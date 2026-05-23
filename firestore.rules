@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} { allow read, write: if false; }
+    
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { 
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'; 
+    }
+    
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.size() >= 3 && data.size() <= 6
+          && data.keys().hasAll(['email', 'role', 'createdAt'])
+          && data.email is string && data.email.size() <= 100
+          && data.role is string && (data.role == 'customer' || data.role == 'admin')
+          && data.createdAt is number
+          && data.get('displayName', '') is string
+          && data.get('phone', '') is string
+          && data.get('address', '') is string
+          && data.get('displayName', '').size() <= 100
+          && data.get('phone', '').size() <= 20
+          && data.get('address', '').size() <= 250;
+      }
+      
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      
+      allow create: if isSignedIn() 
+        && request.auth.uid == userId 
+        && isValidUser(incoming())
+        && (incoming().role == 'customer' || (incoming().role == 'admin' && request.auth.token.email == 'freshnlocalco@gmail.com') || isAdmin()); // Can self-assign admin only if owner email
+        
+      allow update: if isSignedIn() 
+        && (request.auth.uid == userId || isAdmin())
+        && isValidUser(incoming())
+        && incoming().createdAt == existing().createdAt
+        && (incoming().role == existing().role || isAdmin()); // Users cannot escalate own privileges
+    }
+    
+    match /products/{productId} {
+      function isValidProduct(data) {
+        return data.keys().hasAll(['name', 'price', 'createdAt', 'updatedAt'])
+        && data.size() >= 4 && data.size() <= 10
+        && data.name is string && data.name.size() <= 150 && data.name.size() > 0
+        && data.price is number && data.price >= 0
+        && data.createdAt is number
+        && data.updatedAt is number
+        && data.get('description', '') is string && data.get('description', '').size() <= 1000
+        && data.get('imageUrl', '') is string && data.get('imageUrl', '').size() <= 500
+        && data.get('category', '') is string && data.get('category', '').size() <= 50
+        && data.get('originalPrice', 0) is number
+        && data.get('stock', 0) is number
+        && data.get('inStock', true) is bool;
+      }
+      
+      allow read, list: if true;
+      allow create: if isAdmin() 
+        && isValidProduct(incoming());
+      allow update: if isAdmin()
+        && isValidProduct(incoming())
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin();
+    }
+    
+    match /orders/{orderId} {
+      function isValidOrder(data) {
+        return data.keys().hasAll(['userId', 'items', 'totalAmount', 'status', 'paymentMethod', 'shippingDetails', 'createdAt', 'updatedAt'])
+        && data.userId is string && data.userId.size() <= 128
+        && data.items is list && data.items.size() <= 100 && data.items.size() > 0
+        && data.totalAmount is number && data.totalAmount >= 0
+        && data.status is string && (data.status == 'pending' || data.status == 'confirmed' || data.status == 'shipped' || data.status == 'delivered' || data.status == 'cancelled')
+        && data.paymentMethod == 'COD'
+        && data.shippingDetails is map
+        && data.shippingDetails.keys().hasAll(['address', 'phone', 'name'])
+        && data.createdAt is number
+        && data.updatedAt is number;
+      }
+      
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      // Explicitly protect the list query:
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      allow create: if isSignedIn()
+        && isValidOrder(incoming())
+        && incoming().userId == request.auth.uid
+        && incoming().status == 'pending';
+        
+      allow update: if isSignedIn() 
+        && isValidOrder(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && (
+          (request.auth.uid == existing().userId && (existing().status == 'pending') && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') || // User can only cancel pending 
+          isAdmin() // Admin can do anything 
+        );
+    }
+  }
+}

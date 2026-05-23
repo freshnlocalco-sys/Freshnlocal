@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #09120b;
+
+  --color-primary: #00b853;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #f4faf6;
+  --color-secondary-foreground: #09120b;
+
+  --color-accent: #00b853;
+  --color-accent-foreground: #ffffff;
+
+  --color-muted: #edf4f0;
+  --color-muted-foreground: #4a5c4e;
+
+  --color-border: #e2ece5;
+
+  --font-sans: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Slice.co.in Premium Bento Card & Design classes (Light Mode Edition) */
+.slice-bento {
+  @apply rounded-[32px] bg-secondary border border-border/60 p-8 transition-all duration-500 relative overflow-hidden shadow-[0_4px_24px_rgba(0,184,83,0.02)];
+}
+
+.slice-bento:hover {
+  @apply border-primary/50 shadow-[0_15px_40px_rgba(0,184,83,0.06)];
+  transform: translateY(-4px);
+}
+
+.slice-card {
+  @apply rounded-[28px] bg-[#ffffff] border border-border/70 overflow-hidden transition-all duration-500 relative flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.02)];
+}
+
+.slice-card:hover {
+  @apply border-primary/60 shadow-[0_15px_35px_rgba(0,184,83,0.08)];
+  transform: translateY(-6px);
+}
+
+.title-display {
+  @apply font-sans font-black tracking-tight uppercase leading-[0.9] text-primary;
+}
+
+.slice-btn-primary {
+  @apply rounded-[20px] bg-primary text-white font-sans text-xs uppercase font-extrabold tracking-widest transition-all duration-300 transform active:scale-95 inline-flex items-center justify-center gap-2 hover:bg-[#09120b] hover:text-white shadow-[0_4px_20px_rgba(0,184,83,0.25)] hover:shadow-[0_4px_30px_rgba(9,18,11,0.25)];
+}
+
+.slice-btn-secondary {
+  @apply rounded-[20px] bg-transparent text-foreground font-sans text-xs uppercase font-extrabold tracking-widest transition-all duration-300 transform active:scale-95 inline-flex items-center justify-center gap-2 hover:bg-secondary border-2 border-border hover:border-foreground;
+}
+
+.glass-pill {
+  @apply px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] uppercase tracking-widest font-extrabold border border-primary/20;
+}
+
+.premium-glow-text {
+  text-shadow: 0 0 20px rgba(0,184,83,0.2);
+}
+
+/* Slick Custom scrollbar for premium touch */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4e3d7;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00b853;
+}
