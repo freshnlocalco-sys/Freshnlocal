@@ -8,6 +8,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { Profile } from './pages/Profile';
 import { ProductDetail } from './pages/ProductDetail';
 import { Orders } from './pages/Orders';
+import { About } from './pages/About';
 
 export default function App() {
   return (
@@ -33,7 +34,7 @@ export default function App() {
           <Route path="admin" element={<AdminDashboard />} />
           <Route path="profile" element={<Profile />} />
           <Route path="orders" element={<Orders />} />
-          <Route path="about" element={<div className="p-20 text-center text-xl font-serif">Fresh n Local Co. Story - Coming Soon!</div>} />
+          <Route path="about" element={<About />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

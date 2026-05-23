@@ -75,6 +75,12 @@ export function Profile() {
               <span className="flex items-center gap-2"><Award className="w-4 h-4 text-primary" /> Delivery Grade</span>
               <span className="text-primary font-black">PLATINUM (₹0)</span>
             </div>
+            {user?.address && (
+              <div className="bg-background p-4 rounded-xl border border-border space-y-2">
+                <span className="flex items-center gap-2 mb-2"><Package className="w-4 h-4 text-primary" /> Saved Delivery Address</span>
+                <p className="text-foreground text-[11px] leading-relaxed capitalize">{user.address}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

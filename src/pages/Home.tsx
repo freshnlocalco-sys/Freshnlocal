@@ -332,7 +332,7 @@ export function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="slice-bento flex flex-col justify-between group h-80">
+            <div className="slice-bento flex flex-col justify-between group">
               <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-8 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <Leaf className="w-5 h-5" />
               </div>
@@ -344,7 +344,7 @@ export function Home() {
               </div>
             </div>
 
-            <div className="slice-bento flex flex-col justify-between group h-80">
+            <div className="slice-bento flex flex-col justify-between group">
               <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-8 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <Truck className="w-5 h-5" />
               </div>
@@ -356,7 +356,7 @@ export function Home() {
               </div>
             </div>
 
-            <div className="slice-bento flex flex-col justify-between group h-80">
+            <div className="slice-bento flex flex-col justify-between group">
               <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-8 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <ShieldCheck className="w-5 h-5" />
               </div>

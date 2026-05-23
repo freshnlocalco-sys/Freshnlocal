@@ -3,27 +3,70 @@ import { useCart } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck } from 'lucide-react';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
 import toast from 'react-hot-toast';
 
 export function Cart() {
   const { items, removeItem, updateQuantity, total, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [address, setAddress] = useState(user?.address || '');
+  const [addressLines, setAddressLines] = useState(() => {
+    let line1 = user?.address || '';
+    let line2 = '';
+    let landmark = '';
+    let city = 'Surat';
+    let state = 'Gujarat';
+    let pincode = '';
+
+    if (user?.address && user.address.includes(', ')) {
+      const parts = user.address.split(', ');
+      if (parts.length >= 2) {
+        line1 = parts[0];
+        line2 = parts[1];
+      }
+      for (let i = 2; i < parts.length; i++) {
+        if (parts[i].startsWith('Landmark: ')) {
+          landmark = parts[i].replace('Landmark: ', '');
+        } else if (parts[i].startsWith('PIN: ')) {
+          pincode = parts[i].replace('PIN: ', '');
+        } else if (parts[i] !== 'Surat' && parts[i] !== 'Gujarat') {
+          line2 += ', ' + parts[i];
+        }
+      }
+    }
+
+    return {
+      line1,
+      line2,
+      landmark,
+      city,
+      state,
+      pincode
+    };
+  });
   const [phone, setPhone] = useState(user?.phone || '');
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (total() < 1000) return;
     if (!user) return signIn();
-    if (!address.trim() || !phone.trim()) {
-      toast.error("Please provide both delivery address and phone number.");
+    
+    if (!addressLines.line1.trim() || !addressLines.line2.trim() || !addressLines.pincode.trim() || !phone.trim()) {
+      toast.error("Please provide complete delivery address and phone number.");
       return;
     }
+    
+    const formattedAddress = [
+      addressLines.line1,
+      addressLines.line2,
+      addressLines.landmark ? `Landmark: ${addressLines.landmark}` : '',
+      addressLines.city,
+      addressLines.state,
+      addressLines.pincode ? `PIN: ${addressLines.pincode}` : ''
+    ].filter(Boolean).join(', ');
     
     setLoading(true);
     try {
@@ -39,7 +82,7 @@ export function Cart() {
         paymentMethod: 'COD',
         shippingDetails: {
           name: user.displayName || 'Customer',
-          address,
+          address: formattedAddress,
           phone
         },
         createdAt: Date.now(),
@@ -48,6 +91,16 @@ export function Cart() {
       
       const ordersRef = collection(db, 'orders');
       await addDoc(ordersRef, orderData);
+
+      // Save address to user profile
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, { address: formattedAddress, phone });
+        setUser({ ...user, address: formattedAddress, phone });
+      } catch (err) {
+        console.error("Failed to save user address profile details", err);
+      }
+
       clearCart();
       toast.success(`Order Placed successfully! Order ID: ${orderNumber}`);
       navigate('/profile');
@@ -90,9 +143,6 @@ export function Cart() {
               Review Shopping Larder
             </h1>
           </div>
-          <span className="text-xxs font-mono font-bold tracking-widest text-primary bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
-            {items.length} ACTIVE CROP TIERS
-          </span>
         </div>
         
         {/* Banner with organic gradient mimicking fintech benefits */}
@@ -193,15 +243,68 @@ export function Cart() {
                 <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span> Shipping Directives
               </h3>
               
-              <div className="space-y-2">
-                <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#506053]">Delivery Address</label>
-                <textarea 
-                  required 
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full border border-border rounded-2xl px-4 py-3 bg-background outline-none focus:border-primary text-foreground transition-colors text-xs resize-none h-[110px] placeholder:text-muted-foreground font-semibold"
-                  placeholder="Street, Tower Name, Local Area Suffix, Surat, Gujarat"
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#506053] mb-2">Flat, House no., Building, Company, Apartment</label>
+                  <input 
+                    required 
+                    type="text"
+                    value={addressLines.line1}
+                    onChange={(e) => setAddressLines(prev => ({ ...prev, line1: e.target.value }))}
+                    className="w-full border border-border rounded-xl px-4 py-3.5 bg-background outline-none focus:border-primary text-foreground transition-colors text-xs font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#506053] mb-2">Area, Street, Sector, Village</label>
+                  <input 
+                    required 
+                    type="text"
+                    value={addressLines.line2}
+                    onChange={(e) => setAddressLines(prev => ({ ...prev, line2: e.target.value }))}
+                    className="w-full border border-border rounded-xl px-4 py-3.5 bg-background outline-none focus:border-primary text-foreground transition-colors text-xs font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#506053] mb-2">Landmark (Optional)</label>
+                  <input 
+                    type="text"
+                    value={addressLines.landmark}
+                    onChange={(e) => setAddressLines(prev => ({ ...prev, landmark: e.target.value }))}
+                    className="w-full border border-border rounded-xl px-4 py-3.5 bg-background outline-none focus:border-primary text-foreground transition-colors text-xs font-semibold"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#506053] mb-2">City</label>
+                    <input 
+                      disabled
+                      type="text"
+                      value={addressLines.city}
+                      className="w-full border border-border rounded-xl px-4 py-3.5 bg-secondary/50 text-muted-foreground outline-none text-xs font-semibold cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#506053] mb-2">State</label>
+                    <input 
+                      disabled
+                      type="text"
+                      value={addressLines.state}
+                      className="w-full border border-border rounded-xl px-4 py-3.5 bg-secondary/50 text-muted-foreground outline-none text-xs font-semibold cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#506053] mb-2">Pincode</label>
+                  <input 
+                    required 
+                    type="text"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    value={addressLines.pincode}
+                    onChange={(e) => setAddressLines(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '') }))}
+                    className="w-full border border-border rounded-xl px-4 py-3.5 bg-background outline-none focus:border-primary text-foreground transition-colors text-xs font-semibold font-mono"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -211,8 +314,7 @@ export function Cart() {
                   type="tel" 
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full border border-border rounded-2xl px-4 py-4 bg-background outline-none focus:border-primary text-foreground transition-colors text-xs font-mono placeholder:text-muted-foreground font-semibold"
-                  placeholder="+91 7284000881"
+                  className="w-full border border-border rounded-2xl px-4 py-4 bg-background outline-none focus:border-primary text-foreground transition-colors text-xs font-mono font-semibold"
                 />
               </div>
             </div>
