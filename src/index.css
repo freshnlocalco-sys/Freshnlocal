@@ -34,11 +34,11 @@
 
 /* Slice.co.in Premium Bento Card & Design classes (Light Mode Edition) */
 .slice-bento {
-  @apply rounded-[32px] bg-secondary border border-border/60 p-8 transition-all duration-500 relative overflow-hidden shadow-[0_4px_24px_rgba(0,184,83,0.02)];
+  @apply rounded-[32px] bg-secondary border border-border/60 p-8 transition-all duration-500 relative overflow-hidden shadow-sm;
 }
 
 .slice-bento:hover {
-  @apply border-primary/50 shadow-[0_15px_40px_rgba(0,184,83,0.06)];
+  @apply border-primary/50 shadow-md;
   transform: translateY(-4px);
 }
 
