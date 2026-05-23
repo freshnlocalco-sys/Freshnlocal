@@ -18,8 +18,12 @@ export function Cart() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (total() < 999) return;
+    if (total() < 1000) return;
     if (!user) return signIn();
+    if (!address.trim() || !phone.trim()) {
+      toast.error("Please provide both delivery address and phone number.");
+      return;
+    }
     
     setLoading(true);
     try {
@@ -229,16 +233,16 @@ export function Cart() {
               </label>
             </div>
             
-            {total() < 999 && (
+            {total() < 1000 && (
               <div className="bg-red-500/10 text-red-500 border border-red-500/15 p-4 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest">
-                Minimum larder checkout is ₹999
+                Minimum larder checkout is ₹1000
               </div>
             )}
             
             {user ? (
               <button 
                 type="submit" 
-                disabled={loading || total() < 999}
+                disabled={loading || total() < 1000}
                 className="slice-btn-primary w-full py-4.5 text-[10px]"
               >
                 {loading ? 'Committing Settlement...' : 'Finalize Settlement Board'}
@@ -247,7 +251,7 @@ export function Cart() {
               <button 
                 type="button" 
                 onClick={signIn} 
-                disabled={total() < 999} 
+                disabled={total() < 1000} 
                 className="slice-btn-primary w-full py-4.5 text-[10px]"
               >
                 Login to Settle Accounts

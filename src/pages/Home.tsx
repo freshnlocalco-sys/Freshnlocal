@@ -381,7 +381,7 @@ export function Home() {
             Ready to <br/>Slice Freshness?
           </h2>
           <p className="text-xs font-bold uppercase tracking-wider opacity-90 leading-relaxed max-w-sm mx-auto">
-            Order premium harvests with absolute simplicity. Sign in or browse catalogs directly with free delivery above ₹999/-.
+            Order premium harvests with absolute simplicity. Sign in or browse catalogs directly with free delivery above ₹1000/-.
           </p>
           <div className="pt-2">
             <Link to="/shop" className="bg-[#09120b] text-white hover:bg-black rounded-[20px] font-sans text-xs uppercase font-extrabold tracking-widest px-8 py-5 transition-all duration-300 transform active:scale-95 inline-flex items-center gap-2">

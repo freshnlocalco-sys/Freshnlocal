@@ -290,28 +290,28 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 w-full bg-background text-foreground">
+    <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-8 w-full bg-background text-foreground">
       
       {/* Title Desk */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border pb-8 mb-12">
-        <div className="space-y-1.5ClassName bg-transparent">
-          <span className="glass-pill">Command Station</span>
-          <h1 className="text-3xl lg:text-5xl font-sans font-black uppercase text-foreground tracking-tight mt-2.5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 border-b border-border pb-6 sm:pb-8 mb-6 sm:mb-12">
+        <div className="space-y-1.5 bg-transparent">
+          <span className="glass-pill text-[8px] sm:text-[10px]">Command Station</span>
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-sans font-black uppercase text-foreground tracking-tight mt-2.5">
             Logistics Control panel
           </h1>
         </div>
         
         {/* Sleek control navigation tab nodes */}
-        <div className="flex overflow-x-auto md:overflow-visible bg-secondary p-1.5 rounded-2xl border border-border shrink-0 select-none">
+        <div className="flex overflow-x-auto md:overflow-visible bg-secondary p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-border shrink-0 select-none">
           <button 
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center gap-2 px-4 md:px-6 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
           >
             <ShoppingBag className="w-3.5 h-3.5" /> Consignments
           </button>
           <button 
             onClick={() => setActiveTab('products')}
-            className={`flex items-center gap-2 px-4 md:px-6 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
           >
             <Package className="w-3.5 h-3.5" /> Larder Inventory
           </button>
@@ -327,36 +327,37 @@ export function AdminDashboard() {
         activeTab === 'orders' ? (
           <div className="slice-bento p-0 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[800px]">
+              <table className="w-full text-left border-collapse min-w-[700px] sm:min-w-[800px]">
                 <thead>
-                  <tr className="border-b border-border bg-secondary text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                    <th className="p-5">Consignment ID</th>
-                    <th className="p-5">Consignee Details</th>
-                    <th className="p-5">Lodged Timestamp</th>
-                    <th className="p-5">Larder Loads / Cost</th>
-                    <th className="p-5">Logistics status</th>
+                  <tr className="border-b border-border bg-secondary text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Consignment ID</th>
+                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Consignee Details</th>
+                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Lodged Timestamp</th>
+                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Larder Loads / Cost</th>
+                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Logistics status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border text-xs text-foreground">
+                <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
                   {orders.map(order => (
                     <tr key={order.id} className="hover:bg-black/5 transition-colors">
-                      <td className="p-5 font-mono font-black tracking-wider text-primary">
+                      <td className="p-3 sm:p-4 md:p-5 font-mono font-black tracking-wider text-primary">
                         {order.orderNumber || `FNL-${order.id.slice(0, 8).toUpperCase()}`}
                       </td>
-                      <td className="p-5 leading-relaxed">
-                        <span className="font-extrabold text-foreground uppercase block">{order.shippingDetails?.name}</span>
-                        <span className="text-muted-foreground font-mono text-xxs tracking-wider">{order.shippingDetails?.phone}</span>
+                      <td className="p-3 sm:p-4 md:p-5 leading-relaxed max-w-[200px] sm:max-w-xs whitespace-normal">
+                        <span className="font-extrabold text-foreground uppercase block text-[10px] sm:text-xs">{order.shippingDetails?.name || 'Customer'}</span>
+                        <span className="text-muted-foreground font-mono text-[8px] sm:text-xxs tracking-wider block mt-0.5">{order.shippingDetails?.phone || 'No phone'}</span>
+                        <span className="text-muted-foreground text-[8px] sm:text-[9px] block mt-1 leading-snug">{order.shippingDetails?.address || 'No address provided'}</span>
                       </td>
-                      <td className="p-5 font-medium">{new Date(order.createdAt).toLocaleDateString()}</td>
-                      <td className="p-5 leading-relaxed">
+                      <td className="p-3 sm:p-4 md:p-5 font-medium whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td className="p-3 sm:p-4 md:p-5 leading-relaxed whitespace-nowrap">
                         <span className="text-foreground font-bold block">{order.items.length} units</span>
                         <span className="font-black text-primary">₹{order.totalAmount}</span>
                       </td>
-                      <td className="p-5">
+                      <td className="p-3 sm:p-4 md:p-5">
                         <select 
                           value={order.status}
                           onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                          className="bg-white text-foreground px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-border outline-none focus:border-primary transition-colors cursor-pointer"
+                          className="bg-white text-foreground px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-border outline-none focus:border-primary transition-colors cursor-pointer"
                         >
                           <option value="pending">Pending</option>
                           <option value="confirmed">Confirmed</option>
@@ -379,44 +380,44 @@ export function AdminDashboard() {
             </div>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
             {/* Left form desk: manual additions & CSV operations */}
-            <div className="lg:col-span-5 space-y-8 bg-secondary border border-border p-6 md:p-8 rounded-[32px] shadow-sm">
+            <div className="col-span-12 lg:col-span-5 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[32px] shadow-sm">
               <div className="space-y-4">
-                <h3 className="text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-primary" /> Create Product Listing
+                <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" /> Create Product Listing
                 </h3>
                 
                 <form onSubmit={handleAddProduct} className="space-y-4">
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Crop/Item Name</label>
                     <input 
                       required 
                       placeholder="Royal Washington Red Apples..." 
-                      className="w-full border border-border rounded-2xl px-4 py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-xs" 
+                      className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
                       value={newProduct.name} 
                       onChange={e => setNewProduct({...newProduct, name: e.target.value})} 
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="space-y-1.5 sm:space-y-2">
                       <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Rate Price (₹)</label>
                       <input 
                         required 
                         type="number" 
                         placeholder="180" 
-                        className="w-full border border-border rounded-2xl px-4 py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-xs font-mono" 
+                        className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
                         value={newProduct.price} 
                         onChange={e => setNewProduct({...newProduct, price: e.target.value})} 
                       />
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 sm:space-y-2">
                       <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Inventory Category</label>
                       <select 
-                        className="w-full border border-border rounded-2xl p-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] uppercase font-bold tracking-wider" 
+                        className="w-full border border-border rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[9px] sm:text-[10px] uppercase font-bold tracking-wider" 
                         value={newProduct.category} 
                         onChange={e => setNewProduct({...newProduct, category: e.target.value})}
                       >
@@ -432,22 +433,22 @@ export function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">High-Res Product Image URL</label>
                     <input 
                       placeholder="https://images.pexels.com/..." 
-                      className="w-full border border-border rounded-2xl px-4 py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-xs font-mono" 
+                      className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
                       value={newProduct.imageUrl} 
                       onChange={e => setNewProduct({...newProduct, imageUrl: e.target.value})} 
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Larder Description</label>
                     <textarea 
                       placeholder="Details about seed origin, crisp index, weight parameters..." 
                       rows={3} 
-                      className="w-full border border-border rounded-2xl px-4 py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-xs resize-none placeholder:text-muted-foreground font-medium leading-relaxed" 
+                      className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs resize-none placeholder:text-muted-foreground font-medium leading-relaxed" 
                       value={newProduct.description} 
                       onChange={e => setNewProduct({...newProduct, description: e.target.value})}
                     />
@@ -455,7 +456,7 @@ export function AdminDashboard() {
 
                   <button 
                     type="submit" 
-                    className="slice-btn-primary w-full py-4 text-[10px] font-black mt-2 shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black mt-2 shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     Commit Stock <Plus className="w-4.5 h-4.5 text-white" />
                   </button>
@@ -463,40 +464,40 @@ export function AdminDashboard() {
               </div>
               
               {/* Excel/CSV Block integration */}
-              <div className="pt-8 border-t border-border space-y-6" id="bulk-import-section">
-                <div className="space-y-2">
-                  <h3 className="text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
-                    <Upload className="w-5 h-5 text-primary" /> Bulk Harvest Injector
+              <div className="pt-6 sm:pt-8 border-t border-border space-y-4 sm:space-y-6" id="bulk-import-section">
+                <div className="space-y-1 sm:space-y-2">
+                  <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+                    <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-primary" /> Bulk Harvest Injector
                   </h3>
-                  <p className="text-muted-foreground text-xxs font-semibold leading-relaxed">
+                  <p className="text-muted-foreground text-[9px] sm:text-xxs font-semibold leading-relaxed">
                     Instantly catalog hundreds of crops from farmer spreadsheet boards. Fuzzy mappings auto-resolve headers.
                   </p>
                 </div>
                 
-                <div className="p-5 bg-white border border-dashed border-border rounded-2xl space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1.5">
-                    <Download className="w-4 h-4" /> Download Standard template sheets
+                <div className="p-4 sm:p-5 bg-white border border-dashed border-border rounded-xl sm:rounded-2xl space-y-3 sm:space-y-4">
+                  <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1.5">
+                    <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Download Standard template sheets
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3.5">
                     <button 
                       type="button" 
                       onClick={downloadExcelTemplate} 
-                      className="flex items-center justify-center gap-2 py-3 px-4 bg-background hover:bg-black/5 text-[9px] font-black uppercase tracking-wider rounded-xl border border-border transition-colors text-foreground cursor-pointer"
+                      className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-3 px-2 sm:px-4 bg-background hover:bg-black/5 text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-lg sm:rounded-xl border border-border transition-colors text-foreground cursor-pointer"
                     >
-                      <FileText className="w-4 h-4 text-emerald-500" /> Excel (.xlsx)
+                      <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" /> <span className="hidden sm:inline">Excel</span> (.xlsx)
                     </button>
                     <button 
                       type="button" 
                       onClick={downloadCsvTemplate} 
-                      className="flex items-center justify-center gap-2 py-3 px-4 bg-background hover:bg-black/5 text-[9px] font-black uppercase tracking-wider rounded-xl border border-border transition-colors text-foreground cursor-pointer"
+                      className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-3 px-2 sm:px-4 bg-background hover:bg-black/5 text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-lg sm:rounded-xl border border-border transition-colors text-foreground cursor-pointer"
                     >
-                      <FileText className="w-4 h-4 text-blue-500" /> CSV (.csv)
+                      <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" /> <span className="hidden sm:inline">CSV</span> (.csv)
                     </button>
                   </div>
                 </div>
 
-                <label className="w-full py-4.5 rounded-[18px] bg-white hover:bg-primary/5 border border-border hover:border-primary/50 text-foreground hover:text-primary transition-all flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest cursor-pointer">
-                  <Upload className="w-4 h-4" /> Inject Excel / CSV file
+                <label className="w-full py-3 sm:py-4.5 rounded-xl sm:rounded-[18px] bg-white hover:bg-primary/5 border border-border hover:border-primary/50 text-foreground hover:text-primary transition-all flex items-center justify-center gap-2 text-[9px] sm:text-[10px] font-black uppercase tracking-widest cursor-pointer">
+                  <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Inject Excel / CSV file
                   <input 
                     type="file" 
                     accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" 
@@ -508,32 +509,32 @@ export function AdminDashboard() {
             </div>
             
             {/* Live table view of product catalogs */}
-            <div className="lg:col-span-7 bg-white border border-border shadow-sm rounded-[32px] overflow-hidden">
+            <div className="col-span-12 lg:col-span-7 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
-                    <tr className="border-b border-border bg-secondary text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      <th className="p-5">Product Details</th>
-                      <th className="p-5">Catalog Category</th>
-                      <th className="p-5">Rate (₹)</th>
-                      <th className="p-5 text-right">Removal</th>
+                    <tr className="border-b border-border bg-secondary text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Product Details</th>
+                      <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Catalog Category</th>
+                      <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Rate (₹)</th>
+                      <th className="p-3 sm:p-4 md:p-5 text-right whitespace-nowrap">Removal</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border text-xs text-foreground">
+                  <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
                     {products.map(product => (
                       <tr key={product.id} className="hover:bg-black/5 transition-colors">
-                        <td className="p-5 flex items-center gap-3">
-                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0">
+                        <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0">
                             <img src={product.imageUrl || getCategoryImage(product.category)} alt="" className="w-full h-full object-cover" />
                           </div>
-                          <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[120px] sm:max-w-[200px]">{product.name}</span>
+                          <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                         </td>
-                        <td className="p-5 font-bold uppercase tracking-wider text-muted-foreground text-[10px]">{product.category}</td>
-                        <td className="p-5 font-bold font-mono text-foreground text-xs">₹{product.price}</td>
-                        <td className="p-5 text-right">
+                        <td className="p-3 sm:p-4 md:p-5 font-bold uppercase tracking-wider text-muted-foreground text-[8px] sm:text-[10px]">{product.category}</td>
+                        <td className="p-3 sm:p-4 md:p-5 font-bold font-mono text-foreground text-[10px] sm:text-xs">₹{product.price}</td>
+                        <td className="p-3 sm:p-4 md:p-5 text-right">
                           <button 
                             onClick={() => handleDeleteProduct(product.id)} 
-                            className="text-muted-foreground hover:text-red-500 p-2 md:p-2.5 bg-background border border-border rounded-full hover:bg-red-500/10 transition-colors cursor-pointer"
+                            className="text-muted-foreground hover:text-red-500 p-1.5 sm:p-2 md:p-2.5 bg-background border border-border rounded-full hover:bg-red-500/10 transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
