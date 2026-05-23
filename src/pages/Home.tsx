@@ -178,20 +178,20 @@ export function Home() {
             </Link>
           </div>
 
-          <div className="flex gap-8 items-center pt-8 border-t border-border/60 max-w-md mt-10">
-            <div>
-              <p className="text-2xl font-black text-foreground p-0 leading-none">6 HRS</p>
-              <p className="text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5">Guaranteed Delivery</p>
+          <div className="flex justify-between md:justify-start gap-2 md:gap-8 items-center pt-8 border-t border-border/60 w-full max-w-md mt-10">
+            <div className="text-center md:text-left">
+              <p className="text-xl sm:text-2xl font-black text-foreground p-0 leading-none">6 HRS</p>
+              <p className="text-[8px] sm:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5">Guaranteed Delivery</p>
             </div>
             <div className="w-px h-10 bg-border/60"></div>
-            <div>
-              <p className="text-2xl font-black text-foreground p-0 leading-none">100%</p>
-              <p className="text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5">Farmer Traceability</p>
+            <div className="text-center md:text-left">
+              <p className="text-xl sm:text-2xl font-black text-foreground p-0 leading-none">100%</p>
+              <p className="text-[8px] sm:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5">Farmer Traceability</p>
             </div>
             <div className="w-px h-10 bg-border/60"></div>
-            <div>
-              <p className="text-2xl font-black text-foreground p-0 leading-none">0 FEES</p>
-              <p className="text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5">No Platform Taxes</p>
+            <div className="text-center md:text-left">
+              <p className="text-xl sm:text-2xl font-black text-foreground p-0 leading-none">0 FEES</p>
+              <p className="text-[8px] sm:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5">No Platform Taxes</p>
             </div>
           </div>
         </motion.div>
@@ -254,52 +254,52 @@ export function Home() {
           </Link>
 
           {/* Interactive Card Selector tabs resembling slice website widgets */}
-          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 flex flex-wrap justify-center sm:grid sm:grid-cols-4 md:grid-cols-8 gap-1.5 w-full max-w-[960px]">
+          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-4 md:grid-cols-8 gap-1.5 w-full max-w-[960px]">
             <button 
               onClick={() => setActiveCard('greens')} 
-              className={`flex-1 min-w-[100px] py-3 text-center rounded-xl text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'greens' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'greens' ? 'bg-primary text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Veggies
             </button>
             <button 
               onClick={() => setActiveCard('alphonso')} 
-              className={`flex-1 min-w-[100px] py-3 text-center rounded-xl text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'alphonso' ? 'bg-yellow-500 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'alphonso' ? 'bg-yellow-500 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Cuts
             </button>
             <button 
               onClick={() => setActiveCard('exotics')} 
-              className={`flex-1 min-w-[100px] py-3 text-center rounded-xl text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'exotics' ? 'bg-[#ac3fff] text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'exotics' ? 'bg-[#ac3fff] text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Fruits
             </button>
             <button 
               onClick={() => setActiveCard('herbs')} 
-              className={`flex-1 min-w-[100px] py-3 text-center rounded-xl text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'herbs' ? 'bg-emerald-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'herbs' ? 'bg-emerald-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Herbs
             </button>
             <button 
               onClick={() => setActiveCard('superExotics')} 
-              className={`flex-1 min-w-[100px] py-3 text-center rounded-xl text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'superExotics' ? 'bg-cyan-400 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'superExotics' ? 'bg-cyan-400 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Imported
             </button>
             <button 
               onClick={() => setActiveCard('leafyGreens')} 
-              className={`flex-1 min-w-[100px] py-3 text-center rounded-xl text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'leafyGreens' ? 'bg-lime-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'leafyGreens' ? 'bg-lime-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Greens
             </button>
             <button 
               onClick={() => setActiveCard('frozenItems')} 
-              className={`flex-1 min-w-[100px] py-3 text-center rounded-xl text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'frozenItems' ? 'bg-indigo-400 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'frozenItems' ? 'bg-indigo-400 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Frozen
             </button>
             <button 
               onClick={() => setActiveCard('indianFruits')} 
-              className={`flex-1 min-w-[100px] py-3 text-center rounded-xl text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'indianFruits' ? 'bg-orange-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'indianFruits' ? 'bg-orange-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-black/5'}`}
             >
               Indian
             </button>

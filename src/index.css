@@ -42,6 +42,10 @@
   transform: translateY(-4px);
 }
 
+.slice-bento:hover svg.micro-bounce {
+  animation: microBounce 1s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+}
+
 .slice-card {
   @apply rounded-[28px] bg-[#ffffff] border border-border/70 overflow-hidden transition-all duration-500 relative flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.02)];
 }
@@ -56,7 +60,15 @@
 }
 
 .slice-btn-primary {
-  @apply rounded-[20px] bg-primary text-white font-sans text-xs uppercase font-extrabold tracking-widest transition-all duration-300 transform active:scale-95 inline-flex items-center justify-center gap-2 hover:bg-[#09120b] hover:text-white shadow-[0_4px_20px_rgba(0,184,83,0.25)] hover:shadow-[0_4px_30px_rgba(9,18,11,0.25)];
+  @apply rounded-[20px] bg-primary text-white font-sans text-xs uppercase font-extrabold tracking-widest transition-all duration-300 transform active:scale-95 inline-flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(0,184,83,0.25)] hover:shadow-[0_4px_30px_rgba(9,18,11,0.25)];
+}
+.slice-btn-primary:hover {
+  @apply bg-[#09120b] text-white;
+}
+
+.slice-btn-primary:hover svg {
+  transform: translateX(3px);
+  transition: transform 0.3s ease;
 }
 
 .slice-btn-secondary {
@@ -64,11 +76,51 @@
 }
 
 .glass-pill {
-  @apply px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] uppercase tracking-widest font-extrabold border border-primary/20;
+  @apply px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] uppercase tracking-widest font-extrabold border border-primary/20 transition-all duration-300;
+}
+.glass-pill:hover {
+  @apply bg-primary/20 text-[#09120b];
+  transform: translateY(-2px);
 }
 
 .premium-glow-text {
   text-shadow: 0 0 20px rgba(0,184,83,0.2);
+}
+
+/* Micro Animations */
+@keyframes microBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.hover-micro-bounce:hover {
+  animation: microBounce 1.5s ease-in-out infinite;
+}
+
+.nav-link-underline {
+  position: relative;
+}
+
+.nav-link-underline::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 2px;
+  bottom: -4px;
+  left: 0;
+  background-color: var(--color-primary);
+  transform-origin: bottom right;
+  transition: transform 0.3s cubic-bezier(0.86, 0, 0.07, 1);
+}
+
+.nav-link-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
 }
 
 /* Slick Custom scrollbar for premium touch */

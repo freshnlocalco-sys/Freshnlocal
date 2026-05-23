@@ -30,15 +30,15 @@ export function Layout() {
             </Link>
             
             <nav className="hidden md:flex items-center gap-8 ml-10 text-[10px] uppercase tracking-[0.25em] font-extrabold text-[#506053]">
-              <Link to="/" className="hover:text-primary transition-colors hover:scale-105 transform duration-150">Home</Link>
-              <Link to="/shop" className="hover:text-primary transition-colors hover:scale-105 transform duration-150">Catalog</Link>
-              <Link to="/about" className="hover:text-primary transition-colors hover:scale-105 transform duration-150">Story</Link>
+              <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Home</Link>
+              <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Catalog</Link>
+              <Link to="/about" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Story</Link>
             </nav>
           </div>
 
           <div className="flex items-center gap-4 md:gap-6">
             {/* Cart Button */}
-            <Link to="/cart" className="relative flex items-center justify-center w-11 h-11 rounded-full border border-border hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-all duration-300">
+            <Link to="/cart" className="hover-micro-bounce relative flex items-center justify-center w-11 h-11 rounded-full border border-border hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-all duration-300">
               <ShoppingBag className="w-4 h-4 text-foreground" />
               {cartItemsCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-background shadow-[0_4px_10px_rgba(0,184,83,0.3)]">
@@ -60,7 +60,7 @@ export function Layout() {
                       <span className="text-[10px] uppercase tracking-[0.2em] font-black hidden sm:block text-[#506053] group-hover:text-primary cursor-pointer transition-colors">
                         {user.displayName?.split(' ')[0] || 'User'}
                       </span>
-                      <button className="flex items-center justify-center w-11 h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
+                      <button className="hover-micro-bounce flex items-center justify-center w-11 h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
                         <User className="w-4 h-4 text-foreground" />
                       </button>
                       <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 p-2 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
@@ -77,7 +77,7 @@ export function Layout() {
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-3 group bg-secondary border border-border px-5 py-2.5 rounded-full hover:border-[#00b853]/50 hover:bg-primary/5 transition-all">
+                  <button onClick={() => setIsAuthModalOpen(true)} className="hover-micro-bounce flex items-center gap-3 group bg-secondary border border-border px-5 py-2.5 rounded-full hover:border-[#00b853]/50 hover:bg-primary/5 transition-all">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-black hidden sm:block text-[#2c3e30] group-hover:text-primary transition-colors">Login</span>
                     <LogIn className="w-3.5 h-3.5 text-[#2c3e30] group-hover:text-primary" />
                   </button>
@@ -87,7 +87,7 @@ export function Layout() {
 
             <button 
               onClick={() => setIsMobileNavOpen(!isMobileNavOpen)} 
-              className="md:hidden flex items-center justify-center w-11 h-11 rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
+              className="hover-micro-bounce md:hidden flex items-center justify-center w-11 h-11 rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
               aria-label="Toggle Menu"
             >
               {isMobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
