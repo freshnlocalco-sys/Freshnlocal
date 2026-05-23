@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle } from 'lucide-react';
 import { getCategoryImage } from '../lib/constants';
@@ -145,7 +145,7 @@ export function Home() {
     <div className="flex flex-col items-center bg-background text-foreground overflow-hidden">
       
       {/* Hero Section */}
-      <section className="w-full max-w-7xl mx-auto px-4 md:px-8 pt-12 md:pt-24 pb-20 grid md:grid-cols-2 gap-12 items-center relative">
+      <section className="w-full max-w-7xl mx-auto px-4 md:px-8 pt-12 md:pt-24 pb-20 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center relative">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-primary/10 rounded-full blur-[100px] pointer-events-none animate-pulse"></div>
 
@@ -204,102 +204,117 @@ export function Home() {
            className="relative flex flex-col items-center justify-center z-10 w-full"
         >
           {/* Real Agricultural Crop Spotlight Card */}
-          <Link 
-            to={SPOTLIGHTS[activeCard].link}
-            className="w-full max-w-[420px] aspect-[1.3/1] rounded-[24px] p-6 text-white relative flex flex-col justify-between overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border group transition-all duration-700 cursor-pointer"
-            style={{
-              borderColor: SPOTLIGHTS[activeCard].accentColor + '30',
-              transform: isHovered ? 'scale(1.02)' : 'scale(1)',
-            }}
+          <div 
+            className="relative w-full max-w-[420px] aspect-[1.3/1]"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            {/* Full-bleed category image backdrop */}
-            <div className="absolute inset-0 z-0 overflow-hidden">
-              <img 
-                src={SPOTLIGHTS[activeCard].image} 
-                alt={SPOTLIGHTS[activeCard].title}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105 filter brightness-[85%]"
-              />
-              {/* Vignette Gradients for superior high contrast text readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent"></div>
-            </div>
+            <AnimatePresence>
+              <motion.div
+                key={activeCard}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0"
+              >
+                <Link 
+                  to={SPOTLIGHTS[activeCard].link}
+                  className="w-full h-full rounded-[24px] p-6 text-white relative flex flex-col justify-between overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border group transition-all duration-700 cursor-pointer block"
+                  style={{
+                    borderColor: SPOTLIGHTS[activeCard].accentColor + '30',
+                    transform: isHovered ? 'scale(1.02)' : 'scale(1)',
+                  }}
+                >
+                  {/* Full-bleed category image backdrop */}
+                  <div className="absolute inset-0 z-0 overflow-hidden bg-zinc-950">
+                    <img 
+                      src={SPOTLIGHTS[activeCard].image} 
+                      alt={SPOTLIGHTS[activeCard].title}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105 filter brightness-[85%]"
+                    />
+                    {/* Vignette Gradients for superior high contrast text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent"></div>
+                  </div>
 
 
 
-            {/* Bottom Section: crop titles, details & metadata layout */}
-            <div className="z-10 mt-auto space-y-4">
-              <div className="space-y-1">
-                <h3 className="text-xl md:text-2xl font-sans font-black uppercase tracking-tight text-white leading-tight">
-                  {SPOTLIGHTS[activeCard].title}
-                </h3>
-                <p className="text-[10px] text-zinc-200/90 leading-relaxed font-sans font-medium line-clamp-2 max-w-[340px]">
-                  {SPOTLIGHTS[activeCard].subtitle}
-                </p>
-              </div>
+                  {/* Bottom Section: crop titles, details & metadata layout */}
+                  <div className="z-10 mt-auto space-y-4">
+                    <div className="space-y-1">
+                      <h3 className="text-xl md:text-2xl font-sans font-black uppercase tracking-tight text-white leading-tight">
+                        {SPOTLIGHTS[activeCard].title}
+                      </h3>
+                      <p className="text-[10px] text-zinc-200/90 leading-relaxed font-sans font-medium line-clamp-2 max-w-[340px]">
+                        {SPOTLIGHTS[activeCard].subtitle}
+                      </p>
+                    </div>
 
-              {/* Action layout inline */}
-              <div className="flex items-center justify-between border-t border-white/10 pt-3.5 mt-1">
-                <span className="text-[8px] font-extrabold uppercase tracking-widest transition-colors duration-500" style={{ color: SPOTLIGHTS[activeCard].accentColor }}>
-                  Premium Hand-Pick
-                </span>
-                
-                <span className="inline-flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest px-3.5 py-2.5 bg-white text-black rounded-xl hover:bg-zinc-100 transition-colors">
-                  Buy Now <ArrowRight className="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-          </Link>
+                    {/* Action layout inline */}
+                    <div className="flex items-center justify-between border-t border-white/10 pt-3.5 mt-1">
+                      <span className="text-[8px] font-extrabold uppercase tracking-widest transition-colors duration-500" style={{ color: SPOTLIGHTS[activeCard].accentColor }}>
+                        Premium Hand-Pick
+                      </span>
+                      
+                      <span className="inline-flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest px-3.5 py-2.5 bg-white text-black rounded-xl hover:bg-zinc-100 transition-colors">
+                        Buy Now <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
           {/* Interactive Card Selector tabs resembling slice website widgets */}
-          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-4 md:grid-cols-8 gap-1.5 w-full max-w-[960px]">
+          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 w-full max-w-[960px]">
             <button 
               onClick={() => setActiveCard('greens')} 
-              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'greens' ? 'bg-primary text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'greens' ? 'bg-primary text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Veggies
             </button>
             <button 
               onClick={() => setActiveCard('alphonso')} 
-              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'alphonso' ? 'bg-yellow-500 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'alphonso' ? 'bg-yellow-500 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Cuts
             </button>
             <button 
               onClick={() => setActiveCard('exotics')} 
-              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'exotics' ? 'bg-[#ac3fff] text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'exotics' ? 'bg-[#ac3fff] text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Fruits
             </button>
             <button 
               onClick={() => setActiveCard('herbs')} 
-              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'herbs' ? 'bg-emerald-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'herbs' ? 'bg-emerald-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Herbs
             </button>
             <button 
               onClick={() => setActiveCard('superExotics')} 
-              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'superExotics' ? 'bg-cyan-400 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'superExotics' ? 'bg-cyan-400 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Imported
             </button>
             <button 
               onClick={() => setActiveCard('leafyGreens')} 
-              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'leafyGreens' ? 'bg-lime-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'leafyGreens' ? 'bg-lime-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Greens
             </button>
             <button 
               onClick={() => setActiveCard('frozenItems')} 
-              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all active:scale-95 ${activeCard === 'frozenItems' ? 'bg-indigo-400 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'frozenItems' ? 'bg-indigo-400 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Frozen
             </button>
             <button 
               onClick={() => setActiveCard('indianFruits')} 
-              className={`py-3 text-center rounded-xl text-[9px] sm:text-[10px] uppercase font-extrabold tracking-widest transition-all ${activeCard === 'indianFruits' ? 'bg-orange-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-black/5'}`}
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'indianFruits' ? 'bg-orange-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Indian
             </button>
