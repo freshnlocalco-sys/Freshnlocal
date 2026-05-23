@@ -17,7 +17,7 @@ export function Layout() {
       {/* Top Premium Announcement Bar */}
       <div className="bg-primary text-white text-[9px] md:text-[10px] tracking-[0.25em] uppercase font-black py-3 px-4 text-center select-none flex items-center justify-center gap-2 relative z-50">
         <span className="inline-block w-2 h-2 rounded-full bg-white/80 animate-pulse"></span>
-        <span>✨ Surat's Premium Organic Delivery Engine — Free delivery above ₹999/-</span>
+        <span>Surat's Premium Organic Delivery Engine — Free delivery above ₹999/-</span>
       </div>
 
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">

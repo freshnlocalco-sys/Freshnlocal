@@ -157,7 +157,7 @@ export function Home() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-[10px] uppercase tracking-[0.2em] font-extrabold border border-primary/20">
             <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-            <Sparkles className="w-3.5 h-3.5 text-primary" /> Redefining freshness in Surat
+            Redefining freshness in Surat
           </div>
           
           <h1 className="title-display text-5xl lg:text-8xl leading-[0.9] font-black tracking-tight uppercase">
