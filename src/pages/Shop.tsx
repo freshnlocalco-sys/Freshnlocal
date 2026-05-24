@@ -105,7 +105,7 @@ export function Shop() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
         {loading ? (
           <div className="col-span-full py-36 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest flex flex-col items-center justify-center gap-4">
             <span className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></span>
@@ -117,9 +117,9 @@ export function Shop() {
           </div>
         ) : (
           filteredProducts.map((product) => (
-            <div key={product.id} className="slice-card h-[430px]">
-              <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-1.5 leading-none">
-                <span className="bg-[#09120b] text-primary text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-primary/20 backdrop-blur-md">
+            <div key={product.id} className="slice-card h-[320px] sm:h-[430px]">
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap gap-1.5 leading-none">
+                <span className="bg-[#09120b] text-primary text-[8px] font-black uppercase tracking-widest px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full border border-primary/20 backdrop-blur-md">
                   {product.category}
                 </span>
               </div>
@@ -134,22 +134,24 @@ export function Shop() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-80 z-10"></div>
               </Link>
               
-              <div className="p-6 bg-secondary space-y-4 h-[140px] z-20 flex flex-col justify-between">
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <h3 className="text-xs font-sans font-black uppercase tracking-wider text-foreground truncate">{product.name}</h3>
-                    <p className="text-[9px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
-                      <Zap className="w-2.5 h-2.5 fill-primary" /> Active & Traceable
-                    </p>
+              <div className="p-3 sm:p-6 bg-secondary space-y-2 sm:space-y-4 h-[120px] sm:h-[140px] z-20 flex flex-col justify-between">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-1 sm:gap-2.5">
+                  <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 w-full">
+                    <h3 className="text-[10px] sm:text-xs font-sans font-black uppercase tracking-wider text-foreground truncate">{product.name}</h3>
+                    <div className="flex items-center justify-between w-full">
+                      <p className="text-[8px] sm:text-[9px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
+                        <Zap className="w-2 sm:w-2.5 h-2 sm:h-2.5 fill-primary" /> <span className="hidden sm:inline">Active & Traceable</span><span className="sm:hidden">Traceable</span>
+                      </p>
+                      <div className="font-semibold text-sm sm:text-lg text-primary shrink-0 font-sans tracking-tight">₹{product.price}</div>
+                    </div>
                   </div>
-                  <div className="font-semibold text-lg text-primary shrink-0 font-sans tracking-tight">₹{product.price}</div>
                 </div>
                 
                 <button 
                   onClick={() => handleAddToCart(product)}
-                  className="w-full py-3 rounded-[14px] bg-primary text-white font-sans text-[9px] uppercase font-black tracking-widest transition-all duration-300 hover:bg-[#09120b] hover:text-white hover:scale-[1.02] transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] bg-primary text-white font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-all duration-300 hover:bg-[#09120b] hover:text-white hover:scale-[1.02] transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <ShoppingBag className="w-3.5 h-3.5" /> + Add to Basket
+                  <ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> <span className="hidden xs:inline">+ Add to Basket</span><span className="xs:hidden">Add</span>
                 </button>
               </div>
             </div>
