@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle } from 'lucide-react';
+import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getCategoryImage } from '../lib/constants';
 
 const CATEGORIES = [
@@ -125,6 +125,28 @@ const SPOTLIGHTS = {
 export function Home() {
   const [activeCard, setActiveCard] = useState<'greens' | 'alphonso' | 'exotics' | 'herbs' | 'superExotics' | 'leafyGreens' | 'frozenItems' | 'indianFruits'>('greens');
   const [isHovered, setIsHovered] = useState(false);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveCard(current => {
+      const keys = Object.keys(SPOTLIGHTS) as Array<keyof typeof SPOTLIGHTS>;
+      const currentIndex = keys.indexOf(current);
+      const nextIndex = (currentIndex - 1 + keys.length) % keys.length;
+      return keys[nextIndex];
+    });
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveCard(current => {
+      const keys = Object.keys(SPOTLIGHTS) as Array<keyof typeof SPOTLIGHTS>;
+      const currentIndex = keys.indexOf(current);
+      const nextIndex = (currentIndex + 1) % keys.length;
+      return keys[nextIndex];
+    });
+  };
 
   useEffect(() => {
     if (isHovered) return;
@@ -266,6 +288,20 @@ export function Home() {
                 </Link>
               </motion.div>
             </AnimatePresence>
+
+            {/* Navigation Arrows */}
+            <button
+              onClick={handlePrev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all z-20"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleNext}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all z-20"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Interactive Card Selector tabs resembling slice website widgets */}

@@ -60,9 +60,9 @@ export function Layout() {
                       <span className="text-[10px] uppercase tracking-[0.2em] font-black hidden sm:block text-[#506053] group-hover:text-primary cursor-pointer transition-colors">
                         {user.displayName?.split(' ')[0] || 'User'}
                       </span>
-                      <button className="hover-micro-bounce flex items-center justify-center w-11 h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
+                      <Link to="/profile" className="hover-micro-bounce flex items-center justify-center w-11 h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
                         <User className="w-4 h-4 text-foreground" />
-                      </button>
+                      </Link>
                       <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 p-2 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
                         <Link to="/profile" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">My Profile</Link>
                         <Link to="/orders" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">My Orders</Link>
@@ -119,7 +119,7 @@ export function Layout() {
             >
               <div>
                 <div className="flex items-center justify-between pb-6 border-b border-border/40 mb-8">
-                  <span className="font-sans font-black uppercase text-sm tracking-[0.15em] text-[#506053] flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Navigation</span>
+                  <span className="font-sans font-black uppercase text-sm tracking-[0.15em] text-[#506053] flex items-center gap-2">Navigation</span>
                   <button 
                     onClick={() => setIsMobileNavOpen(false)}
                     className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-[#09120b]/5 text-foreground"

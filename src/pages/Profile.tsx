@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { useAuth, db, handleFirestoreError, OperationType, signOut } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key } from 'lucide-react';
+import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -81,6 +81,16 @@ export function Profile() {
                 <p className="text-foreground text-[11px] leading-relaxed capitalize">{user.address}</p>
               </div>
             )}
+            
+            <button 
+              onClick={async () => {
+                await signOut();
+                navigate('/');
+              }} 
+              className="w-full mt-4 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 py-3 rounded-xl border border-red-500/20 transition-all font-black"
+            >
+              <LogOut className="w-4 h-4" /> SIGN OUT NOW
+            </button>
           </div>
         </div>
       </div>

@@ -3,8 +3,86 @@ import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, useAuth } from '../lib/firebase';
 import { Order } from '../store/useCart';
 import { Link, Navigate } from 'react-router-dom';
-import { Package, ArrowRight, Sparkles, HelpCircle, Activity } from 'lucide-react';
+import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+const ORDER_STATUSES = [
+  { id: 'pending', label: 'Pending', icon: Clock },
+  { id: 'confirmed', label: 'Confirmed', icon: FileCheck },
+  { id: 'shipped', label: 'Shipped', icon: Truck },
+  { id: 'delivered', label: 'Delivered', icon: CheckCircle2 }
+];
+
+function OrderTimeline({ status }: { status: string }) {
+  if (status === 'cancelled') {
+    return (
+      <div className="py-4 px-4 bg-red-500/10 rounded-xl border border-red-500/20 text-red-500 text-center font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 mb-6">
+         Order Cancelled
+      </div>
+    );
+  }
+  
+  const normalizedStatus = status === 'processing' ? 'confirmed' : status;
+  const currentIndex = ORDER_STATUSES.findIndex(s => s.id === normalizedStatus);
+  const activeIndex = currentIndex === -1 ? 0 : currentIndex;
+
+  return (
+    <div className="py-4 sm:py-8 w-full border-b border-border/50 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between relative px-2 sm:px-6">
+        
+        {/* Desktop Background Line */}
+        <div className="hidden sm:block absolute top-[1.25rem] md:top-[1.5rem] left-[10%] right-[10%] h-[2px] bg-border -z-10"></div>
+        
+        {/* Desktop Active Line */}
+        <div 
+          className="hidden sm:block absolute top-[1.25rem] md:top-[1.5rem] left-[10%] h-[2px] bg-primary transition-all duration-700 -z-10" 
+          style={{ width: `${(activeIndex / (ORDER_STATUSES.length - 1)) * 80}%` }}
+        ></div>
+
+        {ORDER_STATUSES.map((step, index) => {
+          const isActive = index <= activeIndex;
+          const isCurrent = index === activeIndex;
+          const Icon = step.icon;
+          
+          return (
+            <div key={step.id} className="flex sm:flex-col items-center gap-4 sm:gap-3 relative z-10 sm:w-1/4 mb-8 sm:mb-0 last:mb-0">
+               {/* Mobile vertical line */}
+               {index !== ORDER_STATUSES.length - 1 && (
+                 <div className="sm:hidden absolute left-5 sm:left-auto top-10 sm:top-auto bottom-[-32px] sm:bottom-auto w-[2px] bg-border -z-10"></div>
+               )}
+               {index !== ORDER_STATUSES.length - 1 && isActive && (
+                 <div 
+                   className="sm:hidden absolute left-5 sm:left-auto top-10 sm:top-auto w-[2px] bg-primary -z-10 transition-all duration-700" 
+                   style={{ 
+                     bottom: activeIndex > index ? '-32px' : '50%',
+                     top: '40px'
+                   }}
+                 ></div>
+               )}
+
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center shrink-0 
+                ${isActive 
+                  ? 'border-primary bg-primary/10 text-primary shadow-[0_0_15px_rgba(0,184,83,0.3)]' 
+                  : 'border-border bg-background text-muted-foreground'
+                } transition-all duration-500 bg-background`}
+              >
+                <Icon className={`w-4 h-4 md:w-5 md:h-5 ${isCurrent ? 'animate-pulse' : ''}`} />
+              </div>
+              <div className="flex flex-col sm:items-center sm:text-center mt-1 sm:mt-0">
+                <span className={`text-[10px] md:text-[11px] font-black uppercase tracking-widest ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  {step.label}
+                </span>
+                {isCurrent && (
+                  <span className="text-[8px] text-primary font-extrabold mt-0.5 tracking-[0.1em] uppercase block">Active State</span>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function Orders() {
   const { user, loading: authLoading } = useAuth();
@@ -110,8 +188,8 @@ export function Orders() {
                 <div>
                   <span className={`px-4.5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                     order.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/25' :
-                    order.status === 'processing' ? 'bg-blue-500/10 text-blue-400 border-blue-500/25' :
-                    order.status === 'shipped' ? 'bg-purple-500/10 text-purple-400 border-purple-500/25' :
+                    (order.status === 'processing' || order.status === 'confirmed') ? 'bg-blue-500/10 text-blue-500 border-blue-500/25' :
+                    order.status === 'shipped' ? 'bg-purple-500/10 text-purple-500 border-purple-500/25' :
                     order.status === 'delivered' ? 'bg-primary/10 text-primary border-primary/25 shadow-sm' :
                     'bg-red-500/10 text-red-500 border-red-500/25'
                   }`}>
@@ -119,6 +197,8 @@ export function Orders() {
                   </span>
                 </div>
               </div>
+
+              <OrderTimeline status={order.status} />
 
               {/* Items List */}
               <div className="space-y-4 divide-y divide-border">

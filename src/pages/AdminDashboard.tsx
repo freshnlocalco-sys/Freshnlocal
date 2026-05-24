@@ -1,11 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch } from 'firebase/firestore';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown } from 'lucide-react';
 import { Product } from '../store/useCart';
 import * as XLSX from 'xlsx';
 import { getCategoryImage } from '../lib/constants';
 import toast from 'react-hot-toast';
+
+const STATUS_OPTIONS = [
+  { value: 'pending', label: 'Pending', color: 'bg-amber-400' },
+  { value: 'confirmed', label: 'Confirmed', color: 'bg-blue-500' },
+  { value: 'shipped', label: 'Shipped', color: 'bg-indigo-500' },
+  { value: 'delivered', label: 'Delivered', color: 'bg-emerald-500' },
+  { value: 'cancelled', label: 'Cancelled', color: 'bg-red-500' },
+];
+
+function OrderStatusDropdown({ currentStatus, onStatusChange }: { currentStatus: string, onStatusChange: (status: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const currentOption = STATUS_OPTIONS.find(o => o.value === currentStatus) || STATUS_OPTIONS[0];
+
+  return (
+    <div className="relative inline-block text-left w-[130px] sm:w-[150px]">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-white text-foreground px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-border focus:border-primary transition-colors cursor-pointer flex items-center justify-between shadow-sm outline-none"
+      >
+        <span className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${currentOption.color}`}></span>
+          {currentOption.label}
+        </span>
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform opacity-50 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute z-50 mt-1 w-full rounded-xl bg-white shadow-lg border border-border overflow-hidden">
+            {STATUS_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onStatusChange(option.value);
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-black/5 flex items-center gap-2 transition-colors cursor-pointer text-foreground"
+              >
+                <span className={`w-2 h-2 rounded-full ${option.color}`}></span>
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function AdminDashboard() {
   const { user } = useAuth();
@@ -17,6 +68,7 @@ export function AdminDashboard() {
 
   // New product form handling
   const [newProduct, setNewProduct] = useState({ name: '', price: '', category: 'indian fruits', description: '', imageUrl: '' });
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.role !== 'admin') return;
@@ -61,27 +113,116 @@ export function AdminDashboard() {
     }
   };
 
-  const handleAddProduct = async (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const docRef = await addDoc(collection(db, 'products'), {
-        name: newProduct.name,
-        price: Number(newProduct.price),
-        category: newProduct.category,
-        description: newProduct.description,
-        imageUrl: newProduct.imageUrl || '',
-        stock: 100,
-        inStock: true,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      });
-      setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), category: newProduct.category, description: newProduct.description, imageUrl: newProduct.imageUrl, stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
+      if (editingProductId) {
+        await updateDoc(doc(db, 'products', editingProductId), {
+          name: newProduct.name,
+          price: Number(newProduct.price),
+          category: newProduct.category,
+          description: newProduct.description,
+          imageUrl: newProduct.imageUrl || '',
+          updatedAt: Date.now()
+        });
+        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), category: newProduct.category, description: newProduct.description, imageUrl: newProduct.imageUrl || '' } as Product : p));
+        toast.success('Product updated successfully!');
+        setEditingProductId(null);
+      } else {
+        const docRef = await addDoc(collection(db, 'products'), {
+          name: newProduct.name,
+          price: Number(newProduct.price),
+          category: newProduct.category,
+          description: newProduct.description,
+          imageUrl: newProduct.imageUrl || '',
+          stock: 100,
+          inStock: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        });
+        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), category: newProduct.category, description: newProduct.description, imageUrl: newProduct.imageUrl, stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
+        toast.success('New product cataloged successfully!');
+      }
       setNewProduct({ name: '', price: '', category: 'indian fruits', description: '', imageUrl: '' });
-      toast.success('New product cataloged successfully!');
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'products');
+      handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
       toast.error('Could not save product catalog.');
     }
+  };
+
+  const handleEditSetup = (product: Product) => {
+    setEditingProductId(product.id);
+    setNewProduct({
+      name: product.name,
+      price: product.price.toString(),
+      category: product.category,
+      description: product.description,
+      imageUrl: product.imageUrl || ''
+    });
+    // Scroll to top or form could be useful, but let's keep it simple
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProductId(null);
+    setNewProduct({ name: '', price: '', category: 'indian fruits', description: '', imageUrl: '' });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Firestore max document size is 1MB. 
+    // Approximately 700KB max file size for Base64 (which inflates by ~33%).
+    const MAX_FILE_SIZE = 700 * 1024; 
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      
+      // If file is small enough, use original upload without canvas compression
+      if (file.size <= MAX_FILE_SIZE) {
+        setNewProduct(prev => ({ ...prev, imageUrl: result }));
+        return;
+      }
+
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Use higher quality for larger images before falling back
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        
+        // Safety check - if somehow it's still extremely large, we could compress further,
+        // but 1200x1200 at 0.92 usually stays safely under 600KB
+        setNewProduct(prev => ({ ...prev, imageUrl: dataUrl }));
+      };
+      if (result) {
+        img.src = result;
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDeleteProduct = async (productId: string) => {
@@ -302,16 +443,16 @@ export function AdminDashboard() {
         </div>
         
         {/* Sleek control navigation tab nodes */}
-        <div className="flex overflow-x-auto md:overflow-visible bg-secondary p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-border shrink-0 select-none">
+        <div className="flex w-full md:w-auto overflow-x-auto md:overflow-visible bg-secondary p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-border shrink-0 select-none">
           <button 
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
           >
             <ShoppingBag className="w-3.5 h-3.5" /> Consignments
           </button>
           <button 
             onClick={() => setActiveTab('products')}
-            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
           >
             <Package className="w-3.5 h-3.5" /> Larder Inventory
           </button>
@@ -354,17 +495,10 @@ export function AdminDashboard() {
                         <span className="font-black text-primary">₹{order.totalAmount}</span>
                       </td>
                       <td className="p-3 sm:p-4 md:p-5">
-                        <select 
-                          value={order.status}
-                          onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                          className="bg-white text-foreground px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-border outline-none focus:border-primary transition-colors cursor-pointer"
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="shipped">Shipped</option>
-                          <option value="delivered">Delivered</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
+                        <OrderStatusDropdown 
+                          currentStatus={order.status} 
+                          onStatusChange={(newStatus) => handleUpdateOrderStatus(order.id, newStatus)} 
+                        />
                       </td>
                     </tr>
                   ))}
@@ -386,10 +520,11 @@ export function AdminDashboard() {
             <div className="col-span-12 lg:col-span-5 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[32px] shadow-sm">
               <div className="space-y-4">
                 <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
-                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" /> Create Product Listing
+                  {editingProductId ? <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" /> : <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />} 
+                  {editingProductId ? 'Edit Product Listing' : 'Create Product Listing'}
                 </h3>
                 
-                <form onSubmit={handleAddProduct} className="space-y-4">
+                <form onSubmit={handleSaveProduct} className="space-y-4">
                   <div className="space-y-1.5 sm:space-y-2">
                     <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Crop/Item Name</label>
                     <input 
@@ -401,7 +536,7 @@ export function AdminDashboard() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-1.5 sm:space-y-2">
                       <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Rate Price (₹)</label>
                       <input 
@@ -434,13 +569,28 @@ export function AdminDashboard() {
                   </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
-                    <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">High-Res Product Image URL</label>
-                    <input 
-                      placeholder="https://images.pexels.com/..." 
-                      className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
-                      value={newProduct.imageUrl} 
-                      onChange={e => setNewProduct({...newProduct, imageUrl: e.target.value})} 
-                    />
+                    <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex justify-between">
+                      <span>Product Image (URL or Upload)</span>
+                      <label className="text-primary hover:underline cursor-pointer">
+                        Direct Upload
+                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                      </label>
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="w-12 h-12 bg-black/5 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
+                        {newProduct.imageUrl ? (
+                          <img src={newProduct.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <Upload className="w-4 h-4 text-muted-foreground opacity-50" />
+                        )}
+                      </div>
+                      <input 
+                        placeholder="https://images.pexels.com/... or upload" 
+                        className="w-full flex-1 border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
+                        value={newProduct.imageUrl} 
+                        onChange={e => setNewProduct({...newProduct, imageUrl: e.target.value})} 
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
@@ -454,12 +604,30 @@ export function AdminDashboard() {
                     />
                   </div>
 
-                  <button 
-                    type="submit" 
-                    className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black mt-2 shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    Commit Stock <Plus className="w-4.5 h-4.5 text-white" />
-                  </button>
+                  {editingProductId ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                      <button 
+                        type="button" 
+                        onClick={handleCancelEdit}
+                        className="w-full py-3 sm:py-4 text-[9px] sm:text-[10px] bg-white border border-border text-foreground font-black uppercase tracking-widest rounded-xl hover:bg-black/5 transition-all outline-none"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        Update Stock <Check className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      type="submit" 
+                      className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black mt-2 shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      Commit Stock <Plus className="w-4 h-4 text-white" />
+                    </button>
+                  )}
                 </form>
               </div>
               
@@ -478,7 +646,7 @@ export function AdminDashboard() {
                   <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1.5">
                     <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Download Standard template sheets
                   </h4>
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3.5">
                     <button 
                       type="button" 
                       onClick={downloadExcelTemplate} 
@@ -517,7 +685,7 @@ export function AdminDashboard() {
                       <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Product Details</th>
                       <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Catalog Category</th>
                       <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Rate (₹)</th>
-                      <th className="p-3 sm:p-4 md:p-5 text-right whitespace-nowrap">Removal</th>
+                      <th className="p-3 sm:p-4 md:p-5 text-right whitespace-nowrap">Controls</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
@@ -531,7 +699,13 @@ export function AdminDashboard() {
                         </td>
                         <td className="p-3 sm:p-4 md:p-5 font-bold uppercase tracking-wider text-muted-foreground text-[8px] sm:text-[10px]">{product.category}</td>
                         <td className="p-3 sm:p-4 md:p-5 font-bold font-mono text-foreground text-[10px] sm:text-xs">₹{product.price}</td>
-                        <td className="p-3 sm:p-4 md:p-5 text-right">
+                        <td className="p-3 sm:p-4 md:p-5 text-right space-x-2">
+                          <button 
+                            onClick={() => handleEditSetup(product)} 
+                            className="text-muted-foreground hover:text-primary p-1.5 sm:p-2 md:p-2.5 bg-background border border-border rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
                           <button 
                             onClick={() => handleDeleteProduct(product.id)} 
                             className="text-muted-foreground hover:text-red-500 p-1.5 sm:p-2 md:p-2.5 bg-background border border-border rounded-full hover:bg-red-500/10 transition-colors cursor-pointer"

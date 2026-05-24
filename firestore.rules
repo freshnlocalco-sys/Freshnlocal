@@ -53,7 +53,7 @@ service cloud.firestore {
         && data.createdAt is number
         && data.updatedAt is number
         && data.get('description', '') is string && data.get('description', '').size() <= 1000
-        && data.get('imageUrl', '') is string && data.get('imageUrl', '').size() <= 500
+        && data.get('imageUrl', '') is string
         && data.get('category', '') is string && data.get('category', '').size() <= 50
         && data.get('originalPrice', 0) is number
         && data.get('stock', 0) is number
