@@ -122,14 +122,14 @@ export function Shop() {
           filteredProducts.map((product) => {
             const displayCategory = product.category.replace(/ font-bold/gi, '');
             return (
-            <div key={product.id} className="slice-card h-[320px] sm:h-[430px]">
+            <div key={product.id} className="slice-card h-full">
               <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap gap-1.5 leading-none">
-                <span className="bg-white/80 backdrop-blur-md text-[#09120b] text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/50 shadow-sm">
+                <span className="bg-white/40 backdrop-blur-md text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/40 shadow-sm">
                   {displayCategory}
                 </span>
               </div>
               
-              <Link to={`/product/${product.id}`} className="flex-1 overflow-hidden relative bg-secondary border-b border-border">
+              <Link to={`/product/${product.id}`} className="w-full aspect-[4/3] overflow-hidden relative bg-secondary border-b border-border block shrink-0">
                 <img 
                   src={product.imageUrl || getCategoryImage(displayCategory)} 
                   alt={product.name}
@@ -138,7 +138,7 @@ export function Shop() {
                 />
               </Link>
               
-              <div className="p-3 sm:p-6 bg-secondary space-y-2 sm:space-y-4 h-[120px] sm:h-[140px] z-20 flex flex-col justify-between">
+              <div className="p-3 sm:p-5 md:p-6 bg-secondary space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-1 sm:gap-2.5">
                   <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 w-full">
                     <h3 className="text-[10px] sm:text-xs font-sans font-black uppercase tracking-wider text-foreground truncate">{product.name}</h3>

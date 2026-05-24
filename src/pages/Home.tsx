@@ -227,7 +227,7 @@ export function Home() {
         >
           {/* Real Agricultural Crop Spotlight Card */}
           <div 
-            className="relative w-full max-w-[420px] aspect-[1.3/1]"
+            className="relative w-full max-w-[420px] aspect-[4/3]"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
@@ -256,9 +256,6 @@ export function Home() {
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105 filter brightness-[85%]"
                     />
-                    {/* Vignette Gradients for superior high contrast text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent"></div>
                   </div>
 
 

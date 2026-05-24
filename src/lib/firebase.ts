@@ -9,7 +9,7 @@ export const auth = getAuth(app);
 // Required parameter to use the correct enterprise database instance
 // We use initializeFirestore with experimentalAutoDetectLongPolling to bypass potential websocket blocks in sandboxed containers or iframes
 export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true,
+  experimentalForceLongPolling: true,
 }, firebaseConfig.firestoreDatabaseId);
 
 export enum OperationType {

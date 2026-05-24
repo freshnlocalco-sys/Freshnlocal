@@ -577,7 +577,7 @@ export function AdminDashboard() {
                       </label>
                     </label>
                     <div className="flex gap-2">
-                      <div className="w-12 h-12 bg-black/5 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-16 aspect-[4/3] bg-black/5 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
                         {newProduct.imageUrl ? (
                           <img src={newProduct.imageUrl} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
@@ -692,7 +692,7 @@ export function AdminDashboard() {
                     {products.map(product => (
                       <tr key={product.id} className="hover:bg-black/5 transition-colors">
                         <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0">
+                          <div className="w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0">
                             <img src={product.imageUrl || getCategoryImage(product.category)} alt="" className="w-full h-full object-cover" />
                           </div>
                           <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>

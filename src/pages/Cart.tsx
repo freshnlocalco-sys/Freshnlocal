@@ -163,7 +163,7 @@ export function Cart() {
           {items.map((item) => (
             <div key={item.product.id} className="slice-card flex flex-col sm:flex-row gap-6 p-6 items-start sm:items-center relative group">
               {/* Product preview card layout */}
-              <div className="w-[100px] h-[100px] bg-background border border-border flex-shrink-0 relative rounded-2xl overflow-hidden shadow-inner">
+              <div className="w-[120px] aspect-[4/3] bg-background border border-border flex-shrink-0 relative rounded-2xl overflow-hidden shadow-inner">
                 <img 
                   src={item.product.imageUrl || getCategoryImage(item.product.category)} 
                   alt={item.product.name} 

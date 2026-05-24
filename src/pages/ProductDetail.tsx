@@ -73,8 +73,8 @@ export function ProductDetail() {
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Product Image Panel */}
-        <div className="lg:col-span-7 rounded-[32px] overflow-hidden bg-secondary border border-border relative h-[450px] lg:h-[580px]">
-          <span className="absolute top-5 left-5 text-[10px] uppercase tracking-wider font-extrabold text-[#09120b] bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none z-10 border border-white/50 shadow-sm">{product.category.replace(/ font-bold/gi, '')}</span>
+        <div className="lg:col-span-7 rounded-[32px] overflow-hidden bg-secondary border border-border relative aspect-[4/3] w-full">
+          <span className="absolute top-5 left-5 text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/40 backdrop-blur-md px-5 py-2.5 rounded-full select-none z-10 border border-white/40 shadow-sm">{product.category.replace(/ font-bold/gi, '')}</span>
           <img 
             src={product.imageUrl || getCategoryImage(product.category)} 
             alt={product.name}
@@ -86,10 +86,6 @@ export function ProductDetail() {
         {/* Product Configurations Panel */}
         <div className="lg:col-span-5 space-y-8 bg-secondary border border-border p-8 rounded-[32px] shadow-sm">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] uppercase tracking-widest font-black border border-primary/25">
-              <Sparkles className="w-3.5 h-3.5 fill-current" /> Sourced from Gujarat
-            </div>
-            
             <h1 className="text-3xl lg:text-5xl font-sans font-black tracking-tight uppercase text-foreground leading-tight">
               {product.name}
             </h1>
@@ -99,9 +95,11 @@ export function ProductDetail() {
             </div>
           </div>
           
-          <div className="prose prose-sm font-sans text-xs text-muted-foreground leading-relaxed font-semibold border-t border-b border-border py-6">
-            <p>{product.description || 'Grown locally in certified sustainable soil, hand-scouted by our agronomist panel, and packed inside temperature-balanced cold packs. Freshness guaranteed or unconditional credit replacement.'}</p>
-          </div>
+          {product.description && (
+            <div className="prose prose-sm font-sans text-xs text-muted-foreground leading-relaxed font-semibold border-t border-b border-border py-6">
+              <p>{product.description}</p>
+            </div>
+          )}
 
           <div className="space-y-6">
             <div className="flex items-center justify-between">
