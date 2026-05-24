@@ -13,5 +13,6 @@ export const CATEGORY_IMAGES: Record<string, string> = {
 
 export const getCategoryImage = (category?: string) => {
   if (!category) return CATEGORY_IMAGES['default'];
-  return CATEGORY_IMAGES[category.toLowerCase()] || CATEGORY_IMAGES['default'];
+  const normalizedCategory = category.toLowerCase().replace(/ font-bold/gi, '');
+  return CATEGORY_IMAGES[normalizedCategory] || CATEGORY_IMAGES['default'];
 };

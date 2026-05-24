@@ -74,14 +74,13 @@ export function ProductDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Product Image Panel */}
         <div className="lg:col-span-7 rounded-[32px] overflow-hidden bg-secondary border border-border relative h-[450px] lg:h-[580px]">
-          <span className="absolute top-5 left-5 text-[10px] uppercase tracking-wider font-extrabold text-white bg-primary px-4.5 py-2.5 rounded-full select-none z-10 shadow-md border border-primary/20">{product.category}</span>
+          <span className="absolute top-5 left-5 text-[10px] uppercase tracking-wider font-extrabold text-[#09120b] bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none z-10 border border-white/50 shadow-sm">{product.category.replace(/ font-bold/gi, '')}</span>
           <img 
             src={product.imageUrl || getCategoryImage(product.category)} 
             alt={product.name}
             className="w-full h-full object-cover filter brightness-[95%]"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
         </div>
 
         {/* Product Configurations Panel */}

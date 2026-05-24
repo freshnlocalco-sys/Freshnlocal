@@ -561,9 +561,9 @@ export function AdminDashboard() {
                         <option value="exotic vegetables">Exotic Vegetables</option>
                         <option value="herbs & seasoning">Herbs & Seasoning</option>
                         <option value="fresh & hygenic cut fruits and vegetables">Clean Cuts</option>
-                        <option value="imported / super exotic vegetables font-bold">Global Luxe Veggies</option>
-                        <option value="leafy greens font-bold">Leafy Greens</option>
-                        <option value="frozen items font-bold">Frozen Premium</option>
+                        <option value="imported / super exotic vegetables">Global Luxe Veggies</option>
+                        <option value="leafy greens">Leafy Greens</option>
+                        <option value="frozen items">Frozen Premium</option>
                       </select>
                     </div>
                   </div>
@@ -697,7 +697,7 @@ export function AdminDashboard() {
                           </div>
                           <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                         </td>
-                        <td className="p-3 sm:p-4 md:p-5 font-bold uppercase tracking-wider text-muted-foreground text-[8px] sm:text-[10px]">{product.category}</td>
+                        <td className="p-3 sm:p-4 md:p-5 font-bold uppercase tracking-wider text-muted-foreground text-[8px] sm:text-[10px]">{product.category.replace(/ font-bold/gi, '')}</td>
                         <td className="p-3 sm:p-4 md:p-5 font-bold font-mono text-foreground text-[10px] sm:text-xs">₹{product.price}</td>
                         <td className="p-3 sm:p-4 md:p-5 text-right space-x-2">
                           <button 

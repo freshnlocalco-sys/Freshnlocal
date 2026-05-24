@@ -48,8 +48,11 @@ export function Shop() {
   }, []);
 
   const filteredProducts = products.filter(p => {
+    let productCategory = p.category.toLowerCase();
+    productCategory = productCategory.replace(' font-bold', ''); // Normalize older data typos
+
     const matchesCategory = categoryFilter && categoryFilter.toLowerCase() !== 'all products'
-      ? p.category.toLowerCase() === categoryFilter.toLowerCase()
+      ? productCategory === categoryFilter.toLowerCase()
       : true;
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -116,22 +119,23 @@ export function Shop() {
             This crop tier is currently resting or sold out. Select an active harvest catalog above.
           </div>
         ) : (
-          filteredProducts.map((product) => (
+          filteredProducts.map((product) => {
+            const displayCategory = product.category.replace(/ font-bold/gi, '');
+            return (
             <div key={product.id} className="slice-card h-[320px] sm:h-[430px]">
               <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap gap-1.5 leading-none">
-                <span className="bg-[#09120b] text-primary text-[8px] font-black uppercase tracking-widest px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full border border-primary/20 backdrop-blur-md">
-                  {product.category}
+                <span className="bg-white/80 backdrop-blur-md text-[#09120b] text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/50 shadow-sm">
+                  {displayCategory}
                 </span>
               </div>
               
               <Link to={`/product/${product.id}`} className="flex-1 overflow-hidden relative bg-secondary border-b border-border">
                 <img 
-                  src={product.imageUrl || getCategoryImage(product.category)} 
+                  src={product.imageUrl || getCategoryImage(displayCategory)} 
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110 filter brightness-[95%]"
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-80 z-10"></div>
               </Link>
               
               <div className="p-3 sm:p-6 bg-secondary space-y-2 sm:space-y-4 h-[120px] sm:h-[140px] z-20 flex flex-col justify-between">
@@ -155,7 +159,8 @@ export function Shop() {
                 </button>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
