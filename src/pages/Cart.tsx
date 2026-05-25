@@ -105,8 +105,8 @@ export function Cart() {
       toast.success(`Order Placed successfully! Order ID: ${orderNumber}`);
       navigate('/profile');
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'orders');
-      toast.error("Error committing order settlement.");
+      console.error(error);
+      toast.error("Error committing order settlement: quota exceeded or server error.");
     } finally {
       setLoading(false);
     }

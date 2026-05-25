@@ -94,9 +94,18 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         await setDoc(userRef, newUser);
         useAuth.getState().setUser({ uid: firebaseUser.uid, ...newUser } as AppUser);
       }
-    } catch (e) {
-      console.error("Error setting up user", e);
-      useAuth.getState().setUser(null);
+    } catch (e: any) {
+      console.warn("Using fallback user due to Firestore quota error or setup error");
+      // Fallback if Firestore quota is exceeded so user is still authenticated locally
+      const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com';
+      const fallbackUser: Omit<AppUser, 'uid'> = {
+        email: firebaseUser.email || '',
+        displayName: firebaseUser.displayName || '',
+        role: isAdmin ? 'admin' : 'customer',
+        createdAt: Date.now(),
+      };
+      console.warn("Using fallback user due to Firestore quota error");
+      useAuth.getState().setUser({ uid: firebaseUser.uid, ...fallbackUser } as AppUser);
     }
   } else {
     useAuth.getState().setUser(null);

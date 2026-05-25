@@ -26,7 +26,8 @@ export function Profile() {
         orderList.sort((a: any, b: any) => b.createdAt - a.createdAt);
         setOrders(orderList);
       } catch (error) {
-        handleFirestoreError(error, OperationType.LIST, 'orders');
+        console.warn("Using empty orders due to Firestore quota error or failure:", error);
+        setOrders([]);
       } finally {
         setFetching(false);
       }

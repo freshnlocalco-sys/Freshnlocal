@@ -107,8 +107,9 @@ export function Orders() {
         fetchedOrders.sort((a, b) => b.createdAt - a.createdAt);
         setOrders(fetchedOrders);
       } catch (error) {
-        handleFirestoreError(error, OperationType.LIST, 'orders');
-        toast.error('Failed to load transaction history.');
+        console.warn("Using empty orders due to Firestore quota error or failure:", error);
+        setOrders([]);
+        toast.error('Could not load transaction history right now.');
       } finally {
         setLoading(false);
       }
