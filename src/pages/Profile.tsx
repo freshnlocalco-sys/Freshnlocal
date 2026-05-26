@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth, db, handleFirestoreError, OperationType, signOut } from '../lib/firebase';
+import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -25,9 +25,14 @@ export function Profile() {
         const orderList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         orderList.sort((a: any, b: any) => b.createdAt - a.createdAt);
         setOrders(orderList);
-      } catch (error) {
-        console.warn("Using empty orders due to Firestore quota error or failure:", error);
-        setOrders([]);
+      } catch (error: any) {
+        if (isQuotaError(error)) {
+          toast.error("Database limit reached. Transaction history unavailable.");
+          setOrders([]);
+        } else {
+          console.warn("Using empty orders due to Firestore error:", error);
+          setOrders([]);
+        }
       } finally {
         setFetching(false);
       }

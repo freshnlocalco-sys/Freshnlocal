@@ -4,6 +4,7 @@ import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navig
 import { useAuth, signOut } from '../lib/firebase';
 import { useCart } from '../store/useCart';
 import { AuthModal } from './AuthModal';
+import { AdminNotifier } from './AdminNotifier';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function Layout() {
@@ -273,6 +274,7 @@ export function Layout() {
         </div>
       </footer>
 
+      <AdminNotifier />
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );

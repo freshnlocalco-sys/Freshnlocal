@@ -29,8 +29,11 @@ export interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const isQuota = errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('limit exceeded');
+  
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errorMessage,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -45,8 +48,23 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  
+  if (isQuota) {
+    console.warn('Firestore Quota Exceeded. App may switch to fallback/offline mode.');
+  } else {
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+  }
+  
+  throw new Error(JSON.stringify({ ...errInfo, isQuota }));
+}
+
+export function isQuotaError(error: any): boolean {
+  try {
+    const parsed = JSON.parse(error.message);
+    return parsed.isQuota === true;
+  } catch {
+    return String(error).toLowerCase().includes('quota');
+  }
 }
 
 // User Record in DB
@@ -129,24 +147,27 @@ export const signInWithEmail = async (email: string, pass: string) => {
 
 export const signUpWithEmail = async (email: string, pass: string, name: string) => {
   const res = await createUserWithEmailAndPassword(auth, email, pass);
-  // Profile update logic could also go here, but onAuthStateChanged will handle db user creation.
-  // We can pass the name by temporarily modifying the firebaseUser object locally, but it's simpler to let the trigger grab whatever it can.
-  // Wait, if it's a new user, there's no displayName on firebaseUser. Let's update profile first.
   const { updateProfile } = await import('firebase/auth');
   await updateProfile(res.user, { displayName: name });
   
-  // Also we need to manually trigger the doc creation with the right name if it hasn't, 
-  // but onAuthStateChanged might happen before updateProfile.
-  // Let's just create the doc manually if it's sign up
   const userRef = doc(db, 'users', res.user.uid);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) {
-     await setDoc(userRef, {
-        email: email,
-        displayName: name,
-        role: email === 'freshnlocalco@gmail.com' ? 'admin' : 'customer',
-        createdAt: Date.now()
-     });
+  try {
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) {
+       await setDoc(userRef, {
+          email: email,
+          displayName: name,
+          role: email === 'freshnlocalco@gmail.com' ? 'admin' : 'customer',
+          createdAt: Date.now()
+       });
+    }
+  } catch (error: any) {
+    if (isQuotaError(error) || String(error).toLowerCase().includes('quota')) {
+       console.warn("Could not create user document due to quota error, using fallback state.");
+    } else {
+       console.error("Firestore user creation failed", error);
+       // We don't want to break the whole sign in just because firestore failed, since firebase auth succeeded
+    }
   }
   return res;
 };

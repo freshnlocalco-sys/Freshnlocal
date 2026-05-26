@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
-import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, ShieldCheck, Truck, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, ShieldCheck, Truck, RotateCcw, Zap } from 'lucide-react';
 import { getCategoryImage } from '../lib/constants';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,7 @@ export function ProductDetail() {
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
 
@@ -19,6 +20,7 @@ export function ProductDetail() {
     async function fetchProduct() {
       if (!id) return;
       try {
+        setIsOffline(false);
         const docRef = doc(db, 'products', id);
         const docSnap = await getDoc(docRef);
          if (docSnap.exists()) {
@@ -26,8 +28,13 @@ export function ProductDetail() {
         } else {
           setProduct(null);
         }
-      } catch (error) {
-        handleFirestoreError(error, OperationType.GET, 'products');
+      } catch (error: any) {
+        if (isQuotaError(error)) {
+          setIsOffline(true);
+          toast.error("Database limit reached. Could not load this specific product.");
+        } else {
+          handleFirestoreError(error, OperationType.GET, 'products');
+        }
       } finally {
         setLoading(false);
       }
@@ -49,6 +56,22 @@ export function ProductDetail() {
       <div className="max-w-7xl mx-auto px-4 py-36 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest flex flex-col items-center justify-center gap-4">
         <span className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></span>
         LOADING SPECIFICATIONS AND HARVEST DATA...
+      </div>
+    );
+  }
+
+  if (isOffline) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-36 text-center flex flex-col items-center gap-6 bg-background">
+        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mb-2">
+          <Zap className="w-8 h-8" />
+        </div>
+        <span className="text-red-500 text-xs font-mono uppercase tracking-widest leading-loose">Store Offline</span>
+        <h2 className="text-3xl font-black uppercase tracking-tight text-foreground mb-2">Database Limits Reached</h2>
+        <p className="text-muted-foreground text-sm max-w-md">Our free database quota has been reached for the day. Please check back tomorrow when limits reset.</p>
+        <Link to="/shop" className="slice-btn-secondary px-6 py-4 text-[10px] text-foreground flex items-center gap-2 mt-4">
+          <ArrowLeft className="w-4 h-4" /> Return to Catalog
+        </Link>
       </div>
     );
   }
@@ -90,8 +113,13 @@ export function ProductDetail() {
               {product.name}
             </h1>
             
-            <div className="text-4xl font-black text-primary tracking-tighter">
-              ₹{product.price}
+            <div className="flex items-end gap-3 tracking-tighter">
+              <div className="text-4xl font-black text-primary">₹{product.price}</div>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50 mb-1">
+                  ₹{product.originalPrice}
+                </div>
+              )}
             </div>
           </div>
           

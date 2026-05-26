@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown } from 'lucide-react';
 import { Product } from '../store/useCart';
@@ -67,7 +67,7 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', category: 'indian fruits', description: '', imageUrl: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', description: '', imageUrl: '' });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -83,8 +83,12 @@ export function AdminDashboard() {
           const prodSnap = await getDocs(query(collection(db, 'products')));
           setProducts(prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[]);
         }
-      } catch (error) {
-        handleFirestoreError(error, OperationType.LIST, activeTab);
+      } catch (error: any) {
+        if (isQuotaError(error)) {
+          toast.error("Database limit reached. Dashboard data unavailable.");
+        } else {
+          handleFirestoreError(error, OperationType.LIST, activeTab);
+        }
       } finally {
         setLoading(false);
       }
@@ -125,7 +129,7 @@ export function AdminDashboard() {
           imageUrl: newProduct.imageUrl || '',
           updatedAt: Date.now()
         });
-        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), category: newProduct.category, description: newProduct.description, imageUrl: newProduct.imageUrl || '' } as Product : p));
+        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: newProduct.category, description: newProduct.description, imageUrl: newProduct.imageUrl || '' } as Product : p));
         toast.success('Product updated successfully!');
         setEditingProductId(null);
       } else {
@@ -140,10 +144,10 @@ export function AdminDashboard() {
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
-        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), category: newProduct.category, description: newProduct.description, imageUrl: newProduct.imageUrl, stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
+        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: newProduct.category, description: newProduct.description, imageUrl: newProduct.imageUrl, stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
         toast.success('New product cataloged successfully!');
       }
-      setNewProduct({ name: '', price: '', category: 'indian fruits', description: '', imageUrl: '' });
+      setNewProduct({ name: '', price: '', originalPrice: '', category: 'indian fruits', description: '', imageUrl: '' });
     } catch (error) {
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
       toast.error('Could not save product catalog.');
@@ -155,6 +159,7 @@ export function AdminDashboard() {
     setNewProduct({
       name: product.name,
       price: product.price.toString(),
+      originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
       category: product.category,
       description: product.description,
       imageUrl: product.imageUrl || ''
@@ -319,7 +324,8 @@ export function AdminDashboard() {
         }
 
         let rowName = row.name || row.title || row.product || row.item || row.heading || row.label;
-        let rowPrice = row.price || row.cost || row.mrp || row.rate || row.amount || row.priceinrs || row.rupees;
+        let rowPrice = row.price || row.sellingprice || row.rate || row.amount || row.priceinrs || row.rupees;
+        let rowMrp = row.mrp || row.originalprice || row.regularprice || row.retailprice || row.strikeoutprice;
 
         if (!rowName || rowPrice === undefined) {
           for (const key of Object.keys(row)) {
@@ -327,17 +333,24 @@ export function AdminDashboard() {
             if (!rowName && (lowerKey.includes('name') || lowerKey.includes('product') || lowerKey.includes('title') || lowerKey.includes('item') || lowerKey.includes('fruit') || lowerKey.includes('vegetable') || lowerKey.includes('veg'))) {
               rowName = row[key];
             }
-            if (rowPrice === undefined && (lowerKey.includes('price') || lowerKey.includes('cost') || lowerKey.includes('mrp') || lowerKey.includes('rate') || lowerKey.includes('amount') || lowerKey.includes('value') || lowerKey.includes('rupee'))) {
+            if (rowPrice === undefined && (lowerKey.includes('price') && !lowerKey.includes('mrp') && !lowerKey.includes('original') || lowerKey.includes('cost') || lowerKey.includes('rate') || lowerKey.includes('amount') || lowerKey.includes('value') || lowerKey.includes('rupee'))) {
               rowPrice = row[key];
+            }
+            if (rowMrp === undefined && (lowerKey.includes('mrp') || lowerKey.includes('original') || lowerKey.includes('regular'))) {
+              rowMrp = row[key];
             }
           }
         }
 
         if (!rowName || rowPrice === undefined) continue;
         
+        let parsedPrice = Number(String(rowPrice).replace(/[^0-9.]/g, '') || 0);
+        let parsedMrp = rowMrp ? Number(String(rowMrp).replace(/[^0-9.]/g, '')) : undefined;
+
         const newProd = {
           name: String(rowName).trim(),
-          price: Number(String(rowPrice).replace(/[^0-9.]/g, '') || 0),
+          price: parsedPrice,
+          originalPrice: parsedMrp && parsedMrp > parsedPrice ? parsedMrp : undefined,
           category: (row.category || row.type || 'indian fruits').toLowerCase().trim(),
           description: row.description || row.desc || row.details || '',
           imageUrl: row.imageurl || row.image || row.img || row.photo || '',
@@ -375,10 +388,10 @@ export function AdminDashboard() {
   };
 
   const downloadCsvTemplate = () => {
-    const headers = ['Name', 'Price', 'Category', 'Description', 'ImageUrl', 'Stock'];
+    const headers = ['Name', 'Price', 'MRP', 'Category', 'Description', 'ImageUrl', 'Stock'];
     const sampleData = [
-      ['Gourmet Red Apples', '180', 'Exotic Fruits', 'Sweet and crisp red apples imported from premium orchards.', 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=800', '100'],
-      ['Fresh Broccoli Crown', '95', 'Exotic Vegetables', 'Grown organic Broccoli clusters rich in vitamin C.', 'https://images.pexels.com/photos/1359421/pexels-photo-1359421.jpeg?auto=compress&cs=tinysrgb&w=800', '80']
+      ['Gourmet Red Apples', '180', '250', 'Exotic Fruits', 'Sweet and crisp red apples imported from premium orchards.', 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=800', '100'],
+      ['Fresh Broccoli Crown', '95', '', 'Exotic Vegetables', 'Grown organic Broccoli clusters rich in vitamin C.', 'https://images.pexels.com/photos/1359421/pexels-photo-1359421.jpeg?auto=compress&cs=tinysrgb&w=800', '80']
     ];
 
     const csvRows = [
@@ -403,6 +416,7 @@ export function AdminDashboard() {
         {
           'Name': 'Premium Devgad Alphonso Mangoes',
           'Price': 250,
+          'MRP': 350,
           'Category': 'indian fruits',
           'Description': 'Naturally ripened sweet, aromatic mangoes direct from farmers.',
           'ImageUrl': 'https://images.pexels.com/photos/2290753/pexels-photo-2290753.jpeg?auto=compress&cs=tinysrgb&w=800',
@@ -536,7 +550,7 @@ export function AdminDashboard() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     <div className="space-y-1.5 sm:space-y-2">
                       <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Rate Price (₹)</label>
                       <input 
@@ -546,6 +560,17 @@ export function AdminDashboard() {
                         className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
                         value={newProduct.price} 
                         onChange={e => setNewProduct({...newProduct, price: e.target.value})} 
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">MRP (Optional ₹)</label>
+                      <input 
+                        type="number" 
+                        placeholder="250" 
+                        className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
+                        value={newProduct.originalPrice} 
+                        onChange={e => setNewProduct({...newProduct, originalPrice: e.target.value})} 
                       />
                     </div>
                     

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType, useAuth } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType, useAuth, isQuotaError } from '../lib/firebase';
 import { Order } from '../store/useCart';
 import { Link, Navigate } from 'react-router-dom';
 import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck } from 'lucide-react';
@@ -106,10 +106,13 @@ export function Orders() {
         
         fetchedOrders.sort((a, b) => b.createdAt - a.createdAt);
         setOrders(fetchedOrders);
-      } catch (error) {
-        console.warn("Using empty orders due to Firestore quota error or failure:", error);
-        setOrders([]);
-        toast.error('Could not load transaction history right now.');
+      } catch (error: any) {
+        if (isQuotaError(error)) {
+           toast.error("Database limit reached. Could not load history.");
+           setOrders([]);
+        } else {
+          handleFirestoreError(error, OperationType.LIST, 'orders');
+        }
       } finally {
         setLoading(false);
       }

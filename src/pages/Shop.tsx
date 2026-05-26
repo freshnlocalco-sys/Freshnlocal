@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, getDocs } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
 import { Search, ShoppingBag, ArrowRight, Zap, Sparkles } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
@@ -26,11 +26,13 @@ export function Shop() {
   const { addItem } = useCart();
   const [searchParams] = useSearchParams();
   const categoryFilter = searchParams.get('category');
+  const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     async function fetchProducts() {
       try {
         setLoading(true);
+        setIsOffline(false);
         const q = query(collection(db, 'products'));
          const querySnapshot = await getDocs(q);
         const fetchedProducts = querySnapshot.docs.map(doc => ({
@@ -38,8 +40,13 @@ export function Shop() {
           ...doc.data()
         })) as Product[];
         setProducts(fetchedProducts);
-      } catch (error) {
-        handleFirestoreError(error, OperationType.LIST, 'products');
+      } catch (error: any) {
+        if (isQuotaError(error)) {
+          setIsOffline(true);
+          toast.error("Free data limit reached for today. Store is offline.");
+        } else {
+          handleFirestoreError(error, OperationType.LIST, 'products');
+        }
       } finally {
         setLoading(false);
       }
@@ -66,9 +73,7 @@ export function Shop() {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 w-full bg-background text-foreground">
       <div className="mb-14">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] uppercase tracking-[0.2em] font-extrabold border border-primary/20 backdrop-blur-md mb-4">
-          <Sparkles className="w-3.5 h-3.5 text-primary" /> The Harvest Desk
-        </div>
+        {/* Removed The Harvest Desk badge */}
         
         <h1 className="text-4xl md:text-7xl font-sans font-black uppercase tracking-tight text-foreground mb-4">
           {categoryFilter && categoryFilter.toLowerCase() !== 'all products' ? `${categoryFilter}` : 'Gourmet Inventories'}
@@ -114,6 +119,16 @@ export function Shop() {
             <span className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></span>
              RETRIEVING LIVE INVENTORIES SENSORS...
           </div>
+        ) : isOffline ? (
+          <div className="col-span-full py-36 text-center text-muted-foreground font-sans text-sm uppercase tracking-widest border border-dashed border-border rounded-3xl p-8 bg-secondary flex flex-col items-center gap-4">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mb-2">
+              <Zap className="w-6 h-6" />
+            </div>
+            Store is temporarily offline due to database limits.
+            <span className="text-[10px] text-muted-foreground max-w-sm lowercase normal-case mt-2">
+              Our free database quota has been reached for the day. Please check back tomorrow when limits reset.
+            </span>
+          </div>
         ) : filteredProducts.length === 0 ? (
           <div className="col-span-full py-36 text-center text-muted-foreground font-sans text-xs uppercase tracking-widest border border-dashed border-border rounded-3xl p-8">
             This crop tier is currently resting or sold out. Select an active harvest catalog above.
@@ -143,10 +158,15 @@ export function Shop() {
                   <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 w-full">
                     <h3 className="text-[10px] sm:text-xs font-sans font-black uppercase tracking-wider text-foreground truncate">{product.name}</h3>
                     <div className="flex items-center justify-between w-full">
-                      <p className="text-[8px] sm:text-[9px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
-                        <Zap className="w-2 sm:w-2.5 h-2 sm:h-2.5 fill-primary" /> <span className="hidden sm:inline">Active & Traceable</span><span className="sm:hidden">Traceable</span>
+                      <p className="text-[8px] sm:text-[9px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
+                        {/* Removed Traceable */}
                       </p>
-                      <div className="font-semibold text-sm sm:text-lg text-primary shrink-0 font-sans tracking-tight">₹{product.price}</div>
+                      <div className="flex flex-col items-end">
+                        <div className="font-semibold text-sm sm:text-lg text-primary shrink-0 font-sans tracking-tight leading-none">₹{product.price}</div>
+                        {product.originalPrice && product.originalPrice > product.price && (
+                          <div className="text-[10px] sm:text-xs text-muted-foreground line-through decoration-red-500/50 font-medium">₹{product.originalPrice}</div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
