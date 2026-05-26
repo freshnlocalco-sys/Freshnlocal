@@ -24,7 +24,8 @@ export function ProductDetail() {
         const docRef = doc(db, 'products', id);
         const docSnap = await getDoc(docRef);
          if (docSnap.exists()) {
-          setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
+          const data = docSnap.data();
+          setProduct({ id: docSnap.id, ...data, originalPrice: data.originalPrice || data.mrp } as Product);
         } else {
           setProduct(null);
         }
@@ -97,7 +98,16 @@ export function ProductDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Product Image Panel */}
         <div className="lg:col-span-7 rounded-[32px] overflow-hidden bg-secondary border border-border relative aspect-[4/3] w-full">
-          <span className="absolute top-5 left-5 text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/40 backdrop-blur-md px-5 py-2.5 rounded-full select-none z-10 border border-white/40 shadow-sm">{product.category.replace(/ font-bold/gi, '')}</span>
+          <div className="absolute top-5 left-5 z-20 flex flex-wrap gap-2 leading-none">
+            <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/40 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-white/40 shadow-sm">
+              {product.category.replace(/ font-bold/gi, '')}
+            </span>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-white bg-red-500/90 backdrop-blur-md px-5 py-2.5 rounded-full select-none shadow-sm">
+                {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+              </span>
+            )}
+          </div>
           <img 
             src={product.imageUrl || getCategoryImage(product.category)} 
             alt={product.name}
@@ -116,8 +126,13 @@ export function ProductDetail() {
             <div className="flex items-end gap-3 tracking-tighter">
               <div className="text-4xl font-black text-primary">₹{product.price}</div>
               {product.originalPrice && product.originalPrice > product.price && (
-                <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50 mb-1">
-                  ₹{product.originalPrice}
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50">
+                    ₹{product.originalPrice}
+                  </div>
+                  <span className="text-sm font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded">
+                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                  </span>
                 </div>
               )}
             </div>

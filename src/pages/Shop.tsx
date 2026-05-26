@@ -35,10 +35,14 @@ export function Shop() {
         setIsOffline(false);
         const q = query(collection(db, 'products'));
          const querySnapshot = await getDocs(q);
-        const fetchedProducts = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Product[];
+        const fetchedProducts = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            originalPrice: data.originalPrice || data.mrp
+          };
+        }) as Product[];
         setProducts(fetchedProducts);
       } catch (error: any) {
         if (isQuotaError(error)) {
@@ -142,6 +146,11 @@ export function Shop() {
                 <span className="bg-white/40 backdrop-blur-md text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/40 shadow-sm">
                   {displayCategory}
                 </span>
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <span className="bg-red-500/90 backdrop-blur-md text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-sm">
+                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                  </span>
+                )}
               </div>
               
               <Link to={`/product/${product.id}`} className="w-full aspect-[4/3] overflow-hidden relative bg-secondary border-b border-border block shrink-0">
@@ -161,11 +170,18 @@ export function Shop() {
                       <p className="text-[8px] sm:text-[9px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
                         {/* Removed Traceable */}
                       </p>
-                      <div className="flex flex-col items-end">
-                        <div className="font-semibold text-sm sm:text-lg text-primary shrink-0 font-sans tracking-tight leading-none">₹{product.price}</div>
+                      <div className="flex flex-col items-end gap-0.5 mt-0">
                         {product.originalPrice && product.originalPrice > product.price && (
-                          <div className="text-[10px] sm:text-xs text-muted-foreground line-through decoration-red-500/50 font-medium">₹{product.originalPrice}</div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-muted-foreground line-through font-medium">₹{product.originalPrice}</span>
+                            <span className="text-[9px] font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-1 py-0.5 rounded leading-none">
+                              {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                            </span>
+                          </div>
                         )}
+                        <div className="font-semibold text-sm sm:text-lg text-primary shrink-0 tracking-tight leading-none">
+                          ₹{product.price}
+                        </div>
                       </div>
                     </div>
                   </div>
