@@ -27,6 +27,7 @@ export function Shop() {
   const [searchParams] = useSearchParams();
   const categoryFilter = searchParams.get('category');
   const [isOffline, setIsOffline] = useState(false);
+  const [offlineError, setOfflineError] = useState('');
 
   useEffect(() => {
     async function fetchProducts() {
@@ -47,7 +48,8 @@ export function Shop() {
       } catch (error: any) {
         if (isQuotaError(error)) {
           setIsOffline(true);
-          toast.error("Free data limit reached for today. Store is offline.");
+          setOfflineError(error?.message || String(error));
+          toast.error(`Database error: ${error?.message || String(error)}`, { duration: 8000 });
         } else {
           handleFirestoreError(error, OperationType.LIST, 'products');
         }
@@ -129,8 +131,10 @@ export function Shop() {
               <Zap className="w-6 h-6" />
             </div>
             Store is temporarily offline due to database limits.
-            <span className="text-[10px] text-muted-foreground max-w-sm lowercase normal-case mt-2">
-              Our free database quota has been reached for the day. Please check back tomorrow when limits reset.
+            <span className="text-[10px] text-muted-foreground max-w-sm normal-case mt-2">
+              Our database is blocking access right now.
+              <br/><br/>
+              <b>Error:</b> {offlineError}
             </span>
           </div>
         ) : filteredProducts.length === 0 ? (

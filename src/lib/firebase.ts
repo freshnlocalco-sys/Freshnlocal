@@ -10,7 +10,7 @@ export const auth = getAuth(app);
 // We use initializeFirestore with experimentalAutoDetectLongPolling to bypass potential websocket blocks in sandboxed containers or iframes
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
-}, firebaseConfig.firestoreDatabaseId);
+});
 
 export enum OperationType {
   CREATE = 'create',

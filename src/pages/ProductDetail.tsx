@@ -13,6 +13,7 @@ export function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
+  const [offlineError, setOfflineError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
 
@@ -32,7 +33,8 @@ export function ProductDetail() {
       } catch (error: any) {
         if (isQuotaError(error)) {
           setIsOffline(true);
-          toast.error("Database limit reached. Could not load this specific product.");
+          setOfflineError(error?.message || String(error));
+          toast.error(`Database error: ${error?.message || String(error)}`, { duration: 8000 });
         } else {
           handleFirestoreError(error, OperationType.GET, 'products');
         }
@@ -68,8 +70,10 @@ export function ProductDetail() {
           <Zap className="w-8 h-8" />
         </div>
         <span className="text-red-500 text-xs font-mono uppercase tracking-widest leading-loose">Store Offline</span>
-        <h2 className="text-3xl font-black uppercase tracking-tight text-foreground mb-2">Database Limits Reached</h2>
-        <p className="text-muted-foreground text-sm max-w-md">Our free database quota has been reached for the day. Please check back tomorrow when limits reset.</p>
+        <h2 className="text-3xl font-black uppercase tracking-tight text-foreground mb-2">Database Access Blocked</h2>
+        <p className="text-[11px] text-muted-foreground p-4 bg-secondary border border-border rounded-lg max-w-lg mt-2 font-mono text-left w-full overflow-x-auto whitespace-pre-wrap">
+          Error: {offlineError}
+        </p>
         <Link to="/shop" className="slice-btn-secondary px-6 py-4 text-[10px] text-foreground flex items-center gap-2 mt-4">
           <ArrowLeft className="w-4 h-4" /> Return to Catalog
         </Link>
