@@ -26,7 +26,14 @@ export function ProductDetail() {
         const docSnap = await getDoc(docRef);
          if (docSnap.exists()) {
           const data = docSnap.data();
-          setProduct({ id: docSnap.id, ...data, originalPrice: data.originalPrice || data.mrp } as Product);
+          const pPrice = Number(data.price) || 0;
+          const pMrp = Number(data.originalPrice) || Number(data.mrp) || Number(data.MRP) || 0;
+          setProduct({ 
+            id: docSnap.id, 
+            ...data, 
+            price: pPrice,
+            originalPrice: pMrp > pPrice ? pMrp : undefined 
+          } as Product);
         } else {
           setProduct(null);
         }
@@ -106,11 +113,6 @@ export function ProductDetail() {
             <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/40 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-white/40 shadow-sm">
               {product.category.replace(/ font-bold/gi, '')}
             </span>
-            {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-[10px] uppercase tracking-wider font-extrabold text-white bg-red-500/90 backdrop-blur-md px-5 py-2.5 rounded-full select-none shadow-sm">
-                {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-              </span>
-            )}
           </div>
           <img 
             src={product.imageUrl || getCategoryImage(product.category)} 
@@ -132,7 +134,7 @@ export function ProductDetail() {
               {product.originalPrice && product.originalPrice > product.price && (
                 <div className="flex items-center gap-2 mb-1">
                   <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50">
-                    ₹{product.originalPrice}
+                    MRP ₹{product.originalPrice}
                   </div>
                   <span className="text-sm font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded">
                     {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF

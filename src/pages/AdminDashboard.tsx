@@ -124,6 +124,7 @@ export function AdminDashboard() {
         await updateDoc(doc(db, 'products', editingProductId), {
           name: newProduct.name,
           price: Number(newProduct.price),
+          originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
           category: newProduct.category,
           description: newProduct.description,
           imageUrl: newProduct.imageUrl || '',
@@ -136,6 +137,7 @@ export function AdminDashboard() {
         const docRef = await addDoc(collection(db, 'products'), {
           name: newProduct.name,
           price: Number(newProduct.price),
+          originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
           category: newProduct.category,
           description: newProduct.description,
           imageUrl: newProduct.imageUrl || '',
@@ -350,7 +352,7 @@ export function AdminDashboard() {
         const newProd = {
           name: String(rowName).trim(),
           price: parsedPrice,
-          originalPrice: parsedMrp && parsedMrp > parsedPrice ? parsedMrp : undefined,
+          originalPrice: parsedMrp && parsedMrp > parsedPrice ? parsedMrp : null,
           category: (row.category || row.type || 'indian fruits').toLowerCase().trim(),
           description: row.description || row.desc || row.details || '',
           imageUrl: row.imageurl || row.image || row.img || row.photo || '',

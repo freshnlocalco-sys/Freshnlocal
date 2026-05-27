@@ -3,6 +3,7 @@
   "appId": "1:847111511003:web:f5a04c0a4a5e4f225765fe",
   "apiKey": "AIzaSyAC7wQTruA_TCHVKFaeBt83Kc6VUO4DQzc",
   "authDomain": "freshnlocal-4a420.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
   "storageBucket": "freshnlocal-4a420.firebasestorage.app",
   "messagingSenderId": "847111511003",
   "measurementId": ""

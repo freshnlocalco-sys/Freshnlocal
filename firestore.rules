@@ -47,7 +47,7 @@ service cloud.firestore {
     match /products/{productId} {
       function isValidProduct(data) {
         return data.keys().hasAll(['name', 'price', 'createdAt', 'updatedAt'])
-        && data.size() >= 4 && data.size() <= 10
+        && data.size() >= 4 && data.size() <= 15
         && data.name is string && data.name.size() <= 150 && data.name.size() > 0
         && data.price is number && data.price >= 0
         && data.createdAt is number
@@ -55,9 +55,9 @@ service cloud.firestore {
         && data.get('description', '') is string && data.get('description', '').size() <= 1000
         && data.get('imageUrl', '') is string
         && data.get('category', '') is string && data.get('category', '').size() <= 50
-        && data.get('originalPrice', 0) is number
-        && data.get('stock', 0) is number
-        && data.get('inStock', true) is bool;
+        && (data.get('originalPrice', 0) == null || data.get('originalPrice', 0) is number)
+        && (data.get('stock', 0) == null || data.get('stock', 0) is number)
+        && (data.get('inStock', true) == null || data.get('inStock', true) is bool);
       }
       
       allow read, list: if true;

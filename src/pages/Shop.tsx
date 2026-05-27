@@ -38,10 +38,13 @@ export function Shop() {
          const querySnapshot = await getDocs(q);
         const fetchedProducts = querySnapshot.docs.map(doc => {
           const data = doc.data();
+          const pPrice = Number(data.price) || 0;
+          const pMrp = Number(data.originalPrice) || Number(data.mrp) || Number(data.MRP) || 0;
           return {
             id: doc.id,
             ...data,
-            originalPrice: data.originalPrice || data.mrp
+            price: pPrice,
+            originalPrice: pMrp > pPrice ? pMrp : undefined
           };
         }) as Product[];
         setProducts(fetchedProducts);
@@ -150,11 +153,6 @@ export function Shop() {
                 <span className="bg-white/40 backdrop-blur-md text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/40 shadow-sm">
                   {displayCategory}
                 </span>
-                {product.originalPrice && product.originalPrice > product.price && (
-                  <span className="bg-red-500/90 backdrop-blur-md text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-sm">
-                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                  </span>
-                )}
               </div>
               
               <Link to={`/product/${product.id}`} className="w-full aspect-[4/3] overflow-hidden relative bg-secondary border-b border-border block shrink-0">
@@ -177,7 +175,7 @@ export function Shop() {
                       <div className="flex flex-col items-end gap-0.5 mt-0">
                         {product.originalPrice && product.originalPrice > product.price && (
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-muted-foreground line-through font-medium">₹{product.originalPrice}</span>
+                            <span className="text-[10px] text-muted-foreground line-through font-medium">MRP ₹{product.originalPrice}</span>
                             <span className="text-[9px] font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-1 py-0.5 rounded leading-none">
                               {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
                             </span>

@@ -1,16 +1,12 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { initializeFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { create } from 'zustand';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-// Required parameter to use the correct enterprise database instance
-// We use initializeFirestore with experimentalAutoDetectLongPolling to bypass potential websocket blocks in sandboxed containers or iframes
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-});
+export const db = getFirestore(app, "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
 
 export enum OperationType {
   CREATE = 'create',
@@ -98,8 +94,14 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     try {
       const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
+      const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com';
       if (userSnap.exists()) {
-        useAuth.getState().setUser({ uid: firebaseUser.uid, ...userSnap.data() } as AppUser);
+        const userData = userSnap.data() as Omit<AppUser, 'uid'>;
+        if (isAdmin && userData.role !== 'admin') {
+          await setDoc(userRef, { role: 'admin' }, { merge: true });
+          userData.role = 'admin';
+        }
+        useAuth.getState().setUser({ uid: firebaseUser.uid, ...userData } as AppUser);
       } else {
         // Create new user record
         const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com';
