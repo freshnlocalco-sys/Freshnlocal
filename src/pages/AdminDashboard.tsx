@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc } from 'firebase/firestore';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, Filter, Calendar } from 'lucide-react';
 import { Product } from '../store/useCart';
 import * as XLSX from 'xlsx';
 import { getCategoryImage } from '../lib/constants';
@@ -65,6 +65,30 @@ export function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters for orders
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
+
+  // Filtered orders logic
+  const filteredOrders = orders.filter((order) => {
+    // filter by status
+    if (filterStatus !== 'all' && order.status !== filterStatus) return false;
+    
+    // filter by date
+    if (dateRange.start) {
+      const orderDate = new Date(order.createdAt).getTime();
+      const startDate = new Date(dateRange.start).getTime();
+      if (orderDate < startDate) return false;
+    }
+    if (dateRange.end) {
+      const orderDate = new Date(order.createdAt).getTime();
+      // Add 24 hours to end date to include the whole day
+      const endDate = new Date(dateRange.end).getTime() + 86400000;
+      if (orderDate >= endDate) return false;
+    }
+    return true;
+  });
 
   // Spotlights state
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {title: string, image: string}>>({});
@@ -562,15 +586,53 @@ export function AdminDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="slice-bento !p-4 sm:!p-5 flex flex-col gap-1 sm:gap-2">
                 <span className="text-muted-foreground text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Total Orders</span>
-                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">{orders.length}</span>
+                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">{filteredOrders.length}</span>
               </div>
               <div className="slice-bento !p-4 sm:!p-5 flex flex-col gap-1 sm:gap-2">
                 <span className="text-muted-foreground text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Total Revenue</span>
-                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">₹{orders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0)}</span>
+                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">₹{filteredOrders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0)}</span>
               </div>
               <div className="slice-bento !p-4 sm:!p-5 flex flex-col gap-1 sm:gap-2">
                 <span className="text-muted-foreground text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Total Pending</span>
-                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">{orders.filter(o => o.status === 'pending').length}</span>
+                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">{filteredOrders.filter(o => o.status === 'pending').length}</span>
+              </div>
+            </div>
+
+            {/* Filter Section */}
+            <div className="flex flex-col sm:flex-row gap-4 items-end justify-between bg-secondary p-4 sm:p-5 rounded-2xl border border-border/70 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                  <label className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1.5"><Filter className="w-3 h-3" /> Filter Status</label>
+                  <select 
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full sm:w-[160px] uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm"
+                  >
+                    <option value="all">ANY STATUS</option>
+                    {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                  <label className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Start Date</label>
+                  <input 
+                    type="date"
+                    value={dateRange.start}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                    className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full font-mono font-bold tracking-wider text-foreground shadow-sm uppercase min-h-[40px]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                  <label className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1.5"><Calendar className="w-3 h-3" /> End Date</label>
+                  <input 
+                    type="date"
+                    value={dateRange.end}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                    min={dateRange.start}
+                    className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full font-mono font-bold tracking-wider text-foreground shadow-sm uppercase min-h-[40px]"
+                  />
+                </div>
               </div>
             </div>
             
@@ -587,7 +649,7 @@ export function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
-                    {orders.map(order => (
+                    {filteredOrders.map(order => (
                       <tr key={order.id} className="hover:bg-black/5 transition-colors">
                         <td className="p-3 sm:p-4 md:p-5 font-mono font-black tracking-wider text-primary">
                           {order.orderNumber || `FNL-${order.id.slice(0, 8).toUpperCase()}`}
@@ -613,10 +675,10 @@ export function AdminDashboard() {
                         </td>
                       </tr>
                     ))}
-                    {orders.length === 0 && (
+                    {filteredOrders.length === 0 && (
                       <tr>
                         <td colSpan={5} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
-                          Zero active consignments recorded.
+                          Zero active consignments match filter criteria.
                         </td>
                       </tr>
                     )}
