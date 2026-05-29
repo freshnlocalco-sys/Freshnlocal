@@ -165,25 +165,21 @@ export function Shop() {
               </Link>
               
               <div className="p-3 sm:p-5 md:p-6 bg-secondary space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
-                <div className="flex flex-col sm:flex-row items-start justify-between gap-1 sm:gap-2.5">
-                  <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0 w-full">
-                    <h3 className="text-[10px] sm:text-xs font-sans font-black uppercase tracking-wider text-foreground truncate">{product.name}</h3>
-                    <div className="flex items-center justify-between w-full">
-                      <p className="text-[8px] sm:text-[9px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
-                        {/* Removed Traceable */}
-                      </p>
-                      <div className="flex flex-col items-end gap-0.5 mt-0">
-                        {product.originalPrice && product.originalPrice > product.price && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-muted-foreground line-through font-medium">MRP ₹{product.originalPrice}</span>
-                            <span className="text-[9px] font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-1 py-0.5 rounded leading-none">
-                              {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                            </span>
-                          </div>
-                        )}
-                        <div className="font-semibold text-sm sm:text-lg text-primary shrink-0 tracking-tight leading-none">
-                          ₹{product.price}
+                <div className="flex flex-col gap-1.5 w-full">
+                  <h3 className="text-xs sm:text-sm font-sans font-black uppercase tracking-wider text-foreground line-clamp-2 leading-tight">{product.name}</h3>
+                  
+                  <div className="flex items-end justify-between w-full mt-1 sm:mt-2">
+                    <div className="flex flex-col gap-1.5">
+                      {product.originalPrice && product.originalPrice > product.price && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] sm:text-xs text-muted-foreground line-through font-medium uppercase tracking-wider">MRP ₹{product.originalPrice}</span>
+                          <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-red-500 px-1.5 py-0.5 rounded-md leading-none tracking-widest">
+                            {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                          </span>
                         </div>
+                      )}
+                      <div className="font-sans text-lg sm:text-xl font-black text-foreground tracking-tighter leading-none flex items-center gap-1">
+                        <span className="text-sm font-bold text-muted-foreground">₹</span>{product.price}
                       </div>
                     </div>
                   </div>
@@ -191,7 +187,7 @@ export function Shop() {
                 
                 <button 
                   onClick={() => handleAddToCart(product)}
-                  className="w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] bg-primary text-white font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-all duration-300 hover:bg-[#09120b] hover:text-white hover:scale-[1.02] transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] bg-primary text-white font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-all duration-300 hover:bg-[#09120b] hover:text-white hover:scale-[1.02] transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer mt-auto"
                 >
                   <ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> <span className="hidden xs:inline">+ Add to Basket</span><span className="xs:hidden">Add</span>
                 </button>

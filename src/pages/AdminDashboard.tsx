@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
-import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc } from 'firebase/firestore';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown } from 'lucide-react';
 import { Product } from '../store/useCart';
 import * as XLSX from 'xlsx';
@@ -60,11 +60,14 @@ function OrderStatusDropdown({ currentStatus, onStatusChange }: { currentStatus:
 
 export function AdminDashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'orders' | 'products'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'spotlights'>('orders');
   
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Spotlights state
+  const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {title: string, image: string}>>({});
 
   // New product form handling
   const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', description: '', imageUrl: '' });
@@ -79,9 +82,22 @@ export function AdminDashboard() {
         if (activeTab === 'orders') {
           const ordersSnap = await getDocs(query(collection(db, 'orders')));
           setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a:any, b:any) => b.createdAt - a.createdAt));
-        } else {
+        } else if (activeTab === 'products') {
           const prodSnap = await getDocs(query(collection(db, 'products')));
           setProducts(prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[]);
+        } else if (activeTab === 'spotlights') {
+          const m = await import('./Home');
+          const defaultSpots = m.SPOTLIGHTS;
+          const docSnap = await getDoc(doc(db, 'settings', 'spotlights'));
+          const overrides = docSnap.exists() ? docSnap.data() : {};
+          const initialConfig: any = {};
+          Object.keys(defaultSpots).forEach(k => {
+            initialConfig[k] = { 
+              title: defaultSpots[k as keyof typeof defaultSpots].title,
+              image: overrides[k]?.image || defaultSpots[k as keyof typeof defaultSpots].image
+            };
+          });
+          setSpotlightsConfig(initialConfig);
         }
       } catch (error: any) {
         if (isQuotaError(error)) {
@@ -105,6 +121,65 @@ export function AdminDashboard() {
       </div>
     );
   }
+
+  const handleSaveSpotlights = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await setDoc(doc(db, 'settings', 'spotlights'), spotlightsConfig, { merge: true });
+      toast.success('Spotlight settings saved!');
+    } catch (err: any) {
+      toast.error('Failed to save settings.');
+      console.error(err);
+    }
+  };
+
+  const handleSpotlightImageUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const MAX_FILE_SIZE = 700 * 1024; 
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      
+      if (file.size <= MAX_FILE_SIZE) {
+        setSpotlightsConfig(prev => ({ ...prev, [key]: { ...prev[key], image: result } }));
+        return;
+      }
+
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        setSpotlightsConfig(prev => ({ ...prev, [key]: { ...prev[key], image: dataUrl } }));
+      };
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
@@ -472,6 +547,12 @@ export function AdminDashboard() {
           >
             <Package className="w-3.5 h-3.5" /> Larder Inventory
           </button>
+          <button 
+            onClick={() => setActiveTab('spotlights')}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'spotlights' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
+          >
+            <Sparkles className="w-3.5 h-3.5" /> Spotlights
+          </button>
         </div>
       </div>
 
@@ -529,7 +610,7 @@ export function AdminDashboard() {
               </table>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'products' ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
             {/* Left form desk: manual additions & CSV operations */}
@@ -752,6 +833,68 @@ export function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+          </div>
+        ) : (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black uppercase text-foreground">Spotlights Config</h2>
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">
+                  Manage the visuals for Home page showcase cards
+                </p>
+              </div>
+              <button
+                onClick={handleSaveSpotlights}
+                className="slice-btn-primary px-6 py-3 flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" /> Save Spotlights
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {(Object.entries(spotlightsConfig) as [string, {title: string, image: string}][]).map(([key, config]) => (
+                <div key={key} className="slice-card p-6 bg-secondary border border-border flex flex-col gap-4 relative overflow-hidden group">
+                  <h3 className="font-extrabold text-xs uppercase tracking-widest text-foreground z-10">{config.title}</h3>
+                  <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-white border border-border z-10">
+                     <img src={config.image} alt={config.title} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="z-10 bg-white/50 dark:bg-black/50 p-3 rounded-lg backdrop-blur-sm border border-border">
+                    <label className="text-[9px] uppercase tracking-widest font-extrabold text-foreground block mb-2">Image Source</label>
+                    <div className="flex flex-col gap-3">
+                      <div className="relative group/upload">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleSpotlightImageUpload(key, e)}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        <div className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-secondary hover:bg-secondary/80 border border-border border-dashed rounded-lg transition-colors group-hover/upload:border-primary">
+                          <Upload className="w-3.5 h-3.5 text-muted-foreground group-hover/upload:text-primary transition-colors" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground group-hover/upload:text-primary transition-colors">
+                            Upload / Take Photo
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <div className="h-px bg-border flex-1"></div>
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">or</span>
+                        <div className="h-px bg-border flex-1"></div>
+                      </div>
+
+                      <input 
+                        type="url"
+                        value={config.image}
+                        onChange={(e) => setSpotlightsConfig({...spotlightsConfig, [key]: { ...config, image: e.target.value }})}
+                        placeholder="https://..."
+                        className="slice-input w-full text-[10px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
           </div>

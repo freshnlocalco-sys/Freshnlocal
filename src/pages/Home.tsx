@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getCategoryImage } from '../lib/constants';
+import { db, isQuotaError } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const CATEGORIES = [
   { id: 'indian fruits', name: 'Indian Fruits', tagline: 'Devgad Alphonso & Sweetest Mangoes', discount: 'Flat ₹50 Off' },
@@ -15,7 +17,7 @@ const CATEGORIES = [
   { id: 'frozen items', name: 'Frozen Premium', tagline: 'Snap-frozen berries & sweet corn', discount: 'Long Shelf life' }
 ];
 
-const SPOTLIGHTS = {
+export const SPOTLIGHTS = {
   greens: {
     title: 'Exotic Veggies & Fruits',
     subtitle: 'Pristine organic broccoli, fresh avocados, colored bell peppers, and luxury globally sourced fruits.',
@@ -125,12 +127,42 @@ const SPOTLIGHTS = {
 export function Home() {
   const [activeCard, setActiveCard] = useState<'greens' | 'alphonso' | 'exotics' | 'herbs' | 'superExotics' | 'leafyGreens' | 'frozenItems' | 'indianFruits'>('greens');
   const [isHovered, setIsHovered] = useState(false);
+  const [spotlights, setSpotlights] = useState(SPOTLIGHTS);
+
+  useEffect(() => {
+    async function fetchSpotlightOverrides() {
+      try {
+        const docRef = doc(db, 'settings', 'spotlights');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const overrides = docSnap.data();
+          setSpotlights(prev => {
+            const newSpots = { ...prev };
+            Object.keys(overrides).forEach(key => {
+              if (newSpots[key as keyof typeof SPOTLIGHTS] && overrides[key].image) {
+                newSpots[key as keyof typeof SPOTLIGHTS] = {
+                  ...newSpots[key as keyof typeof SPOTLIGHTS],
+                  image: overrides[key].image
+                };
+              }
+            });
+            return newSpots;
+          });
+        }
+      } catch (err: any) {
+        if (!isQuotaError(err)) {
+          console.error("Error fetching spotlights config:", err);
+        }
+      }
+    }
+    fetchSpotlightOverrides();
+  }, []);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setActiveCard(current => {
-      const keys = Object.keys(SPOTLIGHTS) as Array<keyof typeof SPOTLIGHTS>;
+      const keys = Object.keys(spotlights) as Array<keyof typeof spotlights>;
       const currentIndex = keys.indexOf(current);
       const nextIndex = (currentIndex - 1 + keys.length) % keys.length;
       return keys[nextIndex];
@@ -141,7 +173,7 @@ export function Home() {
     e.preventDefault();
     e.stopPropagation();
     setActiveCard(current => {
-      const keys = Object.keys(SPOTLIGHTS) as Array<keyof typeof SPOTLIGHTS>;
+      const keys = Object.keys(spotlights) as Array<keyof typeof spotlights>;
       const currentIndex = keys.indexOf(current);
       const nextIndex = (currentIndex + 1) % keys.length;
       return keys[nextIndex];
@@ -153,7 +185,7 @@ export function Home() {
     
     const interval = setInterval(() => {
       setActiveCard(current => {
-        const keys = Object.keys(SPOTLIGHTS) as Array<keyof typeof SPOTLIGHTS>;
+        const keys = Object.keys(spotlights) as Array<keyof typeof spotlights>;
         const currentIndex = keys.indexOf(current);
         const nextIndex = (currentIndex + 1) % keys.length;
         return keys[nextIndex];
@@ -161,7 +193,7 @@ export function Home() {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [isHovered]);
+  }, [isHovered, spotlights]);
 
   return (
     <div className="flex flex-col items-center bg-background text-foreground overflow-hidden">
@@ -241,18 +273,18 @@ export function Home() {
                 className="absolute inset-0"
               >
                 <Link 
-                  to={SPOTLIGHTS[activeCard].link}
+                  to={spotlights[activeCard].link}
                   className="w-full h-full rounded-[24px] p-6 text-white relative flex flex-col justify-between overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border group transition-all duration-700 cursor-pointer block"
                   style={{
-                    borderColor: SPOTLIGHTS[activeCard].accentColor + '30',
+                    borderColor: spotlights[activeCard].accentColor + '30',
                     transform: isHovered ? 'scale(1.02)' : 'scale(1)',
                   }}
                 >
                   {/* Full-bleed category image backdrop */}
                   <div className="absolute inset-0 z-0 overflow-hidden bg-zinc-950">
                     <img 
-                      src={SPOTLIGHTS[activeCard].image} 
-                      alt={SPOTLIGHTS[activeCard].title}
+                      src={spotlights[activeCard].image} 
+                      alt={spotlights[activeCard].title}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105 filter brightness-[85%]"
                     />
@@ -264,16 +296,16 @@ export function Home() {
                   <div className="z-10 mt-auto space-y-4">
                     <div className="space-y-1">
                       <h3 className="text-xl md:text-2xl font-sans font-black uppercase tracking-tight text-white leading-tight">
-                        {SPOTLIGHTS[activeCard].title}
+                        {spotlights[activeCard].title}
                       </h3>
                       <p className="text-[10px] text-zinc-200/90 leading-relaxed font-sans font-medium line-clamp-2 max-w-[340px]">
-                        {SPOTLIGHTS[activeCard].subtitle}
+                        {spotlights[activeCard].subtitle}
                       </p>
                     </div>
 
                     {/* Action layout inline */}
                     <div className="flex items-center justify-between border-t border-white/10 pt-3.5 mt-1">
-                      <span className="text-[8px] font-extrabold uppercase tracking-widest transition-colors duration-500" style={{ color: SPOTLIGHTS[activeCard].accentColor }}>
+                      <span className="text-[8px] font-extrabold uppercase tracking-widest transition-colors duration-500" style={{ color: spotlights[activeCard].accentColor }}>
                         Premium Hand-Pick
                       </span>
                       

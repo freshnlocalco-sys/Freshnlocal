@@ -101,5 +101,9 @@ service cloud.firestore {
           isAdmin() // Admin can do anything 
         );
     }
+    match /settings/{settingId} {
+      allow read, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
   }
 }
