@@ -34,7 +34,7 @@
 
 /* Slice.co.in Premium Bento Card & Design classes (Light Mode Edition) */
 .slice-bento {
-  @apply rounded-[32px] bg-secondary border border-border/60 p-8 transition-all duration-500 relative overflow-hidden shadow-sm;
+  @apply rounded-2xl sm:rounded-[32px] bg-secondary border border-border/60 p-4 sm:p-6 md:p-8 transition-all duration-500 relative overflow-hidden shadow-sm;
 }
 
 .slice-bento:hover {
@@ -47,7 +47,7 @@
 }
 
 .slice-card {
-  @apply rounded-[28px] bg-[#ffffff] border border-border/70 overflow-hidden transition-all duration-500 relative flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.02)];
+  @apply rounded-xl sm:rounded-[28px] bg-[#ffffff] border border-border/70 overflow-hidden transition-all duration-500 relative flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.02)];
 }
 
 .slice-card:hover {

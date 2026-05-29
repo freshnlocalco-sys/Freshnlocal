@@ -137,22 +137,16 @@ export function AdminDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const MAX_FILE_SIZE = 700 * 1024; 
-
     const reader = new FileReader();
     reader.onload = (event) => {
       const result = event.target?.result as string;
       
-      if (file.size <= MAX_FILE_SIZE) {
-        setSpotlightsConfig(prev => ({ ...prev, [key]: { ...prev[key], image: result } }));
-        return;
-      }
-
       const img = new window.Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
+        // Aggressive downscale for Firestore to avoid 1MB limit for multi-image doc
+        const MAX_WIDTH = 500;
+        const MAX_HEIGHT = 500;
         let width = img.width;
         let height = img.height;
 
@@ -173,7 +167,8 @@ export function AdminDashboard() {
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
 
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        // High compression to ensure combined spotlights fit in 1MB
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
         setSpotlightsConfig(prev => ({ ...prev, [key]: { ...prev[key], image: dataUrl } }));
       };
       img.src = result;
@@ -533,27 +528,27 @@ export function AdminDashboard() {
           </h1>
         </div>
         
-        {/* Sleek control navigation tab nodes */}
-        <div className="flex w-full md:w-auto overflow-x-auto md:overflow-visible bg-secondary p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-border shrink-0 select-none">
-          <button 
-            onClick={() => setActiveTab('orders')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
-          >
-            <ShoppingBag className="w-3.5 h-3.5" /> Consignments
-          </button>
-          <button 
-            onClick={() => setActiveTab('products')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
-          >
-            <Package className="w-3.5 h-3.5" /> Larder Inventory
-          </button>
-          <button 
-            onClick={() => setActiveTab('spotlights')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'spotlights' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
-          >
-            <Sparkles className="w-3.5 h-3.5" /> Spotlights
-          </button>
-        </div>
+      {/* Sleek control navigation tab nodes */}
+      <div className="flex w-full md:w-auto overflow-x-auto overflow-y-hidden bg-secondary p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-border shrink-0 select-none pb-2 sm:pb-1.5">
+        <button 
+          onClick={() => setActiveTab('orders')}
+          className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
+        >
+          <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Consignments
+        </button>
+        <button 
+          onClick={() => setActiveTab('products')}
+          className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
+        >
+          <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Larder Inventory
+        </button>
+        <button 
+          onClick={() => setActiveTab('spotlights')}
+          className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'spotlights' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
+        >
+          <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Spotlights
+        </button>
+      </div>
       </div>
 
       {loading ? (
@@ -563,51 +558,71 @@ export function AdminDashboard() {
         </div>
       ) : (
         activeTab === 'orders' ? (
-          <div className="slice-bento p-0 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[700px] sm:min-w-[800px]">
-                <thead>
-                  <tr className="border-b border-border bg-secondary text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Consignment ID</th>
-                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Consignee Details</th>
-                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Lodged Timestamp</th>
-                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Larder Loads / Cost</th>
-                    <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Logistics status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
-                  {orders.map(order => (
-                    <tr key={order.id} className="hover:bg-black/5 transition-colors">
-                      <td className="p-3 sm:p-4 md:p-5 font-mono font-black tracking-wider text-primary">
-                        {order.orderNumber || `FNL-${order.id.slice(0, 8).toUpperCase()}`}
-                      </td>
-                      <td className="p-3 sm:p-4 md:p-5 leading-relaxed max-w-[200px] sm:max-w-xs whitespace-normal">
-                        <span className="font-extrabold text-foreground uppercase block text-[10px] sm:text-xs">{order.shippingDetails?.name || 'Customer'}</span>
-                        <span className="text-muted-foreground font-mono text-[8px] sm:text-xxs tracking-wider block mt-0.5">{order.shippingDetails?.phone || 'No phone'}</span>
-                        <span className="text-muted-foreground text-[8px] sm:text-[9px] block mt-1 leading-snug">{order.shippingDetails?.address || 'No address provided'}</span>
-                      </td>
-                      <td className="p-3 sm:p-4 md:p-5 font-medium whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
-                      <td className="p-3 sm:p-4 md:p-5 leading-relaxed whitespace-nowrap">
-                        <span className="text-foreground font-bold block">{order.items.length} units</span>
-                        <span className="font-black text-primary">₹{order.totalAmount}</span>
-                      </td>
-                      <td className="p-3 sm:p-4 md:p-5">
-                        <OrderStatusDropdown 
-                          currentStatus={order.status} 
-                          onStatusChange={(newStatus) => handleUpdateOrderStatus(order.id, newStatus)} 
-                        />
-                      </td>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="slice-bento !p-4 sm:!p-5 flex flex-col gap-1 sm:gap-2">
+                <span className="text-muted-foreground text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Total Orders</span>
+                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">{orders.length}</span>
+              </div>
+              <div className="slice-bento !p-4 sm:!p-5 flex flex-col gap-1 sm:gap-2">
+                <span className="text-muted-foreground text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Total Revenue</span>
+                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">₹{orders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0)}</span>
+              </div>
+              <div className="slice-bento !p-4 sm:!p-5 flex flex-col gap-1 sm:gap-2">
+                <span className="text-muted-foreground text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Total Pending</span>
+                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">{orders.filter(o => o.status === 'pending').length}</span>
+              </div>
+            </div>
+            
+            <div className="slice-bento !p-0 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[700px] sm:min-w-[800px]">
+                  <thead>
+                    <tr className="border-b border-border bg-secondary text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Order ID</th>
+                      <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Customer Details</th>
+                      <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Date and Time</th>
+                      <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Amount & Payment</th>
+                      <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Order Status</th>
                     </tr>
-                  ))}
-                  {orders.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
-                        Zero active consignments recorded.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
+                    {orders.map(order => (
+                      <tr key={order.id} className="hover:bg-black/5 transition-colors">
+                        <td className="p-3 sm:p-4 md:p-5 font-mono font-black tracking-wider text-primary">
+                          {order.orderNumber || `FNL-${order.id.slice(0, 8).toUpperCase()}`}
+                        </td>
+                        <td className="p-3 sm:p-4 md:p-5 leading-relaxed max-w-[200px] sm:max-w-xs whitespace-normal">
+                          <span className="font-extrabold text-foreground uppercase block text-[10px] sm:text-xs">{order.shippingDetails?.name || 'Customer'}</span>
+                          <span className="text-muted-foreground font-mono text-[10px] sm:text-xs tracking-wider block mt-0.5 font-bold">{order.shippingDetails?.phone || 'No phone'}</span>
+                          <span className="text-muted-foreground text-[8px] sm:text-[9px] block mt-1 leading-snug">{order.shippingDetails?.address || 'No address provided'}</span>
+                        </td>
+                        <td className="p-3 sm:p-4 md:p-5 font-medium whitespace-nowrap">
+                          <span className="block font-bold">{new Date(order.createdAt).toLocaleDateString()}</span>
+                          <span className="block text-muted-foreground text-[10px] mt-0.5">{new Date(order.createdAt).toLocaleTimeString()}</span>
+                        </td>
+                        <td className="p-3 sm:p-4 md:p-5 leading-relaxed whitespace-nowrap">
+                          <span className="font-black text-primary text-sm sm:text-base block mb-1">₹{order.totalAmount}</span>
+                          <span className="text-foreground font-bold text-[9px] bg-secondary border border-border px-2 py-0.5 rounded tracking-widest uppercase inline-block">{order.paymentMethod || 'COD'}</span>
+                        </td>
+                        <td className="p-3 sm:p-4 md:p-5">
+                          <OrderStatusDropdown 
+                            currentStatus={order.status} 
+                            onStatusChange={(newStatus) => handleUpdateOrderStatus(order.id, newStatus)} 
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                    {orders.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
+                          Zero active consignments recorded.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         ) : activeTab === 'products' ? (
@@ -853,9 +868,9 @@ export function AdminDashboard() {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {(Object.entries(spotlightsConfig) as [string, {title: string, image: string}][]).map(([key, config]) => (
-                <div key={key} className="slice-card p-6 bg-secondary border border-border flex flex-col gap-4 relative overflow-hidden group">
+                <div key={key} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
                   <h3 className="font-extrabold text-xs uppercase tracking-widest text-foreground z-10">{config.title}</h3>
                   <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-white border border-border z-10">
                      <img src={config.image} alt={config.title} className="w-full h-full object-cover" />
