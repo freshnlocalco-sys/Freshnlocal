@@ -70,6 +70,14 @@ export function AdminDashboard() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
+  // Filter for products
+  const [productSearch, setProductSearch] = useState('');
+
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(productSearch.toLowerCase()) || 
+    product.category.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
   // Filtered orders logic
   const filteredOrders = orders.filter((order) => {
     // filter by status
@@ -863,6 +871,16 @@ export function AdminDashboard() {
             
             {/* Live table view of product catalogs */}
             <div className="col-span-12 lg:col-span-7 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden">
+              <div className="p-4 sm:p-5 md:p-6 border-b border-border bg-secondary flex justify-between items-center gap-4">
+                <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><Package className="w-4 h-4" /> Active Catalog</h3>
+                <input 
+                  type="search"
+                  placeholder="Search inventory..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="w-full max-w-[200px] sm:max-w-xs border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
+                />
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
@@ -874,7 +892,7 @@ export function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
-                    {products.map(product => (
+                    {filteredProducts.map(product => (
                       <tr key={product.id} className="hover:bg-black/5 transition-colors">
                         <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
                           <div className="w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0">
@@ -900,7 +918,7 @@ export function AdminDashboard() {
                         </td>
                       </tr>
                     ))}
-                    {products.length === 0 && (
+                    {filteredProducts.length === 0 && (
                       <tr>
                         <td colSpan={4} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
                           Zero items registered inside the database yet.
