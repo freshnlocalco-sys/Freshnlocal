@@ -10,6 +10,7 @@ import { Profile } from './pages/Profile';
 import { ProductDetail } from './pages/ProductDetail';
 import { Orders } from './pages/Orders';
 import { About } from './pages/About';
+import { FNLJuice } from './pages/FNLJuice';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="orders" element={<Orders />} />
           <Route path="about" element={<About />} />
+          <Route path="juice" element={<FNLJuice />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

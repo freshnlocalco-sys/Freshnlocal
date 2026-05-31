@@ -33,6 +33,7 @@ export function Layout() {
             <nav className="hidden md:flex items-center gap-8 ml-10 text-[10px] uppercase tracking-[0.25em] font-extrabold text-[#506053]">
               <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Home</Link>
               <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Catalog</Link>
+              <Link to="/juice" className="nav-link-underline hover:text-orange-500 transition-colors hover:scale-105 transform duration-150 text-orange-600 font-black">FNL Juice 🍹</Link>
               <Link to="/about" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Story</Link>
             </nav>
           </div>
@@ -145,6 +146,13 @@ export function Layout() {
                     <span>Shop All</span> <span className="opacity-30">→</span>
                   </Link>
                   <Link 
+                    to="/juice" 
+                    onClick={() => setIsMobileNavOpen(false)} 
+                    className="py-2 text-orange-600 hover:text-primary transition-colors flex justify-between items-center font-black"
+                  >
+                    <span>FNL Juice 🍹</span> <span className="opacity-30">→</span>
+                  </Link>
+                  <Link 
                     to="/about" 
                     onClick={() => setIsMobileNavOpen(false)} 
                     className="py-2 hover:text-primary transition-colors flex justify-between items-center"
@@ -252,6 +260,7 @@ export function Layout() {
             <h4 className="font-sans font-black tracking-[0.25em] text-foreground opacity-90 border-b border-border pb-2.5">Collections</h4>
             <ul className="space-y-3.5 mt-6">
               <li><Link to="/shop" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Shop All Products</Link></li>
+              <li><Link to="/juice" className="hover:text-orange-500 hover:translate-x-1.5 text-orange-600 font-extrabold inline-block transition-all duration-200">🍹 FNL Cold-Pressed Juices</Link></li>
               <li><Link to="/shop?category=Indian%20Fruits" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Indian Fruits</Link></li>
               <li><Link to="/shop?category=Exotic%20Fruits" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Exotic Fruits</Link></li>
               <li><Link to="/shop?category=Exotic%20Vegetables" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Exotic Vegetables</Link></li>

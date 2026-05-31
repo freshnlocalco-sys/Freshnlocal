@@ -3,6 +3,7 @@ import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc } from 'firebase/firestore';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, Filter, Calendar } from 'lucide-react';
 import { Product } from '../store/useCart';
+import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
 import * as XLSX from 'xlsx';
 import { getCategoryImage } from '../lib/constants';
 import toast from 'react-hot-toast';
@@ -72,11 +73,19 @@ export function AdminDashboard() {
 
   // Filter for products
   const [productSearch, setProductSearch] = useState('');
+  const [productSection, setProductSection] = useState<'all' | 'veg-fruits' | 'juices'>('veg-fruits');
 
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(productSearch.toLowerCase()) || 
-    product.category.toLowerCase().includes(productSearch.toLowerCase())
-  );
+  const filteredProducts = products.filter(product => {
+    const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
+    if (productSection === 'veg-fruits' && isJuice) return false;
+    if (productSection === 'juices' && !isJuice) return false;
+
+    return (
+      product.name.toLowerCase().includes(productSearch.toLowerCase()) || 
+      product.category.toLowerCase().includes(productSearch.toLowerCase()) ||
+      ((product as any).subCategory || '').toLowerCase().includes(productSearch.toLowerCase())
+    );
+  });
 
   // Filtered orders logic
   const filteredOrders = orders.filter((order) => {
@@ -102,7 +111,7 @@ export function AdminDashboard() {
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {title: string, image: string}>>({});
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', description: '', imageUrl: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '' });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -153,6 +162,59 @@ export function AdminDashboard() {
       </div>
     );
   }
+
+  const [seedingJuices, setSeedingJuices] = useState(false);
+
+  const handleSeedSignatureJuices = async () => {
+    try {
+      setSeedingJuices(true);
+      
+      const currentJuiceNames = new Set(
+        products
+          .filter(p => p.category === 'fnl juices' || p.category === 'fnl juice')
+          .map(p => p.name.toLowerCase().trim())
+      );
+      
+      const toSeed = AUTHENTIC_FNL_JUICES.filter(
+        item => !currentJuiceNames.has(item.name.toLowerCase().trim())
+      );
+      
+      if (toSeed.length === 0) {
+        toast.success("Signature list matches current database items. All items already synced.");
+        return;
+      }
+      
+      const batch = writeBatch(db);
+      const seededProducts: Product[] = [];
+      
+      toSeed.forEach(item => {
+        const newDocRef = doc(collection(db, 'products'));
+        const productPayload = {
+          ...item,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
+        batch.set(newDocRef, productPayload);
+        seededProducts.push({
+          id: newDocRef.id,
+          ...productPayload
+        } as unknown as Product);
+      });
+      
+      await batch.commit();
+      setProducts(prev => [...seededProducts, ...prev]);
+      toast.success(`Successfully imported ${toSeed.length} signature FNL juices!`);
+    } catch (err: any) {
+      if (isQuotaError(err)) {
+        toast.error("Cloud database limits reached. Daily read/write tier full.");
+      } else {
+        console.error(err);
+        toast.error("Failed to seed items from catalog.");
+      }
+    } finally {
+      setSeedingJuices(false);
+    }
+  };
 
   const handleSaveSpotlights = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,17 +284,21 @@ export function AdminDashboard() {
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const finalCategory = productSection === 'juices' ? 'fnl juices' : newProduct.category;
+      const finalSubCategory = productSection === 'juices' ? (newProduct.subCategory || 'cold-pressed') : null;
+
       if (editingProductId) {
         await updateDoc(doc(db, 'products', editingProductId), {
           name: newProduct.name,
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
-          category: newProduct.category,
+          category: finalCategory,
+          subCategory: finalSubCategory,
           description: newProduct.description,
           imageUrl: newProduct.imageUrl || '',
           updatedAt: Date.now()
         });
-        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: newProduct.category, description: newProduct.description, imageUrl: newProduct.imageUrl || '' } as Product : p));
+        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: newProduct.imageUrl || '' } as unknown as Product : p));
         toast.success('Product updated successfully!');
         setEditingProductId(null);
       } else {
@@ -240,7 +306,8 @@ export function AdminDashboard() {
           name: newProduct.name,
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
-          category: newProduct.category,
+          category: finalCategory,
+          subCategory: finalSubCategory,
           description: newProduct.description,
           imageUrl: newProduct.imageUrl || '',
           stock: 100,
@@ -248,10 +315,10 @@ export function AdminDashboard() {
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
-        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: newProduct.category, description: newProduct.description, imageUrl: newProduct.imageUrl, stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
+        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: newProduct.imageUrl, stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
         toast.success('New product cataloged successfully!');
       }
-      setNewProduct({ name: '', price: '', originalPrice: '', category: 'indian fruits', description: '', imageUrl: '' });
+      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '' });
     } catch (error) {
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
       toast.error('Could not save product catalog.');
@@ -260,21 +327,23 @@ export function AdminDashboard() {
 
   const handleEditSetup = (product: Product) => {
     setEditingProductId(product.id);
+    const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
     setNewProduct({
       name: product.name,
       price: product.price.toString(),
       originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
       category: product.category,
+      subCategory: (product as any).subCategory || 'cold-pressed',
       description: product.description,
       imageUrl: product.imageUrl || ''
     });
-    // Scroll to top or form could be useful, but let's keep it simple
+    setProductSection(isJuice ? 'juices' : 'veg-fruits');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', category: 'indian fruits', description: '', imageUrl: '' });
+    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '' });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -696,70 +765,148 @@ export function AdminDashboard() {
             </div>
           </div>
         ) : activeTab === 'products' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-            
-            {/* Left form desk: manual additions & CSV operations */}
-            <div className="col-span-12 lg:col-span-5 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[32px] shadow-sm">
-              <div className="space-y-4">
-                <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
-                  {editingProductId ? <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" /> : <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />} 
-                  {editingProductId ? 'Edit Product Listing' : 'Create Product Listing'}
-                </h3>
-                
-                <form onSubmit={handleSaveProduct} className="space-y-4">
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Crop/Item Name</label>
-                    <input 
-                      required 
-                      placeholder="Royal Washington Red Apples..." 
-                      className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
-                      value={newProduct.name} 
-                      onChange={e => setNewProduct({...newProduct, name: e.target.value})} 
-                    />
-                  </div>
+          <div className="space-y-6 sm:space-y-8">
+            {/* Top Workspace Segmentation Selector */}
+            <div className="flex bg-neutral-100 p-1 rounded-xl max-w-md mx-auto border border-border shadow-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setProductSection('veg-fruits');
+                  setNewProduct(prev => ({ ...prev, category: 'indian fruits' }));
+                }}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  productSection === 'veg-fruits'
+                    ? 'bg-neutral-900 text-white shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                🍏 Veggies & Fruits
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setProductSection('juices');
+                  setNewProduct(prev => ({ ...prev, category: 'fnl juices' }));
+                }}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  productSection === 'juices'
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'text-orange-600 hover:text-orange-700'
+                }`}
+              >
+                🍹 Juice House Menu
+              </button>
+            </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+              {/* Left form desk: manual additions & CSV operations */}
+              <div className={`col-span-12 lg:col-span-5 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[32px] shadow-sm transition-all ${
+                productSection === 'juices' ? 'ring-2 ring-orange-500/10' : 'ring-2 ring-emerald-500/10'
+              }`}>
+                <div className="space-y-4">
+                  <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+                    {editingProductId ? <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" /> : <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />} 
+                    {editingProductId ? (
+                      productSection === 'juices' ? 'Edit FNL Juice Listing' : 'Edit Produce Listing'
+                    ) : (
+                      productSection === 'juices' ? 'Add FNL Cold-Pressed Juice' : 'Add New Produce Stock'
+                    )}
+                  </h3>
+
+                  {productSection === 'juices' && !editingProductId && (
+                    <div className="p-3 bg-gradient-to-br from-orange-500/5 to-amber-500/5 border border-orange-500/20 rounded-xl space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-orange-600 animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-wider text-orange-700">Signature Juice Menu Sync</span>
+                      </div>
+                      <p className="text-[9px] text-[#4a4a4a] leading-relaxed font-semibold">
+                        Instantly deploy the 36 authentic Fresh N Local menu products (Smoothies, detox cold-presses, satvik hydration) directly into your active store database.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={seedingJuices}
+                        onClick={handleSeedSignatureJuices}
+                        className="w-full py-2 bg-orange-600 hover:bg-orange-700 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {seedingJuices ? "Syncing Catalogue..." : "Deploy 36 Menu Items Now"}
+                      </button>
+                    </div>
+                  )}
+                  
+                  <form onSubmit={handleSaveProduct} className="space-y-4">
                     <div className="space-y-1.5 sm:space-y-2">
-                      <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Rate Price (₹)</label>
+                      <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                        {productSection === 'juices' ? 'Juice / Drink Name' : 'Crop/Item Name'}
+                      </label>
                       <input 
                         required 
-                        type="number" 
-                        placeholder="180" 
-                        className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
-                        value={newProduct.price} 
-                        onChange={e => setNewProduct({...newProduct, price: e.target.value})} 
+                        placeholder={productSection === 'juices' ? 'Watermelon Punch or Mango Smoothie...' : 'Royal Washington Red Apples...'} 
+                        className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
+                        value={newProduct.name} 
+                        onChange={e => setNewProduct({...newProduct, name: e.target.value})} 
                       />
                     </div>
 
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">MRP (Optional ₹)</label>
-                      <input 
-                        type="number" 
-                        placeholder="250" 
-                        className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
-                        value={newProduct.originalPrice} 
-                        onChange={e => setNewProduct({...newProduct, originalPrice: e.target.value})} 
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Rate Price (₹)</label>
+                        <input 
+                          required 
+                          type="number" 
+                          placeholder="180" 
+                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
+                          value={newProduct.price} 
+                          onChange={e => setNewProduct({...newProduct, price: e.target.value})} 
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">MRP (Optional ₹)</label>
+                        <input 
+                          type="number" 
+                          placeholder="250" 
+                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
+                          value={newProduct.originalPrice} 
+                          onChange={e => setNewProduct({...newProduct, originalPrice: e.target.value})} 
+                        />
+                      </div>
+                      
+                      {productSection === 'veg-fruits' ? (
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#059669] font-extrabold">Produce Category</label>
+                          <select 
+                            className="w-full border border-border rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 bg-white outline-none focus:border-[#059669] text-foreground transition-colors text-[9px] sm:text-[10px] uppercase font-bold tracking-wider" 
+                            value={newProduct.category === 'fnl juices' ? 'indian fruits' : newProduct.category} 
+                            onChange={e => setNewProduct({...newProduct, category: e.target.value})}
+                          >
+                            <option value="indian fruits">Indian Fruits</option>
+                            <option value="exotic fruits">Exotic Fruits</option>
+                            <option value="exotic vegetables">Exotic Vegetables</option>
+                            <option value="herbs & seasoning">Herbs & Seasoning</option>
+                            <option value="fresh & hygenic cut fruits and vegetables">Clean Cuts</option>
+                            <option value="imported / super exotic vegetables">Global Luxe Veggies</option>
+                            <option value="leafy greens">Leafy Greens</option>
+                            <option value="frozen items">Frozen Premium</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-orange-600 font-extrabold">Juice Menu Section</label>
+                          <select 
+                            className="w-full border border-orange-500/20 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 bg-white outline-none focus:border-orange-500 text-[#151515] transition-colors text-[9px] sm:text-[10px] uppercase font-black tracking-wider bg-orange-50/20" 
+                            value={newProduct.subCategory || 'cold-pressed'} 
+                            onChange={e => setNewProduct({...newProduct, category: 'fnl juices', subCategory: e.target.value})}
+                          >
+                            <option value="cold-pressed">COLD PRESSED JUICES</option>
+                            <option value="detox">DETOX JUICES</option>
+                            <option value="satvik">SATVIK</option>
+                            <option value="smoothies">SUGAR FREE SMOOTHIES</option>
+                            <option value="sweet-cravings">SWEET CRAVINGS</option>
+                            <option value="special">OUR SPECIALS</option>
+                          </select>
+                        </div>
+                      )}
                     </div>
-                    
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Inventory Category</label>
-                      <select 
-                        className="w-full border border-border rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[9px] sm:text-[10px] uppercase font-bold tracking-wider" 
-                        value={newProduct.category} 
-                        onChange={e => setNewProduct({...newProduct, category: e.target.value})}
-                      >
-                        <option value="indian fruits">Indian Fruits</option>
-                        <option value="exotic fruits">Exotic Fruits</option>
-                        <option value="exotic vegetables">Exotic Vegetables</option>
-                        <option value="herbs & seasoning">Herbs & Seasoning</option>
-                        <option value="fresh & hygenic cut fruits and vegetables">Clean Cuts</option>
-                        <option value="imported / super exotic vegetables">Global Luxe Veggies</option>
-                        <option value="leafy greens">Leafy Greens</option>
-                        <option value="frozen items">Frozen Premium</option>
-                      </select>
-                    </div>
-                  </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
                     <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex justify-between">
@@ -871,8 +1018,15 @@ export function AdminDashboard() {
             
             {/* Live table view of product catalogs */}
             <div className="col-span-12 lg:col-span-7 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden">
-              <div className="p-4 sm:p-5 md:p-6 border-b border-border bg-secondary flex justify-between items-center gap-4">
-                <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><Package className="w-4 h-4" /> Active Catalog</h3>
+              <div className="p-4 sm:p-5 md:p-6 border-b border-border bg-secondary flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><Package className="w-4 h-4" /> Active Catalog</h3>
+                  <p className="text-[9px] text-[#059669] font-bold uppercase tracking-wider">
+                    {productSection === 'all' && "All Registered Inventory"}
+                    {productSection === 'veg-fruits' && "Vegetables & Fruits Selection"}
+                    {productSection === 'juices' && "FNL Cold-Pressed Juices Showcase"}
+                  </p>
+                </div>
                 <input 
                   type="search"
                   placeholder="Search inventory..."
@@ -881,6 +1035,41 @@ export function AdminDashboard() {
                   className="w-full max-w-[200px] sm:max-w-xs border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
                 />
               </div>
+
+              {/* SECTION NAVIGATION FOR FRUITS/VEGETABLES VS JUICE SECTIONS */}
+              <div className="flex border-b border-border bg-neutral-50 p-1.5 gap-1.5">
+                <button
+                  onClick={() => setProductSection('all')}
+                  className={`flex-1 py-2 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer ${
+                    productSection === 'all'
+                      ? 'bg-neutral-900 text-white shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100'
+                  }`}
+                >
+                  All Items ({products.length})
+                </button>
+                <button
+                  onClick={() => setProductSection('veg-fruits')}
+                  className={`flex-1 py-2 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer ${
+                    productSection === 'veg-fruits'
+                      ? 'bg-[#059669] text-white shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100'
+                  }`}
+                >
+                  🍎 Vegetables & Fruits ({products.filter(p => p.category !== 'fnl juices' && p.category !== 'fnl juice').length})
+                </button>
+                <button
+                  onClick={() => setProductSection('juices')}
+                  className={`flex-1 py-2 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer ${
+                    productSection === 'juices'
+                      ? 'bg-orange-600 text-white shadow-sm'
+                      : 'text-orange-600 hover:text-orange-700 hover:bg-neutral-100'
+                  }`}
+                >
+                  🍹 FNL Juices ({products.filter(p => p.category === 'fnl juices' || p.category === 'fnl juice').length})
+                </button>
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
@@ -892,17 +1081,38 @@ export function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
-                    {filteredProducts.map(product => (
-                      <tr key={product.id} className="hover:bg-black/5 transition-colors">
-                        <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
-                          <div className="w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0">
-                            <img src={product.imageUrl || getCategoryImage(product.category)} alt="" className="w-full h-full object-cover" />
-                          </div>
-                          <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
-                        </td>
-                        <td className="p-3 sm:p-4 md:p-5 font-bold uppercase tracking-wider text-muted-foreground text-[8px] sm:text-[10px]">{product.category.replace(/ font-bold/gi, '')}</td>
-                        <td className="p-3 sm:p-4 md:p-5 font-bold font-mono text-foreground text-[10px] sm:text-xs">₹{product.price}</td>
-                        <td className="p-3 sm:p-4 md:p-5 text-right space-x-2">
+                    {filteredProducts.map(product => {
+                      const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
+                      const juiceSubCategory = (product as any).subCategory || 'cold-pressed';
+                      const displayJuiceLabel = 
+                        juiceSubCategory === 'cold-pressed' ? 'Cold-Pressed' :
+                        juiceSubCategory === 'detox' ? 'Detox Juice' :
+                        juiceSubCategory === 'satvik' ? 'Satvik Drink' :
+                        juiceSubCategory === 'smoothies' ? 'Sugar Free Smoothie' :
+                        juiceSubCategory === 'sweet-cravings' ? 'Sweet Craving' :
+                        juiceSubCategory === 'special' ? 'Our Special' : 'Juice';
+
+                      return (
+                        <tr key={product.id} className="hover:bg-black/5 transition-colors">
+                          <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
+                            <div className="w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0">
+                              <img src={product.imageUrl || getCategoryImage(product.category)} alt="" className="w-full h-full object-cover" />
+                            </div>
+                            <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
+                          </td>
+                          <td className="p-3 sm:p-4 md:p-5 font-bold uppercase tracking-wider text-[8px] sm:text-[10px]">
+                            {isJuice ? (
+                              <span className="bg-orange-500/10 border border-orange-500/20 text-orange-600 px-2 py-0.5 rounded-full inline-block font-extrabold tracking-widest text-[7.5px] uppercase">
+                                🍹 {displayJuiceLabel}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {product.category.replace(/ font-bold/gi, '')}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 sm:p-4 md:p-5 font-bold font-mono text-foreground text-[10px] sm:text-xs">₹{product.price}</td>
+                          <td className="p-3 sm:p-4 md:p-5 text-right space-x-2">
                           <button 
                             onClick={() => handleEditSetup(product)} 
                             className="text-muted-foreground hover:text-primary p-1.5 sm:p-2 md:p-2.5 bg-background border border-border rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
@@ -917,7 +1127,8 @@ export function AdminDashboard() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                     {filteredProducts.length === 0 && (
                       <tr>
                         <td colSpan={4} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
@@ -931,6 +1142,7 @@ export function AdminDashboard() {
             </div>
 
           </div>
+        </div>
         ) : (
           <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center justify-between mb-8">

@@ -121,11 +121,24 @@ export const SPOTLIGHTS = {
     colorClass: 'text-orange-500 border-orange-500/20 bg-orange-500/10',
     accentColor: '#f97316',
     link: '/shop?category=Indian%20Fruits'
+  },
+  juices: {
+    title: 'FNL COLD-PRESSED JUICES',
+    subtitle: '100% natural, raw, cold-extracted juices with zero water or artificial preservatives. Living enzymes delivered in pristine glass flasks.',
+    price: '₹120',
+    unit: '300ml pristine glass flask',
+    badge: 'Cold-Pressed Juices',
+    origin: 'Pristine Squeeze Hub, Surat',
+    harvested: 'Direct-pressed today at 4:30 AM',
+    image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&auto=format&fit=crop&q=80',
+    colorClass: 'text-orange-500 border-orange-500/20 bg-orange-500/10',
+    accentColor: '#f97316',
+    link: '/juice'
   }
 };
 
 export function Home() {
-  const [activeCard, setActiveCard] = useState<'greens' | 'alphonso' | 'exotics' | 'herbs' | 'superExotics' | 'leafyGreens' | 'frozenItems' | 'indianFruits'>('greens');
+  const [activeCard, setActiveCard] = useState<'greens' | 'alphonso' | 'exotics' | 'herbs' | 'superExotics' | 'leafyGreens' | 'frozenItems' | 'indianFruits' | 'juices'>('greens');
   const [isHovered, setIsHovered] = useState(false);
   const [spotlights, setSpotlights] = useState(SPOTLIGHTS);
 
@@ -227,8 +240,8 @@ export function Home() {
             <Link to="/shop" className="slice-btn-primary px-8 py-5 text-xs text-[11px]">
               Explore Shop <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
-            <Link to="/about" className="slice-btn-secondary px-8 py-5 text-xs text-[11px]">
-              Learn our story
+            <Link to="/juice" className="slice-btn-secondary border-orange-500/20 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5 px-8 py-5 text-xs text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
+              FNL Juice House 🍹
             </Link>
           </div>
 
@@ -336,7 +349,7 @@ export function Home() {
           </div>
 
           {/* Interactive Card Selector tabs resembling slice website widgets */}
-          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 w-full max-w-[960px]">
+          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-1.5 w-full max-w-[1020px]">
             <button 
               onClick={() => setActiveCard('greens')} 
               className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'greens' ? 'bg-primary text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
@@ -384,6 +397,12 @@ export function Home() {
               className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'indianFruits' ? 'bg-orange-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Indian
+            </button>
+            <button 
+              onClick={() => setActiveCard('juices')} 
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'juices' ? 'bg-orange-600 text-white shadow-sm scale-105' : 'text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 hover:scale-105'}`}
+            >
+              Juices 🍹
             </button>
           </div>
         </motion.div>
