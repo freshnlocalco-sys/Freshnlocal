@@ -14,7 +14,8 @@ const CATEGORIES = [
   { id: 'fresh & hygenic cut fruits and vegetables', name: 'Clean Cuts', tagline: 'Pre-washed, chopped & ready to cook', discount: 'Super Safe' },
   { id: 'imported / super exotic vegetables', name: 'Global Luxe Veggies', tagline: 'Direct from premium international farms', discount: 'Exclusive' },
   { id: 'leafy greens', name: 'Leafy Greens', tagline: 'Hydroponic crisp kale, spinach & lettuce', discount: '100% Organic' },
-  { id: 'frozen items', name: 'Frozen Premium', tagline: 'Snap-frozen berries & sweet corn', discount: 'Long Shelf life' }
+  { id: 'frozen items', name: 'Frozen Premium', tagline: 'Snap-frozen berries & sweet corn', discount: 'Long Shelf life' },
+  { id: 'mushrooms', name: 'Mushrooms', tagline: 'Fresh oyster, button & exotic funghi', discount: 'Earthy Fresh' }
 ];
 
 export const SPOTLIGHTS = {
@@ -134,11 +135,24 @@ export const SPOTLIGHTS = {
     colorClass: 'text-orange-500 border-orange-500/20 bg-orange-500/10',
     accentColor: '#f97316',
     link: '/juice'
+  },
+  mushrooms: {
+    title: 'MUSHROOMS',
+    subtitle: 'Fresh oyster, button & exotic funghi straight from pristine climate-controlled farms.',
+    price: '₹140',
+    unit: 'Premium Pack',
+    badge: 'Mushrooms',
+    origin: 'Climate Farms, Local',
+    harvested: 'Handpicked daily',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Edible_fungi_in_basket_2009_G1_%28cropped%29.jpg/800px-Edible_fungi_in_basket_2009_G1_%28cropped%29.jpg',
+    colorClass: 'text-stone-500 border-stone-500/20 bg-stone-500/10',
+    accentColor: '#78716c',
+    link: '/shop?category=Mushrooms'
   }
 };
 
 export function Home() {
-  const [activeCard, setActiveCard] = useState<'greens' | 'alphonso' | 'exotics' | 'herbs' | 'superExotics' | 'leafyGreens' | 'frozenItems' | 'indianFruits' | 'juices'>('greens');
+  const [activeCard, setActiveCard] = useState<'greens' | 'alphonso' | 'exotics' | 'herbs' | 'superExotics' | 'leafyGreens' | 'frozenItems' | 'indianFruits' | 'mushrooms' | 'juices'>('greens');
   const [isHovered, setIsHovered] = useState(false);
   const [spotlights, setSpotlights] = useState(SPOTLIGHTS);
 
@@ -193,20 +207,21 @@ export function Home() {
     });
   };
 
+  const SPOTLIGHT_ORDER = ['greens', 'alphonso', 'exotics', 'herbs', 'superExotics', 'leafyGreens', 'frozenItems', 'indianFruits', 'juices', 'mushrooms'] as const;
+
   useEffect(() => {
     if (isHovered) return;
     
     const interval = setInterval(() => {
       setActiveCard(current => {
-        const keys = Object.keys(spotlights) as Array<keyof typeof spotlights>;
-        const currentIndex = keys.indexOf(current);
-        const nextIndex = (currentIndex + 1) % keys.length;
-        return keys[nextIndex];
+        const currentIndex = SPOTLIGHT_ORDER.indexOf(current as any);
+        const nextIndex = (currentIndex + 1) % SPOTLIGHT_ORDER.length;
+        return SPOTLIGHT_ORDER[nextIndex];
       });
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [isHovered, spotlights]);
+  }, [isHovered]);
 
   return (
     <div className="flex flex-col items-center bg-background text-foreground overflow-hidden">
@@ -349,7 +364,7 @@ export function Home() {
           </div>
 
           {/* Interactive Card Selector tabs resembling slice website widgets */}
-          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-1.5 w-full max-w-[1020px]">
+          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-10 gap-1.5 w-full max-w-[1020px]">
             <button 
               onClick={() => setActiveCard('greens')} 
               className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'greens' ? 'bg-primary text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
@@ -403,6 +418,12 @@ export function Home() {
               className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'juices' ? 'bg-orange-600 text-white shadow-sm scale-105' : 'text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 hover:scale-105'}`}
             >
               Juices 🍹
+            </button>
+            <button 
+              onClick={() => setActiveCard('mushrooms')} 
+              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'mushrooms' ? 'bg-stone-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+            >
+              Mushrooms
             </button>
           </div>
         </motion.div>

@@ -7,6 +7,7 @@ export const CATEGORY_IMAGES: Record<string, string> = {
   'imported / super exotic vegetables': 'https://images.pexels.com/photos/2284166/pexels-photo-2284166.jpeg?auto=compress&cs=tinysrgb&w=800',
   'leafy greens': 'https://images.pexels.com/photos/1300975/pexels-photo-1300975.jpeg?auto=compress&cs=tinysrgb&w=800',
   'frozen items': 'https://images.pexels.com/photos/1293306/pexels-photo-1293306.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'mushrooms': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Edible_fungi_in_basket_2009_G1_%28cropped%29.jpg/800px-Edible_fungi_in_basket_2009_G1_%28cropped%29.jpg',
   'fnl juices': 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=compress&cs=tinysrgb&w=800',
   'all products': 'https://images.pexels.com/photos/1414651/pexels-photo-1414651.jpeg?auto=compress&cs=tinysrgb&w=800',
   'default': 'https://images.pexels.com/photos/1414651/pexels-photo-1414651.jpeg?auto=compress&cs=tinysrgb&w=800'

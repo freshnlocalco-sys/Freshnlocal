@@ -16,7 +16,8 @@ const CATEGORIES = [
   'Fresh & Hygenic Cut Fruits and Vegetables',
   'Imported / Super Exotic Vegetables',
   'Leafy Greens',
-  'Frozen Items'
+  'Frozen Items',
+  'Mushrooms'
 ];
 
 export function Shop() {
@@ -64,13 +65,18 @@ export function Shop() {
   }, []);
 
   const filteredProducts = products.filter(p => {
-    let productCategory = p.category.toLowerCase();
+    let productCategory = p.category ? p.category.toLowerCase() : '';
     productCategory = productCategory.replace(' font-bold', ''); // Normalize older data typos
+
+    // Explicitly hide juices from the Shop page, as they belong on the dedicated FNL Juice page
+    if (productCategory === 'fnl juices' || productCategory === 'fnl juice' || productCategory === 'cold-pressed juices') {
+      return false;
+    }
 
     const matchesCategory = categoryFilter && categoryFilter.toLowerCase() !== 'all products'
       ? productCategory === categoryFilter.toLowerCase()
       : true;
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = p.name ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
     return matchesCategory && matchesSearch;
   });
 

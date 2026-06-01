@@ -5,6 +5,7 @@ import { Product, useCart } from '../store/useCart';
 import { Search, ShoppingBag, Plus, Sparkles, Filter, Leaf, Heart, Wind, Flame, Star, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link } from 'react-router-dom';
 
 // Definitions for the 6 menu sections seen in the customer image
 export type JuiceSubCategory = 'cold-pressed' | 'detox' | 'satvik' | 'smoothies' | 'sweet-cravings' | 'special';
@@ -514,31 +515,31 @@ export function FNLJuice() {
   });
 
   return (
-    <div className="min-h-screen bg-[#FAF9F5] text-[#1A1A19] py-16 px-4 md:px-8 font-sans antialiased">
-      <div className="max-w-6xl mx-auto space-y-16">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 w-full bg-background text-foreground">
+      <div className="mb-14">
         
         {/* Minimalist Editorial Header */}
-        <div className="border-b border-neutral-200/80 pb-12 text-center md:text-left space-y-6">
+        <div className="border-b border-border pb-12 text-center md:text-left space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-400 block font-mono">
+              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-muted-foreground block font-mono">
                 Est. Surat 2026 // Raw Cold Squeezed No Pasteurization
               </span>
-              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-[#151515] leading-none">
+              <h1 className="text-4xl md:text-7xl font-sans font-black uppercase tracking-tight text-foreground leading-none">
                 Fresh N Local Juice House
               </h1>
-              <p className="text-neutral-500 text-xs sm:text-sm font-medium max-w-2xl leading-relaxed">
+              <p className="text-muted-foreground text-xs font-semibold max-w-xl leading-relaxed">
                 Raw, cold-extracted juices with zero water or artificial preservatives. Handcrafted daily at 4:30 AM to capture living enzymes in premium recyclable glass flasks. Wellness and purity in every sip.
               </p>
             </div>
             
             {/* Quick stats board */}
-            <div className="flex gap-4 self-center md:self-end text-left border border-neutral-200 bg-white/60 p-4 rounded-2xl">
+            <div className="flex gap-4 self-center md:self-end text-left border border-border bg-secondary p-4 rounded-2xl">
               <div>
-                <span className="text-[8px] font-black tracking-widest text-neutral-400 uppercase block">Daily Flavors</span>
-                <span className="text-xl font-black text-[#151515]">37 Blends</span>
+                <span className="text-[8px] font-black tracking-widest text-muted-foreground uppercase block">Daily Flavors</span>
+                <span className="text-xl font-black text-foreground">37 Blends</span>
               </div>
-              <div className="w-px bg-neutral-200" />
+              <div className="w-px bg-border" />
               <div>
                 <span className="text-[8px] font-black tracking-widest text-[#059669] uppercase block">Purity Ratio</span>
                 <span className="text-xl font-black text-[#059669]">100% Raw</span>
@@ -547,18 +548,16 @@ export function FNLJuice() {
           </div>
         </div>
 
-        {/* Search Bar & Categories Tabs (Extreme Minimal Design) */}
-        <div className="space-y-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            
+        {/* Search Bar & Categories Tabs */}
+        <div className="flex flex-col xl:flex-row gap-6 mt-12 items-start xl:items-center justify-between border-b pb-8 border-border">
             {/* Filter Pills */}
-            <div className="flex flex-wrap gap-2 w-full md:w-auto justify-center md:justify-start">
+            <div className="flex flex-wrap gap-2.5 flex-1 w-full md:w-auto justify-center md:justify-start">
               <button
                 onClick={() => setActiveSubCategory('all')}
-                className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase transition-all duration-200 border ${
+                className={`px-5 py-3 text-[9px] uppercase tracking-[0.2em] font-extrabold rounded-full border transition-all duration-300 ${
                   activeSubCategory === 'all'
-                    ? 'bg-[#151515] text-white border-transparent'
-                    : 'bg-white hover:bg-neutral-50 border-neutral-200 text-neutral-600'
+                    ? 'bg-primary text-white border-primary shadow-[0_4px_15px_rgba(0,184,83,0.15)]'
+                    : 'bg-secondary text-foreground border-border hover:border-primary/50 hover:text-primary hover:bg-primary/5'
                 }`}
               >
                 Show All
@@ -567,10 +566,10 @@ export function FNLJuice() {
                 <button
                   key={section.id}
                   onClick={() => setActiveSubCategory(section.id)}
-                  className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase transition-all duration-200 border flex items-center gap-1.5 ${
+                  className={`px-5 py-3 text-[9px] uppercase tracking-[0.2em] font-extrabold rounded-full border transition-all duration-300 flex items-center gap-1.5 ${
                     activeSubCategory === section.id
-                      ? 'bg-[#151515] text-white border-transparent shadow-sm'
-                      : 'bg-white hover:bg-neutral-50 border-neutral-200 text-neutral-600'
+                      ? 'bg-primary text-white border-primary shadow-[0_4px_15px_rgba(0,184,83,0.15)]'
+                      : 'bg-secondary text-foreground border-border hover:border-primary/50 hover:text-primary hover:bg-primary/5'
                   }`}
                 >
                   {section.id === 'cold-pressed' && <Flame className="w-3 h-3 text-orange-500" />}
@@ -585,27 +584,24 @@ export function FNLJuice() {
             </div>
 
             {/* Minimal Search Field */}
-            <div className="relative w-full md:w-72 shrink-0 bg-white rounded-full border border-neutral-200 p-1">
-              <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
-                <Search className="w-3.5 h-3.5 text-neutral-400" />
-              </div>
+            <div className="relative w-full md:w-80 shrink-0">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Find botanical elixir..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-4 py-1.5 focus:outline-none bg-transparent text-[10px] sm:text-xs text-neutral-800 font-medium tracking-wider uppercase placeholder-neutral-400"
+                className="w-full pl-11 pr-4 py-4 rounded-full border border-border text-xs text-foreground focus:outline-none focus:border-primary bg-secondary placeholder-muted-foreground transition-colors"
               />
             </div>
-
           </div>
-        </div>
+      </div>
 
-        {/* Content Section */}
-        {loading || seeding ? (
-          <div className="py-24 text-center text-neutral-400 font-mono text-[10px] uppercase tracking-[0.2em] flex flex-col items-center justify-center gap-4">
-            <span className="w-6 h-6 rounded-full border-t-2 border-neutral-800 animate-spin"></span>
-            Syncing Cold pressed inventory databases...
+      {/* Content Section */}
+      {loading || seeding ? (
+          <div className="py-36 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest flex flex-col items-center justify-center gap-4">
+            <span className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></span>
+            RETRIEVING COLD-PRESSED ROSTERS...
           </div>
         ) : (
           <div className="space-y-16">
@@ -614,7 +610,7 @@ export function FNLJuice() {
             <AnimatePresence mode="wait">
               <motion.div 
                 layout 
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+                className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-3 sm:gap-6 lg:gap-8"
               >
                 {filteredJuices.map((product) => {
                   const subCatId = getSubCategory(product);
@@ -628,63 +624,66 @@ export function FNLJuice() {
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.3 }}
                       key={product.id}
-                      className="bg-white rounded-2xl overflow-hidden border border-neutral-200/80 hover:border-neutral-800 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 flex flex-col h-full group"
+                      className="slice-card h-full"
                     >
-                      {/* Image container with subtle visual theme */}
-                      <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-50 border-b border-neutral-100">
+                      {/* Sub-category tag */}
+                      <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap gap-1.5 leading-none">
+                        {subCatInfo && (
+                          <span className="bg-white/40 backdrop-blur-md text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/40 shadow-sm">
+                            {subCatInfo.name}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Image container */}
+                      <Link to={`/product/${product.id}`} className="w-full aspect-[4/3] overflow-hidden relative bg-secondary border-b border-border block shrink-0">
                         <img
                           src={product.imageUrl || 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&auto=format&fit=crop&q=80'}
                           alt={product.name}
                           referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110 filter brightness-[95%]"
                         />
-                        
-                        {/* Elegant floating sub-category label */}
-                        {subCatInfo && (
-                          <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full border border-neutral-200 shadow-sm">
-                            <span className="text-[7.5px] font-black uppercase tracking-widest text-neutral-800">
-                              {subCatInfo.name}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      </Link>
 
                       {/* Info & Typography block */}
-                      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                        <div className="space-y-2">
-                          <h3 className="text-[13px] font-black uppercase tracking-wider text-neutral-900 leading-tight">
+                      <div className="p-3 sm:p-5 md:p-6 bg-secondary space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
+                        <div className="flex flex-col gap-1.5 w-full">
+                          <h3 className="text-xs sm:text-sm font-sans font-black uppercase tracking-wider text-foreground line-clamp-2 leading-tight">
                             {product.name}
                           </h3>
-                          <p className="text-[10px] text-neutral-500 leading-relaxed font-normal normal-case break-words">
-                            {product.description || "Fresh raw formulation mixed and extracted cold to retain vitamins."}
-                          </p>
+                          
+                          <div className="flex items-end justify-between w-full mt-1 sm:mt-2">
+                            <div className="flex flex-col gap-1.5">
+                              {product.originalPrice && product.originalPrice > product.price && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] sm:text-xs text-muted-foreground line-through font-medium uppercase tracking-wider">MRP ₹{product.originalPrice}</span>
+                                  <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-red-500 px-1.5 py-0.5 rounded-md leading-none tracking-widest">
+                                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                                  </span>
+                                </div>
+                              )}
+                              <div className="font-sans text-lg sm:text-xl font-black text-foreground tracking-tighter leading-none flex items-center gap-1">
+                                <span className="text-sm font-bold text-muted-foreground">₹</span>{product.price}
+                              </div>
+                            </div>
+                          </div>
                         </div>
 
                         {/* Price & Cart block */}
-                        <div className="pt-4 border-t border-neutral-100 flex items-center justify-between mt-auto">
-                          <div>
-                            <span className="text-[8px] font-bold text-neutral-400 uppercase block tracking-wider">price</span>
-                            <span className="text-base font-black text-neutral-900 tracking-tight">
-                              ₹{product.price}
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={() => handleAddToCart(product)}
-                            className="bg-neutral-900 hover:bg-[#059669] text-white p-3 rounded-full transition-all duration-300 hover:scale-105 select-none cursor-pointer flex items-center justify-center"
-                            title="Add to Squeeze Basket"
-                          >
-                            <ShoppingCartIcon className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <button 
+                          onClick={() => handleAddToCart(product)}
+                          className="w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] bg-primary text-white font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-all duration-300 hover:bg-[#09120b] hover:text-white hover:scale-[1.02] transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer mt-auto"
+                        >
+                          <ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> <span className="hidden xs:inline">+ Add to Basket</span><span className="xs:hidden">Add</span>
+                        </button>
                       </div>
                     </motion.div>
                   );
                 })}
 
                 {filteredJuices.length === 0 && (
-                  <div className="col-span-full py-20 text-center text-neutral-400 font-mono text-[10px] uppercase tracking-widest border border-dashed border-neutral-200 rounded-2xl bg-white/40">
-                    No matching juices found under current search / filter options.
+                  <div className="col-span-full py-36 text-center text-muted-foreground font-sans text-xs uppercase tracking-widest border border-dashed border-border rounded-3xl p-8">
+                    This menu section is currently resting or empty.
                   </div>
                 )}
               </motion.div>
@@ -694,30 +693,29 @@ export function FNLJuice() {
         )}
 
         {/* Minimal Bottom Info Section matching premium juice shop menus */}
-        <div className="bg-white border border-neutral-200 rounded-[24px] p-6 sm:p-10 text-center max-w-3xl mx-auto space-y-6">
+        <div className="bg-secondary border border-border rounded-[24px] p-6 sm:p-10 text-center max-w-3xl mx-auto space-y-6">
           <Leaf className="w-8 h-8 text-[#059669] mx-auto animate-pulse" />
-          <h3 className="text-sm font-black uppercase tracking-widest text-[#151515]">The Cold-Pressed Commitment</h3>
-          <p className="text-xs text-neutral-500 leading-relaxed max-w-xl mx-auto normal-case font-medium">
+          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">The Cold-Pressed Commitment</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed max-w-xl mx-auto normal-case font-medium">
             At Fresh N Local Juice House, we do not compromise. We never use pasteurization or heat treatment, which kills living vitamins and enzymes. Absolutely no chemical colors, artificial fillers, table sugars, or frozen syrups. Pure goodness in every bottle.
           </p>
-          <div className="pt-4 border-t border-neutral-100 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+          <div className="pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
             <div>
-              <span className="text-[8px] font-black uppercase tracking-wider text-neutral-400 block mb-1">Contact Us</span>
-              <span className="text-[10px] font-bold text-neutral-800 uppercase">+91 72840 00883</span>
+              <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block mb-1">Contact Us</span>
+              <span className="text-[10px] font-bold text-foreground uppercase">+91 72840 00883</span>
             </div>
             <div>
-              <span className="text-[8px] font-black uppercase tracking-wider text-neutral-400 block mb-1">Official Email</span>
-              <span className="text-[10px] font-bold text-neutral-800 font-mono">freshnlocalco@gmail.com</span>
+              <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block mb-1">Official Email</span>
+              <span className="text-[10px] font-bold text-foreground font-mono">freshnlocalco@gmail.com</span>
             </div>
             <div>
-              <span className="text-[8px] font-black uppercase tracking-wider text-neutral-400 block mb-1">Surat Address</span>
-              <span className="text-[10px] font-bold text-neutral-800 uppercase leading-snug">Gr Floor Hall, Reva Dham, Uma Bhawan Road</span>
+              <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block mb-1">Surat Address</span>
+              <span className="text-[10px] font-bold text-foreground uppercase leading-snug">Gr Floor Hall, Reva Dham, Uma Bhawan Road</span>
             </div>
           </div>
         </div>
 
       </div>
-    </div>
   );
 }
 

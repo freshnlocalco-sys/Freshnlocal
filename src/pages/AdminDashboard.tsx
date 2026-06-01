@@ -887,6 +887,7 @@ export function AdminDashboard() {
                             <option value="imported / super exotic vegetables">Global Luxe Veggies</option>
                             <option value="leafy greens">Leafy Greens</option>
                             <option value="frozen items">Frozen Premium</option>
+                            <option value="mushrooms">Mushrooms</option>
                           </select>
                         </div>
                       ) : (
