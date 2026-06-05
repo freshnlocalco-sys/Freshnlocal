@@ -130,6 +130,12 @@ export function ProductDetail() {
             <h1 className="text-3xl lg:text-5xl font-sans font-black tracking-tight uppercase text-foreground leading-tight">
               {product.name}
             </h1>
+
+            {product.unit && (
+              <div className="text-xs uppercase tracking-wider font-extrabold text-muted-foreground bg-white border border-border/80 px-4 py-2 rounded-xl inline-block shadow-xs">
+                Pack / Unit Size: <span className="text-primary font-black ml-1 font-sans">{product.unit}</span>
+              </div>
+            )}
             
             <div className="flex items-end gap-3 tracking-tighter">
               <div className="text-4xl font-black text-primary">₹{product.price}</div>

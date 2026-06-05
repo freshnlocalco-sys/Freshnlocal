@@ -9,9 +9,10 @@ import { ProductCard } from '../components/ProductCard';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useSettings } from '../store/useSettings';
 
-// Definitions for the 6 menu sections seen in the customer image
-export type JuiceSubCategory = 'cold-pressed' | 'detox' | 'satvik' | 'smoothies' | 'sweet-cravings' | 'special';
+// Definitions for dynamic menu sections
+export type JuiceSubCategory = string;
 
 export interface MenuCategoryInfo {
   id: JuiceSubCategory;
@@ -21,19 +22,7 @@ export interface MenuCategoryInfo {
   bgLight: string;
 }
 
-const JUICE_SECTIONS: MenuCategoryInfo[] = [
-  { id: 'cold-pressed', name: 'Cold Pressed Juices', tagline: '100% natural raw hydraulic squeeze', accent: '#f97316', bgLight: 'bg-orange-500/5' },
-  { id: 'detox', name: 'Detox Juices', tagline: 'Power cell cleansing & skin illumination', accent: '#dc2626', bgLight: 'bg-red-500/5' },
-  { id: 'satvik', name: 'Satvik', tagline: 'Yogic hydration, cooling botanical remedies', accent: '#059669', bgLight: 'bg-emerald-500/5' },
-  { id: 'smoothies', name: 'Sugar Free Smoothies', tagline: 'Rich avocado, Greek yogurt & kesar whip', accent: '#8b5cf6', bgLight: 'bg-purple-500/5' },
-  { id: 'sweet-cravings', name: 'Sweet Cravings', tagline: 'Saffron badam thandai & velvet shakes', accent: '#ec4899', bgLight: 'bg-pink-500/5' },
-  { id: 'special', name: 'Our Special', tagline: 'Stunning Matcha & Rose nectar layers', accent: '#0284c7', bgLight: 'bg-sky-500/5' }
-];
-
-const ALL_JUICE_SECTIONS = [
-  { id: 'all' as const, name: 'All Juices', tagline: 'Every raw cold pressed nectar', accent: '#059669', bgLight: 'bg-emerald-500/5' },
-  ...JUICE_SECTIONS
-];
+// Static juice definitions removed. Using dynamic store categories.
 
 // Fully compiled catalog matching user's loaded menu board image precisely
 export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'updatedAt'> & { subCategory: JuiceSubCategory }> = [
@@ -421,6 +410,20 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
 ];
 
 export function FNLJuice() {
+  const { juiceCategories, fetchCategoryImages } = useSettings();
+
+  useEffect(() => {
+    fetchCategoryImages();
+  }, [fetchCategoryImages]);
+
+  const JUICE_SECTIONS = juiceCategories;
+  const ALL_JUICE_SECTIONS = React.useMemo(() => {
+    return [
+      { id: 'all', name: 'All Juices', tagline: 'Every raw cold pressed nectar', accent: '#059669', bgLight: 'bg-emerald-500/5' },
+      ...juiceCategories
+    ];
+  }, [juiceCategories]);
+
   const { products, loading: storeLoading, fetchProducts } = useProducts();
   const [juices, setJuices] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -508,7 +511,24 @@ export function FNLJuice() {
     });
   };
 
-  const POPULAR_SEARCHES = ['Tender Coconut', 'ABC Juice', 'Wheatgrass', 'Matcha', 'Strawberry Smoothie'];
+  const POPULAR_SEARCHES = React.useMemo(() => {
+    // Get distinct in-stock juice names from fetched products
+    const activeJuices = juices.filter(p => p.inStock !== false && p.name);
+    const uniqueNames: string[] = [];
+    for (const p of activeJuices) {
+      if (p.name && !uniqueNames.includes(p.name)) {
+        uniqueNames.push(p.name);
+        if (uniqueNames.length === 5) break;
+      }
+    }
+    
+    if (uniqueNames.length >= 3) {
+      return uniqueNames;
+    }
+    
+    // Exact authentic catalog names
+    return ['Fresh Tender Coconut', 'ABC Juice', 'Wheatgrass Juice', 'Coconut Matcha', 'Strawberry Smoothie'];
+  }, [juices]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {

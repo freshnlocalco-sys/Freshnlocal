@@ -68,7 +68,26 @@ export function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const { categoryImages, fetchCategoryImages, updateCategoryImage, loading: settingsLoading } = useSettings();
+  const { 
+    categoryImages, 
+    productCategories, 
+    juiceCategories, 
+    fetchCategoryImages, 
+    updateCategoryImage, 
+    addProductCategory, 
+    addJuiceCategory, 
+    loading: settingsLoading 
+  } = useSettings();
+
+  // Dynamic Categories addition state
+  const [newProdCatName, setNewProdCatName] = useState('');
+  const [newProdCatImg, setNewProdCatImg] = useState('');
+  const [isAddingProdCat, setIsAddingProdCat] = useState(false);
+
+  const [newJuiceCatName, setNewJuiceCatName] = useState('');
+  const [newJuiceCatTagline, setNewJuiceCatTagline] = useState('');
+  const [newJuiceCatImg, setNewJuiceCatImg] = useState('');
+  const [isAddingJuiceCat, setIsAddingJuiceCat] = useState(false);
 
   // Filters for orders
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -407,7 +426,7 @@ export function AdminDashboard() {
         setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: newProduct.imageUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
         toast.success('New product cataloged successfully!');
       }
-      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
+      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
     } catch (error) {
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
       toast.error('Could not save product catalog.');
@@ -433,7 +452,63 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
+    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
+  };
+
+  const processImageFile = (file: File, callback: (base64: string) => void, cropSquare: boolean = false) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        let sx = 0;
+        let sy = 0;
+        let sWidth = width;
+        let sHeight = height;
+        
+        if (cropSquare) {
+          const size = Math.min(width, height);
+          sx = (width - size) / 2;
+          sy = (height - size) / 2;
+          sWidth = size;
+          sHeight = size;
+          width = Math.min(size, 400); // Scale down to max 400px square for performance and Firestore limit
+          height = width;
+        } else {
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
+        }
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.90);
+        callback(dataUrl);
+      };
+      if (result) {
+        img.src = result;
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1071,18 +1146,12 @@ export function AdminDashboard() {
                           <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#059669] font-extrabold">Produce Category</label>
                           <select 
                             className="w-full border border-border rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 bg-white outline-none focus:border-[#059669] text-foreground transition-colors text-[9px] sm:text-[10px] uppercase font-bold tracking-wider" 
-                            value={newProduct.category === 'fnl juices' ? 'indian fruits' : newProduct.category} 
+                            value={newProduct.category === 'fnl juices' ? (productCategories[0]?.toLowerCase() || 'indian fruits') : newProduct.category} 
                             onChange={e => setNewProduct({...newProduct, category: e.target.value})}
                           >
-                            <option value="indian fruits">Indian Fruits</option>
-                            <option value="exotic fruits">Exotic Fruits</option>
-                            <option value="exotic vegetables">Exotic Vegetables</option>
-                            <option value="herbs & seasoning">Herbs & Seasoning</option>
-                            <option value="fresh & hygenic cut fruits and vegetables">Clean Cuts</option>
-                            <option value="imported / super exotic vegetables">Global Luxe Veggies</option>
-                            <option value="leafy greens">Leafy Greens</option>
-                            <option value="frozen items">Frozen Premium</option>
-                            <option value="mushrooms">Mushrooms</option>
+                            {productCategories.map(cat => (
+                              <option key={cat} value={cat.toLowerCase()}>{cat}</option>
+                            ))}
                           </select>
                         </div>
                       ) : (
@@ -1093,12 +1162,9 @@ export function AdminDashboard() {
                             value={newProduct.subCategory || 'cold-pressed'} 
                             onChange={e => setNewProduct({...newProduct, category: 'fnl juices', subCategory: e.target.value})}
                           >
-                            <option value="cold-pressed">COLD PRESSED JUICES</option>
-                            <option value="detox">DETOX JUICES</option>
-                            <option value="satvik">SATVIK</option>
-                            <option value="smoothies">SUGAR FREE SMOOTHIES</option>
-                            <option value="sweet-cravings">SWEET CRAVINGS</option>
-                            <option value="special">OUR SPECIALS</option>
+                            {juiceCategories.map(sec => (
+                              <option key={sec.id} value={sec.id}>{sec.name.toUpperCase()}</option>
+                            ))}
                           </select>
                         </div>
                       )}
@@ -1444,39 +1510,267 @@ export function AdminDashboard() {
 
           </div>
         ) : activeTab === 'categories' ? (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center justify-between mb-8">
+          <div className="max-w-4xl mx-auto space-y-12">
+            
+            {/* PRODUCE CATEGORIES MANAGEMENT */}
+            <div className="space-y-6">
               <div>
-                <h2 className="text-xl sm:text-2xl font-black uppercase text-foreground">Category Images</h2>
+                <h2 className="text-xl sm:text-2xl font-black uppercase text-foreground">Produce Categories</h2>
                 <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">
-                  Manage the visuals for category sidebar
+                  Manage categories in the farm catalog or register custom ones
                 </p>
               </div>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {CATEGORIES.filter(cat => cat !== 'All Products').map((cat) => {
-                const currentImg = getCategoryImage(cat, categoryImages);
-                return (
-                  <div key={cat} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
-                    <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground z-10 truncate">{cat}</h3>
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-white border border-border z-10 flex shrink-0">
-                       <img src={currentImg} alt={cat} className="w-full h-full object-contain" />
-                    </div>
-                    <div className="z-10 mt-auto">
-                      <label className="text-[8px] uppercase tracking-widest font-extrabold text-foreground block mb-2">Image URL</label>
-                      <input 
-                        type="url"
-                        value={currentImg}
-                        onChange={(e) => updateCategoryImage(cat, e.target.value)}
-                        placeholder="https://..."
-                        className="slice-input w-full text-[9px]"
-                      />
-                    </div>
+
+              {/* Add Produce Category Form Card */}
+              <div className="slice-card p-6 bg-secondary/80 border border-border rounded-w flex flex-col gap-4">
+                <span className="text-[10px] uppercase tracking-widest font-extrabold text-primary">Add New Produce Category</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-[8px] font-bold uppercase tracking-wider text-muted-foreground">Category Name</label>
+                    <input 
+                      type="text"
+                      id="new-prod-cat-name-input"
+                      value={newProdCatName}
+                      onChange={(e) => setNewProdCatName(e.target.value)}
+                      placeholder="e.g. Dry Fruits, Exotic Berries..."
+                      className="slice-input w-full"
+                    />
                   </div>
-                );
-              })}
+                  <div className="space-y-1.5">
+                    <label className="block text-[8px] font-bold uppercase tracking-wider text-muted-foreground flex justify-between">
+                      <span>Illustration Image (URL or Upload)</span>
+                      <label className="text-primary hover:underline cursor-pointer font-black uppercase tracking-wider text-[8px]">
+                        [ Direct Upload ]
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              processImageFile(file, (base64) => setNewProdCatImg(base64), true);
+                            }
+                          }} 
+                          className="hidden" 
+                        />
+                      </label>
+                    </label>
+                    <input 
+                      type="url"
+                      id="new-prod-cat-img-input"
+                      value={newProdCatImg}
+                      onChange={(e) => setNewProdCatImg(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="slice-input w-full"
+                    />
+                  </div>
+                </div>
+                <button
+                  id="add-prod-cat-btn"
+                  disabled={isAddingProdCat}
+                  onClick={async () => {
+                    if (!newProdCatName.trim()) {
+                      toast.error('Please enter a category name');
+                      return;
+                    }
+                    try {
+                      setIsAddingProdCat(true);
+                      await addProductCategory(newProdCatName.trim(), newProdCatImg.trim() || undefined);
+                      setNewProdCatName('');
+                      setNewProdCatImg('');
+                    } catch (e: any) {
+                      toast.error(e.message || 'Error occurred');
+                    } finally {
+                      setIsAddingProdCat(false);
+                    }
+                  }}
+                  className="slice-btn-primary px-6 py-3 self-end flex items-center gap-2 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Add Produce Category
+                </button>
+              </div>
+
+              {/* Grid of registered produce categories */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                {productCategories.map((cat) => {
+                  const currentImg = getCategoryImage(cat, categoryImages);
+                  return (
+                    <div key={cat} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
+                      <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground z-10 truncate">{cat}</h3>
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-white border border-border z-10 flex shrink-0">
+                         <img src={currentImg} alt={cat} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="z-10 mt-auto">
+                        <label className="text-[8px] uppercase tracking-widest font-extrabold text-foreground flex justify-between mb-2">
+                          <span>Image URL</span>
+                          <label className="text-primary hover:underline cursor-pointer font-black text-[8px] tracking-wider uppercase">
+                            [ Upload ]
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  processImageFile(file, (base64) => {
+                                    updateCategoryImage(cat, base64);
+                                  }, true);
+                                }
+                              }} 
+                              className="hidden" 
+                            />
+                          </label>
+                        </label>
+                        <input 
+                          type="url"
+                          value={currentImg}
+                          onChange={(e) => updateCategoryImage(cat, e.target.value)}
+                          placeholder="https://..."
+                          className="slice-input w-full text-[9px]"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+
+            <hr className="border-border" />
+
+            {/* JUICE BAR CATEGORIES SECTION */}
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black uppercase text-foreground">Juice Menu Board Sections</h2>
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">
+                  Manage sections found in the customer-facing raw juice bar
+                </p>
+              </div>
+
+              {/* Add Juice Category Form Card */}
+              <div className="slice-card p-6 bg-secondary/80 border border-border rounded-w flex flex-col gap-4">
+                <span className="text-[10px] uppercase tracking-widest font-extrabold text-orange-600">Add New Juice Subcategory / Section</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-[8px] font-bold uppercase tracking-wider text-muted-foreground">Section Name</label>
+                    <input 
+                      type="text"
+                      id="new-juice-cat-name-input"
+                      value={newJuiceCatName}
+                      onChange={(e) => setNewJuiceCatName(e.target.value)}
+                      placeholder="e.g. Wellness Shots, Special Lattes..."
+                      className="slice-input w-full"
+                    />
+                  </div>
+                  <div className="space-y-1.5 font-mono">
+                    <label className="block text-[8px] font-bold uppercase tracking-wider text-muted-foreground">Section Tagline</label>
+                    <input 
+                      type="text"
+                      id="new-juice-cat-tagline-input"
+                      value={newJuiceCatTagline}
+                      onChange={(e) => setNewJuiceCatTagline(e.target.value)}
+                      placeholder="e.g. Pure extract, zero raw sugar"
+                      className="slice-input w-full"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[8px] font-bold uppercase tracking-wider text-muted-foreground flex justify-between">
+                      <span>Illustration Image (URL or Upload)</span>
+                      <label className="text-primary hover:underline cursor-pointer font-black uppercase tracking-wider text-[8px]">
+                        [ Direct Upload ]
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              processImageFile(file, (base64) => setNewJuiceCatImg(base64), true);
+                            }
+                          }} 
+                          className="hidden" 
+                        />
+                      </label>
+                    </label>
+                    <input 
+                      type="url"
+                      id="new-juice-cat-img-input"
+                      value={newJuiceCatImg}
+                      onChange={(e) => setNewJuiceCatImg(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="slice-input w-full"
+                    />
+                  </div>
+                </div>
+                <button
+                  id="add-juice-cat-btn"
+                  disabled={isAddingJuiceCat}
+                  onClick={async () => {
+                    if (!newJuiceCatName.trim()) {
+                      toast.error('Please enter a section name');
+                      return;
+                    }
+                    try {
+                      setIsAddingJuiceCat(true);
+                      await addJuiceCategory(newJuiceCatName.trim(), newJuiceCatTagline.trim(), newJuiceCatImg.trim() || undefined);
+                      setNewJuiceCatName('');
+                      setNewJuiceCatTagline('');
+                      setNewJuiceCatImg('');
+                    } catch (e: any) {
+                      toast.error(e.message || 'Error occurred');
+                    } finally {
+                      setIsAddingJuiceCat(false);
+                    }
+                  }}
+                  className="bg-orange-600 hover:bg-orange-700 text-white font-extrabold uppercase tracking-widest text-[10px] px-6 py-3.5 rounded-xl transition-all self-end flex items-center gap-2 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Add Juice Section
+                </button>
+              </div>
+
+              {/* Grid of registered juice categories */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                {juiceCategories.map((cat) => {
+                  const currentImg = getCategoryImage(cat.name, categoryImages);
+                  return (
+                    <div key={cat.id} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
+                      <div className="space-y-1 z-10">
+                        <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate">{cat.name}</h3>
+                        <p className="text-[8px] font-mono text-muted-foreground line-clamp-1">{cat.tagline}</p>
+                      </div>
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-white border border-border z-10 flex shrink-0">
+                         <img src={currentImg} alt={cat.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="z-10 mt-auto">
+                        <label className="text-[8px] uppercase tracking-widest font-extrabold text-foreground flex justify-between mb-2">
+                          <span>Image URL</span>
+                          <label className="text-primary hover:underline cursor-pointer font-black text-[8px] tracking-wider uppercase">
+                            [ Upload ]
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  processImageFile(file, (base64) => {
+                                    updateCategoryImage(cat.name, base64);
+                                  }, true);
+                                }
+                              }} 
+                              className="hidden" 
+                            />
+                          </label>
+                        </label>
+                        <input 
+                          type="url"
+                          value={currentImg}
+                          onChange={(e) => updateCategoryImage(cat.name, e.target.value)}
+                          placeholder="https://..."
+                          className="slice-input w-full text-[9px]"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
           </div>
         ) : null
       )}

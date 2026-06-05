@@ -12,13 +12,16 @@ import toast from 'react-hot-toast';
 
 export function Shop() {
   const { products, loading: storeLoading, error, fetchProducts } = useProducts();
-  const { categoryImages, fetchCategoryImages } = useSettings();
+  const { categoryImages, productCategories, fetchCategoryImages } = useSettings();
+  const allUiCategories = React.useMemo(() => {
+    return ['All Products', ...productCategories, 'FNL Juices'];
+  }, [productCategories]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const { addItem } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const categoryFilter = searchParams.get('category') || CATEGORIES[0];
+  const categoryFilter = searchParams.get('category') || allUiCategories[0] || 'All Products';
   const [isOffline, setIsOffline] = useState(false);
   const [offlineError, setOfflineError] = useState('');
   const [maxPrice, setMaxPrice] = useState<number>(5000);
@@ -42,7 +45,30 @@ export function Shop() {
     }
   }, [error]);
 
-  const POPULAR_SEARCHES = ['Devgad Alphonso', 'Avocados', 'Strawberries', 'Button Mushrooms', 'Broccoli'];
+  const POPULAR_SEARCHES = React.useMemo(() => {
+    // Dynamic selection of active in stock non-juice products
+    const activeShopProducts = products.filter(p => {
+      let productCategory = p.category ? p.category.toLowerCase() : '';
+      productCategory = productCategory.replace(' font-bold', '');
+      return productCategory !== 'fnl juices' && productCategory !== 'fnl juice' && productCategory !== 'cold-pressed juices';
+    });
+    
+    // Extract distinct in-stock product names
+    const uniqueNames: string[] = [];
+    for (const p of activeShopProducts) {
+      if (p.inStock !== false && p.name && !uniqueNames.includes(p.name)) {
+        uniqueNames.push(p.name);
+        if (uniqueNames.length === 5) break;
+      }
+    }
+    
+    if (uniqueNames.length >= 3) {
+      return uniqueNames;
+    }
+    
+    // Fresh garden defaults
+    return ['Devgad Alphonso', 'Avocados', 'Strawberries', 'Button Mushrooms', 'Broccoli'];
+  }, [products]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
@@ -221,7 +247,7 @@ export function Shop() {
           </div>
           
           <div className="flex flex-col w-full px-1.5 md:px-3 gap-1 pt-2 md:pt-0 pb-8">
-            {CATEGORIES.map((cat) => {
+            {allUiCategories.map((cat) => {
               const isActive = categoryFilter?.toLowerCase() === cat.toLowerCase();
               return (
                 <button
@@ -243,7 +269,7 @@ export function Shop() {
                     {cat === 'All Products' ? (
                       <ShoppingBag className={`w-5 h-5 md:w-4 md:h-4 text-primary ${isActive ? 'opacity-100 scale-110' : 'opacity-70'}`} />
                     ) : (
-                      <img src={getCategoryImage(cat, categoryImages)} alt={cat} className={`w-7 h-7 md:w-6 md:h-6 object-contain ${isActive ? 'opacity-100 scale-110' : 'opacity-70'} transition-all`} />
+                      <img src={getCategoryImage(cat, categoryImages)} alt={cat} className={`w-full h-full object-cover ${isActive ? 'opacity-100 scale-110' : 'opacity-85 group-hover:opacity-100'} transition-all`} />
                     )}
                   </div>
                   <span className={`text-[9px] md:text-sm text-center md:text-left leading-tight mt-1 md:mt-0 md:normal-case md:font-bold ${isActive ? 'font-black uppercase tracking-widest text-primary md:text-foreground' : 'font-semibold tracking-wide md:tracking-normal'} break-words w-full`}>
