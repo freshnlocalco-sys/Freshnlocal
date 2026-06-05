@@ -12,6 +12,8 @@ import { Orders } from './pages/Orders';
 import { About } from './pages/About';
 import { FNLJuice } from './pages/FNLJuice';
 
+import { useSettings } from './store/useSettings';
+
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -22,10 +24,19 @@ function ScrollToTop() {
   return null;
 }
 
+function GlobalLoader() {
+  const { fetchCategoryImages } = useSettings();
+  useEffect(() => {
+    fetchCategoryImages();
+  }, [fetchCategoryImages]);
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <GlobalLoader />
       <Toaster position="bottom-right" toastOptions={{
         style: {
           background: '#fff',

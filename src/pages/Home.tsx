@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getCategoryImage } from '../lib/constants';
 import { db, isQuotaError } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { useSettings } from '../store/useSettings';
 
 const CATEGORIES = [
   { id: 'indian fruits', name: 'Indian Fruits', tagline: 'Devgad Alphonso & Sweetest Mangoes', discount: 'Flat ₹50 Off' },
@@ -152,6 +152,7 @@ export const SPOTLIGHTS = {
 };
 
 export function Home() {
+  const { categoryImages } = useSettings();
   const [activeCard, setActiveCard] = useState<'greens' | 'alphonso' | 'exotics' | 'herbs' | 'superExotics' | 'leafyGreens' | 'frozenItems' | 'indianFruits' | 'mushrooms' | 'juices'>('greens');
   const [isHovered, setIsHovered] = useState(false);
   const [spotlights, setSpotlights] = useState(SPOTLIGHTS);

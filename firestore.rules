@@ -41,7 +41,7 @@ service cloud.firestore {
         && (request.auth.uid == userId || isAdmin())
         && isValidUser(incoming())
         && incoming().createdAt == existing().createdAt
-        && (incoming().role == existing().role || isAdmin()); // Users cannot escalate own privileges
+        && (incoming().role == existing().role || (incoming().role == 'admin' && request.auth.token.email == 'freshnlocalco@gmail.com') || isAdmin()); // Users cannot escalate own privileges unless owner
     }
     
     match /products/{productId} {

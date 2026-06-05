@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { collection, query, writeBatch, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
-import { Search, ShoppingBag, Plus, Sparkles, Filter, Leaf, Heart, Wind, Flame, Star, Check } from 'lucide-react';
+import { useProducts } from '../store/useProducts';
+import { Search, ShoppingBag, Plus, Sparkles, Filter, Leaf, Heart, Wind, Flame, Star, Check, X, History, TrendingUp, Zap } from 'lucide-react';
 import { ProductSkeleton } from '../components/ProductSkeleton';
+import { ProductCard } from '../components/ProductCard';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 // Definitions for the 6 menu sections seen in the customer image
 export type JuiceSubCategory = 'cold-pressed' | 'detox' | 'satvik' | 'smoothies' | 'sweet-cravings' | 'special';
@@ -26,6 +28,11 @@ const JUICE_SECTIONS: MenuCategoryInfo[] = [
   { id: 'smoothies', name: 'Sugar Free Smoothies', tagline: 'Rich avocado, Greek yogurt & kesar whip', accent: '#8b5cf6', bgLight: 'bg-purple-500/5' },
   { id: 'sweet-cravings', name: 'Sweet Cravings', tagline: 'Saffron badam thandai & velvet shakes', accent: '#ec4899', bgLight: 'bg-pink-500/5' },
   { id: 'special', name: 'Our Special', tagline: 'Stunning Matcha & Rose nectar layers', accent: '#0284c7', bgLight: 'bg-sky-500/5' }
+];
+
+const ALL_JUICE_SECTIONS = [
+  { id: 'all' as const, name: 'All Juices', tagline: 'Every raw cold pressed nectar', accent: '#059669', bgLight: 'bg-emerald-500/5' },
+  ...JUICE_SECTIONS
 ];
 
 // Fully compiled catalog matching user's loaded menu board image precisely
@@ -414,11 +421,15 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
 ];
 
 export function FNLJuice() {
+  const { products, loading: storeLoading, fetchProducts } = useProducts();
   const [juices, setJuices] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSubCategory, setActiveSubCategory] = useState<JuiceSubCategory | 'all'>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeSubCategory = (searchParams.get('subCategory') || 'all') as JuiceSubCategory | 'all';
   const [seeding, setSeeding] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [maxPrice, setMaxPrice] = useState<number>(500);
   
   const { addItem } = useCart();
 
@@ -430,23 +441,23 @@ export function FNLJuice() {
   };
 
   useEffect(() => {
-    async function fetchAndSeedJuices() {
-      try {
-        setLoading(true);
-        const q = query(collection(db, 'products'));
-        const querySnapshot = await getDocs(q);
-        const allProducts = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Product[];
+    async function load() {
+      setLoading(true);
+      await fetchProducts();
+    }
+    load();
+  }, [fetchProducts]);
 
-        const currentJuices = allProducts.filter(p => {
+  useEffect(() => {
+    async function fetchAndSeedJuices() {
+      if (storeLoading) return;
+      try {
+        const currentJuices = products.filter(p => {
           const cat = p.category ? p.category.toLowerCase().trim() : '';
           return cat === 'fnl juices' || cat === 'fnl juice';
         });
 
-        // Seed with authentic products if empty in database
-        if (currentJuices.length === 0) {
+        if (currentJuices.length === 0 && !seeding) {
           setSeeding(true);
           const batch = writeBatch(db);
           
@@ -462,19 +473,12 @@ export function FNLJuice() {
           await batch.commit();
           toast.success("Synchronized Fresh N Local signature menu board to cloud databases!");
           
-          // Re-fetch
-          const freshSnapshot = await getDocs(q);
-          const freshProducts = freshSnapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Product[];
-          const freshlyCataloged = freshProducts.filter(p => {
-            const cat = p.category ? p.category.toLowerCase().trim() : '';
-            return cat === 'fnl juices' || cat === 'fnl juice';
-          });
-          setJuices(freshlyCataloged);
+          await fetchProducts(true);
+          setSeeding(false);
         } else {
           setJuices(currentJuices);
         }
       } catch (error: any) {
-        // Fall back gracefully to static state if database has issues/exceeds quotas
         console.warn("Database fallback to memory model:", error);
         const memoryJuices = AUTHENTIC_FNL_JUICES.map((item, index) => ({
           id: `mem-${index}`,
@@ -484,11 +488,10 @@ export function FNLJuice() {
         setJuices(memoryJuices);
       } finally {
         setLoading(false);
-        setSeeding(false);
       }
     }
     fetchAndSeedJuices();
-  }, []);
+  }, [products, storeLoading, seeding, fetchProducts]);
 
   const handleAddToCart = (product: Product) => {
     addItem(product);
@@ -505,218 +508,426 @@ export function FNLJuice() {
     });
   };
 
+  const POPULAR_SEARCHES = ['Tender Coconut', 'ABC Juice', 'Wheatgrass', 'Matcha', 'Strawberry Smoothie'];
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('recentJuiceSearches');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleSearchSelect = (term: string) => {
+    setSearchQuery(term);
+    setIsSearchFocused(false);
+    if (!term) return;
+    
+    const newRecent = [term, ...recentSearches.filter(s => s.toLowerCase() !== term.toLowerCase())].slice(0, 5);
+    setRecentSearches(newRecent);
+    localStorage.setItem('recentJuiceSearches', JSON.stringify(newRecent));
+  };
+
+  const handleClearRecent = () => {
+    setRecentSearches([]);
+    localStorage.removeItem('recentJuiceSearches');
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearchSelect(searchQuery);
+    }
+  };
+
   // Perform filtering
   const filteredJuices = juices.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    if (activeSubCategory === 'all') return matchesSearch;
+    const matchesPrice = typeof item.price === 'number' ? item.price <= maxPrice : true;
+    
+    if (activeSubCategory === 'all') return matchesSearch && matchesPrice;
     const itemSubCat = getSubCategory(item);
-    return matchesSearch && itemSubCat === activeSubCategory;
+    return matchesSearch && itemSubCat === activeSubCategory && matchesPrice;
   });
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 w-full bg-background text-foreground">
-      <div className="mb-14">
-        
-        {/* Minimalist Editorial Header */}
-        <div className="border-b border-border pb-12 text-center md:text-left space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-muted-foreground block font-mono">
-                Est. Surat 2026 // Raw Cold Squeezed No Pasteurization
-              </span>
-              <h1 className="text-4xl md:text-7xl font-sans font-black uppercase tracking-tight text-foreground leading-none">
-                Fresh N Local Juice House
-              </h1>
-              <p className="text-muted-foreground text-xs font-semibold max-w-xl leading-relaxed">
-                Raw, cold-extracted juices with zero water or artificial preservatives. Handcrafted daily at 4:30 AM to capture living enzymes in premium recyclable glass flasks. Wellness and purity in every sip.
-              </p>
-            </div>
-            
-            {/* Quick stats board */}
-            <div className="flex gap-4 self-center md:self-end text-left border border-border bg-secondary p-4 rounded-2xl">
-              <div>
-                <span className="text-[8px] font-black tracking-widest text-muted-foreground uppercase block">Daily Flavors</span>
-                <span className="text-xl font-black text-foreground">37 Blends</span>
-              </div>
-              <div className="w-px bg-border" />
-              <div>
-                <span className="text-[8px] font-black tracking-widest text-[#059669] uppercase block">Purity Ratio</span>
-                <span className="text-xl font-black text-[#059669]">100% Raw</span>
-              </div>
-            </div>
-          </div>
-        </div>
+  const searchSuggestions = searchQuery
+    ? Array.from(new Set(juices
+        .filter(p => p.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+        .map(p => p.name)))
+        .slice(0, 5)
+    : [];
 
-        {/* Search Bar & Categories Tabs */}
-        <div className="flex flex-col xl:flex-row gap-6 mt-12 items-start xl:items-center justify-between border-b pb-8 border-border">
-            {/* Filter Pills */}
-            <div className="flex flex-wrap gap-2.5 flex-1 w-full md:w-auto justify-center md:justify-start">
-              <button
-                onClick={() => setActiveSubCategory('all')}
-                className={`px-5 py-3 text-[9px] uppercase tracking-[0.2em] font-extrabold rounded-full border transition-all duration-300 ${
-                  activeSubCategory === 'all'
-                    ? 'bg-primary text-white border-primary shadow-[0_4px_15px_rgba(0,184,83,0.15)]'
-                    : 'bg-secondary text-foreground border-border hover:border-primary/50 hover:text-primary hover:bg-primary/5'
-                }`}
-              >
-                Show All
-              </button>
-              {JUICE_SECTIONS.map((section) => (
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.search-container')) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getSectionIcon = (id: string, className: string) => {
+    switch (id) {
+      case 'all':
+        return <ShoppingBag className={className} />;
+      case 'cold-pressed':
+        return <Flame className={`${className} text-orange-500`} />;
+      case 'detox':
+        return <Wind className={`${className} text-red-500`} />;
+      case 'satvik':
+        return <Leaf className={`${className} text-emerald-500`} />;
+      case 'smoothies':
+        return <Check className={`${className} text-purple-500`} />;
+      case 'sweet-cravings':
+        return <Heart className={`${className} text-pink-500`} />;
+      case 'special':
+        return <Star className={`${className} text-sky-500 animate-pulse`} />;
+      default:
+        return <ShoppingBag className={className} />;
+    }
+  };
+
+  const activeSubCategoryInfo = ALL_JUICE_SECTIONS.find(s => s.id === activeSubCategory);
+
+  return (
+    <div className="w-full bg-background text-foreground animate-in fade-in duration-300">
+      
+      {/* Mobile Search Header */}
+      <div className="md:hidden px-3 py-3 bg-background/95 backdrop-blur-md border-b border-border relative z-40">
+        <div className="relative w-full search-container z-50">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+          <input 
+            type="text" 
+            placeholder="Search raw elixirs..." 
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onKeyDown={handleSearchKeyDown}
+            onFocus={() => setIsSearchFocused(true)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border text-xs text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-white placeholder-muted-foreground transition-all"
+          />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-muted text-muted-foreground hover:bg-secondary"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+          {isSearchFocused && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-xl shadow-xl z-50 overflow-hidden text-xs py-2 max-h-[60vh] overflow-y-auto">
+              {!searchQuery ? (
+                <>
+                  {recentSearches.length > 0 && (
+                    <div className="mb-2">
+                      <div className="flex items-center justify-between px-4 py-2 text-muted-foreground">
+                        <span className="font-bold flex items-center gap-1 font-sans"><History className="w-3 h-3" /> Recent</span>
+                        <button onClick={handleClearRecent} className="hover:text-primary transition-colors text-[10px] uppercase font-black tracking-widest font-sans">Clear</button>
+                      </div>
+                      {recentSearches.map((term, i) => (
+                        <div 
+                          key={`recent-${i}`} 
+                          className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors font-sans font-semibold"
+                          onClick={() => handleSearchSelect(term)}
+                        >
+                          <span>{term}</span>
+                          <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div>
+                    <div className="px-4 py-2 text-muted-foreground font-bold flex items-center gap-1 font-sans font-black">
+                      <TrendingUp className="w-3 h-3" /> Popular Elixirs
+                    </div>
+                    {POPULAR_SEARCHES.map((term, i) => (
+                      <div 
+                        key={`pop-${i}`} 
+                        className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors font-sans font-semibold"
+                        onClick={() => handleSearchSelect(term)}
+                      >
+                        <span>{term}</span>
+                        <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div>
+                  {searchSuggestions.length > 0 ? (
+                    searchSuggestions.map((term: any, i) => (
+                      <div 
+                        key={`sugg-${i}`} 
+                        className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors font-sans font-semibold"
+                        onClick={() => handleSearchSelect(String(term))}
+                      >
+                        <span>{String(term)}</span>
+                        <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-4 text-center text-muted-foreground uppercase tracking-widest text-[10px] font-sans">
+                      No matching sips found
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-[1400px] mx-auto flex w-full">
+        
+        {/* Left Sidebar Layout */}
+        <aside className="w-20 sm:w-24 md:w-60 lg:w-72 bg-secondary border-r border-border shrink-0 sticky top-20 md:top-[116px] h-[calc(100vh-80px)] md:h-[calc(100vh-116px)] overflow-y-auto no-scrollbar flex flex-col z-20">
+          <div className="hidden md:block px-6 py-6 pb-2 border-b border-border mb-2 sticky top-0 bg-secondary/95 backdrop-blur-sm z-10">
+            <h2 className="text-xl font-black uppercase tracking-tight">Juice Bar</h2>
+            <p className="text-[10px] text-muted-foreground mt-1 font-medium font-mono uppercase tracking-wider">Est. Surat 2026</p>
+          </div>
+          
+          <div className="flex flex-col w-full px-1.5 md:px-3 gap-1 pt-2 md:pt-0 pb-8">
+            {ALL_JUICE_SECTIONS.map((section) => {
+              const isActive = activeSubCategory === section.id;
+              return (
                 <button
                   key={section.id}
-                  onClick={() => setActiveSubCategory(section.id)}
-                  className={`px-5 py-3 text-[9px] uppercase tracking-[0.2em] font-extrabold rounded-full border transition-all duration-300 flex items-center gap-1.5 ${
-                    activeSubCategory === section.id
-                      ? 'bg-primary text-white border-primary shadow-[0_4px_15px_rgba(0,184,83,0.15)]'
-                      : 'bg-secondary text-foreground border-border hover:border-primary/50 hover:text-primary hover:bg-primary/5'
+                  onClick={() => {
+                    setSearchParams({ subCategory: section.id });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-3 p-2.5 md:px-4 md:py-3.5 rounded-[14px] transition-all w-full relative group ${
+                    isActive 
+                      ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-border/80 text-primary z-10' 
+                      : 'text-muted-foreground border border-transparent hover:bg-white/50 active:bg-black/5 hover:text-foreground'
                   }`}
                 >
-                  {section.id === 'cold-pressed' && <Flame className="w-3 h-3 text-orange-500" />}
-                  {section.id === 'detox' && <Wind className="w-3 h-3 text-red-500" />}
-                  {section.id === 'satvik' && <Leaf className="w-3 h-3 text-emerald-500" />}
-                  {section.id === 'smoothies' && <Check className="w-3 h-3 text-purple-500" />}
-                  {section.id === 'sweet-cravings' && <Heart className="w-3 h-3 text-pink-500" />}
-                  {section.id === 'special' && <Star className="w-3 h-3 text-sky-500 animate-pulse" />}
-                  {section.name}
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-md md:hidden" />
+                  )}
+                  <div className={`w-11 h-11 md:w-10 md:h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center transition-all relative ${isActive ? 'bg-primary/10' : 'bg-background border border-border group-hover:border-primary/30'}`}>
+                    {getSectionIcon(section.id, `w-5 h-5 md:w-3.5 md:h-3.5 ${isActive ? 'scale-110' : 'opacity-70'}`)}
+                  </div>
+                  <span className={`text-[9px] md:text-sm text-center md:text-left leading-tight mt-1 md:mt-0 md:normal-case md:font-bold ${isActive ? 'font-black uppercase tracking-widest text-primary md:text-foreground' : 'font-semibold tracking-wide md:tracking-normal'} break-words w-full`}>
+                    {section.name}
+                  </span>
                 </button>
-              ))}
-            </div>
-
-            {/* Minimal Search Field */}
-            <div className="relative w-full md:w-80 shrink-0">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Find botanical elixir..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-4 rounded-full border border-border text-xs text-foreground focus:outline-none focus:border-primary bg-secondary placeholder-muted-foreground transition-colors"
-              />
-            </div>
+              );
+            })}
           </div>
-      </div>
+        </aside>
 
-      {/* Content Section */}
-      {loading || seeding ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)}
-          </div>
-        ) : (
-          <div className="space-y-16">
+        {/* Main Content Side */}
+        <main className="flex-1 relative z-10">
+          <div className="p-3 sm:p-5 md:p-8 min-h-full flex flex-col bg-white">
             
-            {/* Split view or grid for each section or filtered items */}
-            <AnimatePresence mode="wait">
-              <motion.div 
-                layout 
-                className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-3 sm:gap-6 lg:gap-8"
-              >
-                {filteredJuices.map((product) => {
+            {/* Desktop header with search */}
+            <div className="hidden md:flex flex-col xl:flex-row gap-6 justify-between items-start xl:items-center mb-8 border-b border-border pb-6">
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-muted-foreground block font-mono">
+                  Raw Cold Squeezed No Pasteurization
+                </span>
+                <h1 className="text-3xl md:text-5xl font-sans font-black uppercase tracking-tight text-foreground leading-none">
+                  {activeSubCategory === 'all' ? 'Signature Blends' : activeSubCategoryInfo?.name}
+                </h1>
+                <p className="text-muted-foreground text-xs font-semibold max-w-xl leading-relaxed normal-case">
+                  {activeSubCategory === 'all' 
+                    ? 'Raw, cold-extracted juices with zero added water or artificial preservatives. Handcrafted daily at 4:30 AM to capture living enzymes in premium recyclable glass flasks.' 
+                    : activeSubCategoryInfo?.tagline}
+                </p>
+              </div>
+              
+              <div className="flex gap-3 w-full xl:w-auto relative search-container">
+                <div className="relative w-full xl:w-[320px] shrink-0">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input 
+                    type="text" 
+                    placeholder="Search raw menu board..." 
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleSearchKeyDown}
+                    onFocus={() => setIsSearchFocused(true)}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-full border border-border text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-secondary placeholder-muted-foreground transition-colors mix-blend-normal"
+                  />
+                  {isSearchFocused && (
+                    <div className="absolute top-full mt-2 w-full bg-background border border-border rounded-xl shadow-xl z-50 overflow-hidden text-xs py-2">
+                       {!searchQuery ? (
+                        <>
+                          {recentSearches.length > 0 && (
+                            <div className="mb-2 w-full">
+                              <div className="flex items-center justify-between px-4 py-2 text-muted-foreground">
+                                <span className="font-bold flex items-center gap-1 font-sans"><History className="w-3 h-3" /> Recent Searches</span>
+                                <button onClick={handleClearRecent} className="hover:text-primary transition-colors text-[10px] uppercase font-black tracking-widest font-sans">Clear</button>
+                              </div>
+                              {recentSearches.map((term, i) => (
+                                <div 
+                                  key={`recent-${i}`} 
+                                  className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors font-sans font-semibold"
+                                  onClick={() => handleSearchSelect(term)}
+                                >
+                                  <span>{term}</span>
+                                  <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="w-full">
+                            <div className="px-4 py-2 text-muted-foreground font-bold flex items-center gap-1 font-sans">
+                              <TrendingUp className="w-3 h-3" /> Popular Searches
+                            </div>
+                            {POPULAR_SEARCHES.map((term, i) => (
+                              <div 
+                                key={`pop-${i}`} 
+                                className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors font-sans font-semibold"
+                                onClick={() => handleSearchSelect(term)}
+                              >
+                                <span>{term}</span>
+                                <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full">
+                          {searchSuggestions.length > 0 ? (
+                            searchSuggestions.map((term: any, i) => (
+                              <div 
+                                key={`sugg-${i}`} 
+                                className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors font-sans font-semibold"
+                                onClick={() => handleSearchSelect(String(term))}
+                              >
+                                <span>{String(term)}</span>
+                                <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-4 text-center text-muted-foreground uppercase tracking-widest text-[10px] font-sans">
+                              No matching sips found
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <button onClick={() => setShowFilterModal(true)} className="px-4 py-3.5 rounded-full bg-secondary text-foreground text-sm font-bold flex items-center gap-2 border border-border hover:border-primary/50 transition-colors shrink-0 cursor-pointer">
+                  <Filter className="w-4 h-4"/> Filter
+                </button>
+              </div>
+            </div>
+            
+            {/* Mobile Header view */}
+            <div className="md:hidden flex items-center justify-between mb-4 pb-2 border-b border-border w-full">
+               <h2 className="text-lg font-black tracking-tight">{activeSubCategory === 'all' ? 'Signature Juices' : activeSubCategoryInfo?.name}</h2>
+               <button onClick={() => setShowFilterModal(true)} className="p-2 rounded-lg bg-secondary text-foreground text-xs font-bold flex items-center gap-1.5 shrink-0 border border-transparent active:bg-black/5 cursor-pointer">
+                  <Filter className="w-3.5 h-3.5"/> Filter
+               </button>
+            </div>
+
+            {/* Product lists/Grid with Skeleton Loading and Lazy Image renderers */}
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pb-12">
+              {loading || seeding ? (
+                Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
+              ) : filteredJuices.length === 0 ? (
+                <div className="col-span-full py-24 text-center text-muted-foreground font-sans text-xs uppercase tracking-widest border border-dashed border-border rounded-w p-8">
+                  This menu section is currently resting or empty under ₹{maxPrice}.
+                </div>
+              ) : (
+                filteredJuices.map((product) => {
                   const subCatId = getSubCategory(product);
                   const subCatInfo = JUICE_SECTIONS.find(s => s.id === subCatId);
-                  
                   return (
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.3 }}
-                      key={product.id}
-                      className="slice-card h-full"
-                    >
-                      {/* Sub-category tag */}
-                      <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap gap-1.5 leading-none">
-                        {subCatInfo && (
-                          <span className="bg-white/40 backdrop-blur-md text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/40 shadow-sm">
-                            {subCatInfo.name}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Image container */}
-                      <Link to={`/product/${product.id}`} className="w-full aspect-[4/3] overflow-hidden relative bg-secondary border-b border-border block shrink-0">
-                        <img
-                          src={product.imageUrl || 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&auto=format&fit=crop&q=80'}
-                          alt={product.name}
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110 filter brightness-[95%]"
-                        />
-                      </Link>
-
-                      {/* Info & Typography block */}
-                      <div className="p-3 sm:p-5 md:p-6 bg-secondary space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
-                        <div className="flex flex-col gap-1.5 w-full">
-                          <h3 className="text-xs sm:text-sm font-sans font-black uppercase tracking-wider text-foreground line-clamp-2 leading-tight">
-                            {product.name}
-                          </h3>
-                          
-                          <div className="flex items-end justify-between w-full mt-1 sm:mt-2">
-                            <div className="flex flex-col gap-1.5">
-                              {product.originalPrice && product.originalPrice > product.price && (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] sm:text-xs text-muted-foreground line-through font-medium uppercase tracking-wider">MRP ₹{product.originalPrice}</span>
-                                  <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-red-500 px-1.5 py-0.5 rounded-md leading-none tracking-widest">
-                                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                                  </span>
-                                </div>
-                              )}
-                              <div className="font-sans text-lg sm:text-xl font-black text-foreground tracking-tighter leading-none flex items-center gap-1">
-                                <span className="text-sm font-bold text-muted-foreground">₹</span>{product.price}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Price & Cart block */}
-                        <button 
-                          onClick={() => handleAddToCart(product)}
-                          className="w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] bg-primary text-white font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-all duration-300 hover:bg-[#09120b] hover:text-white hover:scale-[1.02] transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer mt-auto"
-                        >
-                          <ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> <span className="hidden xs:inline">+ Add to Basket</span><span className="xs:hidden">Add</span>
-                        </button>
-                      </div>
-                    </motion.div>
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      onAddToCart={handleAddToCart} 
+                      displayCategoryOverride={subCatInfo?.name || "Cold-Pressed"} 
+                    />
                   );
-                })}
+                })
+              )}
+            </div>
 
-                {filteredJuices.length === 0 && (
-                  <div className="col-span-full py-36 text-center text-muted-foreground font-sans text-xs uppercase tracking-widest border border-dashed border-border rounded-3xl p-8">
-                    This menu section is currently resting or empty.
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+            {/* Vintage style bottom informational banner */}
+            <div className="bg-secondary border border-border rounded-[24px] p-6 sm:p-10 text-center max-w-3xl mx-auto space-y-6 mt-1 w-full">
+              <Leaf className="w-8 h-8 text-[#059669] mx-auto animate-pulse" />
+              <h3 className="text-sm font-black uppercase tracking-widest text-foreground">The Cold-Pressed Commitment</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed max-w-xl mx-auto normal-case font-medium">
+                At Fresh N Local Juice House, we do not compromise. We never use pasteurization or heat treatment, which kills living vitamins and enzymes. Absolutely no chemical colors, artificial fillers, table sugars, or frozen syrups. Pure goodness in every bottle.
+              </p>
+              <div className="pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+                <div>
+                  <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block mb-1">Contact Us</span>
+                  <span className="text-[10px] font-bold text-foreground">+91 72840 00883</span>
+                </div>
+                <div>
+                  <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block mb-1">Official Email</span>
+                  <span className="text-[10px] font-bold text-foreground font-mono">freshnlocalco@gmail.com</span>
+                </div>
+                <div>
+                  <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block mb-1">Surat Address</span>
+                  <span className="text-[10px] font-bold text-foreground uppercase leading-snug">Gr Floor Hall, Reva Dham, Uma Bhawan Road</span>
+                </div>
+              </div>
+            </div>
 
           </div>
-        )}
+        </main>
+      </div>
 
-        {/* Minimal Bottom Info Section matching premium juice shop menus */}
-        <div className="bg-secondary border border-border rounded-[24px] p-6 sm:p-10 text-center max-w-3xl mx-auto space-y-6">
-          <Leaf className="w-8 h-8 text-[#059669] mx-auto animate-pulse" />
-          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">The Cold-Pressed Commitment</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed max-w-xl mx-auto normal-case font-medium">
-            At Fresh N Local Juice House, we do not compromise. We never use pasteurization or heat treatment, which kills living vitamins and enzymes. Absolutely no chemical colors, artificial fillers, table sugars, or frozen syrups. Pure goodness in every bottle.
-          </p>
-          <div className="pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-            <div>
-              <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block mb-1">Contact Us</span>
-              <span className="text-[10px] font-bold text-foreground uppercase">+91 72840 00883</span>
+      {/* Filter Modal for Juices */}
+      {showFilterModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/55 backdrop-blur-xs transition-opacity" onClick={() => setShowFilterModal(false)}>
+          <div 
+            className="w-full sm:w-96 bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl transform transition-transform animate-in slide-in-from-bottom-5" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-black text-xl uppercase tracking-tight">Filters</h3>
+              <button onClick={() => setShowFilterModal(false)} className="p-2 bg-secondary rounded-full hover:bg-black/5 transition-colors cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div>
-              <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block mb-1">Official Email</span>
-              <span className="text-[10px] font-bold text-foreground font-mono">freshnlocalco@gmail.com</span>
+            
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mr-2 text-left">Max Price</label>
+                  <span className="font-black text-primary">₹{maxPrice}</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="500" 
+                  step="10"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary" 
+                />
+                <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground mt-2">
+                  <span>₹0</span>
+                  <span>₹500+</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground block mb-1">Surat Address</span>
-              <span className="text-[10px] font-bold text-foreground uppercase leading-snug">Gr Floor Hall, Reva Dham, Uma Bhawan Road</span>
-            </div>
+
+            <button 
+              onClick={() => setShowFilterModal(false)}
+              className="w-full mt-8 py-3.5 bg-primary text-white font-black text-sm uppercase tracking-widest rounded-xl hover:bg-[#09120b] transition-colors cursor-pointer"
+            >
+              Apply Filter
+            </button>
           </div>
         </div>
-
-      </div>
+      )}
+    </div>
   );
 }
 

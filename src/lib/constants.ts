@@ -1,3 +1,17 @@
+export const CATEGORIES = [
+  'All Products',
+  'Indian Fruits',
+  'Exotic Fruits',
+  'Exotic Vegetables',
+  'Herbs & Seasoning',
+  'Fresh & Hygenic Cut Fruits and Vegetables',
+  'Imported / Super Exotic Vegetables',
+  'Leafy Greens',
+  'Frozen Items',
+  'Mushrooms',
+  'FNL Juices'
+];
+
 export const CATEGORY_IMAGES: Record<string, string> = {
   'indian fruits': 'https://images.pexels.com/photos/264537/pexels-photo-264537.jpeg?auto=compress&cs=tinysrgb&w=800',
   'exotic fruits': 'https://images.pexels.com/photos/1132047/pexels-photo-1132047.jpeg?auto=compress&cs=tinysrgb&w=800',
@@ -13,8 +27,11 @@ export const CATEGORY_IMAGES: Record<string, string> = {
   'default': 'https://images.pexels.com/photos/1414651/pexels-photo-1414651.jpeg?auto=compress&cs=tinysrgb&w=800'
 };
 
-export const getCategoryImage = (category?: string) => {
+export const getCategoryImage = (category?: string, customMapping?: Record<string, string>) => {
   if (!category) return CATEGORY_IMAGES['default'];
   const normalizedCategory = category.toLowerCase().replace(/ font-bold/gi, '');
+  if (customMapping && customMapping[normalizedCategory]) {
+    return customMapping[normalizedCategory];
+  }
   return CATEGORY_IMAGES[normalizedCategory] || CATEGORY_IMAGES['default'];
 };

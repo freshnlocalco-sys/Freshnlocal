@@ -6,10 +6,13 @@ import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck
 import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
+import { useSettings } from '../store/useSettings';
 import toast from 'react-hot-toast';
 
 export function Cart() {
+  const { categoryImages } = useSettings();
   const { items, removeItem, updateQuantity, total, clearCart } = useCart();
+  const cartItems = items.filter(item => item && item.product && item.product.id);
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -76,7 +79,7 @@ export function Cart() {
       const orderData = {
         orderNumber,
         userId: user.uid,
-        items: items.map(i => ({ product: i.product, quantity: i.quantity })),
+        items: cartItems.map(i => ({ product: i.product, quantity: i.quantity })),
         totalAmount: total(),
         status: 'pending',
         paymentMethod: 'COD',
@@ -112,7 +115,7 @@ export function Cart() {
     }
   };
 
-  if (items.length === 0) {
+  if (cartItems.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-36 px-4 text-center max-w-7xl mx-auto w-full bg-background text-foreground">
         <div className="w-20 h-20 bg-secondary border border-border flex items-center justify-center rounded-[24px] mb-8 shadow-inner">
@@ -160,12 +163,12 @@ export function Cart() {
         </div>
 
         <div className="space-y-6">
-          {items.map((item) => (
+          {cartItems.map((item) => (
             <div key={item.product.id} className="slice-card flex flex-col sm:flex-row gap-6 p-6 items-start sm:items-center relative group">
               {/* Product preview card layout */}
               <div className="w-[120px] aspect-[4/3] bg-background border border-border flex-shrink-0 relative rounded-2xl overflow-hidden shadow-inner">
                 <img 
-                  src={item.product.imageUrl || getCategoryImage(item.product.category)} 
+                  src={item.product.imageUrl || getCategoryImage(item.product.category, categoryImages)} 
                   alt={item.product.name} 
                   loading="lazy"
                   className="w-full h-full object-cover"

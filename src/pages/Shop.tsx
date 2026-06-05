@@ -1,69 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { useProducts } from '../store/useProducts';
 import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
-import { Search, ShoppingBag, ArrowRight, Zap, Sparkles, History, TrendingUp, X } from 'lucide-react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { getCategoryImage } from '../lib/constants';
+import { Search, ShoppingBag, ArrowRight, Zap, Sparkles, History, TrendingUp, X, Filter } from 'lucide-react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { getCategoryImage, CATEGORIES } from '../lib/constants';
+import { useSettings } from '../store/useSettings';
 import { ProductSkeleton } from '../components/ProductSkeleton';
+import { ProductCard } from '../components/ProductCard';
 import toast from 'react-hot-toast';
 
-const CATEGORIES = [
-  'All Products',
-  'Indian Fruits',
-  'Exotic Fruits',
-  'Exotic Vegetables',
-  'Herbs & Seasoning',
-  'Fresh & Hygenic Cut Fruits and Vegetables',
-  'Imported / Super Exotic Vegetables',
-  'Leafy Greens',
-  'Frozen Items',
-  'Mushrooms'
-];
-
 export function Shop() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const { products, loading: storeLoading, error, fetchProducts } = useProducts();
+  const { categoryImages, fetchCategoryImages } = useSettings();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const { addItem } = useCart();
-  const [searchParams] = useSearchParams();
-  const categoryFilter = searchParams.get('category');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const categoryFilter = searchParams.get('category') || CATEGORIES[0];
   const [isOffline, setIsOffline] = useState(false);
   const [offlineError, setOfflineError] = useState('');
+  const [maxPrice, setMaxPrice] = useState<number>(5000);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        setLoading(true);
-        setIsOffline(false);
-        const q = query(collection(db, 'products'));
-         const querySnapshot = await getDocs(q);
-        const fetchedProducts = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          const pPrice = Number(data.price) || 0;
-          const pMrp = Number(data.originalPrice) || Number(data.mrp) || Number(data.MRP) || 0;
-          return {
-            id: doc.id,
-            ...data,
-            price: pPrice,
-            originalPrice: pMrp > pPrice ? pMrp : undefined
-          };
-        }) as Product[];
-        setProducts(fetchedProducts);
-      } catch (error: any) {
-        if (isQuotaError(error)) {
-          setIsOffline(true);
-          setOfflineError(error?.message || String(error));
-          toast.error(`Database error: ${error?.message || String(error)}`, { duration: 8000 });
-        } else {
-          handleFirestoreError(error, OperationType.LIST, 'products');
-        }
-      } finally {
-        setLoading(false);
-      }
+    async function load() {
+      setLoading(true);
+      await Promise.all([fetchProducts(), fetchCategoryImages()]);
+      setLoading(false);
     }
-    fetchProducts();
-  }, []);
+    load();
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    if (error) {
+      setIsOffline(true);
+      setOfflineError(error);
+    } else {
+      setIsOffline(false);
+    }
+  }, [error]);
 
   const POPULAR_SEARCHES = ['Devgad Alphonso', 'Avocados', 'Strawberries', 'Button Mushrooms', 'Broccoli'];
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -132,7 +109,8 @@ export function Shop() {
       ? productCategory === categoryFilter.toLowerCase()
       : true;
     const matchesSearch = p.name ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
-    return matchesCategory && matchesSearch;
+    const matchesPrice = typeof p.price === 'number' ? p.price <= maxPrice : true;
+    return matchesCategory && matchesSearch && matchesPrice;
   });
 
   const handleAddToCart = (product: Product) => {
@@ -140,55 +118,44 @@ export function Shop() {
     toast.success(`${product.name} added to cart!`);
   };
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 w-full bg-background text-foreground">
-      <div className="mb-14">
-        {/* Removed The Harvest Desk badge */}
-        
-        <h1 className="text-4xl md:text-7xl font-sans font-black uppercase tracking-tight text-foreground mb-4">
-          {categoryFilter && categoryFilter.toLowerCase() !== 'all products' ? `${categoryFilter}` : 'Gourmet Inventories'}
-        </h1>
-        <p className="text-muted-foreground text-xs font-semibold max-w-xl leading-relaxed">
-          Carefully vetted crops, hand-harvested and packed with medical-grade food safety standards. No middleman markup or delay.
-        </p>
-        
-        <div className="flex flex-col xl:flex-row gap-6 mt-12 items-start xl:items-center justify-between border-b border-border pb-8">
-          {/* Category Navigation with futuristic high-contrast pills */}
-          <div className="flex flex-wrap gap-2.5 flex-1">
-            {CATEGORIES.map((cat) => (
-              <Link 
-                key={cat} 
-                to={cat === 'All Products' ? '/shop' : `/shop?category=${encodeURIComponent(cat)}`}
-                className={`px-5 py-3 text-[9px] uppercase tracking-[0.2em] font-extrabold rounded-full border transition-all duration-300 ${
-                  (cat === 'All Products' && !categoryFilter) || (categoryFilter?.toLowerCase() === cat.toLowerCase())
-                    ? 'bg-primary text-white border-primary shadow-[0_4px_15px_rgba(0,184,83,0.15)]'
-                    : 'bg-secondary text-foreground border-border hover:border-primary/50 hover:text-primary hover:bg-primary/5'
-                }`}
-              >
-                {cat}
-              </Link>
-            ))}
-          </div>
+  const formatCategoryName = (catName: string) => {
+    if (catName.toLowerCase() === 'fresh & hygenic cut fruits and vegetables') return 'Clean Cuts';
+    if (catName.toLowerCase() === 'imported / super exotic vegetables') return 'Exotics';
+    return catName;
+  };
 
-          <div className="relative w-full md:w-80 shrink-0 search-container">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+  return (
+    <div className="w-full bg-background text-foreground">
+      
+      {/* Mobile Search Header */}
+      <div className="md:hidden px-3 py-3 bg-background/95 backdrop-blur-md border-b border-border relative z-40">
+        <div className="relative w-full search-container z-50">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
             <input 
               type="text" 
-              placeholder="Search active crop rosters..." 
+              placeholder="Search products..." 
               value={searchQuery}
               onChange={handleSearchChange}
               onKeyDown={handleSearchKeyDown}
               onFocus={() => setIsSearchFocused(true)}
-              className="w-full pl-11 pr-4 py-4 rounded-full border border-border text-xs text-foreground focus:outline-none focus:border-primary bg-secondary placeholder-muted-foreground transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border text-xs text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-white placeholder-muted-foreground transition-all"
             />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-muted text-muted-foreground hover:bg-secondary"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
             {isSearchFocused && (
-              <div className="absolute top-full mt-2 w-full bg-background border border-border rounded-2xl shadow-xl z-50 overflow-hidden text-xs py-2">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-xl shadow-xl z-50 overflow-hidden text-xs py-2 max-h-[60vh] overflow-y-auto">
                 {!searchQuery ? (
                   <>
                     {recentSearches.length > 0 && (
                       <div className="mb-2">
                         <div className="flex items-center justify-between px-4 py-2 text-muted-foreground">
-                          <span className="font-bold flex items-center gap-1"><History className="w-3 h-3" /> Recent Searches</span>
+                          <span className="font-bold flex items-center gap-1"><History className="w-3 h-3" /> Recent</span>
                           <button onClick={handleClearRecent} className="hover:text-primary transition-colors text-[10px] uppercase font-black tracking-widest">Clear</button>
                         </div>
                         {recentSearches.map((term, i) => (
@@ -205,7 +172,7 @@ export function Shop() {
                     )}
                     <div>
                       <div className="px-4 py-2 text-muted-foreground font-bold flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3" /> Popular Searches
+                        <TrendingUp className="w-3 h-3" /> Popular
                       </div>
                       {POPULAR_SEARCHES.map((term, i) => (
                         <div 
@@ -222,13 +189,13 @@ export function Shop() {
                 ) : (
                   <div>
                     {searchSuggestions.length > 0 ? (
-                      searchSuggestions.map((term, i) => (
+                      searchSuggestions.map((term: any, i) => (
                         <div 
                           key={`sugg-${i}`} 
                           className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors"
-                          onClick={() => handleSearchSelect(term)}
+                          onClick={() => handleSearchSelect(String(term))}
                         >
-                          <span>{term}</span>
+                          <span>{String(term)}</span>
                           <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
                         </div>
                       ))
@@ -241,83 +208,224 @@ export function Shop() {
                 )}
               </div>
             )}
-          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
-        {loading ? (
-          Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
-        ) : isOffline ? (
-          <div className="col-span-full py-36 text-center text-muted-foreground font-sans text-sm uppercase tracking-widest border border-dashed border-border rounded-3xl p-8 bg-secondary flex flex-col items-center gap-4">
-            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mb-2">
-              <Zap className="w-6 h-6" />
-            </div>
-            Store is temporarily offline due to database limits.
-            <span className="text-[10px] text-muted-foreground max-w-sm normal-case mt-2">
-              Our database is blocking access right now.
-              <br/><br/>
-              <b>Error:</b> {offlineError}
-            </span>
+      <div className="max-w-[1400px] mx-auto flex w-full">
+        
+        {/* Left Sidebar Layout */}
+        <aside className="w-20 sm:w-24 md:w-60 lg:w-72 bg-secondary border-r border-border shrink-0 sticky top-20 md:top-[116px] h-[calc(100vh-80px)] md:h-[calc(100vh-116px)] overflow-y-auto no-scrollbar flex flex-col z-20">
+          <div className="hidden md:block px-6 py-6 pb-2 border-b border-border mb-2 sticky top-0 bg-secondary/95 backdrop-blur-sm z-10">
+            <h2 className="text-xl font-black uppercase tracking-tight">Categories</h2>
+            <p className="text-[10px] text-muted-foreground mt-1 font-medium">Fresh harvest daily</p>
           </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="col-span-full py-36 text-center text-muted-foreground font-sans text-xs uppercase tracking-widest border border-dashed border-border rounded-3xl p-8">
-            This crop tier is currently resting or sold out. Select an active harvest catalog above.
+          
+          <div className="flex flex-col w-full px-1.5 md:px-3 gap-1 pt-2 md:pt-0 pb-8">
+            {CATEGORIES.map((cat) => {
+              const isActive = categoryFilter?.toLowerCase() === cat.toLowerCase();
+              return (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setSearchParams({ category: cat });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-3 p-2.5 md:px-4 md:py-3.5 rounded-[14px] transition-all w-full relative group ${
+                    isActive 
+                      ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-border/80 text-primary z-10' 
+                      : 'text-muted-foreground border border-transparent hover:bg-white/50 active:bg-black/5 hover:text-foreground'
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-md md:hidden" />
+                  )}
+                  <div className={`w-11 h-11 md:w-10 md:h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center transition-colors relative ${isActive ? 'bg-primary/10' : 'bg-background border border-border group-hover:border-primary/30'}`}>
+                    {cat === 'All Products' ? (
+                      <ShoppingBag className={`w-5 h-5 md:w-4 md:h-4 text-primary ${isActive ? 'opacity-100 scale-110' : 'opacity-70'}`} />
+                    ) : (
+                      <img src={getCategoryImage(cat, categoryImages)} alt={cat} className={`w-7 h-7 md:w-6 md:h-6 object-contain ${isActive ? 'opacity-100 scale-110' : 'opacity-70'} transition-all`} />
+                    )}
+                  </div>
+                  <span className={`text-[9px] md:text-sm text-center md:text-left leading-tight mt-1 md:mt-0 md:normal-case md:font-bold ${isActive ? 'font-black uppercase tracking-widest text-primary md:text-foreground' : 'font-semibold tracking-wide md:tracking-normal'} break-words w-full`}>
+                    {cat === 'All Products' ? 'All' : formatCategoryName(cat)}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        ) : (
-          filteredProducts.map((product) => {
-            const displayCategory = product.category.replace(/ font-bold/gi, '');
-            return (
-            <div key={product.id} className="slice-card h-full">
-              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap gap-1.5 leading-none">
-                <span className="bg-white/40 backdrop-blur-md text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/40 shadow-sm">
-                  {displayCategory}
-                </span>
+        </aside>
+
+        {/* Main Content Side */}
+        <main className="flex-1 relative z-10">
+          <div className="p-3 sm:p-5 md:p-8 min-h-full flex flex-col bg-white">
+            {/* Desktop header with search */}
+            <div className="hidden md:flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center mb-8 border-b border-border pb-6">
+              <div>
+                <h1 className="text-3xl font-black uppercase tracking-tight text-foreground line-clamp-1">{categoryFilter === 'All Products' ? 'The Harvest' : categoryFilter} <span className="text-primary font-bold hidden xl:inline-block">/ Fresh Selection</span></h1>
+                <p className="text-sm text-muted-foreground mt-2 font-medium">Delivering premium ingredients, responsibly sourced.</p>
               </div>
               
-              <Link to={`/product/${product.id}`} className="w-full aspect-[4/3] overflow-hidden relative bg-secondary border-b border-border block shrink-0">
-                <img 
-                  src={product.imageUrl || getCategoryImage(displayCategory)} 
-                  alt={product.name}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110 filter brightness-[95%]"
-                  referrerPolicy="no-referrer"
-                />
-              </Link>
-              
-              <div className="p-3 sm:p-5 md:p-6 bg-secondary space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
-                <div className="flex flex-col gap-1.5 w-full">
-                  <h3 className="text-xs sm:text-sm font-sans font-black uppercase tracking-wider text-foreground line-clamp-2 leading-tight">{product.name}</h3>
-                  
-                  <div className="flex items-end justify-between w-full mt-1 sm:mt-2">
-                    <div className="flex flex-col gap-1.5">
-                      {product.originalPrice && product.originalPrice > product.price && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] sm:text-xs text-muted-foreground line-through font-medium uppercase tracking-wider">MRP ₹{product.originalPrice}</span>
-                          <span className="text-[9px] sm:text-[10px] font-extrabold text-white bg-red-500 px-1.5 py-0.5 rounded-md leading-none tracking-widest">
-                            {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                          </span>
+              <div className="flex gap-3 w-full lg:w-auto relative">
+                <div className="relative w-full lg:w-[400px] shrink-0 search-container">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input 
+                    type="text" 
+                    placeholder="Search active crop rosters..." 
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleSearchKeyDown}
+                    onFocus={() => setIsSearchFocused(true)}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-full border border-border text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-secondary placeholder-muted-foreground transition-colors"
+                  />
+                  {isSearchFocused && (
+                    <div className="absolute top-full mt-2 w-full bg-background border border-border rounded-xl shadow-xl z-50 overflow-hidden text-xs py-2">
+                       {!searchQuery ? (
+                        <>
+                          {recentSearches.length > 0 && (
+                            <div className="mb-2">
+                              <div className="flex items-center justify-between px-4 py-2 text-muted-foreground">
+                                <span className="font-bold flex items-center gap-1"><History className="w-3 h-3" /> Recent Searches</span>
+                                <button onClick={handleClearRecent} className="hover:text-primary transition-colors text-[10px] uppercase font-black tracking-widest">Clear</button>
+                              </div>
+                              {recentSearches.map((term, i) => (
+                                <div 
+                                  key={`recent-${i}`} 
+                                  className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors"
+                                  onClick={() => handleSearchSelect(term)}
+                                >
+                                  <span>{term}</span>
+                                  <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div>
+                            <div className="px-4 py-2 text-muted-foreground font-bold flex items-center gap-1">
+                              <TrendingUp className="w-3 h-3" /> Popular Searches
+                            </div>
+                            {POPULAR_SEARCHES.map((term, i) => (
+                              <div 
+                                key={`pop-${i}`} 
+                                className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors"
+                                onClick={() => handleSearchSelect(term)}
+                              >
+                                <span>{term}</span>
+                                <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div>
+                          {searchSuggestions.length > 0 ? (
+                            searchSuggestions.map((term: any, i) => (
+                              <div 
+                                key={`sugg-${i}`} 
+                                className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors"
+                                onClick={() => handleSearchSelect(String(term))}
+                              >
+                                <span>{String(term)}</span>
+                                <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-4 text-center text-muted-foreground uppercase tracking-widest text-[10px]">
+                              No matching crops found
+                            </div>
+                          )}
                         </div>
                       )}
-                      <div className="font-sans text-lg sm:text-xl font-black text-foreground tracking-tighter leading-none flex items-center gap-1">
-                        <span className="text-sm font-bold text-muted-foreground">₹</span>{product.price}
-                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-                
-                <button 
-                  onClick={() => handleAddToCart(product)}
-                  className="w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] bg-primary text-white font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-all duration-300 hover:bg-[#09120b] hover:text-white hover:scale-[1.02] transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer mt-auto"
-                >
-                  <ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> <span className="hidden xs:inline">+ Add to Basket</span><span className="xs:hidden">Add</span>
+                <button onClick={() => setShowFilterModal(true)} className="px-4 py-3.5 rounded-full bg-secondary text-foreground text-sm font-bold flex items-center gap-2 border border-border hover:border-primary/50 transition-colors shrink-0">
+                  <Filter className="w-4 h-4"/> Filter
                 </button>
               </div>
             </div>
-            );
-          })
-        )}
+            
+            <div className="md:hidden flex items-center justify-between mb-4 pb-2 border-b border-border w-full">
+               <h2 className="text-lg font-black tracking-tight">{categoryFilter === 'All Products' ? 'All Items' : formatCategoryName(categoryFilter)}</h2>
+               <button onClick={() => setShowFilterModal(true)} className="p-2 rounded-lg bg-secondary text-foreground text-xs font-bold flex items-center gap-1.5 shrink-0 border border-transparent active:bg-black/5">
+                  <Filter className="w-3.5 h-3.5"/> Filter
+               </button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pb-6">
+              {loading ? (
+                Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
+              ) : isOffline ? (
+                <div className="col-span-full mt-10 py-16 text-center text-muted-foreground font-sans text-sm border border-dashed border-border rounded-3xl p-8 bg-secondary flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2">
+                    <Zap className="w-6 h-6" />
+                  </div>
+                  <b>Connection Issue</b>
+                  <span className="text-xs max-w-sm font-medium">Our database is currently blocking access. Refetch failed.</span>
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
+              ) : (
+                filteredProducts.map((product) => {
+                  const displayCategory = product.category.replace(/ font-bold/gi, '');
+                  return (
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      onAddToCart={handleAddToCart} 
+                      displayCategoryOverride={displayCategory} 
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </main>
       </div>
+
+      {showFilterModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setShowFilterModal(false)}>
+          <div 
+            className="w-full sm:w-96 bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl transform transition-transform animate-in slide-in-from-bottom-5 sm:slide-in-from-bottom-0 sm:zoom-in-95" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-black text-xl uppercase tracking-tight">Filters</h3>
+              <button onClick={() => setShowFilterModal(false)} className="p-2 bg-secondary rounded-full hover:bg-black/5 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Max Price</label>
+                  <span className="font-black text-primary">₹{maxPrice}</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="5000" 
+                  step="50"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary" 
+                />
+                <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground mt-2">
+                  <span>₹0</span>
+                  <span>₹5000+</span>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowFilterModal(false)}
+              className="w-full mt-8 py-3.5 bg-primary text-white font-black text-sm uppercase tracking-widest rounded-xl hover:bg-[#09120b] transition-colors"
+            >
+              Apply Filter
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

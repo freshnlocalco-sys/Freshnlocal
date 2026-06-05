@@ -5,9 +5,11 @@ import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/fi
 import { Product, useCart } from '../store/useCart';
 import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, ShieldCheck, Truck, RotateCcw, Zap } from 'lucide-react';
 import { getCategoryImage } from '../lib/constants';
+import { useSettings } from '../store/useSettings';
 import toast from 'react-hot-toast';
 
 export function ProductDetail() {
+  const { categoryImages } = useSettings();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
@@ -115,7 +117,7 @@ export function ProductDetail() {
             </span>
           </div>
           <img 
-            src={product.imageUrl || getCategoryImage(product.category)} 
+            src={product.imageUrl || getCategoryImage(product.category, categoryImages)} 
             alt={product.name}
             className="w-full h-full object-cover filter brightness-[95%]"
             referrerPolicy="no-referrer"
