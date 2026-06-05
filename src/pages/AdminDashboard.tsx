@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc } from 'firebase/firestore';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, Filter, Calendar } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, Filter, Calendar, TrendingUp, X } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
 import * as XLSX from 'xlsx';
@@ -106,6 +106,20 @@ export function AdminDashboard() {
     }
     return true;
   });
+
+  const topProducts = React.useMemo(() => {
+    const productCounts: Record<string, { name: string; quantity: number; revenue: number }> = {};
+    filteredOrders.forEach(order => {
+      order.items?.forEach((item: any) => {
+        if (!productCounts[item.product.id]) {
+          productCounts[item.product.id] = { name: item.product.name, quantity: 0, revenue: 0 };
+        }
+        productCounts[item.product.id].quantity += item.quantity;
+        productCounts[item.product.id].revenue += item.quantity * item.product.price;
+      });
+    });
+    return Object.values(productCounts).sort((a, b) => b.quantity - a.quantity).slice(0, 5);
+  }, [filteredOrders]);
 
   // Spotlights state
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {title: string, image: string}>>({});
@@ -415,6 +429,44 @@ export function AdminDashboard() {
     }
   };
 
+  const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
+
+  const handleToggleStock = async (product: Product) => {
+    try {
+      const newStockStatus = !(product.inStock ?? true);
+      await updateDoc(doc(db, 'products', product.id), { inStock: newStockStatus, updatedAt: Date.now() });
+      setProducts(products.map(p => p.id === product.id ? { ...p, inStock: newStockStatus } : p));
+      toast.success(`${product.name} marked as ${newStockStatus ? 'In Stock' : 'Out of Stock'}`);
+    } catch (error) {
+      toast.error('Failed to update stock status.');
+    }
+  };
+
+  const handlePriceChange = (productId: string, newPrice: string) => {
+    setEditingPrices(prev => ({ ...prev, [productId]: newPrice }));
+  };
+
+  const handleSavePrice = async (product: Product) => {
+    const newPriceValue = editingPrices[product.id];
+    if (!newPriceValue || isNaN(Number(newPriceValue))) {
+      toast.error('Invalid price');
+      return;
+    }
+    const parsedPrice = Number(newPriceValue);
+    try {
+      await updateDoc(doc(db, 'products', product.id), { price: parsedPrice, updatedAt: Date.now() });
+      setProducts(products.map(p => p.id === product.id ? { ...p, price: parsedPrice } : p));
+      
+      const newEditingPrices = { ...editingPrices };
+      delete newEditingPrices[product.id];
+      setEditingPrices(newEditingPrices);
+      
+      toast.success(`Price updated to ₹${parsedPrice}`);
+    } catch (error) {
+      toast.error('Failed to update price.');
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -674,6 +726,23 @@ export function AdminDashboard() {
                 <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">{filteredOrders.filter(o => o.status === 'pending').length}</span>
               </div>
             </div>
+
+            {topProducts.length > 0 && (
+              <div className="slice-bento !p-4 sm:!p-5">
+                <span className="text-foreground text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-4 block flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" /> Top Selling Products</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                  {topProducts.map((p, i) => (
+                    <div key={i} className="bg-secondary p-3 rounded-xl border border-border flex flex-col gap-1">
+                      <span className="text-xs font-bold text-foreground truncate">{p.name}</span>
+                      <div className="flex justify-between items-center text-[9px]">
+                        <span className="text-muted-foreground font-bold">{p.quantity} units</span>
+                        <span className="text-primary font-mono font-black">₹{p.revenue}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Filter Section */}
             <div className="flex flex-col sm:flex-row gap-4 items-end justify-between bg-secondary p-4 sm:p-5 rounded-2xl border border-border/70 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
@@ -1078,6 +1147,7 @@ export function AdminDashboard() {
                       <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Product Details</th>
                       <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Catalog Category</th>
                       <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap">Rate (₹)</th>
+                      <th className="p-3 sm:p-4 md:p-5 whitespace-nowrap text-center">In Stock</th>
                       <th className="p-3 sm:p-4 md:p-5 text-right whitespace-nowrap">Controls</th>
                     </tr>
                   </thead>
@@ -1093,11 +1163,13 @@ export function AdminDashboard() {
                         juiceSubCategory === 'sweet-cravings' ? 'Sweet Craving' :
                         juiceSubCategory === 'special' ? 'Our Special' : 'Juice';
 
+                      const isEditingPrice = editingPrices[product.id] !== undefined;
+
                       return (
-                        <tr key={product.id} className="hover:bg-black/5 transition-colors">
+                        <tr key={product.id} className={`transition-colors ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}>
                           <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
-                            <div className="w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0">
-                              <img src={product.imageUrl || getCategoryImage(product.category)} alt="" className="w-full h-full object-cover" />
+                            <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
+                              <img src={product.imageUrl || getCategoryImage(product.category)} alt="" loading="lazy" className="w-full h-full object-cover" />
                             </div>
                             <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                           </td>
@@ -1112,7 +1184,46 @@ export function AdminDashboard() {
                               </span>
                             )}
                           </td>
-                          <td className="p-3 sm:p-4 md:p-5 font-bold font-mono text-foreground text-[10px] sm:text-xs">₹{product.price}</td>
+                          <td className="p-3 sm:p-4 md:p-5 font-bold font-mono text-foreground text-[10px] sm:text-xs">
+                            {isEditingPrice ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">₹</span>
+                                <input
+                                  type="number"
+                                  className="w-16 sm:w-20 bg-white border border-border rounded px-2 py-1 text-xs outline-none focus:border-primary"
+                                  value={editingPrices[product.id]}
+                                  onChange={(e) => handlePriceChange(product.id, e.target.value)}
+                                />
+                                <button onClick={() => handleSavePrice(product)} className="text-primary hover:text-green-600 font-black bg-primary/10 rounded px-2 py-1 tracking-widest uppercase text-[8px]">
+                                  Save
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 group">
+                                <span>₹{product.price}</span>
+                                <button onClick={() => handlePriceChange(product.id, String(product.price))} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary p-1 bg-white border border-border rounded">
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-3 sm:p-4 md:p-5 text-center">
+                            <button
+                              onClick={() => handleToggleStock(product)}
+                              className={`relative inline-flex h-5 sm:h-6 w-9 sm:w-11 items-center rounded-full transition-colors ${
+                                product.inStock !== false ? 'bg-primary' : 'bg-red-500'
+                              } focus:outline-none`}
+                            >
+                              <span
+                                className={`inline-block h-3 sm:h-4 w-3 sm:w-4 transform rounded-full bg-white transition-transform ${
+                                  product.inStock !== false ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                            <span className="block mt-1 text-muted-foreground uppercase tracking-widest text-[7px]">
+                              {product.inStock !== false ? 'In Stock' : 'Out'}
+                            </span>
+                          </td>
                           <td className="p-3 sm:p-4 md:p-5 text-right space-x-2">
                           <button 
                             onClick={() => handleEditSetup(product)} 

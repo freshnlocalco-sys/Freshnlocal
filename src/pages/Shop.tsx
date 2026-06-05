@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
-import { Search, ShoppingBag, ArrowRight, Zap, Sparkles } from 'lucide-react';
+import { Search, ShoppingBag, ArrowRight, Zap, Sparkles, History, TrendingUp, X } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
+import { ProductSkeleton } from '../components/ProductSkeleton';
 import toast from 'react-hot-toast';
 
 const CATEGORIES = [
@@ -64,6 +65,60 @@ export function Shop() {
     fetchProducts();
   }, []);
 
+  const POPULAR_SEARCHES = ['Devgad Alphonso', 'Avocados', 'Strawberries', 'Button Mushrooms', 'Broccoli'];
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('recentSearches');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleSearchSelect = (term: string) => {
+    setSearchQuery(term);
+    setIsSearchFocused(false);
+    if (!term) return;
+    
+    const newRecent = [term, ...recentSearches.filter(s => s.toLowerCase() !== term.toLowerCase())].slice(0, 5);
+    setRecentSearches(newRecent);
+    localStorage.setItem('recentSearches', JSON.stringify(newRecent));
+  };
+
+  const handleClearRecent = () => {
+    setRecentSearches([]);
+    localStorage.removeItem('recentSearches');
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearchSelect(searchQuery);
+    }
+  };
+
+  const searchSuggestions = searchQuery
+    ? Array.from(new Set(products
+        .filter(p => p.name?.toLowerCase().includes(searchQuery.toLowerCase()) && p.category !== 'fnl juices')
+        .map(p => p.name)))
+        .slice(0, 5)
+    : [];
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.search-container')) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const filteredProducts = products.filter(p => {
     let productCategory = p.category ? p.category.toLowerCase() : '';
     productCategory = productCategory.replace(' font-bold', ''); // Normalize older data typos
@@ -115,25 +170,84 @@ export function Shop() {
             ))}
           </div>
 
-          <div className="relative w-full md:w-80 shrink-0">
+          <div className="relative w-full md:w-80 shrink-0 search-container">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input 
               type="text" 
               placeholder="Search active crop rosters..." 
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={() => setIsSearchFocused(true)}
               className="w-full pl-11 pr-4 py-4 rounded-full border border-border text-xs text-foreground focus:outline-none focus:border-primary bg-secondary placeholder-muted-foreground transition-colors"
             />
+            {isSearchFocused && (
+              <div className="absolute top-full mt-2 w-full bg-background border border-border rounded-2xl shadow-xl z-50 overflow-hidden text-xs py-2">
+                {!searchQuery ? (
+                  <>
+                    {recentSearches.length > 0 && (
+                      <div className="mb-2">
+                        <div className="flex items-center justify-between px-4 py-2 text-muted-foreground">
+                          <span className="font-bold flex items-center gap-1"><History className="w-3 h-3" /> Recent Searches</span>
+                          <button onClick={handleClearRecent} className="hover:text-primary transition-colors text-[10px] uppercase font-black tracking-widest">Clear</button>
+                        </div>
+                        {recentSearches.map((term, i) => (
+                          <div 
+                            key={`recent-${i}`} 
+                            className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors"
+                            onClick={() => handleSearchSelect(term)}
+                          >
+                            <span>{term}</span>
+                            <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div>
+                      <div className="px-4 py-2 text-muted-foreground font-bold flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" /> Popular Searches
+                      </div>
+                      {POPULAR_SEARCHES.map((term, i) => (
+                        <div 
+                          key={`pop-${i}`} 
+                          className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors"
+                          onClick={() => handleSearchSelect(term)}
+                        >
+                          <span>{term}</span>
+                          <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    {searchSuggestions.length > 0 ? (
+                      searchSuggestions.map((term, i) => (
+                        <div 
+                          key={`sugg-${i}`} 
+                          className="px-4 py-2 hover:bg-secondary cursor-pointer flex items-center justify-between group text-foreground transition-colors"
+                          onClick={() => handleSearchSelect(term)}
+                        >
+                          <span>{term}</span>
+                          <Search className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-4 text-center text-muted-foreground uppercase tracking-widest text-[10px]">
+                        No matching crops found
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
         {loading ? (
-          <div className="col-span-full py-36 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest flex flex-col items-center justify-center gap-4">
-            <span className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></span>
-             RETRIEVING LIVE INVENTORIES SENSORS...
-          </div>
+          Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
         ) : isOffline ? (
           <div className="col-span-full py-36 text-center text-muted-foreground font-sans text-sm uppercase tracking-widest border border-dashed border-border rounded-3xl p-8 bg-secondary flex flex-col items-center gap-4">
             <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mb-2">
@@ -165,6 +279,7 @@ export function Shop() {
                 <img 
                   src={product.imageUrl || getCategoryImage(displayCategory)} 
                   alt={product.name}
+                  loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110 filter brightness-[95%]"
                   referrerPolicy="no-referrer"
                 />

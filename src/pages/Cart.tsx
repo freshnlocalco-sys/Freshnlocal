@@ -167,6 +167,7 @@ export function Cart() {
                 <img 
                   src={item.product.imageUrl || getCategoryImage(item.product.category)} 
                   alt={item.product.name} 
+                  loading="lazy"
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />

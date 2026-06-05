@@ -3,6 +3,7 @@ import { collection, query, getDocs, writeBatch, doc } from 'firebase/firestore'
 import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
 import { Search, ShoppingBag, Plus, Sparkles, Filter, Leaf, Heart, Wind, Flame, Star, Check } from 'lucide-react';
+import { ProductSkeleton } from '../components/ProductSkeleton';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
@@ -599,9 +600,8 @@ export function FNLJuice() {
 
       {/* Content Section */}
       {loading || seeding ? (
-          <div className="py-36 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest flex flex-col items-center justify-center gap-4">
-            <span className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></span>
-            RETRIEVING COLD-PRESSED ROSTERS...
+          <div className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)}
           </div>
         ) : (
           <div className="space-y-16">
@@ -640,6 +640,7 @@ export function FNLJuice() {
                         <img
                           src={product.imageUrl || 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&auto=format&fit=crop&q=80'}
                           alt={product.name}
+                          loading="lazy"
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110 filter brightness-[95%]"
                         />
