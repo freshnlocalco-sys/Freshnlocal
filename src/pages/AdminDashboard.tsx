@@ -76,6 +76,8 @@ export function AdminDashboard() {
     updateCategoryImage, 
     addProductCategory, 
     addJuiceCategory, 
+    deleteProductCategory,
+    deleteJuiceCategory,
     loading: settingsLoading 
   } = useSettings();
 
@@ -1213,13 +1215,13 @@ export function AdminDashboard() {
                     </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
-                    <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex justify-between">
+                    <div className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex justify-between">
                       <span>Product Image (URL or Upload)</span>
                       <label className="text-primary hover:underline cursor-pointer">
                         Direct Upload
                         <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                       </label>
-                    </label>
+                    </div>
                     <div className="flex gap-2">
                       <div className="w-16 aspect-[4/3] bg-black/5 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
                         {newProduct.imageUrl ? (
@@ -1579,7 +1581,7 @@ export function AdminDashboard() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-[8px] font-bold uppercase tracking-wider text-muted-foreground flex justify-between">
+                    <div className="block text-[8px] font-bold uppercase tracking-wider text-muted-foreground flex justify-between">
                       <span>Illustration Image (URL or Upload)</span>
                       <label className="text-primary hover:underline cursor-pointer font-black uppercase tracking-wider text-[8px]">
                         [ Direct Upload ]
@@ -1595,7 +1597,7 @@ export function AdminDashboard() {
                           className="hidden" 
                         />
                       </label>
-                    </label>
+                    </div>
                     <input 
                       type="url"
                       id="new-prod-cat-img-input"
@@ -1637,12 +1639,29 @@ export function AdminDashboard() {
                   const currentImg = getCategoryImage(cat, categoryImages);
                   return (
                     <div key={cat} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
-                      <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground z-10 truncate">{cat}</h3>
+                      <div className="flex justify-between items-start gap-2 z-10 w-full min-w-0">
+                        <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate flex-1">{cat}</h3>
+                        <button
+                          onClick={async () => {
+                            if (window.confirm(`Are you sure you want to delete the category "${cat}"? This will remove the category completely.`)) {
+                              try {
+                                await deleteProductCategory(cat);
+                              } catch (error: any) {
+                                toast.error(`Failed to delete category: ${error.message}`);
+                              }
+                            }
+                          }}
+                          className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0"
+                          title="Delete Category"
+                        >
+                          <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </button>
+                      </div>
                       <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-white border border-border z-10 flex shrink-0">
                          <img src={currentImg || null} alt={cat} className="w-full h-full object-cover" />
                       </div>
                       <div className="z-10 mt-auto">
-                        <label className="text-[8px] uppercase tracking-widest font-extrabold text-foreground flex justify-between mb-2">
+                        <div className="text-[8px] uppercase tracking-widest font-extrabold text-foreground flex justify-between mb-2">
                           <span>Image URL</span>
                           <label className="text-primary hover:underline cursor-pointer font-black text-[8px] tracking-wider uppercase">
                             [ Upload ]
@@ -1660,7 +1679,7 @@ export function AdminDashboard() {
                               className="hidden" 
                             />
                           </label>
-                        </label>
+                        </div>
                         <input 
                           type="url"
                           value={currentImg || ''}
@@ -1713,7 +1732,7 @@ export function AdminDashboard() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-[8px] font-bold uppercase tracking-wider text-muted-foreground flex justify-between">
+                    <div className="block text-[8px] font-bold uppercase tracking-wider text-muted-foreground flex justify-between">
                       <span>Illustration Image (URL or Upload)</span>
                       <label className="text-primary hover:underline cursor-pointer font-black uppercase tracking-wider text-[8px]">
                         [ Direct Upload ]
@@ -1729,7 +1748,7 @@ export function AdminDashboard() {
                           className="hidden" 
                         />
                       </label>
-                    </label>
+                    </div>
                     <input 
                       type="url"
                       id="new-juice-cat-img-input"
@@ -1772,15 +1791,32 @@ export function AdminDashboard() {
                   const currentImg = getCategoryImage(cat.name, categoryImages);
                   return (
                     <div key={cat.id} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
-                      <div className="space-y-1 z-10">
-                        <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate">{cat.name}</h3>
-                        <p className="text-[8px] font-mono text-muted-foreground line-clamp-1">{cat.tagline}</p>
+                      <div className="flex justify-between items-start gap-2 z-10 w-full min-w-0">
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate">{cat.name}</h3>
+                          <p className="text-[8px] font-mono text-muted-foreground line-clamp-1">{cat.tagline}</p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (window.confirm(`Are you sure you want to delete the juice section "${cat.name}"? This will remove the section completely.`)) {
+                              try {
+                                await deleteJuiceCategory(cat.id, cat.name);
+                              } catch (error: any) {
+                                toast.error(`Failed to delete category: ${error.message}`);
+                              }
+                            }
+                          }}
+                          className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0"
+                          title="Delete Juice Section"
+                        >
+                          <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </button>
                       </div>
                       <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-white border border-border z-10 flex shrink-0">
                          <img src={currentImg || null} alt={cat.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="z-10 mt-auto">
-                        <label className="text-[8px] uppercase tracking-widest font-extrabold text-foreground flex justify-between mb-2">
+                        <div className="text-[8px] uppercase tracking-widest font-extrabold text-foreground flex justify-between mb-2">
                           <span>Image URL</span>
                           <label className="text-primary hover:underline cursor-pointer font-black text-[8px] tracking-wider uppercase">
                             [ Upload ]
@@ -1798,7 +1834,7 @@ export function AdminDashboard() {
                               className="hidden" 
                             />
                           </label>
-                        </label>
+                        </div>
                         <input 
                           type="url"
                           value={currentImg || ''}

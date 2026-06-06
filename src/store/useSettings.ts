@@ -27,6 +27,8 @@ interface SettingsState {
   updateCategoryImage: (category: string, url: string) => Promise<void>;
   addProductCategory: (categoryName: string, imageUrl?: string) => Promise<void>;
   addJuiceCategory: (name: string, tagline: string, imageUrl?: string) => Promise<void>;
+  deleteProductCategory: (categoryName: string) => Promise<void>;
+  deleteJuiceCategory: (id: string, name: string) => Promise<void>;
 }
 
 export const DEFAULT_PRODUCT_CATEGORIES = [
@@ -175,7 +177,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         if (catSnap.exists()) {
           const catData = catSnap.data();
           if (catData.productCategories) {
-            prodCats = Array.from(new Set([...DEFAULT_PRODUCT_CATEGORIES, ...catData.productCategories]));
+            prodCats = catData.productCategories;
           }
           if (catData.juiceCategories || catData.juiceData) {
             juiceCats = catData.juiceData || catData.juiceCategories;
@@ -227,6 +229,19 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const pluralKey = normalizedCategory.endsWith('s') ? normalizedCategory : normalizedCategory + 's';
       newImages[singularKey] = finalUrl;
       newImages[pluralKey] = finalUrl;
+
+      // Proactively compress any and all other existing uncompressed base64 images in currentImages that exceed 50KB to keep the total document size well below <1MB.
+      const keys = Object.keys(newImages);
+      for (const k of keys) {
+        const val = newImages[k];
+        if (val && val.startsWith('data:image/') && val.length > 50000) {
+          try {
+            newImages[k] = await compressOversizedBase64(val, { targetWidth: 400, targetHeight: 400, quality: 0.75, cropSquare: true });
+          } catch (e) {
+            console.warn(`Failed to auto-compress stored key: ${k}`, e);
+          }
+        }
+      }
       
       const docRef = doc(db, 'settings', 'categoryImages');
       await setDoc(docRef, newImages, { merge: true });
@@ -320,6 +335,77 @@ export const useSettings = create<SettingsState>((set, get) => ({
 
       set({ juiceCategories: updated });
       toast.success(`Juice subcategory "${normalizedName}" added successfully`);
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
+      throw error;
+    }
+  },
+  deleteProductCategory: async (categoryName: string) => {
+    try {
+      const current = get().productCategories;
+      const normalizedName = categoryName.trim();
+      const updated = current.filter(c => c.toLowerCase().trim() !== normalizedName.toLowerCase());
+      
+      const docRef = doc(db, 'settings', 'categoriesConfig');
+      await setDoc(docRef, { productCategories: updated }, { merge: true });
+      
+      // Clean up image references from state and database
+      const normalizedImgKey = normalizedName.toLowerCase().replace(/ font-bold/gi, '').trim();
+      const currentImages = get().categoryImages;
+      const newImages = { ...currentImages };
+      
+      delete newImages[normalizedImgKey];
+      const singularKey = normalizedImgKey.endsWith('s') ? normalizedImgKey.slice(0, -1) : normalizedImgKey;
+      const pluralKey = normalizedImgKey.endsWith('s') ? normalizedImgKey : normalizedImgKey + 's';
+      delete newImages[singularKey];
+      delete newImages[pluralKey];
+
+      const imgRef = doc(db, 'settings', 'categoryImages');
+      await setDoc(imgRef, newImages);
+
+      cacheManager.set('productCategories', updated);
+      cacheManager.set('categoryImages', newImages);
+
+      set({ 
+        productCategories: updated,
+        categoryImages: newImages
+      });
+      toast.success(`Category "${categoryName}" deleted successfully`);
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
+      throw error;
+    }
+  },
+  deleteJuiceCategory: async (id: string, name: string) => {
+    try {
+      const current = get().juiceCategories;
+      const updated = current.filter(c => c.id !== id);
+      
+      const docRef = doc(db, 'settings', 'categoriesConfig');
+      await setDoc(docRef, { juiceData: updated }, { merge: true });
+      
+      // Clean up image associations if any
+      const normalizedImgKey = name.toLowerCase().replace(/ font-bold/gi, '').trim();
+      const currentImages = get().categoryImages;
+      const newImages = { ...currentImages };
+      
+      delete newImages[normalizedImgKey];
+      const singularKey = normalizedImgKey.endsWith('s') ? normalizedImgKey.slice(0, -1) : normalizedImgKey;
+      const pluralKey = normalizedImgKey.endsWith('s') ? normalizedImgKey : normalizedImgKey + 's';
+      delete newImages[singularKey];
+      delete newImages[pluralKey];
+
+      const imgRef = doc(db, 'settings', 'categoryImages');
+      await setDoc(imgRef, newImages);
+
+      cacheManager.set('juiceCategories', updated);
+      cacheManager.set('categoryImages', newImages);
+
+      set({ 
+        juiceCategories: updated,
+        categoryImages: newImages
+      });
+      toast.success(`Juice subcategory "${name}" deleted successfully`);
     } catch (error: any) {
       handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
       throw error;
