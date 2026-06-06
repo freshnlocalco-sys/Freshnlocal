@@ -1637,6 +1637,8 @@ export function AdminDashboard() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {productCategories.map((cat) => {
                   const currentImg = getCategoryImage(cat, categoryImages);
+                  const normalizedKey = cat.toLowerCase().replace(/ font-bold/gi, '').trim();
+                  const customImg = categoryImages[normalizedKey] || '';
                   return (
                     <div key={cat} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
                       <div className="flex justify-between items-start gap-2 z-10 w-full min-w-0">
@@ -1682,9 +1684,9 @@ export function AdminDashboard() {
                         </div>
                         <input 
                           type="url"
-                          value={currentImg || ''}
+                          value={customImg}
                           onChange={(e) => updateCategoryImage(cat, e.target.value)}
-                          placeholder="https://..."
+                          placeholder="Paste image URL or leave blank for default..."
                           className="slice-input w-full text-[9px]"
                         />
                       </div>
@@ -1789,6 +1791,8 @@ export function AdminDashboard() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {juiceCategories.map((cat) => {
                   const currentImg = getCategoryImage(cat.name, categoryImages);
+                  const normalizedKey = cat.name.toLowerCase().replace(/ font-bold/gi, '').trim();
+                  const customImg = categoryImages[normalizedKey] || '';
                   return (
                     <div key={cat.id} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
                       <div className="flex justify-between items-start gap-2 z-10 w-full min-w-0">
@@ -1837,9 +1841,9 @@ export function AdminDashboard() {
                         </div>
                         <input 
                           type="url"
-                          value={currentImg || ''}
+                          value={customImg}
                           onChange={(e) => updateCategoryImage(cat.name, e.target.value)}
-                          placeholder="https://..."
+                          placeholder="Paste image URL or leave blank for default..."
                           className="slice-input w-full text-[9px]"
                         />
                       </div>

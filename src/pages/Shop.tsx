@@ -14,7 +14,11 @@ export function Shop() {
   const { products, loading: storeLoading, error, fetchProducts } = useProducts();
   const { categoryImages, productCategories, fetchCategoryImages, lastFetched } = useSettings();
   const allUiCategories = React.useMemo(() => {
-    return ['All Products', ...productCategories, 'FNL Juices'];
+    const cleanCategories = productCategories.filter(cat => {
+      const lower = cat.toLowerCase();
+      return !lower.includes('juice');
+    });
+    return ['All Products', ...cleanCategories];
   }, [productCategories]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,6 +30,16 @@ export function Shop() {
   const [offlineError, setOfflineError] = useState('');
   const [maxPrice, setMaxPrice] = useState<number>(5000);
   const [showFilterModal, setShowFilterModal] = useState(false);
+
+  useEffect(() => {
+    const matchesJuice = categoryFilter && (
+      categoryFilter.toLowerCase().includes('juice') || 
+      categoryFilter.toLowerCase() === 'fnl juices'
+    );
+    if (matchesJuice) {
+      navigate('/juice', { replace: true });
+    }
+  }, [categoryFilter, navigate]);
 
   useEffect(() => {
     async function load() {
@@ -50,7 +64,7 @@ export function Shop() {
     const activeShopProducts = products.filter(p => {
       let productCategory = p.category ? p.category.toLowerCase() : '';
       productCategory = productCategory.replace(' font-bold', '');
-      return productCategory !== 'fnl juices' && productCategory !== 'fnl juice' && productCategory !== 'cold-pressed juices';
+      return !productCategory.includes('juice');
     });
     
     // Extract distinct in-stock product names
@@ -106,7 +120,7 @@ export function Shop() {
 
   const searchSuggestions = searchQuery
     ? Array.from(new Set(products
-        .filter(p => p.name?.toLowerCase().includes(searchQuery.toLowerCase()) && p.category !== 'fnl juices')
+        .filter(p => p.name?.toLowerCase().includes(searchQuery.toLowerCase()) && !p.category?.toLowerCase().includes('juice'))
         .map(p => p.name)))
         .slice(0, 5)
     : [];
@@ -127,7 +141,7 @@ export function Shop() {
     productCategory = productCategory.replace(' font-bold', ''); // Normalize older data typos
 
     // Explicitly hide juices from the Shop page, as they belong on the dedicated FNL Juice page
-    if (productCategory === 'fnl juices' || productCategory === 'fnl juice' || productCategory === 'cold-pressed juices') {
+    if (productCategory.includes('juice')) {
       return false;
     }
 

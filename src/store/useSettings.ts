@@ -150,6 +150,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
     // 3. See if the cache is unexpired (< 24 hours) and we aren't forcing
     const isCacheFresh = cacheManager.isValid('categoryImages') && cacheManager.isValid('productCategories') && cacheManager.isValid('juiceCategories');
     if (!force && isCacheFresh && cachedImages && cachedProdCats && cachedJuiceCats) {
+      set({ lastFetched: Date.now() }); // Hot state: keep lastFetched mark to prevent subsequent local checks
       return;
     }
 
@@ -216,10 +217,10 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const normalizedCategory = category.toLowerCase().replace(/ font-bold/gi, '').trim();
       const currentImages = get().categoryImages;
       
-      // Auto-compress base64 to target square sizing to ensure aggregate collection remains well under the 1MB Firestore Limit.
+      // Auto-compress base64 to target square sizing (256x256 at 0.70 quality) for ultra-fast loading & minimum footprint
       let finalUrl = url;
       if (url && url.startsWith('data:image/')) {
-        finalUrl = await compressOversizedBase64(url, { targetWidth: 400, targetHeight: 400, quality: 0.75, cropSquare: true });
+        finalUrl = await compressOversizedBase64(url, { targetWidth: 256, targetHeight: 256, quality: 0.7, cropSquare: true });
       }
 
       const newImages = { ...currentImages, [normalizedCategory]: finalUrl };
@@ -229,23 +230,11 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const pluralKey = normalizedCategory.endsWith('s') ? normalizedCategory : normalizedCategory + 's';
       newImages[singularKey] = finalUrl;
       newImages[pluralKey] = finalUrl;
-
-      // Proactively compress any and all other existing uncompressed base64 images in currentImages that exceed 50KB to keep the total document size well below <1MB.
-      const keys = Object.keys(newImages);
-      for (const k of keys) {
-        const val = newImages[k];
-        if (val && val.startsWith('data:image/') && val.length > 50000) {
-          try {
-            newImages[k] = await compressOversizedBase64(val, { targetWidth: 400, targetHeight: 400, quality: 0.75, cropSquare: true });
-          } catch (e) {
-            console.warn(`Failed to auto-compress stored key: ${k}`, e);
-          }
-        }
-      }
       
       const docRef = doc(db, 'settings', 'categoryImages');
       await setDoc(docRef, newImages, { merge: true });
       
+      cacheManager.set('categoryImages', newImages);
       set({ categoryImages: newImages });
       toast.success('Category image updated successfully');
     } catch (error: any) {
@@ -270,22 +259,28 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const docRef = doc(db, 'settings', 'categoriesConfig');
       await setDoc(docRef, { productCategories: updated }, { merge: true });
       
+      cacheManager.set('productCategories', updated);
+      
       if (imageUrl) {
+        let finalUrl = imageUrl;
+        if (imageUrl.startsWith('data:image/')) {
+          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 256, targetHeight: 256, quality: 0.7, cropSquare: true });
+        }
         const normalizedImgKey = normalizedNew.toLowerCase().replace(/ font-bold/gi, '').trim();
         const imgRef = doc(db, 'settings', 'categoryImages');
-        const imgUpdate: Record<string, string> = { [normalizedImgKey]: imageUrl };
+        const imgUpdate: Record<string, string> = { [normalizedImgKey]: finalUrl };
         
         // Populate singular/plural in image config
         const singularKey = normalizedImgKey.endsWith('s') ? normalizedImgKey.slice(0, -1) : normalizedImgKey;
         const pluralKey = normalizedImgKey.endsWith('s') ? normalizedImgKey : normalizedImgKey + 's';
-        imgUpdate[singularKey] = imageUrl;
-        imgUpdate[pluralKey] = imageUrl;
+        imgUpdate[singularKey] = finalUrl;
+        imgUpdate[pluralKey] = finalUrl;
 
         await setDoc(imgRef, imgUpdate, { merge: true });
         
-        set(state => ({
-          categoryImages: { ...state.categoryImages, ...imgUpdate }
-        }));
+        const newImages = { ...get().categoryImages, ...imgUpdate };
+        cacheManager.set('categoryImages', newImages);
+        set({ categoryImages: newImages });
       }
 
       set({ productCategories: updated });
@@ -323,14 +318,28 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const docRef = doc(db, 'settings', 'categoriesConfig');
       await setDoc(docRef, { juiceData: updated }, { merge: true });
 
+      cacheManager.set('juiceCategories', updated);
+
       if (imageUrl) {
+        let finalUrl = imageUrl;
+        if (imageUrl.startsWith('data:image/')) {
+          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 256, targetHeight: 256, quality: 0.7, cropSquare: true });
+        }
         const normalizedImgKey = normalizedName.toLowerCase().replace(/ font-bold/gi, '');
         const imgRef = doc(db, 'settings', 'categoryImages');
-        await setDoc(imgRef, { [normalizedImgKey]: imageUrl }, { merge: true });
+        const imgUpdate: Record<string, string> = { [normalizedImgKey]: finalUrl };
         
-        set(state => ({
-          categoryImages: { ...state.categoryImages, [normalizedImgKey]: imageUrl }
-        }));
+        // Populate singular/plural in image config
+        const singularKey = normalizedImgKey.endsWith('s') ? normalizedImgKey.slice(0, -1) : normalizedImgKey;
+        const pluralKey = normalizedImgKey.endsWith('s') ? normalizedImgKey : normalizedImgKey + 's';
+        imgUpdate[singularKey] = finalUrl;
+        imgUpdate[pluralKey] = finalUrl;
+
+        await setDoc(imgRef, imgUpdate, { merge: true });
+        
+        const newImages = { ...get().categoryImages, ...imgUpdate };
+        cacheManager.set('categoryImages', newImages);
+        set({ categoryImages: newImages });
       }
 
       set({ juiceCategories: updated });

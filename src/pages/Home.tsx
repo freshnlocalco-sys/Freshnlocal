@@ -145,7 +145,7 @@ export const SPOTLIGHTS = {
     badge: 'Mushrooms',
     origin: 'Climate Farms, Local',
     harvested: 'Handpicked daily',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Edible_fungi_in_basket_2009_G1_%28cropped%29.jpg/800px-Edible_fungi_in_basket_2009_G1_%28cropped%29.jpg',
+    image: 'https://images.unsplash.com/photo-1595855759920-86582396756a?w=600&auto=format&fit=crop&q=80',
     colorClass: 'text-stone-500 border-stone-500/20 bg-stone-500/10',
     accentColor: '#78716c',
     link: '/shop?category=Mushrooms'
