@@ -6,6 +6,8 @@ import { Product, useCart } from '../store/useCart';
 import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, ShieldCheck, Truck, RotateCcw, Zap } from 'lucide-react';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
+import { useProducts } from '../store/useProducts';
+import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import toast from 'react-hot-toast';
 
 export function ProductDetail() {
@@ -24,21 +26,55 @@ export function ProductDetail() {
       if (!id) return;
       try {
         setIsOffline(false);
-        const docRef = doc(db, 'products', id);
-        const docSnap = await getDoc(docRef);
-         if (docSnap.exists()) {
-          const data = docSnap.data();
-          const pPrice = Number(data.price) || 0;
-          const pMrp = Number(data.originalPrice) || Number(data.mrp) || Number(data.MRP) || 0;
-          setProduct({ 
-            id: docSnap.id, 
-            ...data, 
-            price: pPrice,
-            originalPrice: pMrp > pPrice ? pMrp : undefined 
-          } as Product);
-        } else {
-          setProduct(null);
+
+        // 1. Check Zustand store first
+        const storeProducts = useProducts.getState().products;
+        let found = storeProducts.find(p => p.id === id);
+
+        // 2. Check localStorage cached products
+        if (!found) {
+          const cachedProducts = cacheManager.get<Product[]>('products', true);
+          if (cachedProducts) {
+            found = cachedProducts.find(p => p.id === id);
+          }
         }
+
+        // 3. Check localStorage cached single product detail
+        if (!found) {
+          found = cacheManager.get<Product>(`product_detail_${id}`);
+        }
+
+        if (found) {
+          setProduct(found);
+          setLoading(false);
+          return;
+        }
+
+        // 4. Fetch from Firestore if not found anywhere else
+        await cacheManager.fetchDeduplicated(`product_detail_fetch_${id}`, async () => {
+          const docRef = doc(db, 'products', id);
+          const docSnap = await getDoc(docRef);
+          
+          trackFirestoreRead('products', 1);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const pPrice = Number(data.price) || 0;
+            const pMrp = Number(data.originalPrice) || Number(data.mrp) || Number(data.MRP) || 0;
+            const fetchedProduct = { 
+              id: docSnap.id, 
+              ...data, 
+              price: pPrice,
+              originalPrice: pMrp > pPrice ? pMrp : undefined 
+            } as Product;
+
+            // Cache single product details
+            cacheManager.set(`product_detail_${id}`, fetchedProduct);
+            setProduct(fetchedProduct);
+          } else {
+            setProduct(null);
+          }
+        });
       } catch (error: any) {
         if (isQuotaError(error)) {
           setIsOffline(true);
@@ -117,7 +153,7 @@ export function ProductDetail() {
             </span>
           </div>
           <img 
-            src={product.imageUrl || getCategoryImage(product.category, categoryImages)} 
+            src={product.imageUrl || getCategoryImage(product.category, categoryImages) || null} 
             alt={product.name}
             className="w-full h-full object-cover filter brightness-[95%]"
             referrerPolicy="no-referrer"

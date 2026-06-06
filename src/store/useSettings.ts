@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, isQuotaError, handleFirestoreError, OperationType } from '../lib/firebase';
+import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import toast from 'react-hot-toast';
 
 export interface CategoryImageMapping {
@@ -27,8 +28,6 @@ interface SettingsState {
   addProductCategory: (categoryName: string, imageUrl?: string) => Promise<void>;
   addJuiceCategory: (name: string, tagline: string, imageUrl?: string) => Promise<void>;
 }
-
-const CACHE_TIME = 1000 * 60 * 5; // 5 minutes
 
 export const DEFAULT_PRODUCT_CATEGORIES = [
   'Indian Fruits',
@@ -59,54 +58,103 @@ export const useSettings = create<SettingsState>((set, get) => ({
   loading: false,
   error: null,
   fetchCategoryImages: async (force = false) => {
-    const { lastFetched, loading } = get();
-    if (loading) return; 
+    const { categoryImages, lastFetched } = get();
     
-    if (!force && (Date.now() - lastFetched) < CACHE_TIME) {
+    // 1. Avoid re-fetching if data already exists in the Zustand store and not forced
+    if (!force && lastFetched > 0 && Object.keys(categoryImages).length > 0) {
       return;
     }
 
-    set({ loading: true, error: null });
-    try {
-      // 1. Fetch category images
-      const docRef = doc(db, 'settings', 'categoryImages');
-      const docSnap = await getDoc(docRef);
-      const imagesData = docSnap.exists() ? (docSnap.data() as CategoryImageMapping) : {};
+    // 2. Load from localStorage immediately if cache exists (supports SWR instantly)
+    const cachedImages = cacheManager.get<CategoryImageMapping>('categoryImages', true);
+    const cachedProdCats = cacheManager.get<string[]>('productCategories', true);
+    const cachedJuiceCats = cacheManager.get<JuiceCategory[]>('juiceCategories', true);
 
-      // 2. Fetch dyn categories list
-      const catRef = doc(db, 'settings', 'categoriesConfig');
-      const catSnap = await getDoc(catRef);
-      let prodCats = DEFAULT_PRODUCT_CATEGORIES;
-      let juiceCats = DEFAULT_JUICE_SECTIONS;
-
-      if (catSnap.exists()) {
-        const catData = catSnap.data();
-        if (catData.productCategories) prodCats = catData.productCategories;
-        if (catData.juiceCategories) juiceCats = catData.juiceData || catData.juiceCategories;
-      }
-
-      set({ 
-        categoryImages: imagesData, 
-        productCategories: prodCats,
-        juiceCategories: juiceCats,
-        lastFetched: Date.now(), 
-        loading: false 
-      });
-    } catch (error: any) {
-      if (isQuotaError(error)) {
-        const errorMsg = error?.message || String(error);
-        set({ error: errorMsg, loading: false });
-      } else {
-        set({ loading: false });
-        handleFirestoreError(error, OperationType.GET, 'settings/categoryImages');
-      }
+    if (cachedImages) {
+      set({ categoryImages: cachedImages });
     }
+    if (cachedProdCats) {
+      set({ productCategories: cachedProdCats });
+    }
+    if (cachedJuiceCats) {
+      set({ juiceCategories: cachedJuiceCats });
+    }
+
+    // 3. See if the cache is unexpired (< 24 hours) and we aren't forcing
+    const isCacheFresh = cacheManager.isValid('categoryImages') && cacheManager.isValid('productCategories') && cacheManager.isValid('juiceCategories');
+    if (!force && isCacheFresh && cachedImages && cachedProdCats && cachedJuiceCats) {
+      return;
+    }
+
+    // 4. Trigger deduplicated background/foreground fetch from Firestore
+    const isBackgroundRefresh = !!(cachedImages && cachedProdCats && cachedJuiceCats);
+    if (!isBackgroundRefresh) {
+      set({ loading: true, error: null });
+    }
+
+    await cacheManager.fetchDeduplicated('category_images_config_fetch', async () => {
+      try {
+        // Fetch 1: Category Images
+        const docRef = doc(db, 'settings', 'categoryImages');
+        const docSnap = await getDoc(docRef);
+        trackFirestoreRead('settings', 1);
+        const imagesData = docSnap.exists() ? (docSnap.data() as CategoryImageMapping) : {};
+
+        // Fetch 2: Categories configuration
+        const catRef = doc(db, 'settings', 'categoriesConfig');
+        const catSnap = await getDoc(catRef);
+        trackFirestoreRead('settings', 1);
+        let prodCats = DEFAULT_PRODUCT_CATEGORIES;
+        let juiceCats = DEFAULT_JUICE_SECTIONS;
+
+        if (catSnap.exists()) {
+          const catData = catSnap.data();
+          if (catData.productCategories) {
+            prodCats = Array.from(new Set([...DEFAULT_PRODUCT_CATEGORIES, ...catData.productCategories]));
+          }
+          if (catData.juiceCategories || catData.juiceData) {
+            juiceCats = catData.juiceData || catData.juiceCategories;
+          }
+        }
+
+        // Save back to cache
+        cacheManager.set('categoryImages', imagesData);
+        cacheManager.set('productCategories', prodCats);
+        cacheManager.set('juiceCategories', juiceCats);
+
+        set({ 
+          categoryImages: imagesData, 
+          productCategories: prodCats,
+          juiceCategories: juiceCats,
+          lastFetched: Date.now(), 
+          loading: false 
+        });
+      } catch (error: any) {
+        if (isQuotaError(error)) {
+          const errorMsg = error?.message || String(error);
+          set({ error: errorMsg, loading: false });
+        } else {
+          set({ loading: false });
+          if (!isBackgroundRefresh) {
+            handleFirestoreError(error, OperationType.GET, 'settings/categoryImages');
+          } else {
+            console.warn("Background update of settings failed safely:", error);
+          }
+        }
+      }
+    });
   },
   updateCategoryImage: async (category: string, url: string) => {
     try {
-      const normalizedCategory = category.toLowerCase().replace(/ font-bold/gi, '');
+      const normalizedCategory = category.toLowerCase().replace(/ font-bold/gi, '').trim();
       const currentImages = get().categoryImages;
       const newImages = { ...currentImages, [normalizedCategory]: url };
+      
+      // Handle singular and plural matches so both work seamlessly
+      const singularKey = normalizedCategory.endsWith('s') ? normalizedCategory.slice(0, -1) : normalizedCategory;
+      const pluralKey = normalizedCategory.endsWith('s') ? normalizedCategory : normalizedCategory + 's';
+      newImages[singularKey] = url;
+      newImages[pluralKey] = url;
       
       const docRef = doc(db, 'settings', 'categoryImages');
       await setDoc(docRef, newImages, { merge: true });
@@ -126,7 +174,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         toast.error('Category name cannot be empty');
         return;
       }
-      if (current.map(c => c.toLowerCase()).includes(normalizedNew.toLowerCase())) {
+      if (current.map(c => c.toLowerCase().trim()).includes(normalizedNew.toLowerCase())) {
         toast.error('Product category already exists');
         return;
       }
@@ -136,12 +184,20 @@ export const useSettings = create<SettingsState>((set, get) => ({
       await setDoc(docRef, { productCategories: updated }, { merge: true });
       
       if (imageUrl) {
-        const normalizedImgKey = normalizedNew.toLowerCase().replace(/ font-bold/gi, '');
+        const normalizedImgKey = normalizedNew.toLowerCase().replace(/ font-bold/gi, '').trim();
         const imgRef = doc(db, 'settings', 'categoryImages');
-        await setDoc(imgRef, { [normalizedImgKey]: imageUrl }, { merge: true });
+        const imgUpdate: Record<string, string> = { [normalizedImgKey]: imageUrl };
+        
+        // Populate singular/plural in image config
+        const singularKey = normalizedImgKey.endsWith('s') ? normalizedImgKey.slice(0, -1) : normalizedImgKey;
+        const pluralKey = normalizedImgKey.endsWith('s') ? normalizedImgKey : normalizedImgKey + 's';
+        imgUpdate[singularKey] = imageUrl;
+        imgUpdate[pluralKey] = imageUrl;
+
+        await setDoc(imgRef, imgUpdate, { merge: true });
         
         set(state => ({
-          categoryImages: { ...state.categoryImages, [normalizedImgKey]: imageUrl }
+          categoryImages: { ...state.categoryImages, ...imgUpdate }
         }));
       }
 

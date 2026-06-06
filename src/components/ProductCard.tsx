@@ -31,7 +31,7 @@ export function ProductCard({ product, onAddToCart, displayCategoryOverride }: P
           <div className="absolute inset-0 bg-muted animate-pulse z-10" />
         )}
         <img 
-          src={product.imageUrl || getCategoryImage(displayCategory, categoryImages)} 
+          src={product.imageUrl || getCategoryImage(displayCategory, categoryImages) || null} 
           alt={product.name}
           loading="lazy"
           onLoad={() => setImageLoaded(true)}

@@ -168,7 +168,7 @@ export function Cart() {
               {/* Product preview card layout */}
               <div className="w-[120px] aspect-[4/3] bg-background border border-border flex-shrink-0 relative rounded-2xl overflow-hidden shadow-inner">
                 <img 
-                  src={item.product.imageUrl || getCategoryImage(item.product.category, categoryImages)} 
+                  src={item.product.imageUrl || getCategoryImage(item.product.category, categoryImages) || null} 
                   alt={item.product.name} 
                   loading="lazy"
                   className="w-full h-full object-cover"

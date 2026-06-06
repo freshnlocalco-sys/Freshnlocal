@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight, Snowflake, Building2, Recycle, PackageCheck, Bike, HeartHandshake, HeartPulse } from 'lucide-react';
 import { db, isQuotaError } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useSettings } from '../store/useSettings';
+import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 
 const CATEGORIES = [
   { id: 'indian fruits', name: 'Indian Fruits', tagline: 'Devgad Alphonso & Sweetest Mangoes', discount: 'Flat ₹50 Off' },
@@ -159,29 +160,45 @@ export function Home() {
 
   useEffect(() => {
     async function fetchSpotlightOverrides() {
-      try {
-        const docRef = doc(db, 'settings', 'spotlights');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const overrides = docSnap.data();
-          setSpotlights(prev => {
-            const newSpots = { ...prev };
-            Object.keys(overrides).forEach(key => {
-              if (newSpots[key as keyof typeof SPOTLIGHTS] && overrides[key].image) {
-                newSpots[key as keyof typeof SPOTLIGHTS] = {
-                  ...newSpots[key as keyof typeof SPOTLIGHTS],
-                  image: overrides[key].image
-                };
-              }
-            });
-            return newSpots;
+      const cachedSpotlights = cacheManager.get<any>('spotlights', true);
+      const isCacheFresh = cacheManager.isValid('spotlights');
+
+      const applyOverrides = (overrides: any) => {
+        setSpotlights(prev => {
+          const newSpots = { ...prev };
+          Object.keys(overrides).forEach(key => {
+            if (newSpots[key as keyof typeof SPOTLIGHTS] && overrides[key].image) {
+              newSpots[key as keyof typeof SPOTLIGHTS] = {
+                ...newSpots[key as keyof typeof SPOTLIGHTS],
+                image: overrides[key].image
+              };
+            }
           });
-        }
-      } catch (err: any) {
-        if (!isQuotaError(err)) {
-          console.error("Error fetching spotlights config:", err);
-        }
+          return newSpots;
+        });
+      };
+
+      if (cachedSpotlights) {
+        applyOverrides(cachedSpotlights);
+        if (isCacheFresh) return;
       }
+
+      await cacheManager.fetchDeduplicated('spotlights_fetch', async () => {
+        try {
+          const docRef = doc(db, 'settings', 'spotlights');
+          const docSnap = await getDoc(docRef);
+          trackFirestoreRead('settings', 1);
+          if (docSnap.exists()) {
+            const overrides = docSnap.data();
+            cacheManager.set('spotlights', overrides);
+            applyOverrides(overrides);
+          }
+        } catch (err: any) {
+          if (!isQuotaError(err)) {
+            console.error("Error fetching spotlights config:", err);
+          }
+        }
+      });
     }
     fetchSpotlightOverrides();
   }, []);
@@ -312,7 +329,7 @@ export function Home() {
                   {/* Full-bleed category image backdrop */}
                   <div className="absolute inset-0 z-0 overflow-hidden bg-zinc-950">
                     <img 
-                      src={spotlights[activeCard].image} 
+                      src={spotlights[activeCard].image || null} 
                       alt={spotlights[activeCard].title}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105 filter brightness-[85%]"
@@ -433,45 +450,102 @@ export function Home() {
       {/* Modern Bento Value Proposition Section */}
       <section className="w-full bg-secondary border-y border-border/40 py-24">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="text-center max-w-xl mx-auto mb-16 space-y-3">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <span className="glass-pill">Core Powerhouse</span>
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-foreground mt-4">Pristine Supply Chain</h2>
-            <p className="text-xs text-muted-foreground font-medium">We sliced out every delay, agent, fee, and middleman to deliver peak farm quality.</p>
+            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-foreground mt-4">SUPPLY CHAIN WITH PURPOSE</h2>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider leading-relaxed">
+              Building a healthier, greener, and more responsible food ecosystem from farm to doorstep.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
+            {/* Card 1: COLD CHAIN SUPPLY */}
             <div className="slice-bento flex flex-col items-start group">
-              <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                <Leaf className="w-5 h-5" />
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <Snowflake className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
               </div>
               <div>
-                <h3 className="text-lg font-black uppercase text-foreground tracking-tight mb-2">100% Traceable Farming</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed font-sans">
-                  Direct agricultural partnerships with verified premium farmers in Gujarat. Zero undisclosed storage or chemical accelerators.
+                <h3 className="text-xs sm:text-base md:text-lg font-black uppercase text-foreground tracking-tight mb-1 sm:mb-2">COLD CHAIN SUPPLY</h3>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed font-sans">
+                  Temperature-controlled handling from sourcing to delivery, preserving freshness, texture, and nutritional value throughout the journey.
                 </p>
               </div>
             </div>
 
+            {/* Card 2: LEADING SUPPLIER FOR HORECA */}
             <div className="slice-bento flex flex-col items-start group">
-              <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                <Truck className="w-5 h-5" />
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black uppercase text-foreground tracking-tight mb-2">Pristine Cold Transit</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed font-sans">
-                  Pre-cooled packing methods keep sensitive leaves and premium exotics safe during local journeys. Arrives absolute crisp.
+                <h3 className="text-xs sm:text-base md:text-lg font-black uppercase text-foreground tracking-tight mb-1 sm:mb-2">LEADING SUPPLIER FOR HORECA</h3>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed font-sans">
+                  Trusted by hotels, restaurants, cafés, cloud kitchens, and premium food businesses across Surat for consistent quality and reliable supply.
                 </p>
               </div>
             </div>
 
+            {/* Card 3: WASTE MANAGEMENT */}
             <div className="slice-bento flex flex-col items-start group">
-              <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                <ShieldCheck className="w-5 h-5" />
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <Recycle className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black uppercase text-foreground tracking-tight mb-2">Elite Vetting Standards</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed font-sans">
-                  Manual inspection stem by stem. We reject discoloration, surface bruising, and shape defects before any box leaves Surat hubs.
+                <h3 className="text-xs sm:text-base md:text-lg font-black uppercase text-foreground tracking-tight mb-1 sm:mb-2">RESPONSIBLE WASTE MANAGEMENT</h3>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed font-sans">
+                  We minimize food waste through efficient inventory planning, surplus redistribution, and sustainable operational practices.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 4: ECO-FRIENDLY PACKAGING */}
+            <div className="slice-bento flex flex-col items-start group">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-base md:text-lg font-black uppercase text-foreground tracking-tight mb-1 sm:mb-2">ECO-FRIENDLY PACKAGING</h3>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed font-sans">
+                  Products are packed using environmentally conscious materials that reduce plastic usage while maintaining product protection.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 5: ECO-FRIENDLY DELIVERY */}
+            <div className="slice-bento flex flex-col items-start group">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <Bike className="w-4 h-4 sm:w-5 sm:h-5 animate-bounce" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-base md:text-lg font-black uppercase text-foreground tracking-tight mb-1 sm:mb-2">GREEN DELIVERY FLEET</h3>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed font-sans">
+                  Local deliveries are increasingly powered by electric vehicles, helping reduce emissions and create a cleaner city.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 6: FOOD DONATION INITIATIVES */}
+            <div className="slice-bento flex flex-col items-start group">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <HeartHandshake className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-base md:text-lg font-black uppercase text-foreground tracking-tight mb-1 sm:mb-2">FOOD DONATION INITIATIVES</h3>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed font-sans">
+                  Safe and consumable surplus produce is redirected to community support programs instead of going to waste.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 7: URBAN HEALTH FOCUSED (Symmetric full-width bento style) */}
+            <div className="slice-bento flex flex-col lg:flex-row items-start lg:items-center group col-span-2 lg:col-span-3 gap-4 sm:gap-6 lg:gap-8">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 shrink-0 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xs sm:text-base md:text-lg font-black uppercase text-foreground tracking-tight mb-1 sm:mb-2">URBAN HEALTH FOCUSED</h3>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed font-sans max-w-4xl">
+                  Curating premium fruits, vegetables, and healthy essentials that help modern families maintain a nutritious lifestyle.
                 </p>
               </div>
             </div>

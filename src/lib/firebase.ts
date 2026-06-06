@@ -94,6 +94,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     try {
       const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
+      import('./cacheManager').then(m => m.trackFirestoreRead('users', 1)).catch(() => {});
       const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com';
       if (userSnap.exists()) {
         const userData = userSnap.data() as Omit<AppUser, 'uid'>;
@@ -155,6 +156,7 @@ export const signUpWithEmail = async (email: string, pass: string, name: string)
   const userRef = doc(db, 'users', res.user.uid);
   try {
     const snap = await getDoc(userRef);
+    import('./cacheManager').then(m => m.trackFirestoreRead('users', 1)).catch(() => {});
     if (!snap.exists()) {
        await setDoc(userRef, {
           email: email,

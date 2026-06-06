@@ -162,6 +162,8 @@ export function AdminDashboard() {
         setLoading(true);
         if (activeTab === 'orders') {
           const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(100)));
+          const mCache = await import('../lib/cacheManager');
+          mCache.trackFirestoreRead('orders', ordersSnap.size);
           setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         } else if (activeTab === 'products') {
           const m = await import('../store/useProducts');
@@ -173,8 +175,18 @@ export function AdminDashboard() {
         } else if (activeTab === 'spotlights') {
           const m = await import('./Home');
           const defaultSpots = m.SPOTLIGHTS;
-          const docSnap = await getDoc(doc(db, 'settings', 'spotlights'));
-          const overrides = docSnap.exists() ? docSnap.data() : {};
+          const mCache = await import('../lib/cacheManager');
+          
+          let overrides = mCache.cacheManager.get<any>('spotlights', true);
+          const isCacheFresh = mCache.cacheManager.isValid('spotlights');
+          
+          if (!overrides || !isCacheFresh) {
+            const docSnap = await getDoc(doc(db, 'settings', 'spotlights'));
+            mCache.trackFirestoreRead('settings', 1);
+            overrides = docSnap.exists() ? docSnap.data() : {};
+            mCache.cacheManager.set('spotlights', overrides);
+          }
+
           const initialConfig: any = {};
           Object.keys(defaultSpots).forEach(k => {
             initialConfig[k] = { 
@@ -1361,7 +1373,7 @@ export function AdminDashboard() {
                         <tr key={product.id} className={`transition-colors ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}>
                           <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
                             <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
-                              <img src={product.imageUrl || getCategoryImage(product.category)} alt="" loading="lazy" className="w-full h-full object-cover" />
+                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-cover" />
                             </div>
                             <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                           </td>
@@ -1383,7 +1395,7 @@ export function AdminDashboard() {
                                 <input
                                   type="number"
                                   className="w-16 sm:w-20 bg-white border border-border rounded px-2 py-1 text-xs outline-none focus:border-primary"
-                                  value={editingPrices[product.id]}
+                                  value={editingPrices[product.id] ?? ''}
                                   onChange={(e) => handlePriceChange(product.id, e.target.value)}
                                 />
                                 <button onClick={() => handleSavePrice(product)} className="text-primary hover:text-green-600 font-black bg-primary/10 rounded px-2 py-1 tracking-widest uppercase text-[8px]">
@@ -1469,7 +1481,7 @@ export function AdminDashboard() {
                 <div key={key} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
                   <h3 className="font-extrabold text-xs uppercase tracking-widest text-foreground z-10">{config.title}</h3>
                   <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-white border border-border z-10">
-                     <img src={config.image} alt={config.title} className="w-full h-full object-cover" />
+                     <img src={config.image || null} alt={config.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="z-10 bg-white/50 dark:bg-black/50 p-3 rounded-lg backdrop-blur-sm border border-border">
                     <label className="text-[9px] uppercase tracking-widest font-extrabold text-foreground block mb-2">Image Source</label>
@@ -1597,7 +1609,7 @@ export function AdminDashboard() {
                     <div key={cat} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
                       <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground z-10 truncate">{cat}</h3>
                       <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-white border border-border z-10 flex shrink-0">
-                         <img src={currentImg} alt={cat} className="w-full h-full object-cover" />
+                         <img src={currentImg || null} alt={cat} className="w-full h-full object-cover" />
                       </div>
                       <div className="z-10 mt-auto">
                         <label className="text-[8px] uppercase tracking-widest font-extrabold text-foreground flex justify-between mb-2">
@@ -1621,7 +1633,7 @@ export function AdminDashboard() {
                         </label>
                         <input 
                           type="url"
-                          value={currentImg}
+                          value={currentImg || ''}
                           onChange={(e) => updateCategoryImage(cat, e.target.value)}
                           placeholder="https://..."
                           className="slice-input w-full text-[9px]"
@@ -1735,7 +1747,7 @@ export function AdminDashboard() {
                         <p className="text-[8px] font-mono text-muted-foreground line-clamp-1">{cat.tagline}</p>
                       </div>
                       <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-white border border-border z-10 flex shrink-0">
-                         <img src={currentImg} alt={cat.name} className="w-full h-full object-cover" />
+                         <img src={currentImg || null} alt={cat.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="z-10 mt-auto">
                         <label className="text-[8px] uppercase tracking-widest font-extrabold text-foreground flex justify-between mb-2">
@@ -1759,7 +1771,7 @@ export function AdminDashboard() {
                         </label>
                         <input 
                           type="url"
-                          value={currentImg}
+                          value={currentImg || ''}
                           onChange={(e) => updateCategoryImage(cat.name, e.target.value)}
                           placeholder="https://..."
                           className="slice-input w-full text-[9px]"
@@ -1868,7 +1880,7 @@ export function AdminDashboard() {
                       <div key={idx} className="flex gap-4 p-3.5 items-center justify-between min-w-0 w-full">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-10 h-10 rounded-lg bg-white border border-border p-1 overflow-hidden flex shrink-0">
-                            <img src={prod.imageUrl || catImg} alt={prod.name} className="w-full h-full object-contain" />
+                            <img src={prod.imageUrl || catImg || null} alt={prod.name} className="w-full h-full object-contain" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="font-extrabold text-xs text-foreground uppercase truncate" title={prod.name}>{prod.name}</p>

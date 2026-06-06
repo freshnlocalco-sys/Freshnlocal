@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 
 export function Shop() {
   const { products, loading: storeLoading, error, fetchProducts } = useProducts();
-  const { categoryImages, productCategories, fetchCategoryImages } = useSettings();
+  const { categoryImages, productCategories, fetchCategoryImages, lastFetched } = useSettings();
   const allUiCategories = React.useMemo(() => {
     return ['All Products', ...productCategories, 'FNL Juices'];
   }, [productCategories]);
@@ -247,37 +247,50 @@ export function Shop() {
           </div>
           
           <div className="flex flex-col w-full px-1.5 md:px-3 gap-1 pt-2 md:pt-0 pb-8">
-            {allUiCategories.map((cat) => {
-              const isActive = categoryFilter?.toLowerCase() === cat.toLowerCase();
-              return (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setSearchParams({ category: cat });
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className={`flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-3 p-2.5 md:px-4 md:py-3.5 rounded-[14px] transition-all w-full relative group ${
-                    isActive 
-                      ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-border/80 text-primary z-10' 
-                      : 'text-muted-foreground border border-transparent hover:bg-white/50 active:bg-black/5 hover:text-foreground'
-                  }`}
+            {lastFetched === 0 ? (
+              // Sleek skeleton category loaders matching identical dimensions
+              Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={`cat-skeleton-${i}`}
+                  className="flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-3 p-2.5 md:px-4 md:py-3.5 rounded-[14px] w-full border border-transparent animate-pulse"
                 >
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-md md:hidden" />
-                  )}
-                  <div className={`w-11 h-11 md:w-10 md:h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center transition-colors relative ${isActive ? 'bg-primary/10' : 'bg-background border border-border group-hover:border-primary/30'}`}>
-                    {cat === 'All Products' ? (
-                      <ShoppingBag className={`w-5 h-5 md:w-4 md:h-4 text-primary ${isActive ? 'opacity-100 scale-110' : 'opacity-70'}`} />
-                    ) : (
-                      <img src={getCategoryImage(cat, categoryImages)} alt={cat} className={`w-full h-full object-cover ${isActive ? 'opacity-100 scale-110' : 'opacity-85 group-hover:opacity-100'} transition-all`} />
+                  <div className="w-11 h-11 md:w-10 md:h-10 rounded-full bg-muted shrink-0" />
+                  <div className="h-3 md:h-4 bg-muted rounded w-10 md:w-24 mt-1 md:mt-0" />
+                </div>
+              ))
+            ) : (
+              allUiCategories.map((cat) => {
+                const isActive = categoryFilter?.toLowerCase() === cat.toLowerCase();
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setSearchParams({ category: cat });
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-3 p-2.5 md:px-4 md:py-3.5 rounded-[14px] transition-all w-full relative group ${
+                      isActive 
+                        ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-border/80 text-primary z-10' 
+                        : 'text-muted-foreground border border-transparent hover:bg-white/50 active:bg-black/5 hover:text-foreground'
+                    }`}
+                  >
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-md md:hidden" />
                     )}
-                  </div>
-                  <span className={`text-[9px] md:text-sm text-center md:text-left leading-tight mt-1 md:mt-0 md:normal-case md:font-bold ${isActive ? 'font-black uppercase tracking-widest text-primary md:text-foreground' : 'font-semibold tracking-wide md:tracking-normal'} break-words w-full`}>
-                    {cat === 'All Products' ? 'All' : formatCategoryName(cat)}
-                  </span>
-                </button>
-              );
-            })}
+                    <div className={`w-11 h-11 md:w-10 md:h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center transition-colors relative ${isActive ? 'bg-primary/10' : 'bg-background border border-border group-hover:border-primary/30'}`}>
+                      {cat === 'All Products' ? (
+                        <ShoppingBag className={`w-5 h-5 md:w-4 md:h-4 text-primary ${isActive ? 'opacity-100 scale-110' : 'opacity-70'}`} />
+                      ) : (
+                        <img src={getCategoryImage(cat, categoryImages) || null} alt={cat} className={`w-full h-full object-cover ${isActive ? 'opacity-100 scale-110' : 'opacity-85 group-hover:opacity-100'} transition-all`} />
+                      )}
+                    </div>
+                    <span className={`text-[9px] md:text-sm text-center md:text-left leading-tight mt-1 md:mt-0 md:normal-case md:font-bold ${isActive ? 'font-black uppercase tracking-widest text-primary md:text-foreground' : 'font-semibold tracking-wide md:tracking-normal'} break-words w-full`}>
+                      {cat === 'All Products' ? 'All' : formatCategoryName(cat)}
+                    </span>
+                  </button>
+                );
+              })
+            )}
           </div>
         </aside>
 

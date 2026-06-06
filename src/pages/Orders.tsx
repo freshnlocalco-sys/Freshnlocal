@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, useAuth, isQuotaError } from '../lib/firebase';
+import { trackFirestoreRead } from '../lib/cacheManager';
 import { Order } from '../store/useCart';
 import { Link, Navigate } from 'react-router-dom';
 import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck } from 'lucide-react';
@@ -99,6 +100,7 @@ export function Orders() {
           where('userId', '==', user.uid)
         );
         const snapshot = await getDocs(q);
+        trackFirestoreRead('orders', snapshot.size);
         const fetchedOrders = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()

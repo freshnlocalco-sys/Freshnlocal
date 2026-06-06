@@ -3,6 +3,7 @@ import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { trackFirestoreRead } from '../lib/cacheManager';
 import toast from 'react-hot-toast';
 
 export function Profile() {
@@ -22,6 +23,7 @@ export function Profile() {
       try {
         const q = query(collection(db, 'orders'), where('userId', '==', user.uid));
         const snap = await getDocs(q);
+        trackFirestoreRead('orders', snap.size);
         const orderList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         orderList.sort((a: any, b: any) => b.createdAt - a.createdAt);
         setOrders(orderList);
