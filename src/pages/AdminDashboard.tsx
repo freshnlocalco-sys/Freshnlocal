@@ -3,7 +3,7 @@ import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, Filter, Calendar, TrendingUp, X } from 'lucide-react';
 import { Product } from '../store/useCart';
-import { useSettings } from '../store/useSettings';
+import { useSettings, compressOversizedBase64 } from '../store/useSettings';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
 import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
@@ -167,11 +167,10 @@ export function AdminDashboard() {
           setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         } else if (activeTab === 'products') {
           const m = await import('../store/useProducts');
-          const store = m.useProducts.getState();
-          if (store.products.length === 0) {
-            await store.fetchProducts();
+          if (m.useProducts.getState().products.length === 0) {
+            await m.useProducts.getState().fetchProducts();
           }
-          setProducts(store.products);
+          setProducts(m.useProducts.getState().products);
         } else if (activeTab === 'spotlights') {
           const m = await import('./Home');
           const defaultSpots = m.SPOTLIGHTS;
@@ -337,7 +336,29 @@ export function AdminDashboard() {
   const handleSaveSpotlights = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await setDoc(doc(db, 'settings', 'spotlights'), spotlightsConfig, { merge: true });
+      const keys = Object.keys(spotlightsConfig);
+      const optimizedConfig: Record<string, {title: string, image: string}> = {};
+      
+      // Auto-compress any large base64 image strings dynamically before uploading to firestore
+      await Promise.all(keys.map(async (key) => {
+        const item = spotlightsConfig[key];
+        let optimizedImage = item.image;
+        if (item.image && item.image.startsWith('data:image/')) {
+          optimizedImage = await compressOversizedBase64(item.image, { targetWidth: 640, targetHeight: 480, quality: 0.72, cropSquare: false });
+        }
+        optimizedConfig[key] = {
+          title: item.title,
+          image: optimizedImage
+        };
+      }));
+
+      await setDoc(doc(db, 'settings', 'spotlights'), optimizedConfig, { merge: true });
+      
+      // Keep state sync'd and warm
+      setSpotlightsConfig(optimizedConfig);
+      const mCache = await import('../lib/cacheManager');
+      mCache.cacheManager.set('spotlights', optimizedConfig);
+      
       toast.success('Spotlight settings saved!');
     } catch (err: any) {
       toast.error('Failed to save settings.');
@@ -356,31 +377,37 @@ export function AdminDashboard() {
       const img = new window.Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        // Aggressive downscale for Firestore to avoid 1MB limit for multi-image doc
-        const MAX_WIDTH = 500;
-        const MAX_HEIGHT = 500;
-        let width = img.width;
-        let height = img.height;
+        
+        // Spotlight banners are displayed at a perfect 4/3 aspect ratio
+        const targetRatio = 4 / 3;
+        let sWidth = img.width;
+        let sHeight = img.height;
+        let sx = 0;
+        let sy = 0;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
+        if (img.width / img.height > targetRatio) {
+          sHeight = img.height;
+          sWidth = img.height * targetRatio;
+          sx = (img.width - sWidth) / 2;
         } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
+          sWidth = img.width;
+          sHeight = img.width / targetRatio;
+          sy = (img.height - sHeight) / 2;
         }
+
+        // Scale down to 640x480 for crystal-clear retina level display in 420x315 slots
+        const width = 640;
+        const height = 480;
 
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
+        if (ctx) {
+          ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
+        }
 
-        // High compression to ensure combined spotlights fit in 1MB
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
+        // Optimized JPEG compression at 0.72 quality yields tiny file sizes (typically 20KB-30KB) with zero perceptible noise
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
         setSpotlightsConfig(prev => ({ ...prev, [key]: { ...prev[key], image: dataUrl } }));
       };
       img.src = result;
@@ -489,11 +516,12 @@ export function AdminDashboard() {
           sy = (height - size) / 2;
           sWidth = size;
           sHeight = size;
-          width = Math.min(size, 400); // Scale down to max 400px square for performance and Firestore limit
+          // Scale down to max 400px square for category circular items (typically rendered at 60-120px)
+          width = Math.min(size, 400);
           height = width;
         } else {
-          const MAX_WIDTH = 1200;
-          const MAX_HEIGHT = 1200;
+          const MAX_WIDTH = 1000;
+          const MAX_HEIGHT = 1000;
           if (width > height) {
             if (width > MAX_WIDTH) {
               height *= MAX_WIDTH / width;
@@ -513,7 +541,9 @@ export function AdminDashboard() {
         if (ctx) {
           ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
         }
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.90);
+        
+        // Circular categories use 75% quality (~15KB per item), whereas other assets use 80%
+        const dataUrl = canvas.toDataURL('image/jpeg', cropSquare ? 0.75 : 0.80);
         callback(dataUrl);
       };
       if (result) {

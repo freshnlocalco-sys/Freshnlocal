@@ -50,6 +50,71 @@ export const DEFAULT_JUICE_SECTIONS: JuiceCategory[] = [
   { id: 'special', name: 'Our Special', tagline: 'Stunning Matcha & Rose nectar layers', accent: '#0284c7', bgLight: 'bg-sky-500/5' }
 ];
 
+interface CropSettings {
+  targetWidth: number;
+  targetHeight: number;
+  quality: number;
+  cropSquare: boolean;
+}
+
+export const compressOversizedBase64 = (
+  base64: string,
+  settings: CropSettings = { targetWidth: 400, targetHeight: 400, quality: 0.75, cropSquare: true }
+): Promise<string> => {
+  return new Promise((resolve) => {
+    if (!base64 || !base64.startsWith('data:image/') || base64.length < 50000) {
+      resolve(base64);
+      return;
+    }
+
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      let sx = 0;
+      let sy = 0;
+      let sWidth = width;
+      let sHeight = height;
+
+      if (settings.cropSquare) {
+        const size = Math.min(width, height);
+        sx = (width - size) / 2;
+        sy = (height - size) / 2;
+        sWidth = size;
+        sHeight = size;
+        width = Math.min(size, settings.targetWidth);
+        height = width;
+      } else {
+        const targetRatio = settings.targetWidth / settings.targetHeight;
+        if (img.width / img.height > targetRatio) {
+          sHeight = img.height;
+          sWidth = img.height * targetRatio;
+          sx = (img.width - sWidth) / 2;
+        } else {
+          sWidth = img.width;
+          sHeight = img.width / targetRatio;
+          sy = (img.height - sHeight) / 2;
+        }
+        width = settings.targetWidth;
+        height = settings.targetHeight;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
+      }
+      resolve(canvas.toDataURL('image/jpeg', settings.quality));
+    };
+    img.onerror = () => {
+      resolve(base64);
+    };
+    img.src = base64;
+  });
+};
+
 export const useSettings = create<SettingsState>((set, get) => ({
   categoryImages: {},
   productCategories: DEFAULT_PRODUCT_CATEGORIES,
@@ -148,13 +213,20 @@ export const useSettings = create<SettingsState>((set, get) => ({
     try {
       const normalizedCategory = category.toLowerCase().replace(/ font-bold/gi, '').trim();
       const currentImages = get().categoryImages;
-      const newImages = { ...currentImages, [normalizedCategory]: url };
+      
+      // Auto-compress base64 to target square sizing to ensure aggregate collection remains well under the 1MB Firestore Limit.
+      let finalUrl = url;
+      if (url && url.startsWith('data:image/')) {
+        finalUrl = await compressOversizedBase64(url, { targetWidth: 400, targetHeight: 400, quality: 0.75, cropSquare: true });
+      }
+
+      const newImages = { ...currentImages, [normalizedCategory]: finalUrl };
       
       // Handle singular and plural matches so both work seamlessly
       const singularKey = normalizedCategory.endsWith('s') ? normalizedCategory.slice(0, -1) : normalizedCategory;
       const pluralKey = normalizedCategory.endsWith('s') ? normalizedCategory : normalizedCategory + 's';
-      newImages[singularKey] = url;
-      newImages[pluralKey] = url;
+      newImages[singularKey] = finalUrl;
+      newImages[pluralKey] = finalUrl;
       
       const docRef = doc(db, 'settings', 'categoryImages');
       await setDoc(docRef, newImages, { merge: true });
