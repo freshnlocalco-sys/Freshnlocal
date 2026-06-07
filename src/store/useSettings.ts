@@ -32,7 +32,6 @@ interface SettingsState {
 }
 
 export const DEFAULT_PRODUCT_CATEGORIES = [
-  'In Season Fruits',
   'Indian Fruits',
   'Exotic Fruits',
   'Exotic Vegetables',
@@ -149,10 +148,8 @@ export const useSettings = create<SettingsState>((set, get) => ({
     }
 
     // 3. See if the cache is unexpired (< 24 hours) and we aren't forcing
-    // 3. See if the cache is unexpired (< 24 hours) and we aren't forcing.
-    // Also verify cache has "In Season Fruits" otherwise force a remote sync to heal old clients immediately.
-    const hasInSeasonInCache = cachedProdCats && cachedProdCats.map(c => c.toLowerCase().trim()).includes('in season fruits');
-    const isCacheFresh = cacheManager.isValid('categoryImages') && cacheManager.isValid('productCategories') && cacheManager.isValid('juiceCategories') && hasInSeasonInCache;
+    // 3. See if the cache is unexpired (< 24 hours) and we aren't forcing
+    const isCacheFresh = cacheManager.isValid('categoryImages') && cacheManager.isValid('productCategories') && cacheManager.isValid('juiceCategories');
     if (!force && isCacheFresh && cachedImages && cachedProdCats && cachedJuiceCats) {
       set({ lastFetched: Date.now() }); // Hot state: keep lastFetched mark to prevent subsequent local checks
       return;
@@ -187,16 +184,6 @@ export const useSettings = create<SettingsState>((set, get) => ({
           if (catData.juiceCategories || catData.juiceData) {
             juiceCats = catData.juiceData || catData.juiceCategories;
           }
-        }
-
-        // Always guarantee In Season Fruits is in the productCategories list to dynamically recover it
-        const lowCats = prodCats.map(c => c.toLowerCase().trim());
-        if (!lowCats.includes('in season fruits')) {
-          prodCats = ['In Season Fruits', ...prodCats];
-          // Save it back to database to permanently persist the healed state
-          setDoc(catRef, { productCategories: prodCats }, { merge: true }).catch(err => {
-            console.warn("Could not auto-heal In Season Fruits category in DB:", err);
-          });
         }
 
         // Save back to cache

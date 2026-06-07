@@ -1,6 +1,5 @@
 export const CATEGORIES = [
   'All Products',
-  'In Season Fruits',
   'Indian Fruits',
   'Exotic Fruits',
   'Exotic Vegetables',
