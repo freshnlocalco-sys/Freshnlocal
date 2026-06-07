@@ -58,11 +58,6 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
 
   return (
     <div ref={cardRef} className="slice-card h-full flex flex-col justify-between group">
-      <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap gap-1.5 leading-none">
-        <span className="bg-white/40 backdrop-blur-md text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/40 shadow-sm select-none">
-          {displayCategory}
-        </span>
-      </div>
       
       <Link to={`/product/${product.id}`} className="w-full aspect-[4/3] overflow-hidden relative bg-secondary border-b border-border block shrink-0">
         {/* Category image shown stably as background layer until actual product image finishes loading (Prevents Flickering) */}
