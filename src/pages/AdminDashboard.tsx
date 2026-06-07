@@ -91,6 +91,11 @@ export function AdminDashboard() {
   const [newJuiceCatImg, setNewJuiceCatImg] = useState('');
   const [isAddingJuiceCat, setIsAddingJuiceCat] = useState(false);
 
+  // Confirmation states to avoid iframe-blocking window.confirm
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [prodCatToDelete, setProdCatToDelete] = useState<string | null>(null);
+  const [juiceCatToDelete, setJuiceCatToDelete] = useState<{ id: string; name: string } | null>(null);
+
   // Filters for orders
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
@@ -151,7 +156,7 @@ export function AdminDashboard() {
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {title: string, image: string}>>({});
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -169,9 +174,7 @@ export function AdminDashboard() {
           setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         } else if (activeTab === 'products') {
           const m = await import('../store/useProducts');
-          if (m.useProducts.getState().products.length === 0) {
-            await m.useProducts.getState().fetchProducts();
-          }
+          await m.useProducts.getState().fetchProducts(true);
           setProducts(m.useProducts.getState().products);
         } else if (activeTab === 'spotlights') {
           const m = await import('./Home');
@@ -443,10 +446,11 @@ export function AdminDashboard() {
           subCategory: finalSubCategory,
           description: newProduct.description,
           imageUrl: newProduct.imageUrl || '',
+          thumbnailUrl: newProduct.thumbnailUrl || newProduct.imageUrl || '',
           unit: newProduct.unit || '',
           updatedAt: Date.now()
         });
-        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: newProduct.imageUrl || '', unit: newProduct.unit || '' } as unknown as Product : p));
+        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: newProduct.imageUrl || '', thumbnailUrl: newProduct.thumbnailUrl || newProduct.imageUrl || '', unit: newProduct.unit || '' } as unknown as Product : p));
         toast.success('Product updated successfully!');
         setEditingProductId(null);
       } else {
@@ -458,16 +462,17 @@ export function AdminDashboard() {
           subCategory: finalSubCategory,
           description: newProduct.description,
           imageUrl: newProduct.imageUrl || '',
+          thumbnailUrl: newProduct.thumbnailUrl || newProduct.imageUrl || '',
           unit: newProduct.unit || '',
           stock: 100,
           inStock: true,
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
-        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: newProduct.imageUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
+        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: newProduct.imageUrl, thumbnailUrl: newProduct.thumbnailUrl || newProduct.imageUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
         toast.success('New product cataloged successfully!');
       }
-      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
+      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
     } catch (error) {
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
       toast.error('Could not save product catalog.');
@@ -485,6 +490,7 @@ export function AdminDashboard() {
       subCategory: (product as any).subCategory || 'cold-pressed',
       description: product.description,
       imageUrl: product.imageUrl || '',
+      thumbnailUrl: product.thumbnailUrl || product.imageUrl || '',
       unit: product.unit || ''
     });
     setProductSection(isJuice ? 'juices' : 'veg-fruits');
@@ -493,7 +499,7 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
+    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
   };
 
   const processImageFile = (file: File, callback: (base64: string) => void, cropSquare: boolean = false) => {
@@ -545,7 +551,7 @@ export function AdminDashboard() {
         }
         
         // Circular categories use 75% quality (~15KB per item), whereas other assets use 80%
-        const dataUrl = canvas.toDataURL('image/jpeg', cropSquare ? 0.75 : 0.80);
+        const dataUrl = canvas.toDataURL('image/webp', cropSquare ? 0.75 : 0.80);
         callback(dataUrl);
       };
       if (result) {
@@ -559,51 +565,67 @@ export function AdminDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Firestore max document size is 1MB. 
-    // Approximately 700KB max file size for Base64 (which inflates by ~33%).
-    const MAX_FILE_SIZE = 700 * 1024; 
-
     const reader = new FileReader();
     reader.onload = (event) => {
       const result = event.target?.result as string;
-      
-      // If file is small enough, use original upload without canvas compression
-      if (file.size <= MAX_FILE_SIZE) {
-        setNewProduct(prev => ({ ...prev, imageUrl: result }));
-        return;
-      }
-
       const img = new window.Image();
+      
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
-        let width = img.width;
-        let height = img.height;
+        // 1. Generate core WebP item spec
+        const canvasFull = document.createElement('canvas');
+        const MAX_WIDTH_FULL = 1000;
+        const MAX_HEIGHT_FULL = 1000;
+        let wFull = img.width;
+        let hFull = img.height;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
+        if (wFull > hFull) {
+          if (wFull > MAX_WIDTH_FULL) {
+            hFull *= MAX_WIDTH_FULL / wFull;
+            wFull = MAX_WIDTH_FULL;
           }
         } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
+          if (hFull > MAX_HEIGHT_FULL) {
+            wFull *= MAX_HEIGHT_FULL / hFull;
+            hFull = MAX_HEIGHT_FULL;
           }
         }
 
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
+        canvasFull.width = wFull;
+        canvasFull.height = hFull;
+        const ctxFull = canvasFull.getContext('2d');
+        ctxFull?.drawImage(img, 0, 0, wFull, hFull);
+        const dataUrlFull = canvasFull.toDataURL('image/webp', 0.85);
 
-        // Use higher quality for larger images before falling back
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-        
-        // Safety check - if somehow it's still extremely large, we could compress further,
-        // but 1200x1200 at 0.92 usually stays safely under 600KB
-        setNewProduct(prev => ({ ...prev, imageUrl: dataUrl }));
+        // 2. Generate optimized WebP thumbnail card (Max 300px)
+        const canvasThumb = document.createElement('canvas');
+        const MAX_WIDTH_THUMB = 300;
+        const MAX_HEIGHT_THUMB = 300;
+        let wThumb = img.width;
+        let hThumb = img.height;
+
+        if (wThumb > hThumb) {
+          if (wThumb > MAX_WIDTH_THUMB) {
+            hThumb *= MAX_WIDTH_THUMB / wThumb;
+            wThumb = MAX_WIDTH_THUMB;
+          }
+        } else {
+          if (hThumb > MAX_HEIGHT_THUMB) {
+            wThumb *= MAX_HEIGHT_THUMB / hThumb;
+            hThumb = MAX_HEIGHT_THUMB;
+          }
+        }
+
+        canvasThumb.width = wThumb;
+        canvasThumb.height = hThumb;
+        const ctxThumb = canvasThumb.getContext('2d');
+        ctxThumb?.drawImage(img, 0, 0, wThumb, hThumb);
+        const dataUrlThumb = canvasThumb.toDataURL('image/webp', 0.70);
+
+        setNewProduct(prev => ({ 
+          ...prev, 
+          imageUrl: dataUrlFull,
+          thumbnailUrl: dataUrlThumb
+        }));
       };
       if (result) {
         img.src = result;
@@ -612,15 +634,43 @@ export function AdminDashboard() {
     reader.readAsDataURL(file);
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!window.confirm('Do you really want to delete this product catalog item?')) return;
+  const handleDeleteProduct = (productId: string) => {
+    setProductToDelete(productId);
+  };
+
+  const handleConfirmDeleteProduct = async () => {
+    if (!productToDelete) return;
     try {
-      await deleteDoc(doc(db, 'products', productId));
-      setProducts(products.filter(p => p.id !== productId));
-      toast.success('Product catalog cleared.');
+      await deleteDoc(doc(db, 'products', productToDelete));
+      setProducts(products.filter(p => p.id !== productToDelete));
+      toast.success('Product catalog item cleared.');
     } catch (error) {
-       handleFirestoreError(error, OperationType.DELETE, `products/${productId}`);
+       handleFirestoreError(error, OperationType.DELETE, `products/${productToDelete}`);
        toast.error('Failed to remove product.');
+    } finally {
+      setProductToDelete(null);
+    }
+  };
+
+  const handleConfirmDeleteProdCat = async () => {
+    if (!prodCatToDelete) return;
+    try {
+      await deleteProductCategory(prodCatToDelete);
+    } catch (error: any) {
+      toast.error(`Failed to delete category: ${error.message}`);
+    } finally {
+      setProdCatToDelete(null);
+    }
+  };
+
+  const handleConfirmDeleteJuiceCat = async () => {
+    if (!juiceCatToDelete) return;
+    try {
+      await deleteJuiceCategory(juiceCatToDelete.id, juiceCatToDelete.name);
+    } catch (error: any) {
+      toast.error(`Failed to delete juice section: ${error.message}`);
+    } finally {
+      setJuiceCatToDelete(null);
     }
   };
 
@@ -1644,14 +1694,8 @@ export function AdminDashboard() {
                       <div className="flex justify-between items-start gap-2 z-10 w-full min-w-0">
                         <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate flex-1">{cat}</h3>
                         <button
-                          onClick={async () => {
-                            if (window.confirm(`Are you sure you want to delete the category "${cat}"? This will remove the category completely.`)) {
-                              try {
-                                await deleteProductCategory(cat);
-                              } catch (error: any) {
-                                toast.error(`Failed to delete category: ${error.message}`);
-                              }
-                            }
+                          onClick={() => {
+                            setProdCatToDelete(cat);
                           }}
                           className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0"
                           title="Delete Category"
@@ -1801,14 +1845,8 @@ export function AdminDashboard() {
                           <p className="text-[8px] font-mono text-muted-foreground line-clamp-1">{cat.tagline}</p>
                         </div>
                         <button
-                          onClick={async () => {
-                            if (window.confirm(`Are you sure you want to delete the juice section "${cat.name}"? This will remove the section completely.`)) {
-                              try {
-                                await deleteJuiceCategory(cat.id, cat.name);
-                              } catch (error: any) {
-                                toast.error(`Failed to delete category: ${error.message}`);
-                              }
-                            }
+                          onClick={() => {
+                            setJuiceCatToDelete({ id: cat.id, name: cat.name });
                           }}
                           className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0"
                           title="Delete Juice Section"
@@ -1988,6 +2026,93 @@ export function AdminDashboard() {
                 <span className="text-foreground text-sm font-black uppercase tracking-wider">Total Value Payable</span>
                 <span className="text-primary font-mono text-xl font-black">₹{selectedOrder.totalAmount}</span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Deletion Confirmation Modal: Products */}
+      {productToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setProductToDelete(null)} />
+          <div className="bg-secondary border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-black uppercase text-foreground">Confirm Deletion</h3>
+            <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wide font-mono">
+              Are you sure you want to delete this product catalog item? This action is irreversible.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setProductToDelete(null)}
+                className="px-4 py-2 border border-border rounded-xl text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:bg-muted/10 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeleteProduct}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Deletion Confirmation Modal: Produce Categories */}
+      {prodCatToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setProdCatToDelete(null)} />
+          <div className="bg-secondary border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-205">
+            <h3 className="text-lg font-black uppercase text-foreground">Delete Produce Category</h3>
+            <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wide">
+              Are you sure you want to delete the category <span className="text-primary font-black">"{prodCatToDelete}"</span>?
+            </p>
+            <p className="text-[10px] text-red-500 font-mono mt-2">
+              ⚠️ Warning: This removes the category listing and image mapping completely from the database.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setProdCatToDelete(null)}
+                className="px-4 py-2 border border-border rounded-xl text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:bg-muted/10 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeleteProdCat}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Deletion Confirmation Modal: Juice Categories */}
+      {juiceCatToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setJuiceCatToDelete(null)} />
+          <div className="bg-secondary border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-black uppercase text-foreground">Delete Juice Section</h3>
+            <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wide">
+              Are you sure you want to delete <span className="text-orange-600 font-black">"{juiceCatToDelete.name}"</span>?
+            </p>
+            <p className="text-[10px] text-red-500 font-mono mt-2">
+              ⚠️ Warning: This section and its metadata will be permanently deleted from the juice menu.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setJuiceCatToDelete(null)}
+                className="px-4 py-2 border border-border rounded-xl text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:bg-muted/10 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeleteJuiceCat}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
+              >
+                Confirm Delete
+              </button>
             </div>
           </div>
         </div>

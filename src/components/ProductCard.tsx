@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import { Product } from '../store/useCart';
@@ -12,30 +12,83 @@ interface ProductCardProps {
   key?: React.Key | string | number;
 }
 
-export function ProductCard({ product, onAddToCart, displayCategoryOverride }: ProductCardProps) {
+export const ProductCard = React.memo(function ProductCard({ product, onAddToCart, displayCategoryOverride }: ProductCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const { categoryImages } = useSettings();
   const displayCategory = displayCategoryOverride || product.category.replace(/ font-bold/gi, '');
 
+  const startTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    startTimeRef.current = performance.now();
+  }, [product.imageUrl, product.thumbnailUrl]);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+        observer.unobserve(el); // Keep rendered once loaded to optimize DOM operations
+      }
+    }, {
+      rootMargin: '200px', // Preload before it enters viewport
+      threshold: 0.01
+    });
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const catImage = getCategoryImage(displayCategory, categoryImages) || '';
+  const productImgSrc = product.thumbnailUrl || product.imageUrl || catImage;
+
+  if (!isVisible) {
+    // Return a lightweight loading skeletal wireframe placeholder for off-screen items, virtualizing DOM elements
+    return (
+      <div 
+        ref={cardRef} 
+        className="w-full bg-secondary border border-border rounded-2xl h-[340px] animate-pulse"
+      />
+    );
+  }
+
   return (
-    <div className="slice-card h-full">
+    <div ref={cardRef} className="slice-card h-full flex flex-col justify-between group">
       <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap gap-1.5 leading-none">
-        <span className="bg-white/40 backdrop-blur-md text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/40 shadow-sm">
+        <span className="bg-white/40 backdrop-blur-md text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/40 shadow-sm select-none">
           {displayCategory}
         </span>
       </div>
       
       <Link to={`/product/${product.id}`} className="w-full aspect-[4/3] overflow-hidden relative bg-secondary border-b border-border block shrink-0">
-        {/* Skeleton shown while image is loading */}
-        {!imageLoaded && (
-          <div className="absolute inset-0 bg-muted animate-pulse z-10" />
+        {/* Category image shown stably as background layer until actual product image finishes loading (Prevents Flickering) */}
+        {catImage && (
+          <img 
+            src={catImage} 
+            alt="" 
+            className="absolute inset-0 w-full h-full object-cover filter brightness-[95%] opacity-25"
+            aria-hidden="true"
+          />
         )}
+        
+        {/* Actual product thumbnail image fades gracefully on top once loaded */}
         <img 
-          src={product.imageUrl || getCategoryImage(displayCategory, categoryImages) || null} 
+          src={productImgSrc} 
           alt={product.name}
           loading="lazy"
-          onLoad={() => setImageLoaded(true)}
-          className={`w-full h-full object-cover transition-all duration-[1500ms] group-hover:scale-110 filter brightness-[95%] ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => {
+            const duration = performance.now() - startTimeRef.current;
+            console.log(
+              `%c[PERF METRIC] Image load time for "${product.name}": ${duration.toFixed(2)}ms`, 
+              "color: #f59e0b; font-weight: bold; font-family: monospace; border: 1px solid #f59e0b; padding: 2px 4px; border-radius: 4px;"
+            );
+            setImageLoaded(true);
+          }}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:scale-110 filter brightness-[95%] ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           referrerPolicy="no-referrer"
         />
       </Link>
@@ -74,4 +127,4 @@ export function ProductCard({ product, onAddToCart, displayCategoryOverride }: P
       </div>
     </div>
   );
-}
+});

@@ -1,5 +1,6 @@
 export const CATEGORIES = [
   'All Products',
+  'In Season Fruits',
   'Indian Fruits',
   'Exotic Fruits',
   'Exotic Vegetables',
@@ -28,6 +29,8 @@ export const getCategoryImage = (category?: string, customMapping?: Record<strin
 
   // High-quality default fallbacks so category images never appear broken
   const DEFAULT_CATEGORY_IMAGES: Record<string, string> = {
+    'in season fruits': 'https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=600&auto=format&fit=crop&q=80',
+    'in season fruit': 'https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=600&auto=format&fit=crop&q=80',
     'indian fruits': 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=600&auto=format&fit=crop&q=80',
     'indian fruit': 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=600&auto=format&fit=crop&q=80',
     'exotic fruits': 'https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=600&auto=format&fit=crop&q=80',

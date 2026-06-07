@@ -853,7 +853,7 @@ export function FNLJuice() {
 
             {/* Product lists/Grid with Skeleton Loading and Lazy Image renderers */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pb-12">
-              {loading || seeding ? (
+              {loading || seeding || storeLoading ? (
                 Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
               ) : filteredJuices.length === 0 ? (
                 <div className="col-span-full py-24 text-center text-muted-foreground font-sans text-xs uppercase tracking-widest border border-dashed border-border rounded-w p-8">
@@ -874,6 +874,8 @@ export function FNLJuice() {
                 })
               )}
             </div>
+
+
 
             {/* Vintage style bottom informational banner */}
             <div className="bg-secondary border border-border rounded-[24px] p-6 sm:p-10 text-center max-w-3xl mx-auto space-y-6 mt-1 w-full">
