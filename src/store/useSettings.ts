@@ -29,6 +29,8 @@ interface SettingsState {
   addJuiceCategory: (name: string, tagline: string, imageUrl?: string) => Promise<void>;
   deleteProductCategory: (categoryName: string) => Promise<void>;
   deleteJuiceCategory: (id: string, name: string) => Promise<void>;
+  reorderProductCategories: (newOrder: string[]) => Promise<void>;
+  reorderJuiceCategories: (newOrder: JuiceCategory[]) => Promise<void>;
 }
 
 export const DEFAULT_PRODUCT_CATEGORIES = [
@@ -420,5 +422,27 @@ export const useSettings = create<SettingsState>((set, get) => ({
       handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
       throw error;
     }
-  }
+  },
+  reorderProductCategories: async (newOrder: string[]) => {
+    try {
+      const docRef = doc(db, 'settings', 'categoriesConfig');
+      await setDoc(docRef, { productCategories: newOrder }, { merge: true });
+      cacheManager.set('productCategories', newOrder);
+      set({ productCategories: newOrder });
+    } catch (error: any) {
+      toast.error('Failed to reorder categories');
+      throw error;
+    }
+  },
+  reorderJuiceCategories: async (newOrder: JuiceCategory[]) => {
+    try {
+      const docRef = doc(db, 'settings', 'juiceCategories');
+      await setDoc(docRef, { categories: newOrder }, { merge: true });
+      cacheManager.set('juiceCategories', newOrder);
+      set({ juiceCategories: newOrder });
+    } catch (error: any) {
+      toast.error('Failed to reorder juice menu');
+      throw error;
+    }
+  },
 }));

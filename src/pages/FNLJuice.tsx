@@ -462,18 +462,25 @@ export function FNLJuice() {
 
         if (currentJuices.length === 0 && !seeding) {
           setSeeding(true);
-          const batch = writeBatch(db);
           
-          AUTHENTIC_FNL_JUICES.forEach(item => {
-            const newDocRef = doc(collection(db, 'products'));
-            batch.set(newDocRef, {
-              ...item,
-              createdAt: Date.now(),
-              updatedAt: Date.now()
-            });
-          });
+          const chunks = [];
+          for (let i = 0; i < AUTHENTIC_FNL_JUICES.length; i += 100) {
+            chunks.push(AUTHENTIC_FNL_JUICES.slice(i, i + 100));
+          }
 
-          await batch.commit();
+          for (const chunk of chunks) {
+            const batch = writeBatch(db);
+            chunk.forEach(item => {
+              const newDocRef = doc(collection(db, 'products'));
+              batch.set(newDocRef, {
+                ...item,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+              });
+            });
+            await batch.commit();
+          }
+
           toast.success("Synchronized Fresh N Local signature menu board to cloud databases!");
           
           await fetchProducts(true);
@@ -565,7 +572,7 @@ export function FNLJuice() {
   };
 
   // Perform filtering
-  const filteredJuices = juices.filter(item => {
+  const filteredJuicesRaw = juices.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
@@ -575,6 +582,25 @@ export function FNLJuice() {
     const itemSubCat = getSubCategory(item);
     return matchesSearch && itemSubCat === activeSubCategory && matchesPrice;
   });
+
+  const filteredJuices = React.useMemo(() => {
+    const list = [...filteredJuicesRaw];
+    const juiceOrder = new Map();
+    juiceCategories.forEach((c, i) => juiceOrder.set(c.id, i));
+
+    list.sort((a, b) => {
+      const subA = getSubCategory(a);
+      const subB = getSubCategory(b);
+      
+      if (subA !== subB) {
+         const idxSubA = juiceOrder.has(subA) ? juiceOrder.get(subA) : 999;
+         const idxSubB = juiceOrder.has(subB) ? juiceOrder.get(subB) : 999;
+         return idxSubA - idxSubB;
+      }
+      return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
+    });
+    return list;
+  }, [filteredJuicesRaw, juiceCategories]);
 
   const searchSuggestions = searchQuery
     ? Array.from(new Set(juices

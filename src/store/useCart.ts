@@ -13,6 +13,7 @@ export interface Product {
   unit?: string;
   stock: number;
   inStock: boolean;
+  orderIndex?: number;
   createdAt: number;
   updatedAt: number;
 }

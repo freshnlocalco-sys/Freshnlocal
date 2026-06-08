@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, Filter, Calendar, TrendingUp, X } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { useSettings, compressOversizedBase64 } from '../store/useSettings';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
@@ -78,6 +78,8 @@ export function AdminDashboard() {
     addJuiceCategory, 
     deleteProductCategory,
     deleteJuiceCategory,
+    reorderProductCategories,
+    reorderJuiceCategories,
     loading: settingsLoading 
   } = useSettings();
 
@@ -115,6 +117,40 @@ export function AdminDashboard() {
       ((product as any).subCategory || '').toLowerCase().includes(productSearch.toLowerCase())
     );
   });
+
+  const categorizedFilteredProducts = useMemo(() => {
+    const list = [...filteredProducts];
+    const catOrder = new Map();
+    productCategories.forEach((c, i) => catOrder.set(c.toLowerCase().trim(), i));
+    const juiceOrder = new Map();
+    juiceCategories.forEach((c, i) => juiceOrder.set(c.id, i));
+
+    list.sort((a, b) => {
+      const catA = (a.category || '').toLowerCase().trim();
+      const catB = (b.category || '').toLowerCase().trim();
+      if (catA !== catB) {
+        const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
+        const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
+        return idxA - idxB;
+      }
+      
+      const isJuiceA = catA === 'fnl juices' || catA === 'fnl juice';
+      const isJuiceB = catB === 'fnl juices' || catB === 'fnl juice';
+      
+      if (isJuiceA && isJuiceB) {
+         const subA = ((a as any).subCategory || 'cold-pressed').toLowerCase().trim();
+         const subB = ((b as any).subCategory || 'cold-pressed').toLowerCase().trim();
+         if (subA !== subB) {
+            const idxSubA = juiceOrder.has(subA) ? juiceOrder.get(subA) : 999;
+            const idxSubB = juiceOrder.has(subB) ? juiceOrder.get(subB) : 999;
+            return idxSubA - idxSubB;
+         }
+      }
+
+      return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
+    });
+    return list;
+  }, [filteredProducts, productCategories, juiceCategories]);
 
   // Filtered orders logic
   const filteredOrders = orders.filter((order) => {
@@ -306,24 +342,30 @@ export function AdminDashboard() {
         return;
       }
       
-      const batch = writeBatch(db);
+      const chunks = [];
+      for (let i = 0; i < toSeed.length; i += 100) {
+        chunks.push(toSeed.slice(i, i + 100));
+      }
+
       const seededProducts: Product[] = [];
       
-      toSeed.forEach(item => {
-        const newDocRef = doc(collection(db, 'products'));
-        const productPayload = {
-          ...item,
-          createdAt: Date.now(),
-          updatedAt: Date.now()
-        };
-        batch.set(newDocRef, productPayload);
-        seededProducts.push({
-          id: newDocRef.id,
-          ...productPayload
-        } as unknown as Product);
-      });
-      
-      await batch.commit();
+      for (const chunk of chunks) {
+        const batch = writeBatch(db);
+        chunk.forEach(item => {
+          const newDocRef = doc(collection(db, 'products'));
+          const productPayload = {
+            ...item,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          };
+          batch.set(newDocRef, productPayload);
+          seededProducts.push({
+            id: newDocRef.id,
+            ...productPayload
+          } as unknown as Product);
+        });
+        await batch.commit();
+      }
       setProducts(prev => [...seededProducts, ...prev]);
       toast.success(`Successfully imported ${toSeed.length} signature FNL juices!`);
     } catch (err: any) {
@@ -676,6 +718,100 @@ export function AdminDashboard() {
 
   const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
 
+  const [draggedProductIdx, setDraggedProductIdx] = useState<number | null>(null);
+  const [dragOverProductIdx, setDragOverProductIdx] = useState<number | null>(null);
+
+  const [draggedProdCat, setDraggedProdCat] = useState<number | null>(null);
+  const [dragOverProdCat, setDragOverProdCat] = useState<number | null>(null);
+  
+  const [draggedJuiceCat, setDraggedJuiceCat] = useState<number | null>(null);
+  const [dragOverJuiceCat, setDragOverJuiceCat] = useState<number | null>(null);
+
+  const handleProductDrop = async (dropIndex: number) => {
+    if (draggedProductIdx === null || draggedProductIdx === dropIndex) {
+      setDraggedProductIdx(null);
+      setDragOverProductIdx(null);
+      return;
+    }
+
+    const newOrder = [...categorizedFilteredProducts];
+    const itemToMove = newOrder[draggedProductIdx];
+    const dropItem = newOrder[dropIndex];
+    
+    // Auto-update category if moved
+    let categoryChanged = false;
+    if (dropItem) {
+        if (itemToMove.category !== dropItem.category) {
+            itemToMove.category = dropItem.category;
+            categoryChanged = true;
+        }
+        
+        const isJuice1 = itemToMove.category === 'fnl juices' || itemToMove.category === 'fnl juice';
+        const isJuice2 = dropItem.category === 'fnl juices' || dropItem.category === 'fnl juice';
+        if (isJuice1 && isJuice2) {
+           const dropSub = (dropItem as any).subCategory || 'cold-pressed';
+           if ((itemToMove as any).subCategory !== dropSub) {
+              (itemToMove as any).subCategory = dropSub;
+              categoryChanged = true;
+           }
+        }
+    }
+
+    const [removed] = newOrder.splice(draggedProductIdx, 1);
+    newOrder.splice(dropIndex, 0, removed);
+
+    try {
+      const updates: { id: string, data: any }[] = [];
+      newOrder.forEach((p, idx) => {
+        const newOrderIndex = (idx + 1) * 10;
+        let pData: any = { orderIndex: newOrderIndex, updatedAt: Date.now() };
+        if (p.id === itemToMove.id && categoryChanged) {
+           pData.category = itemToMove.category;
+           if (p.category === 'fnl juices' || p.category === 'fnl juice') {
+              pData.subCategory = (itemToMove as any).subCategory;
+           }
+        }
+        if (p.orderIndex !== newOrderIndex || (p.id === itemToMove.id && categoryChanged)) {
+          updates.push({ id: p.id, data: pData });
+        }
+      });
+
+      const chunks = [];
+      for (let i = 0; i < updates.length; i += 100) {
+        const batch = writeBatch(db);
+        const chunk = updates.slice(i, i + 100);
+        chunk.forEach(update => {
+          batch.update(doc(db, 'products', update.id), update.data);
+        });
+        await batch.commit();
+      }
+
+      setProducts(prevProducts => {
+        const updated = prevProducts.map(p => ({...p}));
+        newOrder.forEach((p, idx) => {
+          const match = updated.find(up => up.id === p.id);
+          if (match) {
+            match.orderIndex = (idx + 1) * 10;
+            if (p.id === itemToMove.id && categoryChanged) {
+              match.category = itemToMove.category;
+              if (itemToMove.category === 'fnl juices' || itemToMove.category === 'fnl juice') {
+                (match as any).subCategory = (itemToMove as any).subCategory;
+              }
+            }
+          }
+        });
+        return updated.sort((a,b) => (a.orderIndex ?? 999) - (b.orderIndex ?? 999));
+      });
+      toast.success('Products reordered successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to reorder products');
+    }
+
+    setDraggedProductIdx(null);
+    setDragOverProductIdx(null);
+  };
+
   const handleToggleStock = async (product: Product) => {
     try {
       const newStockStatus = !(product.inStock ?? true);
@@ -783,8 +919,7 @@ export function AdminDashboard() {
         rawJson = XLSX.utils.sheet_to_json(worksheet) as any[];
       }
 
-      const batch = writeBatch(db);
-      let importedCount = 0;
+      const validRows: any[] = [];
 
       for (const rawRow of rawJson) {
         const row: Record<string, any> = {};
@@ -817,7 +952,7 @@ export function AdminDashboard() {
         let parsedPrice = Number(String(rowPrice).replace(/[^0-9.]/g, '') || 0);
         let parsedMrp = rowMrp ? Number(String(rowMrp).replace(/[^0-9.]/g, '')) : undefined;
 
-        const newProd = {
+        validRows.push({
           name: String(rowName).trim(),
           price: parsedPrice,
           originalPrice: parsedMrp && parsedMrp > parsedPrice ? parsedMrp : null,
@@ -828,21 +963,31 @@ export function AdminDashboard() {
           inStock: true,
           createdAt: Date.now(),
           updatedAt: Date.now()
-        };
-        
-        const docRef = doc(collection(db, 'products'));
-        batch.set(docRef, newProd);
-        importedCount++;
+        });
       }
       
-      if (importedCount === 0) {
+      if (validRows.length === 0) {
         toast.error('No suitable products identified inside CSV. Standard columns expected: "Name", "Price".');
         setLoading(false);
         if (e.target) e.target.value = '';
         return;
       }
+      
+      const chunks = [];
+      for (let i = 0; i < validRows.length; i += 100) {
+        chunks.push(validRows.slice(i, i + 100));
+      }
 
-      await batch.commit();
+      for (const chunk of chunks) {
+        const batch = writeBatch(db);
+        chunk.forEach(newProd => {
+          const docRef = doc(collection(db, 'products'));
+          batch.set(docRef, newProd);
+        });
+        await batch.commit();
+      }
+
+      let importedCount = validRows.length;
       
       const m = await import('../store/useProducts');
       await m.useProducts.getState().fetchProducts(true);
@@ -1438,9 +1583,22 @@ export function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
-                    {filteredProducts.map(product => {
+                    {categorizedFilteredProducts.map((product, idx) => {
                       const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
+                      
                       const juiceSubCategory = (product as any).subCategory || 'cold-pressed';
+                      const currentCategoryGroupId = isJuice ? 'juice_' + juiceSubCategory.toLowerCase().trim() : (product.category || '').toLowerCase().trim();
+                      
+                      let previousCategoryGroupId = null;
+                      if (idx > 0) {
+                         const prev = categorizedFilteredProducts[idx - 1];
+                         const prevIsJuice = prev.category === 'fnl juices' || prev.category === 'fnl juice';
+                         const prevSubCategory = (prev as any).subCategory || 'cold-pressed';
+                         previousCategoryGroupId = prevIsJuice ? 'juice_' + prevSubCategory.toLowerCase().trim() : (prev.category || '').toLowerCase().trim();
+                      }
+                      
+                      const showHeader = currentCategoryGroupId !== previousCategoryGroupId;
+                      
                       const displayJuiceLabel = 
                         juiceSubCategory === 'cold-pressed' ? 'Cold-Pressed' :
                         juiceSubCategory === 'detox' ? 'Detox Juice' :
@@ -1452,7 +1610,33 @@ export function AdminDashboard() {
                       const isEditingPrice = editingPrices[product.id] !== undefined;
 
                       return (
-                        <tr key={product.id} className={`transition-colors ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}>
+                        <React.Fragment key={product.id}>
+                          {showHeader && (
+                            <tr className="bg-secondary/30">
+                              <td colSpan={5} className="py-4 sm:py-6 px-3 sm:px-5">
+                                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#151515] bg-white border border-border px-4 py-2 rounded-xl shadow-sm">
+                                  {isJuice ? '🍹 FNL Juices / ' + displayJuiceLabel : product.category.replace(/ font-bold/gi, '')}
+                                </span>
+                              </td>
+                            </tr>
+                          )}
+                          <tr 
+                            draggable 
+                            onDragStart={(e) => {
+                               setDraggedProductIdx(idx);
+                               e.dataTransfer.effectAllowed = 'move';
+                            }}
+                          onDragOver={(e) => {
+                             e.preventDefault();
+                             setDragOverProductIdx(idx);
+                          }}
+                          onDragLeave={() => setDragOverProductIdx(null)}
+                          onDrop={(e) => {
+                             e.preventDefault();
+                             handleProductDrop(idx);
+                          }}
+                          className={`transition-colors cursor-move ${dragOverProductIdx === idx ? 'border-primary border-t-2 border-dashed' : ''} ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}
+                        >
                           <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
                             <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
                               <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-cover" />
@@ -1525,11 +1709,12 @@ export function AdminDashboard() {
                           </button>
                         </td>
                       </tr>
+                      </React.Fragment>
                       );
                     })}
-                    {filteredProducts.length === 0 && (
+                    {categorizedFilteredProducts.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
+                        <td colSpan={5} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
                           Zero items registered inside the database yet.
                         </td>
                       </tr>
@@ -1685,19 +1870,43 @@ export function AdminDashboard() {
 
               {/* Grid of registered produce categories */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                {productCategories.map((cat) => {
+                {productCategories.map((cat, index) => {
                   const currentImg = getCategoryImage(cat, categoryImages);
                   const normalizedKey = cat.toLowerCase().replace(/ font-bold/gi, '').trim();
                   const customImg = categoryImages[normalizedKey] || '';
                   return (
-                    <div key={cat} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
+                    <div 
+                      key={cat} 
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedProdCat(index);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragOverProdCat(index);
+                      }}
+                      onDragLeave={() => setDragOverProdCat(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedProdCat !== null && draggedProdCat !== index) {
+                          const newOrder = [...productCategories];
+                          const [removed] = newOrder.splice(draggedProdCat, 1);
+                          newOrder.splice(index, 0, removed);
+                          reorderProductCategories(newOrder);
+                        }
+                        setDraggedProdCat(null);
+                        setDragOverProdCat(null);
+                      }}
+                      className={`slice-card p-4 sm:p-6 bg-secondary border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group cursor-move transition-all ${dragOverProdCat === index ? 'border-primary border-dashed border-2' : 'border-border'}`}
+                    >
                       <div className="flex justify-between items-start gap-2 z-10 w-full min-w-0">
-                        <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate flex-1">{cat}</h3>
+                        <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate flex-1 leading-tight self-center" title={cat}>{cat}</h3>
                         <button
                           onClick={() => {
                             setProdCatToDelete(cat);
                           }}
-                          className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0"
+                          className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0 self-center"
                           title="Delete Category"
                         >
                           <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -1833,22 +2042,46 @@ export function AdminDashboard() {
 
               {/* Grid of registered juice categories */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                {juiceCategories.map((cat) => {
+                {juiceCategories.map((cat, index) => {
                   const currentImg = getCategoryImage(cat.name, categoryImages);
                   const normalizedKey = cat.name.toLowerCase().replace(/ font-bold/gi, '').trim();
                   const customImg = categoryImages[normalizedKey] || '';
                   return (
-                    <div key={cat.id} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
+                    <div 
+                      key={cat.id} 
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedJuiceCat(index);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragOverJuiceCat(index);
+                      }}
+                      onDragLeave={() => setDragOverJuiceCat(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedJuiceCat !== null && draggedJuiceCat !== index) {
+                          const newOrder = [...juiceCategories];
+                          const [removed] = newOrder.splice(draggedJuiceCat, 1);
+                          newOrder.splice(index, 0, removed);
+                          reorderJuiceCategories(newOrder);
+                        }
+                        setDraggedJuiceCat(null);
+                        setDragOverJuiceCat(null);
+                      }}
+                      className={`slice-card p-4 sm:p-6 bg-secondary border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group cursor-move transition-all ${dragOverJuiceCat === index ? 'border-primary border-dashed border-2' : 'border-border'}`}
+                    >
                       <div className="flex justify-between items-start gap-2 z-10 w-full min-w-0">
-                        <div className="space-y-1 flex-1 min-w-0">
-                          <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate">{cat.name}</h3>
+                        <div className="space-y-1 flex-1 min-w-0 self-center">
+                          <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate" title={cat.name}>{cat.name}</h3>
                           <p className="text-[8px] font-mono text-muted-foreground line-clamp-1">{cat.tagline}</p>
                         </div>
                         <button
                           onClick={() => {
                             setJuiceCatToDelete({ id: cat.id, name: cat.name });
                           }}
-                          className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0"
+                          className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0 self-center"
                           title="Delete Juice Section"
                         >
                           <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />

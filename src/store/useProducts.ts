@@ -46,18 +46,46 @@ export const useProducts = create<ProductsState>((set, get) => ({
       const querySnapshot = await getDocs(q);
       trackFirestoreRead('products_all', querySnapshot.size);
 
-      const fetchedList = querySnapshot.docs.map(doc => {
+      // Clean up duplicate juices
+      const byName = new Map<string, string>();
+      const duplicatesToDelete: string[] = [];
+      
+      const fetchedList = querySnapshot.docs.reduce((acc, doc) => {
         const data = doc.data();
         const pPrice = Number(data.price) || 0;
         const pMrp = Number(data.originalPrice) || Number(data.mrp) || Number(data.MRP) || 0;
-        return {
+        const product = {
           id: doc.id,
           ...data,
           price: pPrice,
           originalPrice: pMrp > pPrice ? pMrp : undefined,
           thumbnailUrl: data.thumbnailUrl || data.imageUrl || ''
         } as unknown as Product;
-      });
+
+        const isJuice = product.category?.toLowerCase().includes('juice');
+        if (isJuice) {
+          const key = (product.name || '').toLowerCase() + '|' + (product.category || '').toLowerCase();
+          if (byName.has(key)) {
+            duplicatesToDelete.push(doc.id);
+            return acc; // skip adding to list
+          } else {
+            byName.set(key, doc.id);
+          }
+        }
+        
+        acc.push(product);
+        return acc;
+      }, [] as Product[]);
+
+      fetchedList.sort((a, b) => (a.orderIndex ?? 999) - (b.orderIndex ?? 999));
+
+      if (duplicatesToDelete.length > 0) {
+        import('firebase/firestore').then(({ deleteDoc, doc }) => {
+          Promise.all(duplicatesToDelete.map(id => deleteDoc(doc(db, 'products', id))))
+            .then(() => console.log(`Removed ${duplicatesToDelete.length} duplicate juice items.`))
+            .catch(err => console.error("Failed to remove duplicate juices:", err));
+        });
+      }
 
       set({
         products: fetchedList,

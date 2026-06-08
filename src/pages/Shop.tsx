@@ -136,7 +136,7 @@ export function Shop() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredProducts = products.filter(p => {
+  const filteredProductsRaw = products.filter(p => {
     let productCategory = p.category ? p.category.toLowerCase() : '';
     productCategory = productCategory.replace(' font-bold', ''); // Normalize older data typos
 
@@ -152,6 +152,25 @@ export function Shop() {
     const matchesPrice = typeof p.price === 'number' ? p.price <= maxPrice : true;
     return matchesCategory && matchesSearch && matchesPrice;
   });
+
+  const filteredProducts = React.useMemo(() => {
+    const list = [...filteredProductsRaw];
+    const catOrder = new Map();
+    productCategories.forEach((c, i) => catOrder.set(c.toLowerCase().trim(), i));
+
+    list.sort((a, b) => {
+      const catA = (a.category || '').toLowerCase().trim().replace(' font-bold', '');
+      const catB = (b.category || '').toLowerCase().trim().replace(' font-bold', '');
+      if (catA !== catB) {
+        const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
+        const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
+        return idxA - idxB;
+      }
+
+      return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
+    });
+    return list;
+  }, [filteredProductsRaw, productCategories]);
 
   const handleAddToCart = (product: Product) => {
     addItem(product);
