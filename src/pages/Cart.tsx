@@ -52,9 +52,15 @@ export function Cart() {
   });
   const [phone, setPhone] = useState(user?.phone || '');
 
+  const hasOutOfStockItems = cartItems.some(item => !item.product.inStock);
+
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (total() < 1000) return;
+    if (hasOutOfStockItems) {
+      toast.error("Please remove out of stock items from your cart before checking out.");
+      return;
+    }
     if (!user) return signIn();
     
     if (!addressLines.line1.trim() || !addressLines.line2.trim() || !addressLines.pincode.trim() || !phone.trim()) {
@@ -183,6 +189,13 @@ export function Cart() {
                     {item.product.name}
                   </h3>
                   <div className="text-primary font-black text-base">₹{item.product.price}</div>
+                  {!item.product.inStock && (
+                    <div className="mt-1">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-orange-500 bg-orange-500/10 px-2 py-1 rounded-md">
+                        Out of Stock
+                      </span>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 w-full sm:w-auto self-stretch">
@@ -195,17 +208,19 @@ export function Cart() {
                   </button>
                   
                   {/* Glass Quantity Controls */}
-                  <div className="flex items-center border border-border bg-background rounded-xl overflow-hidden p-1 order-1 sm:order-2">
+                  <div className={`flex items-center border border-border rounded-xl overflow-hidden p-1 order-1 sm:order-2 ${item.product.inStock ? 'bg-background' : 'bg-muted opacity-50'}`}>
                     <button 
                       onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))} 
-                      className="w-8 h-8 flex items-center justify-center hover:bg-[#09120b] hover:text-white transition-colors rounded-lg cursor-pointer text-foreground"
+                      disabled={!item.product.inStock}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-foreground ${item.product.inStock ? 'hover:bg-[#09120b] hover:text-white transition-colors cursor-pointer' : 'cursor-not-allowed'}`}
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
                     <span className="w-8 text-center font-bold text-xs text-foreground">{item.quantity}</span>
                     <button 
                       onClick={() => updateQuantity(item.product.id, item.quantity + 1)} 
-                      className="w-8 h-8 flex items-center justify-center hover:bg-[#09120b] hover:text-white transition-colors rounded-lg cursor-pointer text-foreground"
+                      disabled={!item.product.inStock}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-foreground ${item.product.inStock ? 'hover:bg-[#09120b] hover:text-white transition-colors cursor-pointer' : 'cursor-not-allowed'}`}
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -339,7 +354,12 @@ export function Cart() {
               </label>
             </div>
             
-            {total() < 1000 && (
+            {hasOutOfStockItems && (
+              <div className="bg-orange-500/10 text-orange-500 border border-orange-500/15 p-4 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest">
+                Remove Out of Stock items to proceed
+              </div>
+            )}
+            {total() < 1000 && !hasOutOfStockItems && (
               <div className="bg-red-500/10 text-red-500 border border-red-500/15 p-4 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest">
                 Minimum larder checkout is ₹1000
               </div>
@@ -348,8 +368,8 @@ export function Cart() {
             {user ? (
               <button 
                 type="submit" 
-                disabled={loading || total() < 1000}
-                className="slice-btn-primary w-full py-4.5 text-[10px]"
+                disabled={loading || total() < 1000 || hasOutOfStockItems}
+                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${loading || total() < 1000 || hasOutOfStockItems ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
               >
                 {loading ? 'Committing Settlement...' : 'Finalize Settlement Board'}
               </button>
@@ -357,8 +377,8 @@ export function Cart() {
               <button 
                 type="button" 
                 onClick={signIn} 
-                disabled={total() < 1000} 
-                className="slice-btn-primary w-full py-4.5 text-[10px]"
+                disabled={total() < 1000 || hasOutOfStockItems} 
+                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${total() < 1000 || hasOutOfStockItems ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
               >
                 Login to Settle Accounts
               </button>

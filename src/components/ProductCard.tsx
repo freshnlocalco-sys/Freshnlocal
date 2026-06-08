@@ -114,10 +114,15 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
         </div>
         
         <button 
-          onClick={() => onAddToCart(product)}
-          className="w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] bg-primary text-white font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-all duration-300 hover:bg-[#09120b] hover:text-white hover:scale-[1.02] transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer mt-auto"
+          onClick={() => product.inStock && onAddToCart(product)}
+          disabled={!product.inStock}
+          className={`w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 mt-auto ${product.inStock ? 'bg-primary text-white hover:bg-[#09120b] hover:scale-[1.02] active:scale-95 cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
         >
-          <ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> <span className="hidden xs:inline">+ Add to Basket</span><span className="xs:hidden">Add</span>
+          {product.inStock ? (
+             <><ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> <span className="hidden xs:inline">+ Add to Basket</span><span className="xs:hidden">Add</span></>
+          ) : (
+             <span>Out of Stock</span>
+          )}
         </button>
       </div>
     </div>

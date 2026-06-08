@@ -91,10 +91,8 @@ export function ProductDetail() {
   }, [id]);
 
   const handleAddToCart = () => {
-    if (product) {
-      for (let i = 0; i < quantity; i++) {
-        addItem(product);
-      }
+    if (product && product.inStock) {
+      addItem(product, quantity);
       toast.success(`${quantity} ${product.name} added to cart!`);
     }
   };
