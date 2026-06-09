@@ -130,9 +130,9 @@ export function AdminDashboard() {
   const categorizedFilteredProducts = useMemo(() => {
     const list = [...filteredProducts];
     const catOrder = new Map();
-    productCategories.forEach((c, i) => catOrder.set(c.toLowerCase().trim(), i));
+    productCategories.forEach((c, i) => { if (c) catOrder.set(c.toLowerCase().trim(), i) });
     const juiceOrder = new Map();
-    juiceCategories.forEach((c, i) => juiceOrder.set(c.id, i));
+    juiceCategories.forEach((c, i) => { if (c && c.id) juiceOrder.set(c.id, i) });
 
     list.sort((a, b) => {
       const catA = (a.category || '').toLowerCase().trim();
@@ -1224,7 +1224,7 @@ export function AdminDashboard() {
                           <div className="space-y-1">
                             {order.items && order.items.length > 0 ? (
                               <div className="flex flex-col gap-0.5">
-                                {order.items.map((item: any, idx: number) => {
+                                {(order.items || []).map((item: any, idx: number) => {
                                   const prod = item?.product || item;
                                   if (!prod) return null;
                                   return (
@@ -1398,9 +1398,9 @@ export function AdminDashboard() {
                             value={newProduct.category === 'fnl juices' ? (productCategories[0]?.toLowerCase() || 'indian fruits') : newProduct.category} 
                             onChange={e => setNewProduct({...newProduct, category: e.target.value})}
                           >
-                            {productCategories.map(cat => (
+                            {productCategories.map(cat => cat ? (
                               <option key={cat} value={cat.toLowerCase()}>{cat}</option>
-                            ))}
+                            ) : null)}
                           </select>
                         </div>
                       ) : (
@@ -1411,9 +1411,9 @@ export function AdminDashboard() {
                             value={newProduct.subCategory || 'cold-pressed'} 
                             onChange={e => setNewProduct({...newProduct, category: 'fnl juices', subCategory: e.target.value})}
                           >
-                            {juiceCategories.map(sec => (
+                            {juiceCategories.map(sec => sec ? (
                               <option key={sec.id} value={sec.id}>{sec.name.toUpperCase()}</option>
-                            ))}
+                            ) : null)}
                           </select>
                         </div>
                       )}
@@ -1881,6 +1881,7 @@ export function AdminDashboard() {
               {/* Grid of registered produce categories */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {productCategories.map((cat, index) => {
+                  if (!cat) return null;
                   const currentImg = getCategoryImage(cat, categoryImages);
                   const normalizedKey = cat.toLowerCase().replace(/ font-bold/gi, '').trim();
                   const customImg = categoryImages[normalizedKey] || '';
@@ -2053,6 +2054,7 @@ export function AdminDashboard() {
               {/* Grid of registered juice categories */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {juiceCategories.map((cat, index) => {
+                  if (!cat || !cat.name) return null;
                   const currentImg = getCategoryImage(cat.name, categoryImages);
                   const normalizedKey = cat.name.toLowerCase().replace(/ font-bold/gi, '').trim();
                   const customImg = categoryImages[normalizedKey] || '';

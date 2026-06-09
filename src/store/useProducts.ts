@@ -62,7 +62,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
           thumbnailUrl: data.thumbnailUrl || data.imageUrl || ''
         } as unknown as Product;
 
-        const isJuice = product.category?.toLowerCase().includes('juice');
+        const isJuice = (product.category || '').toLowerCase().includes('juice');
         if (isJuice) {
           const key = (product.name || '').toLowerCase() + '|' + (product.category || '').toLowerCase();
           if (byName.has(key)) {

@@ -439,7 +439,7 @@ export function FNLJuice() {
   // Helper mapping subcategory names
   const getSubCategory = (product: Product | any): JuiceSubCategory => {
     if (product.subCategory) return product.subCategory as JuiceSubCategory;
-    const match = AUTHENTIC_FNL_JUICES.find(item => item.name.toLowerCase() === product.name.toLowerCase());
+    const match = AUTHENTIC_FNL_JUICES.find(item => item.name.toLowerCase() === (product.name || '').toLowerCase());
     return match ? match.subCategory : 'cold-pressed';
   };
 
@@ -573,8 +573,8 @@ export function FNLJuice() {
 
   // Perform filtering
   const filteredJuicesRaw = juices.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = (item.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+                          (item.description && item.description.toLowerCase().includes((searchQuery || '').toLowerCase()));
     
     const matchesPrice = typeof item.price === 'number' ? item.price <= maxPrice : true;
     
@@ -604,7 +604,7 @@ export function FNLJuice() {
 
   const searchSuggestions = searchQuery
     ? Array.from(new Set(juices
-        .filter(p => p.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+        .filter(p => (p.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()))
         .map(p => p.name)))
         .slice(0, 5)
     : [];

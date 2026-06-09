@@ -253,7 +253,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         toast.error('Category name cannot be empty');
         return;
       }
-      if (current.map(c => c.toLowerCase().trim()).includes(normalizedNew.toLowerCase())) {
+      if (current.map(c => c ? c.toLowerCase().trim() : '').includes(normalizedNew.toLowerCase())) {
         toast.error('Product category already exists');
         return;
       }
@@ -304,7 +304,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       }
       
       const id = normalizedName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      if (current.some(c => c.id === id || c.name.toLowerCase() === normalizedName.toLowerCase())) {
+      if (current.some(c => c.id === id || (c.name && c.name.toLowerCase() === normalizedName.toLowerCase()))) {
         toast.error('Juice category already exists');
         return;
       }
@@ -356,7 +356,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
     try {
       const current = get().productCategories;
       const normalizedName = categoryName.trim();
-      const updated = current.filter(c => c.toLowerCase().trim() !== normalizedName.toLowerCase());
+      const updated = current.filter(c => c && c.toLowerCase().trim() !== normalizedName.toLowerCase());
       
       const docRef = doc(db, 'settings', 'categoriesConfig');
       await setDoc(docRef, { productCategories: updated }, { merge: true });

@@ -15,6 +15,7 @@ export function Shop() {
   const { categoryImages, productCategories, fetchCategoryImages, lastFetched } = useSettings();
   const allUiCategories = React.useMemo(() => {
     const cleanCategories = productCategories.filter(cat => {
+      if (!cat) return false;
       const lower = cat.toLowerCase();
       return !lower.includes('juice');
     });
@@ -120,7 +121,7 @@ export function Shop() {
 
   const searchSuggestions = searchQuery
     ? Array.from(new Set(products
-        .filter(p => p.name?.toLowerCase().includes(searchQuery.toLowerCase()) && !p.category?.toLowerCase().includes('juice'))
+        .filter(p => (p.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) && !(p.category || '').toLowerCase().includes('juice'))
         .map(p => p.name)))
         .slice(0, 5)
     : [];
@@ -148,7 +149,7 @@ export function Shop() {
     const matchesCategory = categoryFilter && categoryFilter.toLowerCase() !== 'all products'
       ? productCategory === categoryFilter.toLowerCase()
       : true;
-    const matchesSearch = p.name ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const matchesSearch = p.name ? p.name.toLowerCase().includes((searchQuery || '').toLowerCase()) : false;
     const matchesPrice = typeof p.price === 'number' ? p.price <= maxPrice : true;
     return matchesCategory && matchesSearch && matchesPrice;
   });
@@ -156,7 +157,9 @@ export function Shop() {
   const filteredProducts = React.useMemo(() => {
     const list = [...filteredProductsRaw];
     const catOrder = new Map();
-    productCategories.forEach((c, i) => catOrder.set(c.toLowerCase().trim(), i));
+    try {
+      productCategories.forEach((c, i) => { if (c) catOrder.set(c.toLowerCase().trim(), i) });
+    } catch(e) {}
 
     list.sort((a, b) => {
       const catA = (a.category || '').toLowerCase().trim().replace(' font-bold', '');
@@ -178,6 +181,7 @@ export function Shop() {
   };
 
   const formatCategoryName = (catName: string) => {
+    if (!catName) return '';
     if (catName.toLowerCase() === 'fresh & hygenic cut fruits and vegetables') return 'Clean Cuts';
     if (catName.toLowerCase() === 'imported / super exotic vegetables') return 'Exotics';
     return catName;
@@ -293,6 +297,7 @@ export function Shop() {
               ))
             ) : (
               allUiCategories.map((cat) => {
+                if (!cat) return null;
                 const isActive = categoryFilter?.toLowerCase() === cat.toLowerCase();
                 return (
                   <button
