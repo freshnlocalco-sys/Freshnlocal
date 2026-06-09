@@ -33,7 +33,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Naturally sweet, fat-free raw hydration extracted fresh from selected coastal water coconuts.",
-    imageUrl: "https://images.unsplash.com/photo-1563219037-c87b4178901b?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -43,7 +43,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Pure hydraulic pressure extraction from sun-ripened red watermelons. Ultimate crisp freshness.",
-    imageUrl: "https://images.unsplash.com/photo-1589733911223-99d43527db09?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -53,7 +53,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Classic sweet lime nectar, rich in vitamin C, pressed cold right before dispatch.",
-    imageUrl: "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -63,7 +63,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Exquisite fusion of crisp watermelon, dynamic mint undertone and fresh lime notes.",
-    imageUrl: "https://images.unsplash.com/photo-1546173159-315724a31696?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -73,7 +73,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Lush pulp of selected regional mangoes cold-pushed to make a smooth golden velvet juice.",
-    imageUrl: "https://images.unsplash.com/photo-1534080391025-a7db5eedcc4f?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -83,7 +83,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Sun-golden Nagpur oranges pressed cold with pulp particles for a full spectrum sweet and tangy experience.",
-    imageUrl: "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -93,7 +93,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Lively tropical pineapple elixir cold-squeezed to maintain dietary enzymes and bright flavor.",
-    imageUrl: "https://images.unsplash.com/photo-1550950158-d0d960dff51b?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -103,7 +103,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Rich sweet nectar extracted from selected crisp Kashmir Red Apples. 100% natural oxidization-guarded.",
-    imageUrl: "https://images.unsplash.com/photo-1610397613000-f03e8575364e?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -113,7 +113,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Specialized double melon press bringing together honeydew and red watermelons.",
-    imageUrl: "https://images.unsplash.com/photo-1508888620463-90d3e51dd13a?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -123,7 +123,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Slightly tart, vitamin-heavy green kiwi press with sweet apple base tones.",
-    imageUrl: "https://images.unsplash.com/photo-1589416515438-e6ed45f573af?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -133,7 +133,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "High antioxidant deep crimson ruby pomegranate arils pressed cold with a twist of lime.",
-    imageUrl: "https://images.unsplash.com/photo-1618331835717-801e976710b2?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -143,7 +143,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "cold-pressed",
     description: "Creamy pink guava cold-pressed with a dusting of safe hand-pounded red spices for that classic local kick.",
-    imageUrl: "https://images.unsplash.com/photo-1533038597257-39d5f36d7570?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -155,7 +155,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "detox",
     description: "The classic miracle elixir: Fresh Apple, vibrant Beetroot, and young Carrot. High-performance detox.",
-    imageUrl: "https://images.unsplash.com/photo-1610970881699-44a5587caa90?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -165,7 +165,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "detox",
     description: "Nutrient-packed juice of spinach, mint, cucumber, celery, kiwi and green apple.",
-    imageUrl: "https://images.unsplash.com/photo-1606772733959-c214e15167a3?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -175,7 +175,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "detox",
     description: "Raw living chlorophyll shot of fresh tender wheatgrass, cold-pressed with touch of sweet apple.",
-    imageUrl: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -185,7 +185,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "detox",
     description: "Anti-ageing deep black grape juice cold-pressed to release skin-loving resveratrol.",
-    imageUrl: "https://images.unsplash.com/photo-1603569283847-aa295f0d016a?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -197,7 +197,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "satvik",
     description: "Traditional roasted green mango drink flavored with cumin, black salt and mint leaves.",
-    imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -207,7 +207,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "satvik",
     description: "Famous shaken coconut water with sweet basil seeds (sabja), crushed ginger and green chili slice.",
-    imageUrl: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -217,7 +217,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "satvik",
     description: "Tangy Konkan kokum fruit skin infusion blended with natural cooling tragacanth gum (gond katira).",
-    imageUrl: "https://images.unsplash.com/photo-1595981267035-7b04ec84a82d?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -227,7 +227,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "satvik",
     description: "Traditional cooling lemonade enriched with seasonal black plum (jamun) pulp and rock salts.",
-    imageUrl: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -237,7 +237,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "satvik",
     description: "High-protein roasted gram flour energy drink spiced with mint, green chili, chat masala and cold spring water.",
-    imageUrl: "https://images.unsplash.com/photo-1517256064527-09c53b2d0bc6?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -249,7 +249,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "smoothies",
     description: "Thick musk melon base infused with finest saffron (kesar) strands without any added sugar.",
-    imageUrl: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -259,7 +259,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "smoothies",
     description: "Creamy sugar-free blend of hand-picked strawberries, Greek yogurt, and zero-calorie plant nectar.",
-    imageUrl: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -269,7 +269,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "smoothies",
     description: "Fabulous blend of cold blueberries, raspberries, strawberries, and rich avocado base.",
-    imageUrl: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -279,7 +279,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "smoothies",
     description: "Extreme green boost: organic moringa leaves, creamy avocado, and ripe naturally sweet banana.",
-    imageUrl: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -289,7 +289,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "smoothies",
     description: "Creamy whipped Alphonso mango pulp blended with unsweetened organic almond milk.",
-    imageUrl: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -299,7 +299,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "smoothies",
     description: "Rich digestion-friendly blend of tropical papaya, Turkish apricots, and cardamoms.",
-    imageUrl: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -311,7 +311,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "sweet-cravings",
     description: "Classic velvety rich milkshake crafted with pure mango pulp and cream.",
-    imageUrl: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -321,7 +321,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "sweet-cravings",
     description: "Indulgent coconut milk chocolate milkshake crafted with premium cocoa and coconut bits.",
-    imageUrl: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -331,7 +331,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "sweet-cravings",
     description: "Fabulous double drip combining rich coconut chocolate milkshake with mango pulp swirls.",
-    imageUrl: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -341,7 +341,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "sweet-cravings",
     description: "Rich traditional royal beverage loaded with saffron, almonds, fennel seeds, and cardamoms.",
-    imageUrl: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -353,7 +353,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "special",
     description: "Sensational fragrant rose petal preserve (gulkand) layered with sweet white litchi premium nectar.",
-    imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -363,7 +363,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "special",
     description: "Brewed mountain black tea leaves chilled over fresh peach puree chunks and mint.",
-    imageUrl: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -373,7 +373,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "special",
     description: "Sweet dark red cherries cold pressed and blended with natural Madagascar vanilla pods.",
-    imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -383,7 +383,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "special",
     description: "Ceremonial Uji Japanese green matcha whisked directly over chilled sweet coconut water & tender coconut meat pulp.",
-    imageUrl: "https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -393,7 +393,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "special",
     description: "Stunning layer of organic stoneground Japanese matcha whisked over fresh sweet mango nectar.",
-    imageUrl: "https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   },
@@ -403,7 +403,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     category: "fnl juices",
     subCategory: "special",
     description: "Traditional sweet Thai dessert drink: layered rich coconut milk cream, pandan, sticky rice essence and pure mango pulp.",
-    imageUrl: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600&auto=format&fit=crop&q=80",
+    
     stock: 100,
     inStock: true
   }
