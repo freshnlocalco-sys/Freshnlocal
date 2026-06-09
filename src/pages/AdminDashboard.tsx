@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X } from 'lucide-react';
@@ -62,7 +63,15 @@ function OrderStatusDropdown({ currentStatus, onStatusChange }: { currentStatus:
 
 export function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'spotlights' | 'categories'>('orders');
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const activeTab = useMemo(() => {
+    if (location.pathname.includes('/admin/inventory')) return 'products';
+    if (location.pathname.includes('/admin/spotlights')) return 'spotlights';
+    if (location.pathname.includes('/admin/categories')) return 'categories';
+    return 'orders'; // corresponds to consignments
+  }, [location.pathname]);
   
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -1061,45 +1070,46 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-8 w-full bg-background text-foreground">
+    <div className="flex flex-col md:flex-row min-h-[calc(100vh-80px)] bg-background text-foreground">
       
-      {/* Title Desk */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 border-b border-border pb-6 sm:pb-8 mb-6 sm:mb-12">
-        <div className="space-y-1.5 bg-transparent">
+      {/* Admin Sidebar Navigation */}
+      <div className="w-full md:w-64 lg:w-72 border-b md:border-b-0 md:border-r border-border bg-secondary shrink-0 flex flex-col p-4 sm:p-6 sticky top-0 md:top-20 z-10 md:h-[calc(100vh-80px)] overflow-y-auto">
+        <div className="space-y-1.5 bg-transparent mb-6 sm:mb-8 mt-2">
           <span className="glass-pill text-[8px] sm:text-[10px]">Command Station</span>
-          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-sans font-black uppercase text-foreground tracking-tight mt-2.5">
-            Logistics Control panel
+          <h1 className="text-xl sm:text-2xl font-sans font-black uppercase text-foreground tracking-tight mt-2.5">
+            Logistics
           </h1>
         </div>
         
-      {/* Sleek control navigation tab nodes */}
-      <div className="flex w-full md:w-auto overflow-x-auto overflow-y-hidden bg-secondary p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-border shrink-0 select-none pb-2 sm:pb-1.5">
-        <button 
-          onClick={() => setActiveTab('orders')}
-          className={`shrink-0 flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
-        >
-          <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Consignments
-        </button>
-        <button 
-          onClick={() => setActiveTab('products')}
-          className={`shrink-0 flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
-        >
-          <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Larder Inventory
-        </button>
-        <button 
-          onClick={() => setActiveTab('spotlights')}
-          className={`shrink-0 flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'spotlights' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
-        >
-          <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Spotlights
-        </button>
-        <button 
-          onClick={() => setActiveTab('categories')}
-          className={`shrink-0 flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 rounded-xl font-extrabold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'categories' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:text-foreground bg-transparent'}`}
-        >
-          <Sliders className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Categories
-        </button>
+        <nav className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0 no-scrollbar">
+          <button 
+            onClick={() => navigate('/admin/consignments')}
+            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+          >
+            <ShoppingBag className="w-4 h-4" /> Consignments
+          </button>
+          <button 
+            onClick={() => navigate('/admin/inventory')}
+            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+          >
+            <Package className="w-4 h-4" /> Larder Inventory
+          </button>
+          <button 
+            onClick={() => navigate('/admin/spotlights')}
+            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'spotlights' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+          >
+            <Sparkles className="w-4 h-4" /> Spotlights
+          </button>
+          <button 
+            onClick={() => navigate('/admin/categories')}
+            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'categories' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+          >
+            <Sliders className="w-4 h-4" /> Categories
+          </button>
+        </nav>
       </div>
-      </div>
+
+      <div className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-8">
 
       {loading ? (
         <div className="max-w-7xl mx-auto px-4 py-36 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest flex flex-col items-center justify-center gap-4">
@@ -2350,6 +2360,7 @@ export function AdminDashboard() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

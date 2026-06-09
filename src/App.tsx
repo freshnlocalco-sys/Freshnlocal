@@ -55,7 +55,11 @@ export default function App() {
           <Route path="shop" element={<Shop />} />
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path="cart" element={<Cart />} />
-          <Route path="admin" element={<AdminDashboard />} />
+          <Route path="admin" element={<Navigate to="/admin/consignments" replace />} />
+          <Route path="admin/consignments" element={<AdminDashboard />} />
+          <Route path="admin/inventory" element={<AdminDashboard />} />
+          <Route path="admin/spotlights" element={<AdminDashboard />} />
+          <Route path="admin/categories" element={<AdminDashboard />} />
           <Route path="profile" element={<Profile />} />
           <Route path="orders" element={<Orders />} />
           <Route path="about" element={<About />} />
