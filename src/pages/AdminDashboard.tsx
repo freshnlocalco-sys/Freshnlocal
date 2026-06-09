@@ -488,6 +488,16 @@ export function AdminDashboard() {
       const finalCategory = productSection === 'juices' ? 'fnl juices' : newProduct.category;
       const finalSubCategory = productSection === 'juices' ? (newProduct.subCategory || 'cold-pressed') : null;
 
+      let finalImageUrl = newProduct.imageUrl || '';
+      let finalThumbnailUrl = newProduct.thumbnailUrl || newProduct.imageUrl || '';
+
+      if (finalImageUrl.startsWith('data:image/') && finalImageUrl.length > 300000) {
+        finalImageUrl = await compressOversizedBase64(finalImageUrl, { targetWidth: 600, targetHeight: 600, quality: 0.75, cropSquare: false });
+      }
+      if (finalThumbnailUrl.startsWith('data:image/') && finalThumbnailUrl.length > 50000) {
+        finalThumbnailUrl = await compressOversizedBase64(finalThumbnailUrl, { targetWidth: 200, targetHeight: 200, quality: 0.65, cropSquare: false });
+      }
+
       if (editingProductId) {
         await updateDoc(doc(db, 'products', editingProductId), {
           name: newProduct.name,
@@ -496,12 +506,12 @@ export function AdminDashboard() {
           category: finalCategory,
           subCategory: finalSubCategory,
           description: newProduct.description,
-          imageUrl: newProduct.imageUrl || '',
-          thumbnailUrl: newProduct.thumbnailUrl || newProduct.imageUrl || '',
+          imageUrl: finalImageUrl,
+          thumbnailUrl: finalThumbnailUrl,
           unit: newProduct.unit || '',
           updatedAt: Date.now()
         });
-        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: newProduct.imageUrl || '', thumbnailUrl: newProduct.thumbnailUrl || newProduct.imageUrl || '', unit: newProduct.unit || '' } as unknown as Product : p));
+        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, thumbnailUrl: finalThumbnailUrl, unit: newProduct.unit || '' } as unknown as Product : p));
         toast.success('Product updated successfully!');
         setEditingProductId(null);
       } else {
@@ -512,15 +522,15 @@ export function AdminDashboard() {
           category: finalCategory,
           subCategory: finalSubCategory,
           description: newProduct.description,
-          imageUrl: newProduct.imageUrl || '',
-          thumbnailUrl: newProduct.thumbnailUrl || newProduct.imageUrl || '',
+          imageUrl: finalImageUrl,
+          thumbnailUrl: finalThumbnailUrl,
           unit: newProduct.unit || '',
           stock: 100,
           inStock: true,
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
-        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: newProduct.imageUrl, thumbnailUrl: newProduct.thumbnailUrl || newProduct.imageUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
+        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, thumbnailUrl: finalThumbnailUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
         toast.success('New product cataloged successfully!');
       }
       setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
@@ -624,8 +634,8 @@ export function AdminDashboard() {
       img.onload = () => {
         // 1. Generate core WebP item spec
         const canvasFull = document.createElement('canvas');
-        const MAX_WIDTH_FULL = 1000;
-        const MAX_HEIGHT_FULL = 1000;
+        const MAX_WIDTH_FULL = 600;
+        const MAX_HEIGHT_FULL = 600;
         let wFull = img.width;
         let hFull = img.height;
 
@@ -645,12 +655,12 @@ export function AdminDashboard() {
         canvasFull.height = hFull;
         const ctxFull = canvasFull.getContext('2d');
         ctxFull?.drawImage(img, 0, 0, wFull, hFull);
-        const dataUrlFull = canvasFull.toDataURL('image/webp', 0.85);
+        const dataUrlFull = canvasFull.toDataURL('image/webp', 0.75);
 
         // 2. Generate optimized WebP thumbnail card (Max 300px)
         const canvasThumb = document.createElement('canvas');
-        const MAX_WIDTH_THUMB = 300;
-        const MAX_HEIGHT_THUMB = 300;
+        const MAX_WIDTH_THUMB = 200;
+        const MAX_HEIGHT_THUMB = 200;
         let wThumb = img.width;
         let hThumb = img.height;
 
@@ -670,7 +680,7 @@ export function AdminDashboard() {
         canvasThumb.height = hThumb;
         const ctxThumb = canvasThumb.getContext('2d');
         ctxThumb?.drawImage(img, 0, 0, wThumb, hThumb);
-        const dataUrlThumb = canvasThumb.toDataURL('image/webp', 0.70);
+        const dataUrlThumb = canvasThumb.toDataURL('image/webp', 0.60);
 
         setNewProduct(prev => ({ 
           ...prev, 
