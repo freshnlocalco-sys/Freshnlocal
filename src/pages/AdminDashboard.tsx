@@ -121,8 +121,8 @@ export function AdminDashboard() {
     if (productSection === 'juices' && !isJuice) return false;
 
     return (
-      product.name.toLowerCase().includes(productSearch.toLowerCase()) || 
-      product.category.toLowerCase().includes(productSearch.toLowerCase()) ||
+      (product.name || '').toLowerCase().includes(productSearch.toLowerCase()) || 
+      (product.category || '').toLowerCase().includes(productSearch.toLowerCase()) ||
       ((product as any).subCategory || '').toLowerCase().includes(productSearch.toLowerCase())
     );
   });
@@ -339,7 +339,7 @@ export function AdminDashboard() {
       const currentJuiceNames = new Set(
         products
           .filter(p => p.category === 'fnl juices' || p.category === 'fnl juice')
-          .map(p => p.name.toLowerCase().trim())
+          .map(p => (p.name || '').toLowerCase().trim())
       );
       
       const toSeed = AUTHENTIC_FNL_JUICES.filter(
@@ -1625,7 +1625,7 @@ export function AdminDashboard() {
                             <tr className="bg-secondary/30">
                               <td colSpan={5} className="py-4 sm:py-6 px-3 sm:px-5">
                                 <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#151515] bg-white border border-border px-4 py-2 rounded-xl shadow-sm">
-                                  {isJuice ? '🍹 FNL Juices / ' + displayJuiceLabel : product.category.replace(/ font-bold/gi, '')}
+                                  {isJuice ? '🍹 FNL Juices / ' + displayJuiceLabel : (product.category || '').replace(/ font-bold/gi, '')}
                                 </span>
                               </td>
                             </tr>
@@ -1660,7 +1660,7 @@ export function AdminDashboard() {
                               </span>
                             ) : (
                               <span className="text-muted-foreground">
-                                {product.category.replace(/ font-bold/gi, '')}
+                                {(product.category || '').replace(/ font-bold/gi, '')}
                               </span>
                             )}
                           </td>

@@ -136,7 +136,7 @@ export function ProductDetail() {
     );
   }
 
-  const isJuice = product.category.toLowerCase().includes('juice');
+  const isJuice = (product.category || '').toLowerCase().includes('juice');
   const backLink = isJuice ? "/juice" : "/shop";
   const backText = isJuice ? "Back to FNL Juices" : "Back to store catalog";
 

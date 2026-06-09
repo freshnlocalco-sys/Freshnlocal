@@ -25,7 +25,7 @@ export interface MenuCategoryInfo {
 // Static juice definitions removed. Using dynamic store categories.
 
 // Fully compiled catalog matching user's loaded menu board image precisely
-export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'updatedAt'> & { subCategory: JuiceSubCategory }> = [
+export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'imageUrl'> & { subCategory: JuiceSubCategory, imageUrl?: string }> = [
   // COLD PRESSED JUICES
   {
     name: "Fresh Tender Coconut",
