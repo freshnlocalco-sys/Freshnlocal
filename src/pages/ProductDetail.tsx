@@ -136,10 +136,14 @@ export function ProductDetail() {
     );
   }
 
+  const isJuice = product.category.toLowerCase().includes('juice');
+  const backLink = isJuice ? "/juice" : "/shop";
+  const backText = isJuice ? "Back to FNL Juices" : "Back to store catalog";
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 w-full bg-background text-foreground">
-      <Link to="/shop" className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-secondary border border-border text-[10px] uppercase tracking-widest font-black text-foreground hover:text-primary hover:border-primary transition-colors mb-8">
-        <ArrowLeft className="w-4.5 h-4.5" /> Back to store catalog
+      <Link to={backLink} className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-secondary border border-border text-[10px] uppercase tracking-widest font-black text-foreground hover:text-primary hover:border-primary transition-colors mb-8">
+        <ArrowLeft className="w-4.5 h-4.5" /> {backText}
       </Link>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
@@ -221,7 +225,7 @@ export function ProductDetail() {
           <div className="space-y-4 pt-4">
             <button 
               onClick={handleAddToCart}
-              className="w-full py-4.5 rounded-[18px] bg-primary text-white font-sans text-[10px] uppercase font-black tracking-widest transition-all duration-300 hover:bg-[#09120b] hover:text-white hover:scale-[1.02] transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-md disabled:shadow-none"
+              className="w-full py-4.5 rounded-[18px] bg-primary text-white font-sans text-[10px] uppercase font-black tracking-widest transition-colors hover:bg-[#09120b] hover:text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-md disabled:shadow-none"
               disabled={!product.inStock}
             >
               <ShoppingBag className="w-4.5 h-4.5" />

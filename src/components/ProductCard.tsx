@@ -116,7 +116,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
         <button 
           onClick={() => product.inStock && onAddToCart(product)}
           disabled={!product.inStock}
-          className={`w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 mt-auto ${product.inStock ? 'bg-primary text-white hover:bg-[#09120b] hover:scale-[1.02] active:scale-95 cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
+          className={`w-full py-2.5 sm:py-3 rounded-xl sm:rounded-[14px] font-sans text-[8px] sm:text-[9px] uppercase font-black tracking-widest transition-colors flex items-center justify-center gap-1.5 mt-auto ${product.inStock ? 'bg-primary text-white hover:bg-[#09120b] cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
         >
           {product.inStock ? (
              <><ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" /> <span className="hidden xs:inline">+ Add to Basket</span><span className="xs:hidden">Add</span></>
