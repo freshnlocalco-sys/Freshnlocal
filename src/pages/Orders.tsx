@@ -215,7 +215,7 @@ export function Orders() {
                       <div className="flex items-center gap-4">
                         {product.imageUrl ? (
                           <div className="w-12 h-12 rounded-xl overflow-hidden bg-background border border-border flex-shrink-0">
-                            <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover" />
+                            <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-contain p-1" />
                           </div>
                         ) : (
                           <div className="w-12 h-12 bg-background border border-border rounded-xl flex items-center justify-center flex-shrink-0">

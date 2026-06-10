@@ -148,16 +148,16 @@ export function ProductDetail() {
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Product Image Panel */}
-        <div className="lg:col-span-7 rounded-[32px] overflow-hidden bg-secondary border border-border relative aspect-[4/3] w-full">
+        <div className="lg:col-span-7 rounded-[32px] overflow-hidden bg-secondary border border-border relative aspect-[4/3] w-full items-center justify-center flex">
           <div className="absolute top-5 left-5 z-20 flex flex-wrap gap-2 leading-none">
-            <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/40 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-white/40 shadow-sm">
+            <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-border shadow-sm">
               {product.category.replace(/ font-bold/gi, '')}
             </span>
           </div>
           <img 
             src={product.imageUrl || getCategoryImage(product.category, categoryImages) || null} 
             alt={product.name}
-            className="w-full h-full object-cover filter brightness-[95%]"
+            className="w-full h-full object-contain p-4 md:p-8"
             referrerPolicy="no-referrer"
           />
         </div>

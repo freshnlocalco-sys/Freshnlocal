@@ -63,7 +63,7 @@ interface CropSettings {
 
 export const compressOversizedBase64 = (
   base64: string,
-  settings: CropSettings = { targetWidth: 400, targetHeight: 400, quality: 0.75, cropSquare: true }
+  settings: CropSettings = { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false }
 ): Promise<string> => {
   return new Promise((resolve) => {
     if (!base64 || !base64.startsWith('data:image/') || base64.length < 50000) {
@@ -90,18 +90,15 @@ export const compressOversizedBase64 = (
         width = Math.min(size, settings.targetWidth);
         height = width;
       } else {
-        const targetRatio = settings.targetWidth / settings.targetHeight;
-        if (img.width / img.height > targetRatio) {
-          sHeight = img.height;
-          sWidth = img.height * targetRatio;
-          sx = (img.width - sWidth) / 2;
-        } else {
-          sWidth = img.width;
-          sHeight = img.width / targetRatio;
-          sy = (img.height - sHeight) / 2;
+        // preserve aspect ratio without cropping
+        if (width > settings.targetWidth) {
+          height = Math.round((height * settings.targetWidth) / width);
+          width = settings.targetWidth;
         }
-        width = settings.targetWidth;
-        height = settings.targetHeight;
+        if (height > settings.targetHeight) {
+          width = Math.round((width * settings.targetHeight) / height);
+          height = settings.targetHeight;
+        }
       }
 
       canvas.width = width;
@@ -223,7 +220,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       // Auto-compress base64 to target square sizing (256x256 at 0.70 quality) for ultra-fast loading & minimum footprint
       let finalUrl = url;
       if (url && url.startsWith('data:image/')) {
-        finalUrl = await compressOversizedBase64(url, { targetWidth: 256, targetHeight: 256, quality: 0.7, cropSquare: true });
+        finalUrl = await compressOversizedBase64(url, { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false });
       }
 
       const newImages = { ...currentImages, [normalizedCategory]: finalUrl };
@@ -267,7 +264,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       if (imageUrl) {
         let finalUrl = imageUrl;
         if (imageUrl.startsWith('data:image/')) {
-          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 256, targetHeight: 256, quality: 0.7, cropSquare: true });
+          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false });
         }
         const normalizedImgKey = normalizedNew.toLowerCase().replace(/ font-bold/gi, '').trim();
         const imgRef = doc(db, 'settings', 'categoryImages');
@@ -326,7 +323,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       if (imageUrl) {
         let finalUrl = imageUrl;
         if (imageUrl.startsWith('data:image/')) {
-          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 256, targetHeight: 256, quality: 0.7, cropSquare: true });
+          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false });
         }
         const normalizedImgKey = normalizedName.toLowerCase().replace(/ font-bold/gi, '');
         const imgRef = doc(db, 'settings', 'categoryImages');

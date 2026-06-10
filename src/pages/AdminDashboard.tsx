@@ -563,10 +563,10 @@ export function AdminDashboard() {
       let finalThumbnailUrl = newProduct.thumbnailUrl || newProduct.imageUrl || '';
 
       if (finalImageUrl.startsWith('data:image/') && finalImageUrl.length > 300000) {
-        finalImageUrl = await compressOversizedBase64(finalImageUrl, { targetWidth: 800, targetHeight: 800, quality: 0.85, cropSquare: false });
+        finalImageUrl = await compressOversizedBase64(finalImageUrl, { targetWidth: 1200, targetHeight: 1200, quality: 0.92, cropSquare: false });
       }
       if (finalThumbnailUrl.startsWith('data:image/') && finalThumbnailUrl.length > 50000) {
-        finalThumbnailUrl = await compressOversizedBase64(finalThumbnailUrl, { targetWidth: 400, targetHeight: 400, quality: 0.80, cropSquare: false });
+        finalThumbnailUrl = await compressOversizedBase64(finalThumbnailUrl, { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false });
       }
 
       if (editingProductId) {
@@ -705,8 +705,8 @@ export function AdminDashboard() {
       img.onload = () => {
         // 1. Generate core WebP item spec
         const canvasFull = document.createElement('canvas');
-        const MAX_WIDTH_FULL = 600;
-        const MAX_HEIGHT_FULL = 600;
+        const MAX_WIDTH_FULL = 1200;
+        const MAX_HEIGHT_FULL = 1200;
         let wFull = img.width;
         let hFull = img.height;
 
@@ -726,12 +726,12 @@ export function AdminDashboard() {
         canvasFull.height = hFull;
         const ctxFull = canvasFull.getContext('2d');
         ctxFull?.drawImage(img, 0, 0, wFull, hFull);
-        const dataUrlFull = canvasFull.toDataURL('image/webp', 0.75);
+        const dataUrlFull = canvasFull.toDataURL('image/webp', 0.92);
 
-        // 2. Generate optimized WebP thumbnail card (Max 300px)
+        // 2. Generate optimized WebP thumbnail card (Max 400px)
         const canvasThumb = document.createElement('canvas');
-        const MAX_WIDTH_THUMB = 200;
-        const MAX_HEIGHT_THUMB = 200;
+        const MAX_WIDTH_THUMB = 400;
+        const MAX_HEIGHT_THUMB = 400;
         let wThumb = img.width;
         let hThumb = img.height;
 
@@ -751,7 +751,14 @@ export function AdminDashboard() {
         canvasThumb.height = hThumb;
         const ctxThumb = canvasThumb.getContext('2d');
         ctxThumb?.drawImage(img, 0, 0, wThumb, hThumb);
-        const dataUrlThumb = canvasThumb.toDataURL('image/webp', 0.60);
+        const dataUrlThumb = canvasThumb.toDataURL('image/webp', 0.85);
+
+        // Add logging for image generation stats
+        console.log(`[Image Upload] Original size: ${img.width}x${img.height}`);
+        console.log(`[Image Upload] Processed Full size: ${Math.round(wFull)}x${Math.round(hFull)} at quality 0.92`);
+        console.log(`[Image Upload] Processed Thumbnail size: ${Math.round(wThumb)}x${Math.round(hThumb)} at quality 0.85`);
+        console.log(`[Image Upload] Full image file size approx: ${Math.round((dataUrlFull.length * 0.75) / 1024)} KB`);
+        console.log(`[Image Upload] Thumbnail file size approx: ${Math.round((dataUrlThumb.length * 0.75) / 1024)} KB`);
 
         setNewProduct(prev => ({ 
           ...prev, 
@@ -1500,7 +1507,7 @@ export function AdminDashboard() {
                     <div className="flex gap-2">
                       <div className="w-16 aspect-[4/3] bg-black/5 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
                         {newProduct.imageUrl ? (
-                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-cover" />
+                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-contain p-1" />
                         ) : (
                           <Upload className="w-4 h-4 text-muted-foreground opacity-50" />
                         )}
@@ -1719,7 +1726,7 @@ export function AdminDashboard() {
                         >
                           <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
                             <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
-                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-cover" />
+                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-contain p-1" />
                             </div>
                             <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                           </td>
