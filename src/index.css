@@ -24,7 +24,15 @@
 }
 
 @layer base {
-  body {
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
+    margin: 0;
+    padding: 0;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);

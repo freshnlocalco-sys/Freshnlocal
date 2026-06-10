@@ -188,7 +188,7 @@ export function Shop() {
   };
 
   return (
-    <div className="w-full bg-background text-foreground">
+    <div className="w-full max-w-full box-border overflow-x-hidden bg-background text-foreground">
       
       {/* Mobile Search Header */}
       <div className="md:hidden px-3 py-3 bg-background/95 backdrop-blur-md border-b border-border relative z-40">
@@ -277,7 +277,7 @@ export function Shop() {
       <div className="max-w-[1400px] mx-auto flex w-full">
         
         {/* Left Sidebar Layout */}
-        <aside className="w-20 sm:w-24 md:w-60 lg:w-72 bg-secondary border-r border-border shrink-0 sticky top-20 md:top-[116px] h-[calc(100vh-80px)] md:h-[calc(100vh-116px)] overflow-y-auto no-scrollbar flex flex-col z-20">
+        <aside className="w-20 sm:w-24 md:w-60 lg:w-72 bg-secondary border-r border-border shrink-0 md:sticky md:top-[116px] md:h-[calc(100vh-116px)] md:overflow-y-auto no-scrollbar flex flex-col z-20">
           <div className="hidden md:block px-6 py-6 pb-2 border-b border-border mb-2 sticky top-0 bg-secondary/95 backdrop-blur-sm z-10">
             <h2 className="text-xl font-black uppercase tracking-tight">Categories</h2>
             <p className="text-[10px] text-muted-foreground mt-1 font-medium">Fresh harvest daily</p>
@@ -338,7 +338,7 @@ export function Shop() {
             {/* Desktop header with search */}
             <div className="hidden md:flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center mb-8 border-b border-border pb-6">
               <div>
-                <h1 className="text-3xl font-black uppercase tracking-tight text-foreground line-clamp-1">{categoryFilter === 'All Products' ? 'The Harvest' : categoryFilter} <span className="text-primary font-bold hidden xl:inline-block">/ Fresh Selection</span></h1>
+                <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-foreground line-clamp-1">{categoryFilter === 'All Products' ? 'The Harvest' : categoryFilter} <span className="text-primary font-bold hidden xl:inline-block">/ Fresh Selection</span></h1>
                 <p className="text-sm text-muted-foreground mt-2 font-medium">Delivering premium ingredients, responsibly sourced.</p>
               </div>
               

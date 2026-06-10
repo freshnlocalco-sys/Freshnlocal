@@ -24,7 +24,15 @@ export function AuthModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
       }
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+      if (err?.code === 'auth/email-already-in-use' || err?.message?.includes('email-already-in-use')) {
+         setError('This email uses Google Sign-In. Open the app in a new tab to use Google login.');
+      } else if (err?.code === 'auth/invalid-credential') {
+         setError('Invalid password. If you originally used Google, please use Google login. (If you want an email/password Admin account, close this and Sign Up with admin@yourdomain.com)');
+      } else if (err?.code === 'auth/unauthorized-domain') {
+         setError('Vercel Domain Not Authorized: Add your Vercel URL to Firebase Console -> Authentication -> Authorized domains.');
+      } else {
+         setError(err.message || 'Authentication failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -105,7 +113,38 @@ export function AuthModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 my-6">
+          <div className="flex-1 border-t border-border"></div>
+          <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">OR</span>
+          <div className="flex-1 border-t border-border"></div>
+        </div>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={async () => {
+            try {
+              setLoading(true);
+              const m = await import('../lib/firebase');
+              await m.signIn();
+              onClose();
+            } catch (err: any) {
+              if (err?.code === 'auth/unauthorized-domain') {
+                 setError('Vercel Domain Not Authorized: Add your Vercel URL to Firebase Console -> Authentication -> Settings -> Authorized domains.');
+              } else {
+                 setError('Google Sign In failed: ' + (err.message || ''));
+              }
+            } finally {
+              setLoading(false);
+            }
+          }}
+          className="w-full py-3 bg-white text-foreground text-[10px] font-bold uppercase tracking-widest border border-border hover:bg-black/5 transition-colors flex justify-center items-center gap-2 mb-6"
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4" />
+          Continue with Google
+        </button>
+
+        <div className="text-center text-sm text-muted-foreground">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button 
             type="button" 

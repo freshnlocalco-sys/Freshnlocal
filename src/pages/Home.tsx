@@ -242,56 +242,56 @@ export function Home() {
   }, [isHovered]);
 
   return (
-    <div className="flex flex-col items-center bg-background text-foreground overflow-hidden">
+    <div className="flex flex-col items-center bg-background text-foreground overflow-x-hidden w-full max-w-full box-border">
       
       {/* Hero Section */}
-      <section className="w-full max-w-7xl mx-auto px-4 md:px-8 pt-12 md:pt-24 pb-20 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center relative">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-primary/10 rounded-full blur-[100px] pointer-events-none animate-pulse"></div>
+      <section className="w-full max-w-7xl mx-auto px-4 md:px-8 pt-8 md:pt-24 pb-16 md:pb-20 grid lg:grid-cols-2 gap-10 md:gap-16 items-center relative overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 md:w-96 md:h-96 bg-primary/5 rounded-full blur-[80px] md:blur-[120px] pointer-events-none"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 md:w-80 md:h-80 bg-primary/10 rounded-full blur-[80px] md:blur-[100px] pointer-events-none animate-pulse"></div>
 
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="space-y-6 z-10"
+          className="space-y-4 md:space-y-6 z-10 flex flex-col items-start text-left w-full max-w-xl lg:max-w-none"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-[10px] uppercase tracking-[0.2em] font-extrabold border border-primary/20">
-            <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-primary/10 text-primary text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-extrabold border border-primary/20">
+            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary animate-ping"></span>
             Redefining freshness in Surat
           </div>
           
-          <h1 className="title-display text-5xl lg:text-8xl leading-[0.9] font-black tracking-tight uppercase">
+          <h1 className="title-display text-3xl sm:text-4xl md:text-5xl lg:text-[7rem] leading-[1.1] sm:leading-[1] md:leading-[0.9] font-black tracking-tight uppercase w-full">
             Freshness <br/>
             <span className="text-foreground">Sliced Simple.</span>
           </h1>
 
-          <p className="text-sm md:text-base text-muted-foreground max-w-md leading-relaxed font-sans font-medium">
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground w-full max-w-[300px] sm:max-w-md mx-0 leading-relaxed font-sans font-medium">
             Zero hassle. Ultra-pure quality. Experience Surat's premier tech-driven larder bringing crisp, handpicked, local harvests & exotic fruits right to your modern kitchen.
           </p>
 
-          <div className="flex flex-wrap gap-4 pt-6">
-            <Link to="/shop" className="slice-btn-primary px-8 py-5 text-xs text-[11px]">
-              Explore Shop <ArrowRight className="w-4 h-4 ml-1" />
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-6 justify-start w-full sm:w-auto">
+            <Link to="/shop" className="slice-btn-primary px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] w-full sm:w-auto justify-center">
+              Explore Shop <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4 ml-1" />
             </Link>
-            <Link to="/juice" className="slice-btn-secondary border-orange-500/20 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5 px-8 py-5 text-xs text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
+            <Link to="/juice" className="slice-btn-secondary border-orange-500/20 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5 px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full sm:w-auto">
               FNL Juice House 🍹
             </Link>
           </div>
 
-          <div className="flex justify-between md:justify-start gap-2 md:gap-8 items-center pt-8 border-t border-border/60 w-full max-w-md mt-10">
-            <div className="text-center md:text-left">
-              <p className="text-xl sm:text-2xl font-black text-foreground p-0 leading-none">6 HRS</p>
-              <p className="text-[8px] sm:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5">Guaranteed Delivery</p>
+          <div className="flex flex-wrap justify-start gap-4 sm:gap-6 md:gap-8 items-center pt-6 md:pt-8 border-t border-border/60 w-full lg:max-w-md mt-8 md:mt-10">
+            <div className="text-left flex-1 min-w-[30%]">
+              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">6 HRS</p>
+              <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Guaranteed Delivery</p>
             </div>
-            <div className="w-px h-10 bg-border/60"></div>
-            <div className="text-center md:text-left">
-              <p className="text-xl sm:text-2xl font-black text-foreground p-0 leading-none">100%</p>
-              <p className="text-[8px] sm:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5">Farmer Traceability</p>
+            <div className="w-px h-8 md:h-10 bg-border/60"></div>
+            <div className="text-left flex-1 min-w-[30%]">
+              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">100%</p>
+              <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Farmer Traceability</p>
             </div>
-            <div className="w-px h-10 bg-border/60"></div>
-            <div className="text-center md:text-left">
-              <p className="text-xl sm:text-2xl font-black text-foreground p-0 leading-none">0 FEES</p>
-              <p className="text-[8px] sm:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5">No Platform Taxes</p>
+            <div className="hidden sm:block w-px h-8 md:h-10 bg-border/60"></div>
+            <div className="text-left flex-1 min-w-[30%] mt-2 sm:mt-0">
+              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">0 FEES</p>
+              <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">No Platform Taxes</p>
             </div>
           </div>
         </motion.div>
@@ -305,7 +305,7 @@ export function Home() {
         >
           {/* Real Agricultural Crop Spotlight Card */}
           <div 
-            className="relative w-full max-w-[420px] aspect-[4/3]"
+            className="relative w-full max-w-[420px] mx-auto xl:mx-0 aspect-[4/3]"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
@@ -382,64 +382,64 @@ export function Home() {
           </div>
 
           {/* Interactive Card Selector tabs resembling slice website widgets */}
-          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-10 gap-1.5 w-full max-w-[1020px]">
+          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-1.5 sm:gap-2 w-full max-w-[1020px] mx-auto">
             <button 
               onClick={() => setActiveCard('greens')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'greens' ? 'bg-primary text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'greens' ? 'bg-primary text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Veggies
             </button>
             <button 
               onClick={() => setActiveCard('alphonso')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'alphonso' ? 'bg-yellow-500 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'alphonso' ? 'bg-yellow-500 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Cuts
             </button>
             <button 
               onClick={() => setActiveCard('exotics')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'exotics' ? 'bg-[#ac3fff] text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'exotics' ? 'bg-[#ac3fff] text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Fruits
             </button>
             <button 
               onClick={() => setActiveCard('herbs')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'herbs' ? 'bg-emerald-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'herbs' ? 'bg-emerald-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Herbs
             </button>
             <button 
               onClick={() => setActiveCard('superExotics')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'superExotics' ? 'bg-cyan-400 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'superExotics' ? 'bg-cyan-400 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Imported
             </button>
             <button 
               onClick={() => setActiveCard('leafyGreens')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'leafyGreens' ? 'bg-lime-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'leafyGreens' ? 'bg-lime-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Greens
             </button>
             <button 
               onClick={() => setActiveCard('frozenItems')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'frozenItems' ? 'bg-indigo-400 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'frozenItems' ? 'bg-indigo-400 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Frozen
             </button>
             <button 
               onClick={() => setActiveCard('indianFruits')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'indianFruits' ? 'bg-orange-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'indianFruits' ? 'bg-orange-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Indian
             </button>
             <button 
               onClick={() => setActiveCard('juices')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'juices' ? 'bg-orange-600 text-white shadow-sm scale-105' : 'text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'juices' ? 'bg-orange-600 text-white shadow-sm scale-105' : 'text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 hover:scale-105'}`}
             >
               Juices 🍹
             </button>
             <button 
               onClick={() => setActiveCard('mushrooms')} 
-              className={`py-2 px-1 sm:py-3 sm:px-0 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'mushrooms' ? 'bg-stone-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
+              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'mushrooms' ? 'bg-stone-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
             >
               Mushrooms
             </button>
@@ -452,7 +452,7 @@ export function Home() {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <span className="glass-pill">Core Powerhouse</span>
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-foreground mt-4">SUPPLY CHAIN WITH PURPOSE</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-foreground mt-4">SUPPLY CHAIN WITH PURPOSE</h2>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider leading-relaxed">
               Building a healthier, greener, and more responsible food ecosystem from farm to doorstep.
             </p>
@@ -559,7 +559,7 @@ export function Home() {
         <div className="absolute bottom-[-300px] right-[-300px] w-[600px] h-[600px] bg-black/5 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div className="max-w-xl mx-auto space-y-6 z-10 relative">
-          <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tight leading-none text-white">
+          <h2 className="text-2xl sm:text-4xl md:text-6xl font-black uppercase tracking-tight leading-none text-white">
             Ready to <br/>Slice Freshness?
           </h2>
           <p className="text-xs font-bold uppercase tracking-wider opacity-90 leading-relaxed max-w-sm mx-auto">

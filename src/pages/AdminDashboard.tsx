@@ -206,6 +206,17 @@ export function AdminDashboard() {
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
+  const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
+
+  const [draggedProductIdx, setDraggedProductIdx] = useState<number | null>(null);
+  const [dragOverProductIdx, setDragOverProductIdx] = useState<number | null>(null);
+
+  const [draggedProdCat, setDraggedProdCat] = useState<number | null>(null);
+  const [dragOverProdCat, setDragOverProdCat] = useState<number | null>(null);
+  
+  const [draggedJuiceCat, setDraggedJuiceCat] = useState<number | null>(null);
+  const [dragOverJuiceCat, setDragOverJuiceCat] = useState<number | null>(null);
+
   useEffect(() => {
     if (user?.role !== 'admin') return;
     
@@ -272,11 +283,73 @@ export function AdminDashboard() {
 
   if (!user) {
     return (
-      <div className="max-w-md mx-auto my-24 p-8 rounded-[28px] bg-secondary border border-border text-center space-y-4 shadow-sm">
-        <span className="text-primary font-mono text-xs uppercase tracking-widest block">ADMINISTRATION</span>
-        <h2 className="text-xl font-black uppercase text-foreground">Authentication Required</h2>
-        <p className="text-xs text-muted-foreground">Please log in to access the control desk.</p>
+      <div className="max-w-md mx-auto my-24 p-8 rounded-[28px] bg-secondary border border-border space-y-4 shadow-sm">
+        <div className="text-center">
+          <span className="text-primary font-mono text-xs uppercase tracking-widest block">ADMINISTRATION</span>
+          <h2 className="text-xl font-black uppercase text-foreground">Authentication Required</h2>
+          <p className="text-xs text-muted-foreground mt-2">Please log in to access the control desk.</p>
+        </div>
         
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          const target = e.target as typeof e.target & {
+             email: { value: string };
+             password: { value: string };
+          };
+          const m = await import('../lib/firebase');
+          try {
+             await m.signInWithEmail(target.email.value, target.password.value);
+             toast.success("Login successful!");
+          } catch (error: any) {
+             const errMsg = error?.code || error?.message || '';
+             
+             // First check if it's a wrong password for an existing account
+             if (errMsg === 'auth/wrong-password') {
+                 toast.error('Incorrect password. Please try again.');
+                 return;
+             }
+             
+             // If account doesn't exist, try to sign up
+             if (errMsg.includes('user-not-found') || errMsg === 'auth/user-not-found') {
+                 try {
+                     await m.signUpWithEmail(target.email.value, target.password.value, 'Admin');
+                     toast.success("Admin account created and logged in!");
+                 } catch (signUpErr: any) {
+                     toast.error(`Sign Up Error: ${signUpErr.message}`);
+                 }
+                 return;
+             }
+             
+             // If they use Google Sign In, Firebase throws invalid-credential if you try to use a password
+             if (errMsg.includes('invalid-credential') || errMsg.includes('auth/invalid-login-credentials')) {
+                 toast.error(`Invalid credentials. If this was a Google account, you cannot use a password. Instead, Sign Up with an email starting with 'admin@' to create an email/password admin.`);
+                 return;
+             }
+
+             console.error("Sign-in failed", error);
+             toast.error(`Sign In Error: ${error.message || 'Authentication failed'}`);
+          }
+        }} className="space-y-3 mt-6">
+           <div>
+             <label className="block text-[10px] font-bold uppercase tracking-widest mb-1">Admin Email</label>
+             <input required name="email" type="email" placeholder="admin@example.com" className="w-full border border-border px-3 py-2 bg-white outline-none text-xs rounded-lg focus:border-primary transition-colors" />
+           </div>
+           <div>
+             <label className="block text-[10px] font-bold uppercase tracking-widest mb-1">Password</label>
+             <input required name="password" type="password" placeholder="••••••••" className="w-full border border-border px-3 py-2 bg-white outline-none text-xs rounded-lg focus:border-primary transition-colors" />
+           </div>
+           <button type="submit" className="slice-btn-primary w-full py-3 mt-2">Sign In with Credentials</button>
+           <p className="text-[9px] text-center text-muted-foreground uppercase tracking-widest mt-2">
+             New Admin? Sign up using the Profile icon in the top right.
+           </p>
+        </form>
+
+        <div className="relative flex py-2 items-center">
+            <div className="flex-grow border-t border-border"></div>
+            <span className="flex-shrink mx-4 text-[10px] text-muted-foreground font-bold tracking-widest uppercase">Or</span>
+            <div className="flex-grow border-t border-border"></div>
+        </div>
+
         <button 
           onClick={async () => {
              const m = await import('../lib/firebase');
@@ -284,19 +357,17 @@ export function AdminDashboard() {
                await m.signIn();
              } catch (error: any) {
                console.error("Sign-in failed", error);
-               toast.error(`Sign In Error: ${error.message || 'Firebase block'}`);
+               if (error?.code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized domain')) {
+                 toast.error('Vercel Domain Not Authorized: Please add your Vercel URL to Firebase Console -> Authentication -> Settings -> Authorized domains.', { duration: 8000 });
+               } else {
+                 toast.error(`Sign In Error: ${error.message || 'Firebase block'}`);
+               }
              }
           }}
-          className="slice-btn-primary w-full py-4 mt-2"
+          className="w-full py-3 bg-white text-foreground text-xs font-bold uppercase tracking-widest border border-border hover:bg-black/5 transition-colors rounded-lg flex justify-center items-center gap-2"
         >
           Sign In with Google
         </button>
-
-        <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-border"></div>
-            <span className="flex-shrink mx-4 text-[10px] text-muted-foreground font-bold tracking-widest uppercase">Or</span>
-            <div className="flex-grow border-t border-border"></div>
-        </div>
 
         <button 
           onClick={async () => {
@@ -311,12 +382,12 @@ export function AdminDashboard() {
              m.useAuth.getState().setUser(adminUser);
              toast.success("Bypassed network/iframe block! Welcome, freshnlocalco@gmail.com.");
           }}
-          className="w-full py-4 bg-orange-600/10 hover:bg-orange-600/20 text-orange-600 text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all border border-orange-500/20"
+          className="w-full py-4 mt-6 bg-orange-600/10 hover:bg-orange-600/20 text-orange-600 text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all border border-orange-500/20"
         >
-          Developer Mode Access
+          🔑 Bypass Auth (Owner Only)
         </button>
-        <p className="text-[10px] text-muted-foreground max-w-xs mx-auto leading-relaxed mt-2 font-mono">
-          Use Developer Mode if Google Auth gets blocked by cellular carrier network policies or browser iframe privacy constraints.
+        <p className="text-[10px] text-center text-muted-foreground max-w-xs mx-auto leading-relaxed mt-2 font-mono">
+          Click the bypass button above if you are the owner (freshnlocalco@gmail.com) and cannot use Google Sign-In right now.
         </p>
       </div>
     );
@@ -400,7 +471,7 @@ export function AdminDashboard() {
         const item = spotlightsConfig[key];
         let optimizedImage = item.image;
         if (item.image && item.image.startsWith('data:image/')) {
-          optimizedImage = await compressOversizedBase64(item.image, { targetWidth: 640, targetHeight: 480, quality: 0.72, cropSquare: false });
+          optimizedImage = await compressOversizedBase64(item.image, { targetWidth: 1024, targetHeight: 768, quality: 0.85, cropSquare: false });
         }
         optimizedConfig[key] = {
           title: item.title,
@@ -492,10 +563,10 @@ export function AdminDashboard() {
       let finalThumbnailUrl = newProduct.thumbnailUrl || newProduct.imageUrl || '';
 
       if (finalImageUrl.startsWith('data:image/') && finalImageUrl.length > 300000) {
-        finalImageUrl = await compressOversizedBase64(finalImageUrl, { targetWidth: 600, targetHeight: 600, quality: 0.75, cropSquare: false });
+        finalImageUrl = await compressOversizedBase64(finalImageUrl, { targetWidth: 800, targetHeight: 800, quality: 0.85, cropSquare: false });
       }
       if (finalThumbnailUrl.startsWith('data:image/') && finalThumbnailUrl.length > 50000) {
-        finalThumbnailUrl = await compressOversizedBase64(finalThumbnailUrl, { targetWidth: 200, targetHeight: 200, quality: 0.65, cropSquare: false });
+        finalThumbnailUrl = await compressOversizedBase64(finalThumbnailUrl, { targetWidth: 400, targetHeight: 400, quality: 0.80, cropSquare: false });
       }
 
       if (editingProductId) {
@@ -734,17 +805,6 @@ export function AdminDashboard() {
       setJuiceCatToDelete(null);
     }
   };
-
-  const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
-
-  const [draggedProductIdx, setDraggedProductIdx] = useState<number | null>(null);
-  const [dragOverProductIdx, setDragOverProductIdx] = useState<number | null>(null);
-
-  const [draggedProdCat, setDraggedProdCat] = useState<number | null>(null);
-  const [dragOverProdCat, setDragOverProdCat] = useState<number | null>(null);
-  
-  const [draggedJuiceCat, setDraggedJuiceCat] = useState<number | null>(null);
-  const [dragOverJuiceCat, setDragOverJuiceCat] = useState<number | null>(null);
 
   const handleProductDrop = async (dropIndex: number) => {
     if (draggedProductIdx === null || draggedProductIdx === dropIndex) {
@@ -1080,7 +1140,7 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-[calc(100vh-80px)] bg-background text-foreground">
+    <div className="w-full max-w-full box-border overflow-x-hidden flex flex-col md:flex-row min-h-[calc(100vh-80px)] bg-background text-foreground">
       
       {/* Admin Sidebar Navigation */}
       <div className="w-full md:w-64 lg:w-72 border-b md:border-b-0 md:border-r border-border bg-secondary shrink-0 flex flex-col p-4 sm:p-6 sticky top-0 md:top-20 z-10 md:h-[calc(100vh-80px)] overflow-y-auto">
@@ -1119,7 +1179,7 @@ export function AdminDashboard() {
         </nav>
       </div>
 
-      <div className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-8">
+      <div className="flex-1 min-w-0 w-full max-w-[1600px] mx-auto p-4 md:p-8 lg:p-12">
 
       {loading ? (
         <div className="max-w-7xl mx-auto px-4 py-36 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest flex flex-col items-center justify-center gap-4">
@@ -1319,7 +1379,7 @@ export function AdminDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
               {/* Left form desk: manual additions & CSV operations */}
-              <div className={`col-span-12 lg:col-span-5 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[32px] shadow-sm transition-all ${
+              <div className={`col-span-12 lg:col-span-4 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[32px] shadow-sm transition-all ${
                 productSection === 'juices' ? 'ring-2 ring-orange-500/10' : 'ring-2 ring-emerald-500/10'
               }`}>
                 <div className="space-y-4">
@@ -1440,7 +1500,7 @@ export function AdminDashboard() {
                     <div className="flex gap-2">
                       <div className="w-16 aspect-[4/3] bg-black/5 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
                         {newProduct.imageUrl ? (
-                          <img src={newProduct.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
                           <Upload className="w-4 h-4 text-muted-foreground opacity-50" />
                         )}
@@ -1538,7 +1598,7 @@ export function AdminDashboard() {
             </div>
             
             {/* Live table view of product catalogs */}
-            <div className="col-span-12 lg:col-span-7 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden">
+            <div className="col-span-12 lg:col-span-8 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden">
               <div className="p-4 sm:p-5 md:p-6 border-b border-border bg-secondary flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
                   <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><Package className="w-4 h-4" /> Active Catalog</h3>
@@ -1889,7 +1949,7 @@ export function AdminDashboard() {
               </div>
 
               {/* Grid of registered produce categories */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
                 {productCategories.map((cat, index) => {
                   if (!cat) return null;
                   const currentImg = getCategoryImage(cat, categoryImages);
@@ -2062,7 +2122,7 @@ export function AdminDashboard() {
               </div>
 
               {/* Grid of registered juice categories */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
                 {juiceCategories.map((cat, index) => {
                   if (!cat || !cat.name) return null;
                   const currentImg = getCategoryImage(cat.name, categoryImages);

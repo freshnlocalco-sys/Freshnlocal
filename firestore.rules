@@ -10,8 +10,11 @@ service cloud.firestore {
     function existing() { return resource.data; }
     function isSignedIn() { return request.auth != null; }
     function isAdmin() { 
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'; 
+      return isSignedIn() && (
+        (request.auth.token.email != null && request.auth.token.email == 'freshnlocalco@gmail.com') || 
+        (request.auth.token.email != null && request.auth.token.email.lower() == 'mohitswami855@gmail.com') || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      ); 
     }
     
     match /users/{userId} {
@@ -35,13 +38,13 @@ service cloud.firestore {
       allow create: if isSignedIn() 
         && request.auth.uid == userId 
         && isValidUser(incoming())
-        && (incoming().role == 'customer' || (incoming().role == 'admin' && request.auth.token.email == 'freshnlocalco@gmail.com') || isAdmin()); // Can self-assign admin only if owner email
+        && (incoming().role == 'customer' || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com')) || isAdmin()); // Can self-assign admin only if owner email
         
       allow update: if isSignedIn() 
         && (request.auth.uid == userId || isAdmin())
         && isValidUser(incoming())
         && incoming().createdAt == existing().createdAt
-        && (incoming().role == existing().role || (incoming().role == 'admin' && request.auth.token.email == 'freshnlocalco@gmail.com') || isAdmin()); // Users cannot escalate own privileges unless owner
+        && (incoming().role == existing().role || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com')) || isAdmin()); // Users cannot escalate own privileges unless owner
     }
     
     match /products/{productId} {
@@ -83,9 +86,7 @@ service cloud.firestore {
         && data.updatedAt is number;
       }
       
-      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
-      // Explicitly protect the list query:
-      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       
       allow create: if isSignedIn()
         && isValidOrder(incoming())

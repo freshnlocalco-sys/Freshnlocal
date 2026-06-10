@@ -165,7 +165,7 @@ export function ProductDetail() {
         {/* Product Configurations Panel */}
         <div className="lg:col-span-5 space-y-8 bg-secondary border border-border p-8 rounded-[32px] shadow-sm">
           <div className="space-y-4">
-            <h1 className="text-3xl lg:text-5xl font-sans font-black tracking-tight uppercase text-foreground leading-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-5xl font-sans font-black tracking-tight uppercase text-foreground leading-tight">
               {product.name}
             </h1>
 

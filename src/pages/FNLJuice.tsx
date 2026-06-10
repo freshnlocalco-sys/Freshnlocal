@@ -644,7 +644,7 @@ export function FNLJuice() {
   const activeSubCategoryInfo = ALL_JUICE_SECTIONS.find(s => s.id === activeSubCategory);
 
   return (
-    <div className="w-full bg-background text-foreground animate-in fade-in duration-300">
+    <div className="w-full max-w-full box-border overflow-x-hidden bg-background text-foreground animate-in fade-in duration-300">
       
       {/* Mobile Search Header */}
       <div className="md:hidden px-3 py-3 bg-background/95 backdrop-blur-md border-b border-border relative z-40">
@@ -733,7 +733,7 @@ export function FNLJuice() {
       <div className="max-w-[1400px] mx-auto flex w-full">
         
         {/* Left Sidebar Layout */}
-        <aside className="w-20 sm:w-24 md:w-60 lg:w-72 bg-secondary border-r border-border shrink-0 sticky top-20 md:top-[116px] h-[calc(100vh-80px)] md:h-[calc(100vh-116px)] overflow-y-auto no-scrollbar flex flex-col z-20">
+        <aside className="w-20 sm:w-24 md:w-60 lg:w-72 bg-secondary border-r border-border shrink-0 md:sticky md:top-[116px] md:h-[calc(100vh-116px)] md:overflow-y-auto no-scrollbar flex flex-col z-20">
           <div className="hidden md:block px-6 py-6 pb-2 border-b border-border mb-2 sticky top-0 bg-secondary/95 backdrop-blur-sm z-10">
             <h2 className="text-xl font-black uppercase tracking-tight">Juice Bar</h2>
             <p className="text-[10px] text-muted-foreground mt-1 font-medium font-mono uppercase tracking-wider">Est. Surat 2026</p>
@@ -780,7 +780,7 @@ export function FNLJuice() {
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-muted-foreground block font-mono">
                   Raw Cold Squeezed No Pasteurization
                 </span>
-                <h1 className="text-3xl md:text-5xl font-sans font-black uppercase tracking-tight text-foreground leading-none">
+                <h1 className="text-2xl sm:text-3xl md:text-5xl font-sans font-black uppercase tracking-tight text-foreground leading-none">
                   {activeSubCategory === 'all' ? 'Signature Blends' : activeSubCategoryInfo?.name}
                 </h1>
                 <p className="text-muted-foreground text-xs font-semibold max-w-xl leading-relaxed normal-case">

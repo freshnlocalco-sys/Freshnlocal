@@ -14,19 +14,21 @@ export function Layout() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white">
+    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white w-full max-w-full box-border overflow-x-clip">
       {/* Top Premium Announcement Bar */}
-      <div className="bg-primary text-white text-[9px] md:text-[10px] tracking-[0.25em] uppercase font-black py-3 px-4 text-center select-none flex items-center justify-center gap-2 relative z-50">
-        <span className="inline-block w-2 h-2 rounded-full bg-white/80 animate-pulse"></span>
-        <span>Surat's Premium Organic Delivery Engine — Free delivery above ₹1000/-</span>
+      <div className="bg-primary text-white text-[8px] sm:text-[9px] md:text-[10px] tracking-[0.1em] sm:tracking-[0.2em] md:tracking-[0.25em] uppercase font-black py-2.5 sm:py-3 px-2 sm:px-4 text-center select-none flex items-center justify-center gap-1.5 sm:gap-2 relative z-50">
+        <span className="inline-block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white/80 animate-pulse shrink-0"></span>
+        <span className="leading-tight">
+          SURAT'S PREMIUM ORGANIC DELIVERY ENGINE - FREE DELIVERY ABOVE ₹1000/-
+        </span>
       </div>
 
-      <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-2 group">
-              <span className="font-sans font-black text-xl md:text-2xl tracking-tighter uppercase transition-colors hover:text-primary duration-300 text-foreground flex items-center gap-1">
-                FreshNLocal <span className="text-primary">CO.</span>
+      <header className="sticky top-0 z-50 bg-background/70 backdrop-blur-xl shadow-sm border-b border-border/50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-6 shrink-0 z-10 min-w-0 pr-2">
+            <Link to="/" className="flex items-center gap-1 sm:gap-2 group truncate">
+              <span className="font-sans font-black text-[0.95rem] min-[360px]:text-lg sm:text-xl md:text-2xl tracking-tighter uppercase transition-colors hover:text-primary duration-300 text-foreground flex items-center gap-0.5 sm:gap-1 truncate">
+                FreshNLocal <span className="text-primary hidden min-[360px]:inline">CO.</span>
               </span>
             </Link>
             
@@ -38,12 +40,12 @@ export function Layout() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-2 sm:gap-4 md:gap-6 shrink-0">
             {/* Cart Button */}
-            <Link to="/cart" className="hover-micro-bounce relative flex items-center justify-center w-11 h-11 rounded-full border border-border hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-all duration-300">
-              <ShoppingBag className="w-4 h-4 text-foreground" />
+            <Link to="/cart" className="hover-micro-bounce relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-border hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-all duration-300">
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground" />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-background shadow-[0_4px_10px_rgba(0,184,83,0.3)]">
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-[8px] sm:text-[9px] font-black w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center border-2 border-background shadow-[0_4px_10px_rgba(0,184,83,0.3)]">
                   {cartItemsCount}
                 </span>
               )}
@@ -52,18 +54,18 @@ export function Layout() {
             {!loading && (
               <>
                 {user ? (
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4">
                     {user.role === 'admin' && (
                       <Link to="/admin" title="Admin Panel" className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-primary hidden lg:block border border-primary/25 hover:border-primary bg-primary/5 px-4 py-2 rounded-full transition-all">
                         Admin Portal
                       </Link>
                     )}
-                    <div className="relative group flex items-center gap-4">
+                    <div className="relative group flex items-center gap-2 sm:gap-4">
                       <span className="text-[10px] uppercase tracking-[0.2em] font-black hidden sm:block text-[#506053] group-hover:text-primary cursor-pointer transition-colors">
                         {user.displayName?.split(' ')[0] || 'User'}
                       </span>
-                      <Link to="/profile" className="hover-micro-bounce flex items-center justify-center w-11 h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
-                        <User className="w-4 h-4 text-foreground" />
+                      <Link to="/profile" className="hover-micro-bounce flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
+                        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground" />
                       </Link>
                       <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 p-2 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
                         <Link to="/profile" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">My Profile</Link>
@@ -79,9 +81,9 @@ export function Layout() {
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => setIsAuthModalOpen(true)} className="hover-micro-bounce flex items-center gap-3 group bg-secondary border border-border px-5 py-2.5 rounded-full hover:border-[#00b853]/50 hover:bg-primary/5 transition-all">
+                  <button onClick={() => setIsAuthModalOpen(true)} className="hover-micro-bounce flex items-center gap-3 group bg-secondary border border-border px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full hover:border-[#00b853]/50 hover:bg-primary/5 transition-all">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-black hidden sm:block text-[#2c3e30] group-hover:text-primary transition-colors">Login</span>
-                    <LogIn className="w-3.5 h-3.5 text-[#2c3e30] group-hover:text-primary" />
+                    <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#2c3e30] group-hover:text-primary" />
                   </button>
                 )}
               </>
@@ -89,10 +91,10 @@ export function Layout() {
 
             <button 
               onClick={() => setIsMobileNavOpen(!isMobileNavOpen)} 
-              className="hover-micro-bounce md:hidden flex items-center justify-center w-11 h-11 rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
+              className="hover-micro-bounce md:hidden flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
               aria-label="Toggle Menu"
             >
-              {isMobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {isMobileNavOpen ? <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Menu className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </button>
           </div>
         </div>

@@ -127,7 +127,7 @@ export function Cart() {
         <div className="w-20 h-20 bg-secondary border border-border flex items-center justify-center rounded-[24px] mb-8 shadow-inner">
           <ShoppingBag className="w-8 h-8 text-primary" />
         </div>
-        <h2 className="text-3xl font-sans font-black uppercase tracking-tight mb-3 text-foreground">Your larder list is empty</h2>
+        <h2 className="text-2xl sm:text-3xl font-sans font-black uppercase tracking-tight mb-3 text-foreground">Your larder list is empty</h2>
         <p className="text-muted-foreground text-xs font-semibold max-w-sm mb-8 leading-relaxed">
           Unlock your fresh gourmet potential by placing hand-vetted local crops inside your checkout larder.
         </p>
@@ -148,7 +148,7 @@ export function Cart() {
         <div className="flex items-end justify-between border-b border-border pb-6">
           <div className="space-y-1.5">
             <span className="glass-pill">Checkout Chamber</span>
-            <h1 className="text-3xl lg:text-5xl font-sans font-black uppercase text-foreground tracking-tight mt-2.5">
+            <h1 className="text-2xl sm:text-3xl lg:text-5xl font-sans font-black uppercase text-foreground tracking-tight mt-2.5">
               Review Shopping Larder
             </h1>
           </div>
