@@ -148,7 +148,7 @@ export function ProductDetail() {
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Product Image Panel */}
-        <div className="lg:col-span-7 rounded-[32px] overflow-hidden bg-secondary border border-border relative aspect-[4/3] w-full items-center justify-center flex">
+        <div className="lg:col-span-7 rounded-xl overflow-hidden bg-secondary border border-border relative aspect-[4/3] w-full items-center justify-center flex">
           <div className="absolute top-5 left-5 z-20 flex flex-wrap gap-2 leading-none">
             <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-border shadow-sm">
               {product.category.replace(/ font-bold/gi, '')}
@@ -157,13 +157,13 @@ export function ProductDetail() {
           <img 
             src={product.imageUrl || getCategoryImage(product.category, categoryImages) || null} 
             alt={product.name}
-            className="w-full h-full object-contain p-4 md:p-8"
+            className="absolute inset-0 w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
         </div>
 
         {/* Product Configurations Panel */}
-        <div className="lg:col-span-5 space-y-8 bg-secondary border border-border p-8 rounded-[32px] shadow-sm">
+        <div className="lg:col-span-5 space-y-8 bg-secondary border border-border p-8 rounded-xl shadow-sm">
           <div className="space-y-4">
             <h1 className="text-2xl sm:text-3xl lg:text-5xl font-sans font-black tracking-tight uppercase text-foreground leading-tight">
               {product.name}
@@ -225,7 +225,7 @@ export function ProductDetail() {
           <div className="space-y-4 pt-4">
             <button 
               onClick={handleAddToCart}
-              className="w-full py-4.5 rounded-[18px] bg-primary text-white font-sans text-[10px] uppercase font-black tracking-widest transition-colors hover:bg-[#09120b] hover:text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-md disabled:shadow-none"
+              className="w-full py-4.5 rounded-xl bg-primary text-white font-sans text-[10px] uppercase font-black tracking-widest transition-colors hover:bg-[#09120b] hover:text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-md disabled:shadow-none"
               disabled={!product.inStock}
             >
               <ShoppingBag className="w-4.5 h-4.5" />

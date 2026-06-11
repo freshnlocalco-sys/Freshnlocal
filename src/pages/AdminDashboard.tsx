@@ -106,6 +106,7 @@ export function AdminDashboard() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [prodCatToDelete, setProdCatToDelete] = useState<string | null>(null);
   const [juiceCatToDelete, setJuiceCatToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
 
   // Filters for orders
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -550,6 +551,21 @@ export function AdminDashboard() {
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
       toast.error('Failed to update status.');
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(null);
+      }
+      await deleteDoc(doc(db, 'orders', orderId));
+      setOrders(orders.filter(o => o.id !== orderId));
+      setOrderToDelete(null);
+      toast.success('Order deleted successfully.');
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `orders/${orderId}`);
+      toast.error('Failed to delete order.');
     }
   };
 
@@ -1331,10 +1347,20 @@ export function AdminDashboard() {
                           <span className="text-foreground font-bold text-[9px] bg-secondary border border-border px-2 py-0.5 rounded tracking-widest uppercase inline-block">{order.paymentMethod || 'COD'}</span>
                         </td>
                         <td className="p-3 sm:p-4 md:p-5">
-                          <OrderStatusDropdown 
-                            currentStatus={order.status} 
-                            onStatusChange={(newStatus) => handleUpdateOrderStatus(order.id, newStatus)} 
-                          />
+                          <div className="flex items-center gap-2">
+                            <OrderStatusDropdown 
+                              currentStatus={order.status} 
+                              onStatusChange={(newStatus) => handleUpdateOrderStatus(order.id, newStatus)} 
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setOrderToDelete(order.id)}
+                              className="text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 p-2 rounded-xl transition-colors shrink-0"
+                              title="Delete Order"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -2262,6 +2288,14 @@ export function AdminDashboard() {
                 >
                   {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
                 </select>
+                <button
+                  type="button"
+                  onClick={() => setOrderToDelete(selectedOrder.id)}
+                  className="ml-2 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-lg p-1.5 sm:p-2 cursor-pointer transition-colors"
+                  title="Delete Order"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -2371,6 +2405,33 @@ export function AdminDashboard() {
               </button>
               <button
                 onClick={handleConfirmDeleteProduct}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Deletion Confirmation Modal: Orders */}
+      {orderToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setOrderToDelete(null)} />
+          <div className="bg-secondary border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-black uppercase text-foreground">Confirm Deletion</h3>
+            <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wide font-mono">
+              Are you sure you want to completely delete this order? This action is irreversible.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setOrderToDelete(null)}
+                className="px-4 py-2 border border-border rounded-xl text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:bg-muted/10 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteOrder(orderToDelete)}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
               >
                 Confirm Delete

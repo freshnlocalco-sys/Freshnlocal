@@ -101,6 +101,8 @@ service cloud.firestore {
           (request.auth.uid == existing().userId && (existing().status == 'pending') && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') || // User can only cancel pending 
           isAdmin() // Admin can do anything 
         );
+        
+      allow delete: if isAdmin();
     }
     match /settings/{settingId} {
       allow read, list: if true;
