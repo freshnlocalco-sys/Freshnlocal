@@ -142,7 +142,7 @@ export function Home() {
     <div className="flex flex-col items-center bg-background text-foreground overflow-x-hidden w-full max-w-full box-border">
       
       {/* Hero Section */}
-      <section className="w-full max-w-7xl mx-auto px-4 md:px-8 pt-8 md:pt-24 pb-16 md:pb-20 grid lg:grid-cols-2 gap-10 md:gap-16 items-center relative overflow-hidden">
+      <section className="w-full mx-auto pt-8 md:pt-24 pb-16 md:pb-20 flex flex-col gap-10 lg:gap-12 items-center relative overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-72 h-72 md:w-96 md:h-96 bg-primary/5 rounded-full blur-[80px] md:blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 md:w-80 md:h-80 bg-primary/10 rounded-full blur-[80px] md:blur-[100px] pointer-events-none animate-pulse"></div>
 
@@ -150,23 +150,23 @@ export function Home() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="space-y-4 md:space-y-6 z-10 flex flex-col items-start text-left w-full max-w-xl lg:max-w-none"
+          className="space-y-4 md:space-y-6 z-10 flex flex-col items-start lg:items-center text-left lg:text-center w-full max-w-7xl px-4 md:px-8"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-primary/10 text-primary text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-extrabold border border-primary/20">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-primary/10 text-primary text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-extrabold border border-primary/20 self-start lg:self-center">
             <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary animate-ping"></span>
             Redefining freshness in Surat
           </div>
           
           <h1 className="title-display text-3xl sm:text-4xl md:text-5xl lg:text-[7rem] leading-[1.1] sm:leading-[1] md:leading-[0.9] font-black tracking-tight uppercase w-full">
-            Freshness <br/>
+            Freshness <br className="lg:hidden" />
             <span className="text-foreground">Sliced Simple.</span>
           </h1>
 
-          <p className="text-xs sm:text-sm md:text-base text-muted-foreground w-full max-w-[300px] sm:max-w-md mx-0 leading-relaxed font-sans font-medium">
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground w-full max-w-[300px] sm:max-w-md lg:max-w-2xl mx-0 lg:mx-auto leading-relaxed font-sans font-medium text-left lg:text-center">
             Zero hassle. Ultra-pure quality. Experience Surat's premier tech-driven larder bringing crisp, handpicked, local harvests & exotic fruits right to your modern kitchen.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-6 justify-start w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-6 justify-start lg:justify-center w-full sm:w-auto">
             <Link to="/shop" className="slice-btn-primary px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] w-full sm:w-auto justify-center flex items-center gap-2">
               SHOP NOW
               <span className="relative flex h-2 w-2">
@@ -179,18 +179,18 @@ export function Home() {
             </Link>
           </div>
 
-          <div className="flex flex-wrap justify-start gap-4 sm:gap-6 md:gap-8 items-center pt-6 md:pt-8 border-t border-border/60 w-full lg:max-w-md mt-8 md:mt-10">
-            <div className="text-left flex-1 min-w-[30%]">
+          <div className="flex flex-wrap justify-start lg:justify-center gap-4 sm:gap-6 md:gap-12 items-center pt-6 md:pt-8 border-t border-border/60 w-full lg:max-w-3xl mt-8 md:mt-10 mx-auto">
+            <div className="text-left lg:text-center flex-1 min-w-[30%]">
               <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">24 HRS</p>
               <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Guaranteed Delivery</p>
             </div>
             <div className="w-px h-8 md:h-10 bg-border/60"></div>
-            <div className="text-left flex-1 min-w-[30%]">
+            <div className="text-left lg:text-center flex-1 min-w-[30%]">
               <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">100%</p>
               <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Farmer Traceability</p>
             </div>
             <div className="hidden sm:block w-px h-8 md:h-10 bg-border/60"></div>
-            <div className="text-left flex-1 min-w-[30%] mt-2 sm:mt-0">
+            <div className="text-left lg:text-center flex-1 min-w-[30%] mt-2 sm:mt-0">
               <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">0 FEES</p>
               <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">No Platform Taxes</p>
             </div>
