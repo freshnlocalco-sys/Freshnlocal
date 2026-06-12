@@ -102,7 +102,13 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
         </div>
         
         <button 
-          onClick={() => product.inStock && onAddToCart(product)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (product.inStock) {
+              onAddToCart(product);
+            }
+          }}
           disabled={!product.inStock}
           className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold transition-colors flex items-center justify-center gap-1.5 mt-2 sm:mt-3 ${product.inStock ? 'bg-primary text-white hover:bg-primary/90 cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
         >

@@ -235,8 +235,9 @@ export function AdminDashboard() {
           setProducts(m.useProducts.getState().products);
         } else if (activeTab === 'spotlights') {
           const m = await import('./Home');
-          const defaultSpots = m.SPOTLIGHTS;
+          const defaultSpots = m.CATEGORIES;
           const mCache = await import('../lib/cacheManager');
+          const currentCategoryImages = useSettings.getState().categoryImages;
           
           let overrides = mCache.cacheManager.get<any>('spotlights', true);
           const isCacheFresh = mCache.cacheManager.isValid('spotlights');
@@ -249,10 +250,11 @@ export function AdminDashboard() {
           }
 
           const initialConfig: any = {};
-          Object.keys(defaultSpots).forEach(k => {
-            initialConfig[k] = { 
-              title: defaultSpots[k as keyof typeof defaultSpots].title,
-              image: overrides[k]?.image || defaultSpots[k as keyof typeof defaultSpots].image
+          defaultSpots.forEach(cat => {
+            const normalizedKey = cat.name.toLowerCase().replace(/ font-bold/gi, '').trim();
+            initialConfig[cat.id] = { 
+              title: cat.name,
+              image: overrides[cat.id]?.image || currentCategoryImages[normalizedKey] || ''
             };
           });
           setSpotlightsConfig(initialConfig);
@@ -1843,16 +1845,16 @@ export function AdminDashboard() {
           <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-xl sm:text-2xl font-black uppercase text-foreground">Spotlights Config</h2>
+                <h2 className="text-xl sm:text-2xl font-black uppercase text-foreground">Shop By Categories Config</h2>
                 <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">
-                  Manage the visuals for Home page showcase cards
+                  Manage the visuals for Home page category cards
                 </p>
               </div>
               <button
                 onClick={handleSaveSpotlights}
                 className="slice-btn-primary px-6 py-3 flex items-center gap-2"
               >
-                <Sparkles className="w-4 h-4" /> Save Spotlights
+                <Sparkles className="w-4 h-4" /> Save Categories
               </button>
             </div>
             

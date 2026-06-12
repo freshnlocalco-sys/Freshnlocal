@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight, Snowflake, Building2, Recycle, PackageCheck, Bike, HeartHandshake, HeartPulse } from 'lucide-react';
@@ -6,180 +6,88 @@ import { db, isQuotaError } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useSettings } from '../store/useSettings';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
+import { getCategoryImage } from '../lib/constants';
+import { useProducts } from '../store/useProducts';
+import { useCart, Product } from '../store/useCart';
+import { ProductCard } from '../components/ProductCard';
+import toast from 'react-hot-toast';
 
-const CATEGORIES = [
+export const CATEGORIES = [
   { id: 'indian fruits', name: 'Indian Fruits', tagline: 'Devgad Alphonso & Sweetest Mangoes', discount: 'Flat ₹50 Off' },
   { id: 'exotic fruits', name: 'Exotic Fruits', tagline: 'Premium berries & Japanese plums', discount: 'Trending' },
   { id: 'exotic vegetables', name: 'Exotic Vegetables', tagline: 'Pristine organic broccoli & bell peppers', discount: 'Best Seller' },
   { id: 'herbs & seasoning', name: 'Herbs & Seasoning', tagline: 'Aromatic basil, mint & rosemary', discount: 'Freshly Cut' },
   { id: 'fresh & hygenic cut fruits and vegetables', name: 'Clean Cuts', tagline: 'Pre-washed, chopped & ready to cook', discount: 'Super Safe' },
-  { id: 'imported / super exotic vegetables', name: 'Global Luxe Veggies', tagline: 'Direct from premium international farms', discount: 'Exclusive' },
+  { id: 'imported / super exotic vegetables', name: 'Imported Veggies', tagline: 'Direct from premium international farms', discount: 'Exclusive' },
   { id: 'leafy greens', name: 'Leafy Greens', tagline: 'Hydroponic crisp kale, spinach & lettuce', discount: '100% Organic' },
   { id: 'frozen items', name: 'Frozen Premium', tagline: 'Snap-frozen berries & sweet corn', discount: 'Long Shelf life' },
   { id: 'mushrooms', name: 'Mushrooms', tagline: 'Fresh oyster, button & exotic funghi', discount: 'Earthy Fresh' }
 ];
 
-export const SPOTLIGHTS = {
-  greens: {
-    title: 'Exotic Veggies & Fruits',
-    subtitle: 'Pristine organic broccoli, fresh avocados, colored bell peppers, and luxury globally sourced fruits.',
-    price: '₹280',
-    unit: '500g assorted pack',
-    badge: 'Exotic Harvests',
-    origin: 'Elite Agri-Hub, Surat',
-    harvested: 'Direct-harvest today at 5:00 AM',
-    image: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-primary border-primary/20 bg-primary/10',
-    accentColor: '#00ea72',
-    link: '/shop?category=Exotic%20Vegetables'
-  },
-  alphonso: {
-    title: 'FRESH & HYGENIC CUT FRUITS AND VEGETABLES',
-    subtitle: 'Hand Peeled Garlic, Fresh Hand Peeled Sweet Corn, Fresh Hand Peeled Green Peas, Coconut Chunks, Pineapple Slice, Guava Chunks.',
-    price: '₹120',
-    unit: 'Clean-Cuts assorted box',
-    badge: 'Clean Cuts',
-    origin: 'Pristine Hub, Surat',
-    harvested: 'Peeled & chilled today at 4:30 AM',
-    image: 'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-yellow-500 border-yellow-500/20 bg-yellow-500/10',
-    accentColor: '#eab308',
-    link: '/shop?category=Fresh%20%26%20Hygenic%20Cut%20Fruits%20and%20Vegetables'
-  },
-  exotics: {
-    title: 'EXOTIC FRUITS',
-    subtitle: 'Thai Mangosteen, Asian Persimmon, Fresh Blueberry & Raspberry, Purple Passion Fruit, Peara Fruit, Zespri Sungold & Green Kiwi, Mandarin Orange, Spanish Grapefruit, Malta Orange, Spanish Sweet Plum, Red Globe Grapes, Thai Longan, Green Pear, Apples.',
-    price: '₹450',
-    unit: 'Gourmet selection box',
-    badge: 'Exotic Fruits',
-    origin: 'Global Orchards Gateway',
-    harvested: 'Air-shipped & cold-stored',
-    image: 'https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-[#ac3fff] border-[#ac3fff]/20 bg-[#ac3fff]/10',
-    accentColor: '#ac3fff',
-    link: '/shop?category=Exotic%20Fruits'
-  },
-  herbs: {
-    title: 'HERBS & SEASONING',
-    subtitle: 'Italian Basil, Moyashi Bean Sprouts, Parsley, Celery, Fresh Rosemary, Fresh Thyme, Fresh Oregano, Fresh Sage, Fresh Chives, Fresh Tarragon, Thai Lemongrass Stick, Thai Galangal, Thai Kaffir Lime, Thai Bird Chilli, Thai Sweet Tamarind, Banana Leaves, White Shimeji Mushroom.',
-    price: '₹150',
-    unit: 'Aromatic bundle',
-    badge: 'Herbs & Seasoning',
-    origin: 'Direct Agri-Hub, Surat',
-    harvested: 'Direct-harvest today at 5:00 AM',
-    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-emerald-500 border-emerald-500/20 bg-emerald-500/10',
-    accentColor: '#10b981',
-    link: '/shop?category=Herbs%20%26%20Seasoning'
-  },
-  superExotics: {
-    title: 'IMPORTED / SUPER EXOTIC VEGETABLES',
-    subtitle: 'Hass Avocado Semiripe, Italian Lemon, Portobello Mushroom, King Oyster Mushroom, Oyster Mushroom, Shiitake Mushroom, Enoki Mushroom, Jerusalem Artichoke, European Sweet Potato, Thai Jumbo Taro Root, Butternut Squash, Thai Jumbo Asparagus, Thai Snow Pea.',
-    price: '₹350',
-    unit: 'Premium grade',
-    badge: 'Super Exotics',
-    origin: 'Global Specialty Farms',
-    harvested: 'Imported fresh',
-    image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-cyan-400 border-cyan-400/20 bg-cyan-400/10',
-    accentColor: '#22d3ee',
-    link: '/shop?category=Imported%20%2F%20Super%20Exotic%20Vegetables'
-  },
-  leafyGreens: {
-    title: 'LEAFY GREENS',
-    subtitle: 'Mixed Salad Greens, Mix Microgreen, Radicchio Lettuce, Rocket Arugula, Curly Kale, Baby Spinach, Romaine Lettuce, Lollo Rosso Lettuce, Oak Leaf Lettuce, French Lettuce, Wild Arugula.',
-    price: '₹140',
-    unit: 'Farm Fresh Batch',
-    badge: 'Leafy Greens',
-    origin: 'Hydroponic Farms, Surat',
-    harvested: 'Direct-harvest today at 6:00 AM',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-lime-500 border-lime-500/20 bg-lime-500/10',
-    accentColor: '#84cc16',
-    link: '/shop?category=Leafy%20Greens'
-  },
-  frozenItems: {
-    title: 'FROZEN ITEMS',
-    subtitle: 'Frozen Blueberry, Frozen Raspberry, Frozen Blackberry, Frozen Cranberry, Frozen Mulberry, Frozen Cherry Halves, Frozen Hass Avocado Paste, Frozen Sweet Corn Kernels, Frozen Green Peas, Edamame Beans Peeled and Boiled, Frozen Strawberry, Mix Berry.',
-    price: '₹250',
-    unit: 'Premium Pack',
-    badge: 'Frozen Items',
-    origin: 'Cold Storage, Imported',
-    harvested: 'IQF Frozen',
-    image: 'https://images.unsplash.com/photo-1498579809087-ef1e558fd1da?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-indigo-400 border-indigo-400/20 bg-indigo-400/10',
-    accentColor: '#818cf8',
-    link: '/shop?category=Frozen%20Items'
-  },
-  indianFruits: {
-    title: 'INDIAN FRUITS',
-    subtitle: 'Devgad Alphonso Mango, Indian Papaya, Guava, Indian Banana, Custard Apple, Indian Pomegranate, Indian Sweet Lime, Indian Watermelon, Indian Muskmelon, Indian Grapes.',
-    price: '₹180',
-    unit: 'Seasonal Box',
-    badge: 'Indian Fruits',
-    origin: 'Devgad, Ratnagiri, Local Farms',
-    harvested: 'Farm Fresh',
-    image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-orange-500 border-orange-500/20 bg-orange-500/10',
-    accentColor: '#f97316',
-    link: '/shop?category=Indian%20Fruits'
-  },
-  juices: {
-    title: 'FNL COLD-PRESSED JUICES',
-    subtitle: '100% natural, raw, cold-extracted juices with zero water or artificial preservatives. Living enzymes delivered in pristine glass flasks.',
-    price: '₹120',
-    unit: '300ml pristine glass flask',
-    badge: 'Cold-Pressed Juices',
-    origin: 'Pristine Squeeze Hub, Surat',
-    harvested: 'Direct-pressed today at 4:30 AM',
-    image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-orange-500 border-orange-500/20 bg-orange-500/10',
-    accentColor: '#f97316',
-    link: '/juice'
-  },
-  mushrooms: {
-    title: 'MUSHROOMS',
-    subtitle: 'Fresh oyster, button & exotic funghi straight from pristine climate-controlled farms.',
-    price: '₹140',
-    unit: 'Premium Pack',
-    badge: 'Mushrooms',
-    origin: 'Climate Farms, Local',
-    harvested: 'Handpicked daily',
-    image: 'https://images.unsplash.com/photo-1595855759920-86582396756a?w=600&auto=format&fit=crop&q=80',
-    colorClass: 'text-stone-500 border-stone-500/20 bg-stone-500/10',
-    accentColor: '#78716c',
-    link: '/shop?category=Mushrooms'
-  }
-};
+function CategoryCarousel({ category, products, handleAddToCart }: { category: any; products: Product[]; handleAddToCart: (product: Product) => void }) {
+  const isJuice = category.id === 'fnl juices';
+  const linkDest = isJuice ? '/juice' : `/shop?category=${encodeURIComponent(category.id)}`;
+
+  return (
+    <div className="w-full">
+      <div className="flex justify-between items-end mb-4 sm:mb-6 px-2">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">
+          {category.name}
+        </h2>
+        <Link to={linkDest} className="text-[10px] sm:text-xs font-bold text-primary flex items-center hover:underline uppercase tracking-wider shrink-0">
+          View All <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5" />
+        </Link>
+      </div>
+      
+      <div className="w-full pb-6 overflow-hidden flex group">
+        <div className="flex animate-marquee w-max group-hover:[animation-play-state:paused]">
+          {[0, 1, 2].map((setIndex) => (
+            <div key={setIndex} className="flex gap-3 sm:gap-4 md:gap-6 pr-3 sm:pr-4 md:pr-6">
+              {products.map(product => (
+                <div key={`${setIndex}-${product.id}`} className="w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] shrink-0 flex">
+                  <div className="w-full">
+                    <ProductCard 
+                      product={product}
+                      onAddToCart={handleAddToCart}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 export function Home() {
   const { categoryImages } = useSettings();
-  const [activeCard, setActiveCard] = useState<'greens' | 'alphonso' | 'exotics' | 'herbs' | 'superExotics' | 'leafyGreens' | 'frozenItems' | 'indianFruits' | 'mushrooms' | 'juices'>('greens');
-  const [isHovered, setIsHovered] = useState(false);
-  const [spotlights, setSpotlights] = useState(SPOTLIGHTS);
+  const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
+
+  const { products, fetchProducts } = useProducts();
+  const { addItem, items } = useCart();
+  
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const handleAddToCart = (product: Product) => {
+    const currentQty = items.find(item => item.product.id === product.id)?.quantity || 0;
+    addItem(product);
+    if (currentQty === 0) {
+      toast.success(<span>Added <b>{product.name}</b> to cart</span>);
+    }
+  };
 
   useEffect(() => {
     async function fetchSpotlightOverrides() {
       const cachedSpotlights = cacheManager.get<any>('spotlights', true);
       const isCacheFresh = cacheManager.isValid('spotlights');
 
-      const applyOverrides = (overrides: any) => {
-        setSpotlights(prev => {
-          const newSpots = { ...prev };
-          Object.keys(overrides).forEach(key => {
-            if (newSpots[key as keyof typeof SPOTLIGHTS] && overrides[key].image) {
-              newSpots[key as keyof typeof SPOTLIGHTS] = {
-                ...newSpots[key as keyof typeof SPOTLIGHTS],
-                image: overrides[key].image
-              };
-            }
-          });
-          return newSpots;
-        });
-      };
-
       if (cachedSpotlights) {
-        applyOverrides(cachedSpotlights);
+        setSpotlightsConfig(cachedSpotlights);
         if (isCacheFresh) return;
       }
 
@@ -191,55 +99,15 @@ export function Home() {
           if (docSnap.exists()) {
             const overrides = docSnap.data();
             cacheManager.set('spotlights', overrides);
-            applyOverrides(overrides);
+            setSpotlightsConfig(overrides);
           }
         } catch (err: any) {
-          if (!isQuotaError(err)) {
-            console.error("Error fetching spotlights config:", err);
-          }
+          console.error("Error fetching spotlights config:", err);
         }
       });
     }
     fetchSpotlightOverrides();
   }, []);
-
-  const handlePrev = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setActiveCard(current => {
-      const keys = Object.keys(spotlights) as Array<keyof typeof spotlights>;
-      const currentIndex = keys.indexOf(current);
-      const nextIndex = (currentIndex - 1 + keys.length) % keys.length;
-      return keys[nextIndex];
-    });
-  };
-
-  const handleNext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setActiveCard(current => {
-      const keys = Object.keys(spotlights) as Array<keyof typeof spotlights>;
-      const currentIndex = keys.indexOf(current);
-      const nextIndex = (currentIndex + 1) % keys.length;
-      return keys[nextIndex];
-    });
-  };
-
-  const SPOTLIGHT_ORDER = ['greens', 'alphonso', 'exotics', 'herbs', 'superExotics', 'leafyGreens', 'frozenItems', 'indianFruits', 'juices', 'mushrooms'] as const;
-
-  useEffect(() => {
-    if (isHovered) return;
-    
-    const interval = setInterval(() => {
-      setActiveCard(current => {
-        const currentIndex = SPOTLIGHT_ORDER.indexOf(current as any);
-        const nextIndex = (currentIndex + 1) % SPOTLIGHT_ORDER.length;
-        return SPOTLIGHT_ORDER[nextIndex];
-      });
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [isHovered]);
 
   return (
     <div className="flex flex-col items-center bg-background text-foreground overflow-x-hidden w-full max-w-full box-border">
@@ -270,8 +138,12 @@ export function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-6 justify-start w-full sm:w-auto">
-            <Link to="/shop" className="slice-btn-primary px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] w-full sm:w-auto justify-center">
-              Explore Shop <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4 ml-1" />
+            <Link to="/shop" className="slice-btn-primary px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] w-full sm:w-auto justify-center flex items-center gap-2">
+              SHOP NOW
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
             </Link>
             <Link to="/juice" className="slice-btn-secondary border-orange-500/20 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5 px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full sm:w-auto">
               FNL Juice House 🍹
@@ -280,7 +152,7 @@ export function Home() {
 
           <div className="flex flex-wrap justify-start gap-4 sm:gap-6 md:gap-8 items-center pt-6 md:pt-8 border-t border-border/60 w-full lg:max-w-md mt-8 md:mt-10">
             <div className="text-left flex-1 min-w-[30%]">
-              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">6 HRS</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">24 HRS</p>
               <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Guaranteed Delivery</p>
             </div>
             <div className="w-px h-8 md:h-10 bg-border/60"></div>
@@ -296,154 +168,79 @@ export function Home() {
           </div>
         </motion.div>
         
-        {/* Interactive "Fresh Platinum Card" visual deck */}
         <motion.div
            initial={{ opacity: 0, scale: 0.95 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ duration: 0.8, delay: 0.25 }}
-           className="relative flex flex-col items-center justify-center z-10 w-full"
+           className="relative flex flex-col items-center justify-center z-10 w-full min-w-0"
         >
-          {/* Real Agricultural Crop Spotlight Card */}
-          <div 
-            className="relative w-full max-w-[420px] mx-auto xl:mx-0 aspect-[4/3]"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            <AnimatePresence>
-              <motion.div
-                key={activeCard}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                className="absolute inset-0"
-              >
-                <Link 
-                  to={spotlights[activeCard].link}
-                  className="w-full h-full rounded-[24px] p-6 text-white relative flex flex-col justify-between overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border group transition-all duration-700 cursor-pointer block"
-                  style={{
-                    borderColor: spotlights[activeCard].accentColor + '30',
-                    transform: isHovered ? 'scale(1.02)' : 'scale(1)',
-                  }}
-                >
-                  {/* Full-bleed category image backdrop */}
-                  <div className="absolute inset-0 z-0 overflow-hidden bg-zinc-950">
-                    <img 
-                      src={spotlights[activeCard].image || null} 
-                      alt={spotlights[activeCard].title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105 filter brightness-[85%]"
-                    />
-                  </div>
-
-
-
-                  {/* Bottom Section: crop titles, details & metadata layout */}
-                  <div className="z-10 mt-auto space-y-4">
-                    <div className="space-y-1">
-                      <h3 className="text-xl md:text-2xl font-sans font-black uppercase tracking-tight text-white leading-tight">
-                        {spotlights[activeCard].title}
-                      </h3>
-                      <p className="text-[10px] text-zinc-200/90 leading-relaxed font-sans font-medium line-clamp-2 max-w-[340px]">
-                        {spotlights[activeCard].subtitle}
-                      </p>
+          {/* Mobile-first categories grid substituting the previous button deck */}
+          <div className="w-full max-w-[1020px] mx-auto mt-10 md:mt-16 text-left relative z-20">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground mb-4 sm:mb-6 px-2">
+              Shop By Categories
+            </h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+              {CATEGORIES.map((cat) => {
+                const isJuice = cat.id === 'fnl juices';
+                const linkDest = isJuice ? '/juice' : `/shop?category=${encodeURIComponent(cat.id)}`;
+                return (
+                  <Link
+                    key={cat.id}
+                    to={linkDest}
+                    className="flex flex-col items-center group cursor-pointer"
+                  >
+                    <div className="w-full aspect-[4/3] sm:aspect-square rounded-2xl bg-sky-50/50 dark:bg-sky-950/20 overflow-hidden flex items-center justify-center mb-2 sm:mb-3 transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md border border-sky-100/50 dark:border-sky-900/30 relative">
+                      {spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages) ? (
+                        <img
+                          src={spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages)}
+                          alt={cat.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 drop-shadow-sm"
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-border/20 rounded-lg"></div>
+                      )}
                     </div>
-
-                    {/* Action layout inline */}
-                    <div className="flex items-center justify-between border-t border-white/10 pt-3.5 mt-1">
-                      <span className="text-[8px] font-extrabold uppercase tracking-widest transition-colors duration-500" style={{ color: spotlights[activeCard].accentColor }}>
-                        Premium Hand-Pick
-                      </span>
-                      
-                      <span className="inline-flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest px-3.5 py-2.5 bg-white text-black rounded-xl hover:bg-zinc-100 transition-colors">
-                        Buy Now <ArrowRight className="w-3 h-3" />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Navigation Arrows */}
-            <div className="absolute top-4 right-4 flex gap-2 z-20">
-              <button
-                onClick={handlePrev}
-                className="w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm border border-white/10"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={handleNext}
-                className="w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm border border-white/10"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+                    <span className="text-center text-[9px] sm:text-[11px] font-extrabold uppercase tracking-wide leading-tight text-foreground group-hover:text-primary transition-colors max-w-full break-words px-1">
+                      {cat.name}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
-          {/* Interactive Card Selector tabs resembling slice website widgets */}
-          <div className="bg-secondary border border-border/60 rounded-2xl p-2 mt-8 grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-1.5 sm:gap-2 w-full max-w-[1020px] mx-auto">
-            <button 
-              onClick={() => setActiveCard('greens')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'greens' ? 'bg-primary text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
-            >
-              Veggies
-            </button>
-            <button 
-              onClick={() => setActiveCard('alphonso')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'alphonso' ? 'bg-yellow-500 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
-            >
-              Cuts
-            </button>
-            <button 
-              onClick={() => setActiveCard('exotics')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'exotics' ? 'bg-[#ac3fff] text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
-            >
-              Fruits
-            </button>
-            <button 
-              onClick={() => setActiveCard('herbs')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'herbs' ? 'bg-emerald-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
-            >
-              Herbs
-            </button>
-            <button 
-              onClick={() => setActiveCard('superExotics')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'superExotics' ? 'bg-cyan-400 text-black shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
-            >
-              Imported
-            </button>
-            <button 
-              onClick={() => setActiveCard('leafyGreens')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'leafyGreens' ? 'bg-lime-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
-            >
-              Greens
-            </button>
-            <button 
-              onClick={() => setActiveCard('frozenItems')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'frozenItems' ? 'bg-indigo-400 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
-            >
-              Frozen
-            </button>
-            <button 
-              onClick={() => setActiveCard('indianFruits')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'indianFruits' ? 'bg-orange-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
-            >
-              Indian
-            </button>
-            <button 
-              onClick={() => setActiveCard('juices')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'juices' ? 'bg-orange-600 text-white shadow-sm scale-105' : 'text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 hover:scale-105'}`}
-            >
-              Juices 🍹
-            </button>
-            <button 
-              onClick={() => setActiveCard('mushrooms')} 
-              className={`py-2 px-1 text-center rounded-xl text-[8px] sm:text-[10px] uppercase font-extrabold tracking-wider lg:tracking-widest transition-all active:scale-95 ${activeCard === 'mushrooms' ? 'bg-stone-500 text-white shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-black/5 hover:scale-105'}`}
-            >
-              Mushrooms
-            </button>
+          {/* All Categories Product Showcases */}
+          <div className="w-full max-w-[1020px] mx-auto mt-12 md:mt-20 text-left relative z-20 space-y-12 md:space-y-16 overflow-hidden">
+            <style dangerouslySetInnerHTML={{__html: `
+              .hide-scrollbar::-webkit-scrollbar {
+                display: none;
+              }
+              @keyframes marquee {
+                0% { transform: translateX(0%); }
+                100% { transform: translateX(-33.333333%); }
+              }
+              .animate-marquee {
+                animation: marquee 20s linear infinite;
+              }
+            `}} />
+            {CATEGORIES.map(category => {
+              const categoryProducts = products.filter(p => (p.category || '').toLowerCase() === category.id.toLowerCase());
+              // Only show category if it has products
+              if (categoryProducts.length === 0) return null;
+              
+              return (
+                <CategoryCarousel 
+                  key={category.id}
+                  category={category}
+                  products={categoryProducts.slice(0, 5)}
+                  handleAddToCart={handleAddToCart}
+                />
+              );
+            })}
           </div>
+
         </motion.div>
       </section>
 
