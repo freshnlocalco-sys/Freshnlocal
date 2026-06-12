@@ -63,8 +63,37 @@ function CategoryCarousel({ category, products, handleAddToCart }: { category: a
 
 
 export function Home() {
-  const { categoryImages } = useSettings();
+  const { categoryImages, productCategories } = useSettings();
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
+
+  const activeCategories = React.useMemo(() => {
+    if (!productCategories || productCategories.length === 0) return CATEGORIES;
+    
+    return productCategories.map(catName => {
+      const match = CATEGORIES.find(c => 
+        c.name.toLowerCase() === catName.toLowerCase() || 
+        c.id.toLowerCase() === catName.toLowerCase() ||
+        (catName.toLowerCase() === 'exotics' && c.id.includes('imported')) ||
+        (catName.toLowerCase() === 'clean cuts' && c.id.includes('hygenic'))
+      );
+      
+      if (match) {
+        return {
+          ...match,
+          name: catName,
+          originalId: match.id,
+          id: catName.toLowerCase()
+        };
+      }
+      
+      return {
+        id: catName.toLowerCase(),
+        name: catName,
+        tagline: 'Fresh harvest daily',
+        discount: ''
+      };
+    });
+  }, [productCategories]);
 
   const { products, fetchProducts } = useProducts();
   const { addItem, items } = useCart();
@@ -180,7 +209,7 @@ export function Home() {
               Shop By Categories
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
-              {CATEGORIES.map((cat) => {
+              {activeCategories.map((cat) => {
                 const isJuice = cat.id === 'fnl juices';
                 const linkDest = isJuice ? '/juice' : `/shop?category=${encodeURIComponent(cat.id)}`;
                 return (
@@ -225,8 +254,12 @@ export function Home() {
                 animation: marquee 20s linear infinite;
               }
             `}} />
-            {CATEGORIES.map(category => {
-              const categoryProducts = products.filter(p => (p.category || '').toLowerCase() === category.id.toLowerCase());
+            {activeCategories.map(category => {
+              const categoryProducts = products.filter(p => {
+                const pCat = (p.category || '').toLowerCase();
+                const cId = category.id.toLowerCase();
+                return pCat === cId || (category.originalId && pCat === category.originalId.toLowerCase());
+              });
               // Only show category if it has products
               if (categoryProducts.length === 0) return null;
               
