@@ -280,7 +280,7 @@ export function AdminDashboard() {
           
           setSpotlightsConfig(initialConfig);
         } else if (activeTab === 'categories') {
-          await fetchCategoryImages();
+          await fetchCategoryImages(true);
         }
       } catch (error: any) {
         console.error("Dashboard failed to retrieve live data:", error);

@@ -1,7 +1,7 @@
 import { doc, getDoc, collection, query, limit, startAfter, getDocs, orderBy, QueryConstraint, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
 export interface CachedData<T> {
   data: T;
