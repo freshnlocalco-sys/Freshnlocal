@@ -12,6 +12,11 @@ export function AdminNotifier() {
   useEffect(() => {
     if (user?.role !== 'admin') return;
 
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(console.error);
+    }
+
     // We only want to notify for orders created AFTER the component mounts
     const q = query(
       collection(db, 'orders'),
@@ -30,6 +35,18 @@ export function AdminNotifier() {
         if (change.type === 'added') {
           const data = change.doc.data();
           
+          // Browser native notification (works if tab is in background)
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification('Fresh&Local - New Order!', {
+                body: `Order ${data.orderNumber || ''} for ₹${data.totalAmount || 0} received.`,
+                icon: '/icon.svg', // will use fallback if not found
+              });
+            } catch (e) {
+              console.error("Failed to show native notification", e);
+            }
+          }
+
           // Play a simple notification sound using Audio API
           try {
             const context = new (window.AudioContext || (window as any).webkitAudioContext)();

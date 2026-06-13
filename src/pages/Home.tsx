@@ -13,6 +13,7 @@ import { ProductCard } from '../components/ProductCard';
 import toast from 'react-hot-toast';
 
 export const CATEGORIES = [
+  { id: 'in season fruits', name: 'In Season Fruits', tagline: 'Fresh seasonal picks', discount: 'Seasonal' },
   { id: 'indian fruits', name: 'Indian Fruits', tagline: 'Devgad Alphonso & Sweetest Mangoes', discount: 'Flat ₹50 Off' },
   { id: 'exotic fruits', name: 'Exotic Fruits', tagline: 'Premium berries & Japanese plums', discount: 'Trending' },
   { id: 'exotic vegetables', name: 'Exotic Vegetables', tagline: 'Pristine organic broccoli & bell peppers', discount: 'Best Seller' },
@@ -181,7 +182,7 @@ export function Home() {
 
           <div className="flex flex-wrap justify-start lg:justify-center gap-4 sm:gap-6 md:gap-12 items-center pt-6 md:pt-8 border-t border-border/60 w-full lg:max-w-3xl mt-8 md:mt-10 mx-auto">
             <div className="text-left lg:text-center flex-1 min-w-[30%]">
-              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">24 HRS</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">IN 24 HRS</p>
               <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Guaranteed Delivery</p>
             </div>
             <div className="w-px h-8 md:h-10 bg-border/60"></div>

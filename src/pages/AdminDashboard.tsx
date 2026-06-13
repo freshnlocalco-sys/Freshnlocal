@@ -236,6 +236,7 @@ export function AdminDashboard() {
         } else if (activeTab === 'spotlights') {
           const m = await import('./Home');
           const defaultSpots = m.CATEGORIES;
+          const userProducts = useSettings.getState().productCategories || [];
           const mCache = await import('../lib/cacheManager');
           const currentCategoryImages = useSettings.getState().categoryImages;
           
@@ -250,13 +251,26 @@ export function AdminDashboard() {
           }
 
           const initialConfig: any = {};
-          defaultSpots.forEach(cat => {
+          
+          const activeSpots = userProducts.length > 0 ? userProducts.map(catName => {
+            const match = defaultSpots.find(c => 
+              c.name.toLowerCase() === catName.toLowerCase() || 
+              c.id.toLowerCase() === catName.toLowerCase() ||
+              (catName.toLowerCase() === 'exotics' && c.id.includes('imported')) ||
+              (catName.toLowerCase() === 'clean cuts' && c.id.includes('hygenic'))
+            );
+            if (match) return match;
+            return { id: catName.toLowerCase(), name: catName, tagline: 'Fresh & Organic', discount: 'New' };
+          }) : defaultSpots;
+          
+          activeSpots.forEach(cat => {
             const normalizedKey = cat.name.toLowerCase().replace(/ font-bold/gi, '').trim();
             initialConfig[cat.id] = { 
               title: cat.name,
               image: overrides[cat.id]?.image || currentCategoryImages[normalizedKey] || ''
             };
           });
+          
           setSpotlightsConfig(initialConfig);
         } else if (activeTab === 'categories') {
           await fetchCategoryImages();
@@ -463,36 +477,31 @@ export function AdminDashboard() {
     }
   };
 
-  const handleSaveSpotlights = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const updateSpotlightValue = async (key: string, field: 'title' | 'image', value: string) => {
     try {
-      const keys = Object.keys(spotlightsConfig);
-      const optimizedConfig: Record<string, {title: string, image: string}> = {};
-      
-      // Auto-compress any large base64 image strings dynamically before uploading to firestore
-      await Promise.all(keys.map(async (key) => {
-        const item = spotlightsConfig[key];
-        let optimizedImage = item.image;
-        if (item.image && item.image.startsWith('data:image/')) {
-          optimizedImage = await compressOversizedBase64(item.image, { targetWidth: 1024, targetHeight: 768, quality: 0.85, cropSquare: false });
-        }
-        optimizedConfig[key] = {
-          title: item.title,
-          image: optimizedImage
-        };
-      }));
+      const currentItem = spotlightsConfig[key] || { title: '', image: '' };
+      const updatedItem = { ...currentItem, [field]: value };
+      const newConfig = { ...spotlightsConfig, [key]: updatedItem };
+      setSpotlightsConfig(newConfig);
 
-      await setDoc(doc(db, 'settings', 'spotlights'), optimizedConfig, { merge: true });
-      
-      // Keep state sync'd and warm
-      setSpotlightsConfig(optimizedConfig);
+      // Save directly to Firestore for auto-save
+      const optimizedItem = { ...updatedItem };
+      if (field === 'image' && value.startsWith('data:image/')) {
+        optimizedItem.image = await compressOversizedBase64(value, { targetWidth: 640, targetHeight: 480, quality: 0.85, cropSquare: false });
+      }
+
+      await setDoc(doc(db, 'settings', 'spotlights'), {
+        [key]: optimizedItem
+      }, { merge: true });
+
       const mCache = await import('../lib/cacheManager');
-      mCache.cacheManager.set('spotlights', optimizedConfig);
-      
-      toast.success('Spotlight settings saved!');
+      const existingCache = mCache.cacheManager.get<any>('spotlights', true) || {};
+      mCache.cacheManager.set('spotlights', { ...existingCache, [key]: optimizedItem });
+
+      if (field === 'image') toast.success('Spotlight image updated');
     } catch (err: any) {
-      toast.error('Failed to save settings.');
       console.error(err);
+      toast.error('Failed to save spotlight setting');
     }
   };
 
@@ -537,8 +546,8 @@ export function AdminDashboard() {
         }
 
         // Optimized JPEG compression at 0.72 quality yields tiny file sizes (typically 20KB-30KB) with zero perceptible noise
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
-        setSpotlightsConfig(prev => ({ ...prev, [key]: { ...prev[key], image: dataUrl } }));
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        updateSpotlightValue(key, 'image', dataUrl);
       };
       img.src = result;
     };
@@ -1850,12 +1859,6 @@ export function AdminDashboard() {
                   Manage the visuals for Home page category cards
                 </p>
               </div>
-              <button
-                onClick={handleSaveSpotlights}
-                className="slice-btn-primary px-6 py-3 flex items-center gap-2"
-              >
-                <Sparkles className="w-4 h-4" /> Save Categories
-              </button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -1892,7 +1895,7 @@ export function AdminDashboard() {
                       <input 
                         type="url"
                         value={config.image}
-                        onChange={(e) => setSpotlightsConfig({...spotlightsConfig, [key]: { ...config, image: e.target.value }})}
+                        onChange={(e) => updateSpotlightValue(key, 'image', e.target.value)}
                         placeholder="https://..."
                         className="slice-input w-full text-[10px]"
                       />

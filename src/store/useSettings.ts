@@ -34,6 +34,7 @@ interface SettingsState {
 }
 
 export const DEFAULT_PRODUCT_CATEGORIES = [
+  'In Season Fruits',
   'Indian Fruits',
   'Exotic Fruits',
   'Exotic Vegetables',
