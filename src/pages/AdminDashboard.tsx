@@ -259,7 +259,14 @@ export function AdminDashboard() {
               (catName.toLowerCase() === 'exotics' && c.id.includes('imported')) ||
               (catName.toLowerCase() === 'clean cuts' && c.id.includes('hygenic'))
             );
-            if (match) return match;
+            if (match) {
+              return {
+                ...match,
+                name: catName,
+                originalId: match.id,
+                id: catName.toLowerCase()
+              };
+            }
             return { id: catName.toLowerCase(), name: catName, tagline: 'Fresh & Organic', discount: 'New' };
           }) : defaultSpots;
           
