@@ -90,16 +90,11 @@ export function Cart() {
             id: i.product.id,
             name: i.product.name,
             price: i.product.price,
-            imageUrl: i.product.imageUrl,
-            category: i.product.category,
-            description: i.product.description,
-            stock: i.product.stock,
-            inStock: i.product.inStock,
-            originalPrice: i.product.originalPrice,
-            thumbnailUrl: i.product.thumbnailUrl,
             unit: i.product.unit,
-            orderIndex: i.product.orderIndex,
           };
+          if (i.product.imageUrl && typeof i.product.imageUrl === 'string' && i.product.imageUrl.startsWith('http')) {
+            p.imageUrl = i.product.imageUrl;
+          }
           // Remove keys with undefined directly just in case this is top level
           Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
           return { product: p, quantity: i.quantity };
@@ -118,6 +113,9 @@ export function Cart() {
       
       // Deep clone and strip all undefined values before passing to Firestore
       const orderData = JSON.parse(JSON.stringify(rawOrderData));
+      
+      const sizeBytes = new Blob([JSON.stringify(orderData)]).size;
+      console.log("Order JSON size (bytes):", sizeBytes);
       
       const ordersRef = collection(db, 'orders');
       await addDoc(ordersRef, orderData);
