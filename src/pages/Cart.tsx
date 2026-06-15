@@ -113,9 +113,10 @@ export function Cart() {
       clearCart();
       toast.success(`Order Placed successfully! Order ID: ${orderNumber}`);
       navigate('/profile');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Error committing order settlement: quota exceeded or server error.");
+      const errorMsg = error?.message || error?.error || String(error);
+      toast.error(`Error committing order settlement: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
