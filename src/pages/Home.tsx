@@ -64,8 +64,9 @@ function CategoryCarousel({ category, products, handleAddToCart }: { category: a
 
 
 export function Home() {
-  const { categoryImages, productCategories } = useSettings();
+  const { categoryImages, productCategories, loading: settingsLoading } = useSettings();
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
+  const [spotlightsLoading, setSpotlightsLoading] = useState(true);
 
   const activeCategories = React.useMemo(() => {
     if (!productCategories || productCategories.length === 0) return CATEGORIES;
@@ -118,7 +119,10 @@ export function Home() {
 
       if (cachedSpotlights) {
         setSpotlightsConfig(cachedSpotlights);
-        if (isCacheFresh) return;
+        if (isCacheFresh) {
+          setSpotlightsLoading(false);
+          return;
+        }
       }
 
       await cacheManager.fetchDeduplicated('spotlights_fetch', async () => {
@@ -133,6 +137,8 @@ export function Home() {
           }
         } catch (err: any) {
           console.error("Error fetching spotlights config:", err);
+        } finally {
+          setSpotlightsLoading(false);
         }
       });
     }
@@ -220,16 +226,20 @@ export function Home() {
                     className="flex flex-col items-center group cursor-pointer"
                   >
                     <div className="w-full aspect-[4/3] sm:aspect-square rounded-2xl bg-sky-50/50 dark:bg-sky-950/20 overflow-hidden flex items-center justify-center mb-2 sm:mb-3 transition-transform duration-300 group-hover:-translate-y-1 shadow-sm group-hover:shadow-md relative">
-                      {spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages) ? (
+                      {(spotlightsLoading || settingsLoading) ? (
+                        <div className="w-full h-full bg-border/20 rounded-lg animate-pulse" />
+                      ) : spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false) ? (
                         <img
-                          src={spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages)}
+                          src={spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false) || undefined}
                           alt={cat.name}
                           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 drop-shadow-sm"
                           referrerPolicy="no-referrer"
                           loading="lazy"
                         />
                       ) : (
-                        <div className="w-full h-full bg-border/20 rounded-lg"></div>
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/80 rounded-lg">
+                           <span className="text-muted-foreground opacity-50 font-black text-2xl tracking-tighter uppercase">{cat.name.slice(0, 2)}</span>
+                        </div>
                       )}
                     </div>
                     <span className="text-center text-[9px] sm:text-[11px] font-extrabold uppercase tracking-wide leading-tight text-foreground group-hover:text-primary transition-colors max-w-full break-words px-1">

@@ -12,7 +12,7 @@ export const CATEGORIES = [
   'FNL Juices'
 ];
 
-export const getCategoryImage = (category?: string, customMapping?: Record<string, string>) => {
+export const getCategoryImage = (category?: string, customMapping?: Record<string, string>, allowDefault: boolean = true) => {
   if (!category) return null;
   const normalizedCategory = category.toLowerCase().replace(/ font-bold/gi, '').trim();
   if (customMapping) {
@@ -25,6 +25,8 @@ export const getCategoryImage = (category?: string, customMapping?: Record<strin
     if (customMapping[singularKey]) return customMapping[singularKey];
     if (customMapping[pluralKey]) return customMapping[pluralKey];
   }
+
+  if (!allowDefault) return null;
 
   // High-quality default fallbacks so category images never appear broken
   const DEFAULT_CATEGORY_IMAGES: Record<string, string> = {
