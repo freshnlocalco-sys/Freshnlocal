@@ -82,7 +82,7 @@ export function Cart() {
       const randomDigits = Math.floor(100000 + Math.random() * 900000);
       const orderNumber = `FNL-${randomDigits}`;
 
-      const orderData = {
+      const rawOrderData = {
         orderNumber,
         userId: user.uid,
         items: cartItems.map(i => {
@@ -95,11 +95,13 @@ export function Cart() {
             description: i.product.description,
             stock: i.product.stock,
             inStock: i.product.inStock,
+            originalPrice: i.product.originalPrice,
+            thumbnailUrl: i.product.thumbnailUrl,
+            unit: i.product.unit,
+            orderIndex: i.product.orderIndex,
           };
-          if (i.product.originalPrice !== undefined) p.originalPrice = i.product.originalPrice;
-          if (i.product.thumbnailUrl !== undefined) p.thumbnailUrl = i.product.thumbnailUrl;
-          if (i.product.unit !== undefined) p.unit = i.product.unit;
-          if (i.product.orderIndex !== undefined) p.orderIndex = i.product.orderIndex;
+          // Remove keys with undefined directly just in case this is top level
+          Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
           return { product: p, quantity: i.quantity };
         }),
         totalAmount: total(),
@@ -113,6 +115,9 @@ export function Cart() {
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
+      
+      // Deep clone and strip all undefined values before passing to Firestore
+      const orderData = JSON.parse(JSON.stringify(rawOrderData));
       
       const ordersRef = collection(db, 'orders');
       await addDoc(ordersRef, orderData);
