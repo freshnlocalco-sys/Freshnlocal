@@ -86,6 +86,15 @@ export const useCart = create<CartState>()(
     }),
     {
       name: 'fresh-n-local-cart',
+      onRehydrateStorage: () => (state) => {
+        if (state && state.items) {
+          const stringified = JSON.stringify(state.items);
+          if (stringified.length > 500000) {
+            console.warn("Cart state too large, clearing to prevent quota issues");
+            state.items = [];
+          }
+        }
+      }
     }
   )
 );

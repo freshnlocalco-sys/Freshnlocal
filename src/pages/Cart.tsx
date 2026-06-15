@@ -88,11 +88,11 @@ export function Cart() {
         items: cartItems.map(i => {
           const p: any = {
             id: i.product.id,
-            name: i.product.name,
+            name: typeof i.product.name === 'string' ? i.product.name.substring(0, 100) : i.product.name,
             price: i.product.price,
             unit: i.product.unit,
           };
-          if (i.product.imageUrl && typeof i.product.imageUrl === 'string' && i.product.imageUrl.startsWith('http')) {
+          if (i.product.imageUrl && typeof i.product.imageUrl === 'string' && i.product.imageUrl.length < 500 && i.product.imageUrl.startsWith('http')) {
             p.imageUrl = i.product.imageUrl;
           }
           // Remove keys with undefined directly just in case this is top level
@@ -103,19 +103,31 @@ export function Cart() {
         status: 'pending',
         paymentMethod: 'COD',
         shippingDetails: {
-          name: user.displayName || 'Customer',
-          address: formattedAddress,
-          phone
+          name: typeof user.displayName === 'string' ? user.displayName.substring(0, 50) : (user.displayName || 'Customer'),
+          address: typeof formattedAddress === 'string' ? formattedAddress.substring(0, 500) : formattedAddress,
+          phone: typeof phone === 'string' ? phone.substring(0, 20) : phone
         },
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
       
       // Deep clone and strip all undefined values before passing to Firestore
-      const orderData = JSON.parse(JSON.stringify(rawOrderData));
+      let orderData = JSON.parse(JSON.stringify(rawOrderData));
       
-      const sizeBytes = new Blob([JSON.stringify(orderData)]).size;
-      console.log("Order JSON size (bytes):", sizeBytes);
+      console.log("--- ORDER SIZE AUDIT ---");
+      Object.entries(orderData).forEach(([key, value]) => {
+        const size = new Blob([JSON.stringify(value)]).size;
+        console.log(`${key}: ${size} bytes`);
+      });
+
+      const totalSize = new Blob([JSON.stringify(orderData)]).size;
+      console.log("Total document size:", totalSize);
+      console.log("Number of items:", orderData.items.length);
+      console.log("Estimated Firestore payload:", totalSize, "bytes");
+
+      if (totalSize > 900000) {
+        throw new Error(`Order too large: ${totalSize} bytes. Please remove some items or contact support.`);
+      }
       
       const ordersRef = collection(db, 'orders');
       await addDoc(ordersRef, orderData);
