@@ -85,7 +85,23 @@ export function Cart() {
       const orderData = {
         orderNumber,
         userId: user.uid,
-        items: cartItems.map(i => ({ product: i.product, quantity: i.quantity })),
+        items: cartItems.map(i => {
+          const p: any = {
+            id: i.product.id,
+            name: i.product.name,
+            price: i.product.price,
+            imageUrl: i.product.imageUrl,
+            category: i.product.category,
+            description: i.product.description,
+            stock: i.product.stock,
+            inStock: i.product.inStock,
+          };
+          if (i.product.originalPrice !== undefined) p.originalPrice = i.product.originalPrice;
+          if (i.product.thumbnailUrl !== undefined) p.thumbnailUrl = i.product.thumbnailUrl;
+          if (i.product.unit !== undefined) p.unit = i.product.unit;
+          if (i.product.orderIndex !== undefined) p.orderIndex = i.product.orderIndex;
+          return { product: p, quantity: i.quantity };
+        }),
         totalAmount: total(),
         status: 'pending',
         paymentMethod: 'COD',

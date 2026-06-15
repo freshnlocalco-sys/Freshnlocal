@@ -25,7 +25,7 @@ export const CATEGORIES = [
   { id: 'mushrooms', name: 'Mushrooms', tagline: 'Fresh oyster, button & exotic funghi', discount: 'Earthy Fresh' }
 ];
 
-function CategoryCarousel({ category, products, handleAddToCart }: { category: any; products: Product[]; handleAddToCart: (product: Product) => void }) {
+function CategoryCarousel({ category, products, handleAddToCart }: { key?: React.Key | null | undefined; category: any; products: Product[]; handleAddToCart: (product: Product) => void }) {
   const isJuice = category.id === 'fnl juices';
   const linkDest = isJuice ? '/juice' : `/shop?category=${encodeURIComponent(category.id)}`;
 
