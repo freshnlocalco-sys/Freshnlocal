@@ -41,7 +41,10 @@ function CategoryCarousel({ category, products, handleAddToCart }: { category: a
       </div>
       
       <div className="w-full pb-6 overflow-hidden flex group">
-        <div className="flex animate-marquee w-max group-hover:[animation-play-state:paused]">
+        <div 
+          className="flex animate-marquee w-max group-hover:[animation-play-state:paused]"
+          style={{ '--marquee-duration': `${Math.max(10, products.length * 5)}s` } as React.CSSProperties}
+        >
           {[0, 1, 2].map((setIndex) => (
             <div key={setIndex} className="flex gap-3 sm:gap-4 md:gap-6 pr-3 sm:pr-4 md:pr-6">
               {products.map(product => (
@@ -262,7 +265,7 @@ export function Home() {
                 100% { transform: translateX(-33.333333%); }
               }
               .animate-marquee {
-                animation: marquee 20s linear infinite;
+                animation: marquee var(--marquee-duration, 20s) linear infinite;
               }
             `}} />
             {activeCategories.map(category => {
@@ -283,6 +286,32 @@ export function Home() {
                 />
               );
             })}
+
+            {/* Dedicated FNL Juices Showcase at the bottom of categories */}
+            {(() => {
+              const juiceProducts = products.filter(p => {
+                const pCat = (p.category || '').toLowerCase();
+                return pCat === 'fnl juices' || pCat === 'fnl juice';
+              });
+              
+              if (juiceProducts.length === 0) return null;
+              
+              const juiceCategory = {
+                id: 'fnl juices',
+                name: 'FNL Juices 🍹',
+                tagline: '100% Raw Cold Pressed Nectars',
+                discount: 'Zero Sugar'
+              };
+              
+              return (
+                <CategoryCarousel 
+                  key="fnl-juices-showcase"
+                  category={juiceCategory}
+                  products={juiceProducts}
+                  handleAddToCart={handleAddToCart}
+                />
+              );
+            })()}
           </div>
 
         </motion.div>
