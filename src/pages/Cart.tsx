@@ -127,9 +127,9 @@ export function Cart() {
         <div className="w-20 h-20 bg-secondary border border-border flex items-center justify-center rounded-[24px] mb-8 shadow-inner">
           <ShoppingBag className="w-8 h-8 text-primary" />
         </div>
-        <h2 className="text-2xl sm:text-3xl font-sans font-black uppercase tracking-tight mb-3 text-foreground">Your larder list is empty</h2>
+        <h2 className="text-2xl sm:text-3xl font-sans font-black uppercase tracking-tight mb-3 text-foreground">Your order list is empty</h2>
         <p className="text-muted-foreground text-xs font-semibold max-w-sm mb-8 leading-relaxed">
-          Unlock your fresh gourmet potential by placing hand-vetted local crops inside your checkout larder.
+          Unlock your fresh gourmet potential by placing hand-vetted local crops inside your checkout order.
         </p>
         <button 
           onClick={() => navigate('/shop')} 
@@ -149,7 +149,7 @@ export function Cart() {
           <div className="space-y-1.5">
             <span className="glass-pill">Checkout Chamber</span>
             <h1 className="text-2xl sm:text-3xl lg:text-5xl font-sans font-black uppercase text-foreground tracking-tight mt-2.5">
-              Review Shopping Larder
+              Review Shopping Order
             </h1>
           </div>
         </div>
@@ -241,7 +241,7 @@ export function Cart() {
 
           <div className="space-y-4 text-xs font-semibold">
             <div className="flex justify-between items-center text-muted-foreground">
-              <span>Larder Subtotal</span>
+              <span>Order Subtotal</span>
               <span className="font-mono text-foreground">₹{total().toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center text-muted-foreground">
@@ -361,7 +361,7 @@ export function Cart() {
             )}
             {total() < 1000 && !hasOutOfStockItems && (
               <div className="bg-red-500/10 text-red-500 border border-red-500/15 p-4 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest">
-                Minimum larder checkout is ₹1000
+                Minimum order checkout is ₹1000
               </div>
             )}
             

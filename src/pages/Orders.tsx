@@ -142,7 +142,7 @@ export function Orders() {
         <div className="space-y-1.5ClassName bg-transparent">
           <span className="glass-pill">History Desk</span>
           <h1 className="text-3xl md:text-5xl font-sans font-black uppercase text-foreground tracking-tight mt-2.5">
-            Larder Board Logs
+            Order Board Logs
           </h1>
         </div>
         <div className="flex items-center gap-2 p-2 bg-secondary border border-border rounded-2xl text-[9px] font-mono tracking-wider text-muted-foreground">
@@ -160,7 +160,7 @@ export function Orders() {
           <div className="space-y-1">
             <h3 className="text-base font-black uppercase tracking-tight text-foreground">No historical orders lodged</h3>
             <p className="text-muted-foreground text-xs font-semibold max-w-xs mx-auto">
-              Your active credential has zero historical purchase logs. Start building your larder basket!
+              Your active credential has zero historical purchase logs. Start building your order basket!
             </p>
           </div>
           <Link to="/shop" className="slice-btn-primary px-8 py-4 text-[10px] flex items-center gap-1.5 mt-2 shadow-none">

@@ -236,7 +236,7 @@ export function Layout() {
               FreshNLocal <span className="text-primary">CO.</span>
             </h3>
             <p className="text-muted-foreground max-w-sm leading-relaxed normal-case tracking-normal text-xs font-sans font-medium">
-              Surat's finest technology-driven organic delivery larder. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your micro-kitchen.
+              Surat's finest technology-driven organic delivery order. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your micro-kitchen.
             </p>
             <div className="text-muted-foreground space-y-3.5 normal-case tracking-normal text-xs font-sans font-semibold">
               <p className="flex items-start gap-2.5">

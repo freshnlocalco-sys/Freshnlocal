@@ -50,7 +50,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
     return (
       <div 
         ref={cardRef} 
-        className="w-full bg-secondary border border-border rounded-xl h-[280px] animate-pulse"
+        className="w-full bg-secondary border border-border rounded-xl h-[210px] sm:h-[235px] md:h-[260px] lg:h-[280px] animate-pulse"
       />
     );
   }
@@ -76,7 +76,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
         />
       </Link>
       
-      <div className="p-3 sm:p-4 bg-background space-y-2 sm:space-3 flex-1 flex flex-col justify-between">
+      <div className="p-2.5 sm:p-3 bg-background flex-1 flex flex-col justify-between">
         <div className="flex flex-col gap-1 w-full">
           <h3 className="text-[10px] sm:text-xs font-sans font-bold text-foreground line-clamp-2 leading-tight">{product.name}</h3>
           
@@ -110,7 +110,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             }
           }}
           disabled={!product.inStock}
-          className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold transition-colors flex items-center justify-center gap-1.5 mt-2 sm:mt-3 ${product.inStock ? 'bg-primary text-white hover:bg-primary/90 cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
+          className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold transition-colors flex items-center justify-center gap-1.5 mt-1.5 sm:mt-2.5 ${product.inStock ? 'bg-primary text-white hover:bg-primary/90 cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
         >
           {product.inStock ? (
              <>

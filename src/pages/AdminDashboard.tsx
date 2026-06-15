@@ -1203,7 +1203,7 @@ export function AdminDashboard() {
             onClick={() => navigate('/admin/inventory')}
             className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
           >
-            <Package className="w-4 h-4" /> Larder Inventory
+            <Package className="w-4 h-4" /> Order Inventory
           </button>
           <button 
             onClick={() => navigate('/admin/spotlights')}
@@ -1566,7 +1566,7 @@ export function AdminDashboard() {
                   </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
-                    <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Larder Description</label>
+                    <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Order Description</label>
                     <textarea 
                       placeholder="Details about seed origin, crisp index, weight parameters..." 
                       rows={3} 

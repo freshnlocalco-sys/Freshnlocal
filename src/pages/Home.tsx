@@ -173,7 +173,7 @@ export function Home() {
           </h1>
 
           <p className="text-xs sm:text-sm md:text-base text-muted-foreground w-full max-w-[300px] sm:max-w-md lg:max-w-2xl mx-0 lg:mx-auto leading-relaxed font-sans font-medium text-left lg:text-center">
-            Zero hassle. Ultra-pure quality. Experience Surat's premier tech-driven larder bringing crisp, handpicked, local harvests & exotic fruits right to your modern kitchen.
+            Zero hassle. Ultra-pure quality. Experience Surat's premier tech-driven order bringing crisp, handpicked, local harvests & exotic fruits right to your modern kitchen.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-6 justify-start lg:justify-center w-full sm:w-auto">
