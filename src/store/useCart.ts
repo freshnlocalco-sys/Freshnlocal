@@ -28,6 +28,7 @@ export interface Order {
   orderNumber?: string;
   userId: string;
   createdAt: number;
+  updatedAt?: number;
   totalAmount: number;
   status: string;
   items: CartItem[];

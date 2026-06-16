@@ -10,6 +10,7 @@ import { useProducts } from '../store/useProducts';
 import { useWishlist } from '../store/useWishlist';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { ProductCard } from '../components/ProductCard';
+import { ProductReviews } from '../components/ProductReviews';
 import toast from 'react-hot-toast';
 
 export function ProductDetail() {
@@ -283,6 +284,8 @@ export function ProductDetail() {
           </div>
         </div>
       </div>
+
+      <ProductReviews productId={product.id!} />
 
       {/* Related Products Section */}
       {relatedProducts.length > 0 && (

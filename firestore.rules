@@ -109,5 +109,23 @@ service cloud.firestore {
       allow read, list: if true;
       allow create, update, delete: if isAdmin();
     }
+    
+    match /reviews/{reviewId} {
+      function isValidReview(data) {
+        return data.size() >= 6 && data.size() <= 8
+          && data.keys().hasAll(['productId', 'userId', 'userName', 'rating', 'comment', 'createdAt'])
+          && data.productId is string && data.productId.size() <= 128
+          && data.userId is string && data.userId.size() <= 128
+          && data.userName is string && data.userName.size() <= 100
+          && data.rating is number && data.rating >= 1 && data.rating <= 5
+          && data.comment is string && data.comment.size() <= 1000
+          && data.createdAt is number;
+      }
+      
+      allow read: if true;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && isValidReview(incoming());
+      allow update: if isSignedIn() && (request.auth.uid == existing().userId || isAdmin()) && isValidReview(incoming()) && incoming().productId == existing().productId && incoming().userId == existing().userId && incoming().createdAt == existing().createdAt;
+      allow delete: if isSignedIn() && (request.auth.uid == existing().userId || isAdmin());
+    }
   }
 }
