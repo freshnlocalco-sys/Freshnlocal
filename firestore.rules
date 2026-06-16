@@ -19,7 +19,7 @@ service cloud.firestore {
     
     match /users/{userId} {
       function isValidUser(data) {
-        return data.size() >= 3 && data.size() <= 6
+        return data.size() >= 3 && data.size() <= 10
           && data.keys().hasAll(['email', 'role', 'createdAt'])
           && data.email is string && data.email.size() <= 100
           && data.role is string && (data.role == 'customer' || data.role == 'admin')
@@ -29,7 +29,8 @@ service cloud.firestore {
           && data.get('address', '') is string
           && data.get('displayName', '').size() <= 100
           && data.get('phone', '').size() <= 20
-          && data.get('address', '').size() <= 250;
+          && data.get('address', '').size() <= 500
+          && (data.get('addresses', []) is list);
       }
       
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());

@@ -83,7 +83,31 @@ export function Profile() {
               <span className="flex items-center gap-2"><Award className="w-4 h-4 text-primary" /> Delivery Grade</span>
               <span className="text-primary font-black">PLATINUM (₹0)</span>
             </div>
-            {user?.address && (
+            {user?.addresses && user.addresses.length > 0 ? (
+              <div className="bg-background p-4 rounded-xl border border-border space-y-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="flex items-center gap-2"><Package className="w-4 h-4 text-primary" /> Saved Addresses ({user.addresses.length})</span>
+                </div>
+                <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+                  {user.addresses.map((addr, i) => (
+                    <div key={addr.id} className={`${i !== 0 ? 'border-t border-border pt-3' : ''}`}>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-xs uppercase text-foreground flex items-center gap-2">
+                          {addr.label}
+                          {addr.isDefault && <span className="text-[8px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full tracking-widest hidden sm:inline-block">Default</span>}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground text-[10px] leading-relaxed capitalize">
+                        {addr.line1}, {addr.line2}
+                        {addr.landmark ? `, ${addr.landmark}` : ''}
+                        <br/> {addr.city}, {addr.state} - {addr.pincode}
+                      </p>
+                      {addr.phone && <p className="text-muted-foreground font-mono mt-1 tracking-wider">{addr.phone}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : user?.address && (
               <div className="bg-background p-4 rounded-xl border border-border space-y-2">
                 <span className="flex items-center gap-2 mb-2"><Package className="w-4 h-4 text-primary" /> Saved Delivery Address</span>
                 <p className="text-foreground text-[11px] leading-relaxed capitalize">{user.address}</p>

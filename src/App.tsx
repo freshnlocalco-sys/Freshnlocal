@@ -11,6 +11,7 @@ import { ProductDetail } from './pages/ProductDetail';
 import { Orders } from './pages/Orders';
 import { About } from './pages/About';
 import { FNLJuice } from './pages/FNLJuice';
+import { Wishlist } from './pages/Wishlist';
 
 import { useSettings } from './store/useSettings';
 
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="shop" element={<Shop />} />
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path="cart" element={<Cart />} />
+          <Route path="wishlist" element={<Wishlist />} />
           <Route path="admin" element={<Navigate to="/admin/consignments" replace />} />
           <Route path="admin/consignments" element={<AdminDashboard />} />
           <Route path="admin/inventory" element={<AdminDashboard />} />

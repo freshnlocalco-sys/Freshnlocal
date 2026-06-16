@@ -65,6 +65,21 @@ export function isQuotaError(error: any): boolean {
   }
 }
 
+// Address interface for multiple addresses
+export interface Address {
+  id: string;
+  label: string;
+  name?: string;
+  phone?: string;
+  line1: string;
+  line2: string;
+  landmark?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault?: boolean;
+}
+
 // User Record in DB
 export interface AppUser {
   uid: string;
@@ -72,7 +87,8 @@ export interface AppUser {
   displayName: string;
   role: 'admin' | 'customer';
   phone?: string;
-  address?: string;
+  address?: string; // legacy address
+  addresses?: Address[];
   createdAt: number;
 }
 

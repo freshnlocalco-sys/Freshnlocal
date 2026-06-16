@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
-import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navigation, MapPin, Phone, Mail } from 'lucide-react';
+import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navigation, MapPin, Phone, Mail, Heart } from 'lucide-react';
 import { useAuth, signOut } from '../lib/firebase';
 import { useCart } from '../store/useCart';
 import { AuthModal } from './AuthModal';
@@ -41,6 +41,11 @@ export function Layout() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6 shrink-0">
+            {/* Wishlist Button */}
+            <Link to="/wishlist" className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-border hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all duration-300 group">
+              <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground group-hover:text-red-500 transition-colors" />
+            </Link>
+
             {/* Cart Button */}
             <Link to="/cart" className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-border hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-all duration-300">
               <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground" />
@@ -160,6 +165,13 @@ export function Layout() {
                     className="py-2 hover:text-primary transition-colors flex justify-between items-center"
                   >
                     <span>Our story</span> <span className="opacity-30">→</span>
+                  </Link>
+                  <Link 
+                    to="/wishlist" 
+                    onClick={() => setIsMobileNavOpen(false)} 
+                    className="py-2 hover:text-red-500 transition-colors flex justify-between items-center text-red-500 font-extrabold"
+                  >
+                    <span className="flex items-center gap-2"><Heart className="w-4 h-4 fill-red-500" /> Wishlist</span> <span className="opacity-30">→</span>
                   </Link>
                   
                   {user && (

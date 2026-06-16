@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
-import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, ShieldCheck, Truck, RotateCcw, Zap } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, ShieldCheck, Truck, RotateCcw, Zap, Heart } from 'lucide-react';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useProducts } from '../store/useProducts';
+import { useWishlist } from '../store/useWishlist';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
+import { ProductCard } from '../components/ProductCard';
 import toast from 'react-hot-toast';
 
 export function ProductDetail() {
@@ -20,6 +22,17 @@ export function ProductDetail() {
   const [offlineError, setOfflineError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const allProducts = useProducts(state => state.products);
+
+  const inWishlist = product ? isInWishlist(product.id!) : false;
+
+  const relatedProducts = useMemo(() => {
+    if (!product || allProducts.length === 0) return [];
+    return allProducts
+      .filter(p => p.category === product.category && p.id !== product.id && p.inStock)
+      .slice(0, 4);
+  }, [product, allProducts]);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -154,6 +167,26 @@ export function ProductDetail() {
               {product.category.replace(/ font-bold/gi, '')}
             </span>
           </div>
+          <button
+            onClick={() => {
+              if (inWishlist) {
+                removeFromWishlist(product.id!);
+                toast.success('Removed from wishlist');
+              } else {
+                addToWishlist(product);
+                toast.success('Added to wishlist');
+              }
+            }}
+            className="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 p-2 transition-transform active:scale-90"
+          >
+            <Heart 
+              className={`w-7 h-7 sm:w-8 sm:h-8 transition-all ${
+                inWishlist 
+                  ? 'fill-red-500 text-red-500 drop-shadow-md' 
+                  : 'fill-white/30 text-white hover:fill-white/50 drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] lg:drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]'
+              }`} 
+            />
+          </button>
           <img 
             src={product.imageUrl || getCategoryImage(product.category, categoryImages) || null} 
             alt={product.name}
@@ -250,6 +283,34 @@ export function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Related Products Section */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-20 border-t border-border pt-12">
+          <div className="flex flex-col gap-2 mb-8">
+            <h2 className="text-2xl font-black uppercase tracking-tight text-foreground">
+              Related Items
+            </h2>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-extrabold">
+              You might also like
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {relatedProducts.map(rp => (
+              <ProductCard 
+                key={rp.id} 
+                product={rp} 
+                onAddToCart={(p) => {
+                  if (p.inStock) {
+                    addItem(p, 1);
+                    toast.success(`1 ${p.name} added to cart!`);
+                  }
+                }} 
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

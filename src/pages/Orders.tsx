@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, useAuth, isQuotaError } from '../lib/firebase';
 import { trackFirestoreRead } from '../lib/cacheManager';
-import { Order } from '../store/useCart';
-import { Link, Navigate } from 'react-router-dom';
-import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck } from 'lucide-react';
+import { Order, useCart } from '../store/useCart';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const ORDER_STATUSES = [
-  { id: 'pending', label: 'Pending', icon: Clock },
-  { id: 'confirmed', label: 'Confirmed', icon: FileCheck },
-  { id: 'shipped', label: 'Shipped', icon: Truck },
-  { id: 'delivered', label: 'Delivered', icon: CheckCircle2 }
+const TIMELINE_STEPS = [
+  { id: 'pending', label: 'Order Placed', desc: 'We received your order', icon: FileCheck },
+  { id: 'confirmed', label: 'Processing', desc: 'Preparing dispatch', icon: Package },
+  { id: 'shipped', label: 'On the Way', desc: 'Out for delivery', icon: Truck },
+  { id: 'delivered', label: 'Delivered', desc: 'Order completed', icon: CheckCircle2 }
 ];
 
-function OrderTimeline({ status }: { status: string }) {
-  if (status === 'cancelled') {
+function OrderTimeline({ order }: { order: Order }) {
+  if (order.status === 'cancelled') {
     return (
       <div className="py-4 px-4 bg-red-500/10 rounded-xl border border-red-500/20 text-red-500 text-center font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 mb-6">
          Order Cancelled
@@ -23,59 +23,80 @@ function OrderTimeline({ status }: { status: string }) {
     );
   }
   
-  const normalizedStatus = status === 'processing' ? 'confirmed' : status;
-  const currentIndex = ORDER_STATUSES.findIndex(s => s.id === normalizedStatus);
+  const normalizedStatus = order.status === 'processing' ? 'confirmed' : order.status;
+  const currentIndex = TIMELINE_STEPS.findIndex(s => s.id === normalizedStatus);
   const activeIndex = currentIndex === -1 ? 0 : currentIndex;
 
+  const formatDate = (timestamp: number) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit'
+    }).format(new Date(timestamp));
+  }
+
   return (
-    <div className="py-4 sm:py-8 w-full border-b border-border/50 mb-6">
-      <div className="flex flex-col sm:flex-row justify-between relative px-2 sm:px-6">
+    <div className="w-full border border-border bg-secondary/30 rounded-2xl p-6 sm:p-8 mb-6 overflow-hidden">
+      <div className="flex flex-col relative space-y-8 sm:space-y-0 sm:flex-row sm:justify-between sm:px-2">
         
-        {/* Desktop Background Line */}
-        <div className="hidden sm:block absolute top-[1.25rem] md:top-[1.5rem] left-[10%] right-[10%] h-[2px] bg-border -z-10"></div>
-        
-        {/* Desktop Active Line */}
+        {/* Desktop Active/Background Line */}
+        <div className="hidden sm:block absolute top-[1.25rem] left-[12%] right-[12%] h-[2px] bg-border -z-10"></div>
         <div 
-          className="hidden sm:block absolute top-[1.25rem] md:top-[1.5rem] left-[10%] h-[2px] bg-primary transition-all duration-700 -z-10" 
-          style={{ width: `${(activeIndex / (ORDER_STATUSES.length - 1)) * 80}%` }}
+          className="hidden sm:block absolute top-[1.25rem] left-[12%] h-[2px] bg-primary transition-all duration-700 delay-300 -z-10" 
+          style={{ width: `${(activeIndex / (TIMELINE_STEPS.length - 1)) * 76}%` }}
         ></div>
 
-        {ORDER_STATUSES.map((step, index) => {
+        {TIMELINE_STEPS.map((step, index) => {
           const isActive = index <= activeIndex;
           const isCurrent = index === activeIndex;
           const Icon = step.icon;
           
+          let dateStr = '';
+          if (index === 0) dateStr = formatDate(order.createdAt);
+          else if (isCurrent && order.updatedAt) dateStr = formatDate(order.updatedAt);
+          else if (isActive && order.updatedAt && index === TIMELINE_STEPS.length - 1) dateStr = formatDate(order.updatedAt);
+          
           return (
-            <div key={step.id} className="flex sm:flex-col items-center gap-4 sm:gap-3 relative z-10 sm:w-1/4 mb-8 sm:mb-0 last:mb-0">
-               {/* Mobile vertical line */}
-               {index !== ORDER_STATUSES.length - 1 && (
-                 <div className="sm:hidden absolute left-5 sm:left-auto top-10 sm:top-auto bottom-[-32px] sm:bottom-auto w-[2px] bg-border -z-10"></div>
+            <div key={step.id} className="flex sm:flex-col items-start sm:items-center relative z-10 sm:w-1/4">
+               {/* Mobile vertical lines */}
+               {index !== TIMELINE_STEPS.length - 1 && (
+                 <div className="sm:hidden absolute left-5 top-10 bottom-[-32px] w-[2px] bg-border -z-10"></div>
                )}
-               {index !== ORDER_STATUSES.length - 1 && isActive && (
+               {index !== TIMELINE_STEPS.length - 1 && isActive && (
                  <div 
-                   className="sm:hidden absolute left-5 sm:left-auto top-10 sm:top-auto w-[2px] bg-primary -z-10 transition-all duration-700" 
+                   className="sm:hidden absolute left-5 top-10 w-[2px] bg-primary -z-10 transition-all duration-700" 
                    style={{ 
                      bottom: activeIndex > index ? '-32px' : '50%',
-                     top: '40px'
                    }}
                  ></div>
                )}
 
-              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center shrink-0 
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center shrink-0 mb-0 sm:mb-4 mt-1 sm:mt-0
                 ${isActive 
-                  ? 'border-primary bg-primary/10 text-primary shadow-[0_0_15px_rgba(0,184,83,0.3)]' 
+                  ? 'border-primary bg-primary shadow-[0_0_15px_rgba(0,184,83,0.3)]' 
                   : 'border-border bg-background text-muted-foreground'
-                } transition-all duration-500 bg-background`}
+                } transition-all duration-500`}
               >
-                <Icon className={`w-4 h-4 md:w-5 md:h-5 ${isCurrent ? 'animate-pulse' : ''}`} />
+                {isActive ? (
+                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
+                    <Icon className={`w-4 h-4 md:w-5 md:h-5 ${isCurrent ? 'animate-pulse text-primary' : 'text-primary'}`} />
+                  </div>
+                ) : (
+                  <Icon className="w-4 h-4 md:w-5 md:h-5" />
+                )}
               </div>
-              <div className="flex flex-col sm:items-center sm:text-center mt-1 sm:mt-0">
-                <span className={`text-[10px] md:text-[11px] font-black uppercase tracking-widest ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
+              
+              <div className="flex flex-col ml-5 sm:ml-0 sm:items-center sm:text-center mt-0 sm:mt-1 min-h-[3rem]">
+                <span className={`text-[11px] md:text-xs font-black uppercase tracking-widest ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
                   {step.label}
                 </span>
-                {isCurrent && (
-                  <span className="text-[8px] text-primary font-extrabold mt-0.5 tracking-[0.1em] uppercase block">Active State</span>
-                )}
+                <span className={`text-[10px] mt-1 font-bold leading-snug ${isActive ? 'text-muted-foreground' : 'text-muted-foreground/50'}`}>
+                  {step.desc}
+                </span>
+                {(isActive && dateStr) ? (
+                  <span className="text-[9px] font-mono text-primary font-bold mt-2 flex items-center gap-1 sm:justify-center bg-primary/10 px-2 py-0.5 rounded-full w-fit">
+                    {dateStr}
+                  </span>
+                ) : null}
               </div>
             </div>
           )
@@ -89,6 +110,41 @@ export function Orders() {
   const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addItem } = useCart();
+  const navigate = useNavigate();
+
+  const handleOrderAgain = async (order: Order) => {
+    let itemsAdded = 0;
+    try {
+      // Create an array of promises to fetch the latest product data for each item
+      const addedProducts = [];
+      for (const item of order.items) {
+        const product = (item as any).product || item;
+        // Verify product still exists in db to get latest price/stock
+        if (product.id) {
+          const docRef = doc(db, 'products', product.id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+             const data = docSnap.data();
+             if (data.inStock) {
+               addItem({ id: product.id, ...data } as any, item.quantity);
+               itemsAdded++;
+             }
+          }
+        }
+      }
+      
+      if (itemsAdded > 0) {
+        toast.success(`Added ${itemsAdded} items to cart`);
+        navigate('/cart');
+      } else {
+        toast.error("Items from this order are no longer available.");
+      }
+    } catch(err) {
+      console.error(err);
+      toast.error("Failed to re-order items.");
+    }
+  };
 
   useEffect(() => {
     async function fetchOrders() {
@@ -204,7 +260,7 @@ export function Orders() {
                 </div>
               </div>
 
-              <OrderTimeline status={order.status} />
+              <OrderTimeline order={order} />
 
               {/* Items List */}
               <div className="space-y-4 divide-y divide-border">
@@ -238,19 +294,31 @@ export function Orders() {
               </div>
 
               {/* Destination logistics block */}
-              {order.shippingDetails && (
-                <div className="bg-background border border-border p-5 rounded-2xl flex flex-col md:flex-row gap-8 justify-between text-xs font-semibold leading-relaxed">
-                  <div className="space-y-1.5">
-                    <h4 className="font-black text-[9px] uppercase tracking-wider text-primary">Consignee Card</h4>
-                    <p className="text-foreground">{order.shippingDetails.name || 'Gourmet Customer'}</p>
-                    <p className="text-muted-foreground font-mono text-xxs tracking-wider">{order.shippingDetails.phone}</p>
+              <div className="flex flex-col gap-4">
+                {order.shippingDetails && (
+                  <div className="bg-background border border-border p-5 rounded-2xl flex flex-col md:flex-row gap-8 justify-between text-xs font-semibold leading-relaxed">
+                    <div className="space-y-1.5">
+                      <h4 className="font-black text-[9px] uppercase tracking-wider text-primary">Consignee Card</h4>
+                      <p className="text-foreground">{order.shippingDetails.name || 'Gourmet Customer'}</p>
+                      <p className="text-muted-foreground font-mono text-xxs tracking-wider">{order.shippingDetails.phone}</p>
+                    </div>
+                    <div className="space-y-1.5 max-w-sm">
+                      <h4 className="font-black text-[9px] uppercase tracking-wider text-primary">Consignment Port</h4>
+                      <p className="text-foreground font-medium">{order.shippingDetails.address}</p>
+                    </div>
                   </div>
-                  <div className="space-y-1.5 max-w-sm">
-                    <h4 className="font-black text-[9px] uppercase tracking-wider text-primary">Consignment Port</h4>
-                    <p className="text-foreground font-medium">{order.shippingDetails.address}</p>
-                  </div>
-                </div>
-              )}
+                )}
+                
+                {order.status === 'delivered' && (
+                  <button 
+                    onClick={() => handleOrderAgain(order)}
+                    className="slice-btn-primary w-full sm:w-auto self-end px-6 py-3.5 text-[10px] flex items-center justify-center gap-2 group shadow-sm mt-2"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 transition-transform group-hover:rotate-180 duration-500" />
+                    Order Again
+                  </button>
+                )}
+              </div>
 
             </div>
           ))}
