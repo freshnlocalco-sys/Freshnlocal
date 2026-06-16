@@ -62,6 +62,7 @@ export default function App() {
           <Route path="admin/inventory" element={<AdminDashboard />} />
           <Route path="admin/spotlights" element={<AdminDashboard />} />
           <Route path="admin/categories" element={<AdminDashboard />} />
+          <Route path="admin/reviews" element={<AdminDashboard />} />
           <Route path="profile" element={<Profile />} />
           <Route path="orders" element={<Orders />} />
           <Route path="about" element={<About />} />

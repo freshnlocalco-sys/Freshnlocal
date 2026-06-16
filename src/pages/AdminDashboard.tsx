@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { useSettings, compressOversizedBase64 } from '../store/useSettings';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
@@ -70,11 +70,13 @@ export function AdminDashboard() {
     if (location.pathname.includes('/admin/inventory')) return 'products';
     if (location.pathname.includes('/admin/spotlights')) return 'spotlights';
     if (location.pathname.includes('/admin/categories')) return 'categories';
+    if (location.pathname.includes('/admin/reviews')) return 'reviews';
     return 'orders'; // corresponds to consignments
   }, [location.pathname]);
   
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const { 
@@ -281,6 +283,9 @@ export function AdminDashboard() {
           setSpotlightsConfig(initialConfig);
         } else if (activeTab === 'categories') {
           await fetchCategoryImages(true);
+        } else if (activeTab === 'reviews') {
+          const reviewsSnap = await getDocs(query(collection(db, 'reviews'), orderBy('createdAt', 'desc')));
+          setReviews(reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         }
       } catch (error: any) {
         console.error("Dashboard failed to retrieve live data:", error);
@@ -1180,6 +1185,18 @@ export function AdminDashboard() {
     }
   };
 
+  const deleteReview = async (reviewId: string) => {
+    if (!window.confirm("Are you sure you want to delete this review?")) return;
+    try {
+      await deleteDoc(doc(db, 'reviews', reviewId));
+      setReviews(reviews.filter(r => r.id !== reviewId));
+      toast.success("Review deleted successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete review");
+    }
+  };
+
   return (
     <div className="w-full max-w-full box-border overflow-x-hidden flex flex-col md:flex-row min-h-[calc(100vh-80px)] bg-background text-foreground">
       
@@ -1216,6 +1233,12 @@ export function AdminDashboard() {
             className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'categories' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
           >
             <Sliders className="w-4 h-4" /> Categories
+          </button>
+          <button 
+            onClick={() => navigate('/admin/reviews')}
+            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'reviews' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+          >
+            <Sparkles className="w-4 h-4" /> Reviews
           </button>
         </nav>
       </div>
@@ -2251,6 +2274,64 @@ export function AdminDashboard() {
               </div>
             </div>
 
+          </div>
+        ) : activeTab === 'reviews' ? (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black uppercase text-foreground flex items-center gap-2">
+                  <Star className="w-6 h-6 text-foreground fill-foreground" /> Reviews Manager
+                </h2>
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">
+                  Read and manage customer reviews
+                </p>
+              </div>
+            </div>
+
+            {reviews.length === 0 ? (
+              <div className="bg-secondary/50 border border-border rounded-2xl p-12 text-center">
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">No reviews found.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map(review => (
+                  <div key={review.id} className="bg-white border border-border p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start gap-4 hover:shadow-sm transition-shadow">
+                    <div className="space-y-3 flex-1 w-full">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <span className="font-extrabold text-xs uppercase text-foreground bg-secondary px-2.5 py-1 rounded-lg border border-border/50">{review.userName}</span>
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <Star 
+                              key={star} 
+                              className={`w-3.5 h-3.5 ${star <= review.rating ? 'fill-foreground text-foreground' : 'text-border fill-transparent'}`} 
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[9px] text-muted-foreground uppercase font-black tracking-widest ml-auto">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">
+                        Product: <span className="text-primary font-mono bg-primary/5 px-2 py-0.5 rounded border border-primary/10 truncate max-w-[200px]">{review.productId}</span>
+                      </div>
+
+                      <p className="text-xs text-foreground font-medium leading-relaxed bg-secondary/30 p-3.5 rounded-xl border border-border/50">
+                        "{review.comment}"
+                      </p>
+                    </div>
+                    
+                    <button
+                      onClick={() => deleteReview(review.id!)}
+                      className="shrink-0 p-2 text-muted-foreground hover:bg-red-50 hover:text-red-500 rounded-xl border border-transparent hover:border-red-100 transition-colors"
+                      title="Delete Review"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : null
       )}

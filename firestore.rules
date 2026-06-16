@@ -11,8 +11,8 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isAdmin() { 
       return isSignedIn() && (
-        (request.auth.token.email != null && request.auth.token.email == 'freshnlocalco@gmail.com') || 
-        (request.auth.token.email != null && request.auth.token.email.lower() == 'mohitswami855@gmail.com') || 
+        ('email' in request.auth.token && request.auth.token.email == 'freshnlocalco@gmail.com') || 
+        ('email' in request.auth.token && request.auth.token.email.lower() == 'mohitswami855@gmail.com') || 
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       ); 
     }
@@ -124,8 +124,8 @@ service cloud.firestore {
       
       allow read: if true;
       allow create: if isSignedIn() && incoming().userId == request.auth.uid && isValidReview(incoming());
-      allow update: if isSignedIn() && (request.auth.uid == existing().userId || isAdmin()) && isValidReview(incoming()) && incoming().productId == existing().productId && incoming().userId == existing().userId && incoming().createdAt == existing().createdAt;
-      allow delete: if isSignedIn() && (request.auth.uid == existing().userId || isAdmin());
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin()) && isValidReview(incoming()) && incoming().productId == resource.data.productId && incoming().userId == resource.data.userId && incoming().createdAt == resource.data.createdAt;
+      allow delete: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
     }
   }
 }
