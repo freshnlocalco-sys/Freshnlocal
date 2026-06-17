@@ -284,7 +284,10 @@ function triggerBackgroundThumbnailGeneration(
   const isAdminUser = email === 'freshnlocalco@gmail.com' || email === 'mohitswami855@gmail.com';
 
   const itemsNeedingThumbnail = items.filter(
-    item => item.imageUrl && (!item.thumbnailUrl || item.thumbnailUrl === item.imageUrl)
+    item => {
+      const isOldLowRes = !!(item.thumbnailUrl && item.thumbnailUrl.startsWith('data:') && item.thumbnailUrl.length < 24000);
+      return item.imageUrl && (!item.thumbnailUrl || item.thumbnailUrl === item.imageUrl || isOldLowRes);
+    }
   );
 
   if (itemsNeedingThumbnail.length === 0) return;

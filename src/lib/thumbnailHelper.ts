@@ -6,7 +6,7 @@ import { Product } from '../store/useCart';
  * Generates an optimized JPEG thumbnail from an image URL using canvas.
  * Correctly requests CORS. If CORS fails or loading errors out, it rejects gracefully.
  */
-export function generateThumbnail(imageUrl: string, targetWidth: number = 250): Promise<string> {
+export function generateThumbnail(imageUrl: string, targetWidth: number = 500): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!imageUrl) {
       reject(new Error("No image URL provided"));
@@ -39,7 +39,7 @@ export function generateThumbnail(imageUrl: string, targetWidth: number = 250): 
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const base64 = canvas.toDataURL('image/jpeg', 0.8);
+          const base64 = canvas.toDataURL('image/jpeg', 0.88);
           resolve(base64);
         } else {
           reject(new Error("Failed to get 2D canvas context"));
@@ -66,17 +66,20 @@ export async function ensureProductThumbnail(
   onUpdateLocal: (updatedProduct: Product) => void,
   isAdminUser: boolean
 ): Promise<string | null> {
-  const needsThumbnail = !product.thumbnailUrl || product.thumbnailUrl === product.imageUrl;
+  // Detect if existing thumbnail is the legacy low-res version (small base64 size)
+  const isOldLowRes = !!(product.thumbnailUrl && product.thumbnailUrl.startsWith('data:') && product.thumbnailUrl.length < 24000);
+  const needsThumbnail = !product.thumbnailUrl || product.thumbnailUrl === product.imageUrl || isOldLowRes;
+  
   if (!needsThumbnail || !product.imageUrl) {
     return product.thumbnailUrl || null;
   }
 
   const startTime = performance.now();
   try {
-    const thumbnailBase64 = await generateThumbnail(product.imageUrl, 220);
+    const thumbnailBase64 = await generateThumbnail(product.imageUrl, 500);
     const duration = performance.now() - startTime;
     console.log(
-      `%c[PERF METRIC] Automatically generated thumbnail for "${product.name}" in ${duration.toFixed(2)}ms`,
+      `%c[PERF METRIC] Automatically generated upscale thumbnail for "${product.name}" in ${duration.toFixed(2)}ms`,
       "color: #10b981; font-weight: bold; font-family: monospace;"
     );
 
@@ -94,7 +97,7 @@ export async function ensureProductThumbnail(
         await updateDoc(doc(db, 'products', product.id), {
           thumbnailUrl: thumbnailBase64
         });
-        console.log(`Saved generated thumbnail for "${product.name}" to Firestore.`);
+        console.log(`Saved generated high-res thumbnail for "${product.name}" to Firestore.`);
       } catch (fsErr) {
         console.warn(`Could not sync thumbnail for "${product.name}" to Firestore (expected if non-admin):`, fsErr);
       }

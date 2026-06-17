@@ -64,7 +64,7 @@ interface CropSettings {
 
 export const compressOversizedBase64 = (
   base64: string,
-  settings: CropSettings = { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false }
+  settings: CropSettings = { targetWidth: 512, targetHeight: 512, quality: 0.90, cropSquare: false }
 ): Promise<string> => {
   return new Promise((resolve) => {
     if (!base64 || !base64.startsWith('data:image/') || base64.length < 50000) {
@@ -218,10 +218,10 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const normalizedCategory = category.toLowerCase().replace(/ font-bold/gi, '').trim();
       const currentImages = get().categoryImages;
       
-      // Auto-compress base64 to target square sizing (256x256 at 0.70 quality) for ultra-fast loading & minimum footprint
+      // Auto-compress base64 to target square sizing (512x512 at 0.90 quality) for ultra-fast loading & crisp retina visuals
       let finalUrl = url;
       if (url && url.startsWith('data:image/')) {
-        finalUrl = await compressOversizedBase64(url, { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false });
+        finalUrl = await compressOversizedBase64(url, { targetWidth: 512, targetHeight: 512, quality: 0.90, cropSquare: false });
       }
 
       const newImages = { ...currentImages, [normalizedCategory]: finalUrl };
@@ -265,7 +265,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       if (imageUrl) {
         let finalUrl = imageUrl;
         if (imageUrl.startsWith('data:image/')) {
-          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false });
+          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 512, targetHeight: 512, quality: 0.90, cropSquare: false });
         }
         const normalizedImgKey = normalizedNew.toLowerCase().replace(/ font-bold/gi, '').trim();
         const imgRef = doc(db, 'settings', 'categoryImages');
@@ -324,7 +324,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       if (imageUrl) {
         let finalUrl = imageUrl;
         if (imageUrl.startsWith('data:image/')) {
-          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false });
+          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 512, targetHeight: 512, quality: 0.90, cropSquare: false });
         }
         const normalizedImgKey = normalizedName.toLowerCase().replace(/ font-bold/gi, '');
         const imgRef = doc(db, 'settings', 'categoryImages');

@@ -499,7 +499,7 @@ export function AdminDashboard() {
       // Save directly to Firestore for auto-save
       const optimizedItem = { ...updatedItem };
       if (field === 'image' && value.startsWith('data:image/')) {
-        optimizedItem.image = await compressOversizedBase64(value, { targetWidth: 640, targetHeight: 480, quality: 0.85, cropSquare: false });
+        optimizedItem.image = await compressOversizedBase64(value, { targetWidth: 800, targetHeight: 600, quality: 0.92, cropSquare: false });
       }
 
       await setDoc(doc(db, 'settings', 'spotlights'), {
@@ -546,9 +546,9 @@ export function AdminDashboard() {
           sy = (img.height - sHeight) / 2;
         }
 
-        // Scale down to 640x480 for crystal-clear retina level display in 420x315 slots
-        const width = 640;
-        const height = 480;
+        // Scale down to 800x600 for razor-sharp high-density retina displays
+        const width = 800;
+        const height = 600;
 
         canvas.width = width;
         canvas.height = height;
@@ -557,8 +557,8 @@ export function AdminDashboard() {
           ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
         }
 
-        // Optimized JPEG compression at 0.72 quality yields tiny file sizes (typically 20KB-30KB) with zero perceptible noise
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        // Crisp high-fidelity JPEG compression at 0.92 quality for pristine posters
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
         updateSpotlightValue(key, 'image', dataUrl);
       };
       img.src = result;
@@ -695,12 +695,12 @@ export function AdminDashboard() {
           sy = (height - size) / 2;
           sWidth = size;
           sHeight = size;
-          // Scale down to max 400px square for category circular items (typically rendered at 60-120px)
-          width = Math.min(size, 400);
+          // Scale down to max 512px square for category circular items (perfect for pixel-dense Retina screens)
+          width = Math.min(size, 512);
           height = width;
         } else {
-          const MAX_WIDTH = 1000;
-          const MAX_HEIGHT = 1000;
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
           if (width > height) {
             if (width > MAX_WIDTH) {
               height *= MAX_WIDTH / width;
@@ -721,8 +721,8 @@ export function AdminDashboard() {
           ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
         }
         
-        // Circular categories use 75% quality (~15KB per item), whereas other assets use 80%
-        const dataUrl = canvas.toDataURL('image/webp', cropSquare ? 0.75 : 0.80);
+        // Use 90% JPEG quality for square crops, and 92% for higher res assets (maintains lossless visual clarity)
+        const dataUrl = canvas.toDataURL('image/jpeg', cropSquare ? 0.90 : 0.92);
         callback(dataUrl);
       };
       if (result) {
@@ -742,7 +742,7 @@ export function AdminDashboard() {
       const img = new window.Image();
       
       img.onload = () => {
-        // 1. Generate core WebP item spec
+        // 1. Generate core JPEG item spec
         const canvasFull = document.createElement('canvas');
         const MAX_WIDTH_FULL = 1200;
         const MAX_HEIGHT_FULL = 1200;
@@ -765,12 +765,12 @@ export function AdminDashboard() {
         canvasFull.height = hFull;
         const ctxFull = canvasFull.getContext('2d');
         ctxFull?.drawImage(img, 0, 0, wFull, hFull);
-        const dataUrlFull = canvasFull.toDataURL('image/webp', 0.92);
+        const dataUrlFull = canvasFull.toDataURL('image/jpeg', 0.92);
 
-        // 2. Generate optimized WebP thumbnail card (Max 400px)
+        // 2. Generate optimized JPEG thumbnail card (Max 500px for crystal-clear retina displays)
         const canvasThumb = document.createElement('canvas');
-        const MAX_WIDTH_THUMB = 400;
-        const MAX_HEIGHT_THUMB = 400;
+        const MAX_WIDTH_THUMB = 500;
+        const MAX_HEIGHT_THUMB = 500;
         let wThumb = img.width;
         let hThumb = img.height;
 
@@ -790,12 +790,12 @@ export function AdminDashboard() {
         canvasThumb.height = hThumb;
         const ctxThumb = canvasThumb.getContext('2d');
         ctxThumb?.drawImage(img, 0, 0, wThumb, hThumb);
-        const dataUrlThumb = canvasThumb.toDataURL('image/webp', 0.85);
+        const dataUrlThumb = canvasThumb.toDataURL('image/jpeg', 0.90);
 
         // Add logging for image generation stats
         console.log(`[Image Upload] Original size: ${img.width}x${img.height}`);
         console.log(`[Image Upload] Processed Full size: ${Math.round(wFull)}x${Math.round(hFull)} at quality 0.92`);
-        console.log(`[Image Upload] Processed Thumbnail size: ${Math.round(wThumb)}x${Math.round(hThumb)} at quality 0.85`);
+        console.log(`[Image Upload] Processed Thumbnail size: ${Math.round(wThumb)}x${Math.round(hThumb)} at quality 0.90`);
         console.log(`[Image Upload] Full image file size approx: ${Math.round((dataUrlFull.length * 0.75) / 1024)} KB`);
         console.log(`[Image Upload] Thumbnail file size approx: ${Math.round((dataUrlThumb.length * 0.75) / 1024)} KB`);
 
