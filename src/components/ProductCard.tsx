@@ -47,7 +47,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   }, []);
 
   const catImage = getCategoryImage(displayCategory, categoryImages) || undefined;
-  const productImgSrc = product.imageUrl || product.thumbnailUrl || catImage || undefined;
+  const productImgSrc = product.thumbnailUrl || product.imageUrl || catImage || undefined;
 
   if (!isVisible) {
     return (

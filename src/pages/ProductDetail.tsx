@@ -191,6 +191,8 @@ export function ProductDetail() {
           <img 
             src={product.imageUrl || getCategoryImage(product.category, categoryImages) || null} 
             alt={product.name}
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />

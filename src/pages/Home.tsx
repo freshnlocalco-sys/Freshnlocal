@@ -99,12 +99,16 @@ export function Home() {
     });
   }, [productCategories]);
 
-  const { products, fetchProducts } = useProducts();
+  const { products, fetchProducts, hydrateFromIDB } = useProducts();
   const { addItem, items } = useCart();
   
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    async function init() {
+      await hydrateFromIDB();
+      fetchProducts();
+    }
+    init();
+  }, [fetchProducts, hydrateFromIDB]);
 
   const handleAddToCart = (product: Product) => {
     const currentQty = items.find(item => item.product.id === product.id)?.quantity || 0;

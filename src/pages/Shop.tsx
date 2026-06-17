@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useProducts } from '../store/useProducts';
 import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
@@ -11,7 +11,7 @@ import { ProductCard } from '../components/ProductCard';
 import toast from 'react-hot-toast';
 
 export function Shop() {
-  const { products, loading: storeLoading, error, fetchProducts } = useProducts();
+  const { products, loading: storeLoading, error, fetchProducts, fetchNextProducts, hasMore, loadingNext, hydrateFromIDB } = useProducts();
   const { categoryImages, productCategories, fetchCategoryImages, lastFetched } = useSettings();
   const allUiCategories = React.useMemo(() => {
     const cleanCategories = productCategories.filter(cat => {
@@ -42,14 +42,29 @@ export function Shop() {
     }
   }, [categoryFilter, navigate]);
 
+  const bottomRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     async function load() {
       setLoading(true);
+      const startTime = performance.now();
+      
+      // Hydrate from IndexedDB first for maximum speed
+      await hydrateFromIDB();
+      
+      // Load products and settings config side-by-side
       await Promise.all([fetchProducts(), fetchCategoryImages()]);
+      
       setLoading(false);
+      
+      const pageRenderTime = performance.now() - startTime;
+      console.log(
+        `%c[PERF METRIC] Shop page initial products loaded and rendered in ${pageRenderTime.toFixed(2)}ms`, 
+        "color: #3b82f6; font-weight: bold; font-family: monospace; border: 1px solid #3b82f6; padding: 2px;"
+      );
     }
     load();
-  }, [fetchProducts]);
+  }, [fetchProducts, hydrateFromIDB, fetchCategoryImages]);
 
   useEffect(() => {
     if (error) {
@@ -174,6 +189,23 @@ export function Shop() {
     });
     return list;
   }, [filteredProductsRaw, productCategories]);
+
+  // Infinite Scroll Intersection Observer
+  useEffect(() => {
+    const el = bottomRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && hasMore && !loadingNext) {
+        fetchNextProducts();
+      }
+    }, {
+      rootMargin: '120px',
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loadingNext, fetchNextProducts, filteredProducts.length]);
 
   const handleAddToCart = (product: Product) => {
     addItem(product);
@@ -429,7 +461,7 @@ export function Shop() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pb-6">
-            {(loading || storeLoading) ? (
+            {((loading || storeLoading) && products.length === 0) ? (
               Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
             ) : isOffline ? (
               <div className="col-span-full mt-10 py-16 text-center text-muted-foreground font-sans text-sm border border-dashed border-border rounded-3xl p-8 bg-secondary flex flex-col items-center gap-4">
@@ -456,7 +488,21 @@ export function Shop() {
                 );
               })
             )}
-          </div>
+            </div>
+
+            {/* Pagination scrolling trigger */}
+            {hasMore && filteredProducts.length > 0 && (
+              <div ref={bottomRef} className="col-span-full py-10 text-center flex items-center justify-center">
+                {loadingNext ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-[10px] uppercase font-black tracking-wider text-primary">Gathering more fresh garden picks...</span>
+                  </div>
+                ) : (
+                  <span className="text-[9px] uppercase font-black tracking-widest text-muted-foreground bg-secondary px-4 py-2 rounded-full border border-border cursor-pointer">Scroll for more</span>
+                )}
+              </div>
+            )}
 
 
           </div>

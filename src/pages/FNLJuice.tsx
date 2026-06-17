@@ -424,7 +424,7 @@ export function FNLJuice() {
     ];
   }, [juiceCategories]);
 
-  const { products, loading: storeLoading, fetchProducts } = useProducts();
+  const { products, loading: storeLoading, fetchProducts, hydrateFromIDB } = useProducts();
   const [juices, setJuices] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -446,10 +446,11 @@ export function FNLJuice() {
   useEffect(() => {
     async function load() {
       setLoading(true);
+      await hydrateFromIDB();
       await fetchProducts();
     }
     load();
-  }, [fetchProducts]);
+  }, [fetchProducts, hydrateFromIDB]);
 
   useEffect(() => {
     async function fetchAndSeedJuices() {
@@ -879,7 +880,7 @@ export function FNLJuice() {
 
             {/* Product lists/Grid with Skeleton Loading and Lazy Image renderers */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pb-12">
-              {loading || seeding || storeLoading ? (
+              {(loading || seeding || storeLoading) && juices.length === 0 ? (
                 Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
               ) : filteredJuices.length === 0 ? (
                 <div className="col-span-full py-24 text-center text-muted-foreground font-sans text-xs uppercase tracking-widest border border-dashed border-border rounded-w p-8">
