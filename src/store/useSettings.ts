@@ -64,10 +64,20 @@ interface CropSettings {
 
 export const compressOversizedBase64 = (
   base64: string,
-  settings: CropSettings = { targetWidth: 512, targetHeight: 512, quality: 0.90, cropSquare: false }
+  settings: CropSettings = { targetWidth: 2048, targetHeight: 2048, quality: 0.95, cropSquare: false }
 ): Promise<string> => {
   return new Promise((resolve) => {
-    if (!base64 || !base64.startsWith('data:image/') || base64.length < 50000) {
+    // Due to rigorous user requirements to preserve 100% original quality and NOT compress or resize images,
+    // we bypass compression unless the file is dangerously large for Firestore limit (> 900KB).
+    const isBase64Image = base64 && base64.startsWith('data:image/');
+    if (!isBase64Image) {
+      resolve(base64);
+      return;
+    }
+
+    const fileSizeKB = (base64.length * 0.75) / 1024;
+    // If it's safe for Firestore, preserve original raw upload exactly as is
+    if (fileSizeKB <= 900 && !settings.cropSquare) {
       resolve(base64);
       return;
     }

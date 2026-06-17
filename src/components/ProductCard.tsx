@@ -47,7 +47,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   }, []);
 
   const catImage = getCategoryImage(displayCategory, categoryImages) || undefined;
-  const productImgSrc = product.thumbnailUrl || product.imageUrl || catImage || undefined;
+  const productImgSrc = product.imageUrl || product.thumbnailUrl || catImage || undefined;
 
   if (!isVisible) {
     return (
@@ -76,7 +76,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
               );
               setImageLoaded(true);
             }}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             referrerPolicy="no-referrer"
           />
         </Link>

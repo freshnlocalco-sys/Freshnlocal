@@ -253,7 +253,7 @@ export function Cart() {
                   src={item.product.imageUrl || getCategoryImage(item.product.category, categoryImages) || null} 
                   alt={item.product.name} 
                   loading="lazy"
-                  className="w-full h-full object-contain p-2"
+                  className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
               </div>

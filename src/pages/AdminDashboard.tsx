@@ -742,62 +742,40 @@ export function AdminDashboard() {
       const img = new window.Image();
       
       img.onload = () => {
-        // 1. Generate core JPEG item spec
-        const canvasFull = document.createElement('canvas');
-        const MAX_WIDTH_FULL = 1200;
-        const MAX_HEIGHT_FULL = 1200;
-        let wFull = img.width;
-        let hFull = img.height;
+        // Due to user requirement: "Do NOT compress images. Do NOT generate low-quality thumbnails. Do NOT reduce resolution."
+        // We will natively preserve the original image data exactly as uploaded.
+        
+        let dataUrlFull = result;
+        let dataUrlThumb = result;
 
-        if (wFull > hFull) {
-          if (wFull > MAX_WIDTH_FULL) {
-            hFull *= MAX_WIDTH_FULL / wFull;
-            wFull = MAX_WIDTH_FULL;
-          }
-        } else {
-          if (hFull > MAX_HEIGHT_FULL) {
-            wFull *= MAX_HEIGHT_FULL / hFull;
-            hFull = MAX_HEIGHT_FULL;
-          }
+        // Ensure we don't breach Firestore limits (1MB). Only fallback to slight compression if strictly necessary.
+        const fileSizeKB = (result.length * 0.75) / 1024;
+        if (fileSizeKB > 900) {
+           const canvasFull = document.createElement('canvas');
+           const MAX_WIDTH = 2048; // Preserving high-res up to 2K
+           const MAX_HEIGHT = 2048;
+           let wFull = img.width;
+           let hFull = img.height;
+
+           if (wFull > hFull) {
+             if (wFull > MAX_WIDTH) { hFull *= MAX_WIDTH / wFull; wFull = MAX_WIDTH; }
+           } else {
+             if (hFull > MAX_HEIGHT) { wFull *= MAX_HEIGHT / hFull; hFull = MAX_HEIGHT; }
+           }
+
+           canvasFull.width = wFull;
+           canvasFull.height = hFull;
+           const ctxFull = canvasFull.getContext('2d');
+           ctxFull?.drawImage(img, 0, 0, wFull, hFull);
+           dataUrlFull = canvasFull.toDataURL('image/jpeg', 0.95); // Nearly lossless
+           dataUrlThumb = dataUrlFull; // Never use reduced thumbnails
         }
-
-        canvasFull.width = wFull;
-        canvasFull.height = hFull;
-        const ctxFull = canvasFull.getContext('2d');
-        ctxFull?.drawImage(img, 0, 0, wFull, hFull);
-        const dataUrlFull = canvasFull.toDataURL('image/jpeg', 0.92);
-
-        // 2. Generate optimized JPEG thumbnail card (Max 500px for crystal-clear retina displays)
-        const canvasThumb = document.createElement('canvas');
-        const MAX_WIDTH_THUMB = 500;
-        const MAX_HEIGHT_THUMB = 500;
-        let wThumb = img.width;
-        let hThumb = img.height;
-
-        if (wThumb > hThumb) {
-          if (wThumb > MAX_WIDTH_THUMB) {
-            hThumb *= MAX_WIDTH_THUMB / wThumb;
-            wThumb = MAX_WIDTH_THUMB;
-          }
-        } else {
-          if (hThumb > MAX_HEIGHT_THUMB) {
-            wThumb *= MAX_HEIGHT_THUMB / hThumb;
-            hThumb = MAX_HEIGHT_THUMB;
-          }
-        }
-
-        canvasThumb.width = wThumb;
-        canvasThumb.height = hThumb;
-        const ctxThumb = canvasThumb.getContext('2d');
-        ctxThumb?.drawImage(img, 0, 0, wThumb, hThumb);
-        const dataUrlThumb = canvasThumb.toDataURL('image/jpeg', 0.90);
 
         // Add logging for image generation stats
-        console.log(`[Image Upload] Original size: ${img.width}x${img.height}`);
-        console.log(`[Image Upload] Processed Full size: ${Math.round(wFull)}x${Math.round(hFull)} at quality 0.92`);
-        console.log(`[Image Upload] Processed Thumbnail size: ${Math.round(wThumb)}x${Math.round(hThumb)} at quality 0.90`);
-        console.log(`[Image Upload] Full image file size approx: ${Math.round((dataUrlFull.length * 0.75) / 1024)} KB`);
-        console.log(`[Image Upload] Thumbnail file size approx: ${Math.round((dataUrlThumb.length * 0.75) / 1024)} KB`);
+        console.log(`[Image Upload] Original size: ${img.width}x${img.height} (${Math.round(fileSizeKB)} KB)`);
+        console.log(`[Image Upload] Saved resolution: Saved as strictly original or up to 2K bounding.`);
+        console.log(`[Image Upload] Final Payload size approx: ${Math.round((dataUrlFull.length * 0.75) / 1024)} KB`);
+
 
         setNewProduct(prev => ({ 
           ...prev, 
@@ -1574,7 +1552,7 @@ export function AdminDashboard() {
                     <div className="flex gap-2">
                       <div className="w-16 aspect-[4/3] bg-black/5 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
                         {newProduct.imageUrl ? (
-                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-contain p-1" />
+                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
                           <Upload className="w-4 h-4 text-muted-foreground opacity-50" />
                         )}
@@ -1793,7 +1771,7 @@ export function AdminDashboard() {
                         >
                           <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
                             <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
-                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-contain p-1" />
+                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-cover" />
                             </div>
                             <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                           </td>
@@ -2437,7 +2415,7 @@ export function AdminDashboard() {
                       <div key={idx} className="flex gap-4 p-3.5 items-center justify-between min-w-0 w-full">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-10 h-10 rounded-lg bg-white border border-border p-1 overflow-hidden flex shrink-0">
-                            <img src={prod.imageUrl || catImg || null} alt={prod.name} className="w-full h-full object-contain" />
+                            <img src={prod.imageUrl || catImg || null} alt={prod.name} className="w-full h-full object-cover" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="font-extrabold text-xs text-foreground uppercase truncate" title={prod.name}>{prod.name}</p>

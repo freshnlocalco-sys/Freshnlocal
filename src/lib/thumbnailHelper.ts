@@ -66,54 +66,7 @@ export async function ensureProductThumbnail(
   onUpdateLocal: (updatedProduct: Product) => void,
   isAdminUser: boolean
 ): Promise<string | null> {
-  // Detect if existing thumbnail is the legacy low-res version (small base64 size)
-  const isOldLowRes = !!(product.thumbnailUrl && product.thumbnailUrl.startsWith('data:') && product.thumbnailUrl.length < 24000);
-  const needsThumbnail = !product.thumbnailUrl || product.thumbnailUrl === product.imageUrl || isOldLowRes;
-  
-  if (!needsThumbnail || !product.imageUrl) {
-    return product.thumbnailUrl || null;
-  }
-
-  const startTime = performance.now();
-  try {
-    const thumbnailBase64 = await generateThumbnail(product.imageUrl, 500);
-    const duration = performance.now() - startTime;
-    console.log(
-      `%c[PERF METRIC] Automatically generated upscale thumbnail for "${product.name}" in ${duration.toFixed(2)}ms`,
-      "color: #10b981; font-weight: bold; font-family: monospace;"
-    );
-
-    const updatedProduct = {
-      ...product,
-      thumbnailUrl: thumbnailBase64
-    };
-
-    // 1. Instantly trigger state update so UI is snappy
-    onUpdateLocal(updatedProduct);
-
-    // 2. Try Firestore updating (only if user is admin)
-    if (isAdminUser) {
-      try {
-        await updateDoc(doc(db, 'products', product.id), {
-          thumbnailUrl: thumbnailBase64
-        });
-        console.log(`Saved generated high-res thumbnail for "${product.name}" to Firestore.`);
-      } catch (fsErr) {
-        console.warn(`Could not sync thumbnail for "${product.name}" to Firestore (expected if non-admin):`, fsErr);
-      }
-    }
-
-    return thumbnailBase64;
-  } catch (err) {
-    // If generation fails (CORS, network error, etc.), gracefully tag it so we don't repeat generation attempts
-    console.debug(`Could not generate thumbnail for "${product.name}":`, err);
-    
-    // Mark the thumbnail equal to imageUrl temporarily in local state/cache to bypass endless regeneration loops
-    const updatedProduct = {
-      ...product,
-      thumbnailUrl: product.imageUrl // fallback to full size
-    };
-    onUpdateLocal(updatedProduct);
-    return null;
-  }
+  // Due to rigorous user requirements to preserve 100% original quality and NOT compress or resize images,
+  // we disable thumbnail generation completely and always use the original image URL.
+  return product.thumbnailUrl || product.imageUrl || null;
 }
