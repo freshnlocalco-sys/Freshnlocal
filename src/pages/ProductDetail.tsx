@@ -47,7 +47,7 @@ export function ProductDetail() {
 
         // 2. Check localStorage cached products
         if (!found) {
-          const cachedProducts = cacheManager.get<Product[]>('products', true);
+          const cachedProducts = cacheManager.get<Product[]>('products_v3', true);
           if (cachedProducts) {
             found = cachedProducts.find(p => p.id === id);
           }

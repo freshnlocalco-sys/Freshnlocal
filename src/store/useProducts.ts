@@ -27,8 +27,8 @@ const loadLocalStorageProducts = (): { products: Product[]; lastFetched: number 
     return { products: [], lastFetched: 0 };
   }
   try {
-    const products = cacheManager.get<Product[]>('products', true) || [];
-    const lastFetched = cacheManager.get<number>('products_last_fetched', true) || 0;
+    const products = cacheManager.get<Product[]>('products_v3', true) || [];
+    const lastFetched = cacheManager.get<number>('products_last_fetched_v3', true) || 0;
     return { products, lastFetched };
   } catch {
     return { products: [], lastFetched: 0 };
@@ -47,8 +47,8 @@ export const useProducts = create<ProductsState>((set, get) => ({
 
   hydrateFromIDB: async () => {
     try {
-      const dbProducts = await idb.get<Product[]>('products');
-      const dbLastFetched = await idb.get<number>('products_last_fetched');
+      const dbProducts = await idb.get<Product[]>('products_v3');
+      const dbLastFetched = await idb.get<number>('products_last_fetched_v3');
       if (dbProducts && dbProducts.length > 0) {
         set({
           products: dbProducts,
@@ -72,8 +72,8 @@ export const useProducts = create<ProductsState>((set, get) => ({
     }
 
     const now = Date.now();
-    // Cache duration increased to 12 hours!
-    const needsFetch = force || (now - lastFetched) >= 12 * 60 * 60 * 1000;
+    // Invalidate cache if we have suspiciously few products from previous buggy paginated cache
+    const needsFetch = force || (now - lastFetched) >= 12 * 60 * 60 * 1000 || products.length < 50;
 
     if (!needsFetch) {
       return;
@@ -99,8 +99,8 @@ export const useProducts = create<ProductsState>((set, get) => ({
 
     const startTime = performance.now();
     try {
-      // First page queries 20 items initially to optimize load speed and reduce Reads!
-      const pageSize = 20;
+      // First page queries all items to make sure all categories display properly
+      const pageSize = 1000;
       const q = query(
         collection(db, 'products'),
         orderBy('__name__'),
@@ -162,10 +162,10 @@ export const useProducts = create<ProductsState>((set, get) => ({
       const hasMore = querySnapshot.docs.length === pageSize;
 
       // Sync fetched list back to cache
-      cacheManager.set('products', fetchedList);
-      cacheManager.set('products_last_fetched', Date.now());
-      await idb.set('products', fetchedList, 12 * 60 * 60 * 1000);
-      await idb.set('products_last_fetched', Date.now(), 12 * 60 * 60 * 1000);
+      cacheManager.set('products_v3', fetchedList);
+      cacheManager.set('products_last_fetched_v3', Date.now());
+      await idb.set('products_v3', fetchedList, 12 * 60 * 60 * 1000);
+      await idb.set('products_last_fetched_v3', Date.now(), 12 * 60 * 60 * 1000);
 
       set({
         products: fetchedList,
@@ -208,7 +208,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
     const startTime = performance.now();
 
     try {
-      const pageSize = 20;
+      const pageSize = 1000;
       const q = query(
         collection(db, 'products'),
         orderBy('__name__'),
@@ -254,8 +254,8 @@ export const useProducts = create<ProductsState>((set, get) => ({
       });
 
       // Update both caches
-      cacheManager.set('products', updatedProducts);
-      await idb.set('products', updatedProducts, 12 * 60 * 60 * 1000);
+      cacheManager.set('products_v3', updatedProducts);
+      await idb.set('products_v3', updatedProducts, 12 * 60 * 60 * 1000);
 
       const loadTime = performance.now() - startTime;
       console.log(
@@ -309,8 +309,8 @@ function triggerBackgroundThumbnailGeneration(
               set({ products: updatedList });
 
               // Sync to caches
-              cacheManager.set('products', updatedList);
-              idb.set('products', updatedList, 12 * 60 * 60 * 1000);
+              cacheManager.set('products_v3', updatedList);
+              idb.set('products_v3', updatedList, 12 * 60 * 60 * 1000);
             }
           },
           isAdminUser

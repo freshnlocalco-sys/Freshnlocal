@@ -141,7 +141,7 @@ export const cacheManager = {
       }
 
       // Save complete products list back to cache
-      this.set('products', allProducts);
+      this.set('products_v3', allProducts);
       return allProducts;
     });
   }
