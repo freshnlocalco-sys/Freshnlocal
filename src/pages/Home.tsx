@@ -65,54 +65,10 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
   );
 }
 
-function CategoryCarouselSkeleton({ category }: { key?: React.Key | null | undefined; category: any }) {
-  const mockItems = Array.from({ length: 5 }, (_, i) => i);
-  return (
-    <div className="w-full">
-      <div className="flex justify-between items-end mb-4 sm:mb-6 px-2">
-        <div className="h-6 sm:h-8 w-44 bg-border/40 rounded-lg animate-pulse" />
-        <div className="h-4 w-12 bg-border/45 rounded-lg animate-pulse" />
-      </div>
-      
-      <div className="w-full pb-6 overflow-hidden flex">
-        <div 
-          className="flex animate-marquee w-max"
-          style={{ '--marquee-duration': '25s' } as React.CSSProperties}
-        >
-          {[0, 1, 2].map((setIndex) => (
-            <div key={setIndex} className="flex gap-3 sm:gap-4 md:gap-6 pr-3 sm:pr-4 md:pr-6">
-              {mockItems.map(itemIndex => (
-                <div key={`${setIndex}-${itemIndex}`} className="w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] shrink-0 flex">
-                  <div className="w-full">
-                    <div className="w-full flex flex-col justify-between overflow-hidden bg-background rounded-xl border border-border/60 h-full min-h-[210px] sm:min-h-[235px] md:min-h-[260px] lg:min-h-[280px]">
-                      <div className="w-full aspect-[4/3] bg-secondary border-b border-border/40 animate-pulse relative shrink-0" />
-                      <div className="p-2.5 sm:p-3 bg-background flex-1 flex flex-col justify-between">
-                        <div className="flex flex-col gap-2 w-full">
-                          <div className="h-3 sm:h-3.5 w-11/12 bg-border/40 rounded animate-pulse" />
-                          <div className="h-3 sm:h-3.5 w-7/12 bg-border/40 rounded animate-pulse" />
-                          <div className="h-2.5 sm:h-3 w-5/12 bg-border/30 rounded animate-pulse mt-1" />
-                          <div className="h-3.5 sm:h-4 w-1/3 bg-border/40 rounded animate-pulse mt-2" />
-                        </div>
-                        <div className="w-full h-8 sm:h-9 bg-border/40 rounded-lg animate-pulse mt-4 shrink-0" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
 export function Home() {
   const { categoryImages, productCategories, loading: settingsLoading } = useSettings();
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
   const [spotlightsLoading, setSpotlightsLoading] = useState(true);
-  const [loadedCatImages, setLoadedCatImages] = useState<Record<string, boolean>>({});
 
   const activeCategories = React.useMemo(() => {
     if (!productCategories || productCategories.length === 0) return CATEGORIES;
@@ -143,7 +99,7 @@ export function Home() {
     });
   }, [productCategories]);
 
-  const { products, fetchProducts, loading: productsLoading } = useProducts();
+  const { products, fetchProducts } = useProducts();
   const { addItem, items } = useCart();
   
   useEffect(() => {
@@ -272,38 +228,21 @@ export function Home() {
                     className="flex flex-col items-center group cursor-pointer"
                   >
                     <div className="w-full aspect-[4/3] sm:aspect-square rounded-2xl bg-sky-50/50 dark:bg-sky-950/20 overflow-hidden flex items-center justify-center mb-2 sm:mb-3 transition-transform duration-300 group-hover:-translate-y-1 shadow-sm group-hover:shadow-md relative">
-                      {(() => {
-                        if (spotlightsLoading || settingsLoading) {
-                          return <div className="absolute inset-0 w-full h-full bg-border/20 rounded-2xl animate-pulse" />;
-                        }
-                        const imgSrc = spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false);
-                        if (imgSrc) {
-                          const isLoaded = loadedCatImages[cat.id];
-                          return (
-                            <>
-                              {!isLoaded && (
-                                <div className="absolute inset-0 w-full h-full bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded-2xl flex items-center justify-center">
-                                  <div className="w-6 h-6 rounded-full border border-primary/20 bg-primary/5 animate-ping" />
-                                </div>
-                              )}
-                              <img
-                                src={imgSrc}
-                                alt={cat.name}
-                                onLoad={() => setLoadedCatImages(prev => ({ ...prev, [cat.id]: true }))}
-                                className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-110 drop-shadow-sm ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-                                referrerPolicy="no-referrer"
-                                loading="lazy"
-                              />
-                            </>
-                          );
-                        } else {
-                          return (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/80 rounded-2xl">
-                              <span className="text-muted-foreground opacity-50 font-black text-2xl tracking-tighter uppercase">{cat.name.slice(0, 2)}</span>
-                            </div>
-                          );
-                        }
-                      })()}
+                      {(spotlightsLoading || settingsLoading) ? (
+                        <div className="w-full h-full bg-border/20 rounded-2xl animate-pulse" />
+                      ) : spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false) ? (
+                        <img
+                          src={spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false) || undefined}
+                          alt={cat.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 drop-shadow-sm"
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/80 rounded-2xl">
+                           <span className="text-muted-foreground opacity-50 font-black text-2xl tracking-tighter uppercase">{cat.name.slice(0, 2)}</span>
+                        </div>
+                      )}
                     </div>
                     <span className="text-center text-[9px] sm:text-[11px] font-extrabold uppercase tracking-wide leading-tight text-foreground group-hover:text-primary transition-colors max-w-full break-words px-1">
                       {cat.name}
@@ -321,65 +260,59 @@ export function Home() {
                 display: none;
               }
               @keyframes marquee {
-                0% { transform: translateX(0%); }
-                100% { transform: translateX(-33.333333%); }
+                0% { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(-33.333333%, 0, 0); }
               }
               .animate-marquee {
                 animation: marquee var(--marquee-duration, 20s) linear infinite;
+                will-change: transform;
+                transform: translateZ(0);
               }
             `}} />
-            {(productsLoading || products.length === 0) ? (
-              activeCategories.slice(0, 3).map((category) => (
-                <CategoryCarouselSkeleton key={`skeleton-${category.id}`} category={category} />
-              ))
-            ) : (
-              <>
-                {activeCategories.map(category => {
-                  const categoryProducts = products.filter(p => {
-                    const pCat = (p.category || '').toLowerCase();
-                    const cId = category.id.toLowerCase();
-                    return pCat === cId || (category.originalId && pCat === category.originalId.toLowerCase());
-                  });
-                  // Only show category if it has products
-                  if (categoryProducts.length === 0) return null;
-                  
-                  return (
-                    <CategoryCarousel 
-                      key={category.id}
-                      category={category}
-                      products={categoryProducts.slice(0, 5)}
-                      handleAddToCart={handleAddToCart}
-                    />
-                  );
-                })}
+            {activeCategories.map(category => {
+              const categoryProducts = products.filter(p => {
+                const pCat = (p.category || '').toLowerCase();
+                const cId = category.id.toLowerCase();
+                return pCat === cId || (category.originalId && pCat === category.originalId.toLowerCase());
+              });
+              // Only show category if it has products
+              if (categoryProducts.length === 0) return null;
+              
+              return (
+                <CategoryCarousel 
+                  key={category.id}
+                  category={category}
+                  products={categoryProducts.slice(0, 5)}
+                  handleAddToCart={handleAddToCart}
+                />
+              );
+            })}
 
-                {/* Dedicated FNL Juices Showcase at the bottom of categories */}
-                {(() => {
-                  const juiceProducts = products.filter(p => {
-                    const pCat = (p.category || '').toLowerCase();
-                    return pCat === 'fnl juices' || pCat === 'fnl juice';
-                  });
-                  
-                  if (juiceProducts.length === 0) return null;
-                  
-                  const juiceCategory = {
-                    id: 'fnl juices',
-                    name: 'FNL Juices 🍹',
-                    tagline: '100% Raw Cold Pressed Nectars',
-                    discount: 'Zero Sugar'
-                  };
-                  
-                  return (
-                    <CategoryCarousel 
-                      key="fnl-juices-showcase"
-                      category={juiceCategory}
-                      products={juiceProducts}
-                      handleAddToCart={handleAddToCart}
-                    />
-                  );
-                })()}
-              </>
-            )}
+            {/* Dedicated FNL Juices Showcase at the bottom of categories */}
+            {(() => {
+              const juiceProducts = products.filter(p => {
+                const pCat = (p.category || '').toLowerCase();
+                return pCat === 'fnl juices' || pCat === 'fnl juice';
+              });
+              
+              if (juiceProducts.length === 0) return null;
+              
+              const juiceCategory = {
+                id: 'fnl juices',
+                name: 'FNL Juices 🍹',
+                tagline: '100% Raw Cold Pressed Nectars',
+                discount: 'Zero Sugar'
+              };
+              
+              return (
+                <CategoryCarousel 
+                  key="fnl-juices-showcase"
+                  category={juiceCategory}
+                  products={juiceProducts}
+                  handleAddToCart={handleAddToCart}
+                />
+              );
+            })()}
           </div>
 
         </motion.div>

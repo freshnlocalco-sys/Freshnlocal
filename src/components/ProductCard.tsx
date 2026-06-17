@@ -67,6 +67,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             src={productImgSrc} 
             alt={product.name}
             loading="lazy"
+            decoding="async"
             onLoad={() => {
               const duration = performance.now() - startTimeRef.current;
               console.log(
