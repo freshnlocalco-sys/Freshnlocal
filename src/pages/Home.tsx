@@ -277,21 +277,21 @@ export function Home() {
                   <Link
                     key={cat.id}
                     to={linkDest}
-                    className="flex flex-col items-center group cursor-pointer"
+                    className="flex flex-col items-center group cursor-pointer w-full"
                   >
-                    <div className="w-full aspect-square rounded-2xl bg-sky-50/50 dark:bg-sky-950/20 overflow-hidden flex items-center justify-center mb-2 sm:mb-3 transition-transform duration-300 group-hover:-translate-y-1 shadow-sm group-hover:shadow-md relative">
+                    <div className="w-full aspect-[4/3] rounded-[24px] bg-sky-50/50 dark:bg-sky-950/20 overflow-hidden flex items-center justify-center mb-2 sm:mb-3 transition-transform duration-300 group-hover:-translate-y-1 shadow-sm group-hover:shadow-md relative">
                       {(spotlightsLoading || settingsLoading) ? (
-                        <div className="w-full h-full bg-border/20 rounded-2xl animate-pulse" />
+                        <div className="w-full h-full bg-border/20 rounded-[24px] animate-pulse" />
                       ) : spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false) ? (
                         <img
                           src={spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false) || undefined}
                           alt={cat.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 drop-shadow-sm"
+                          className="absolute inset-0 w-full h-full object-cover object-center block transition-transform duration-500 group-hover:scale-110 drop-shadow-sm"
                           referrerPolicy="no-referrer"
                           loading="lazy"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/80 rounded-2xl">
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/80 rounded-[24px]">
                            <span className="text-muted-foreground opacity-50 font-black text-2xl tracking-tighter uppercase">{cat.name.slice(0, 2)}</span>
                         </div>
                       )}
