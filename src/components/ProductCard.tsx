@@ -61,7 +61,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   return (
     <div ref={cardRef} className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border">
       
-      <div className="w-full aspect-[4/3] overflow-hidden rounded-t-xl relative bg-secondary border-b border-border block shrink-0">
+      <div className="w-full aspect-square overflow-hidden rounded-t-xl relative bg-white dark:bg-white border-b border-border block shrink-0">
         <Link to={`/product/${product.id}`} className="block w-full h-full">
           <img 
             src={productImgSrc} 
@@ -71,7 +71,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             onLoad={() => {
               setImageLoaded(true);
             }}
-            className={`absolute inset-0 w-full h-full object-contain object-center rounded-t-xl transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 w-full h-full object-cover object-center rounded-t-xl transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             referrerPolicy="no-referrer"
           />
         </Link>
@@ -131,7 +131,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             }
           }}
           disabled={!product.inStock}
-          className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold transition-colors flex items-center justify-center gap-1.5 mt-1.5 sm:mt-2.5 ${product.inStock ? 'bg-primary text-white hover:bg-primary/90 cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
+          className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1.5 mt-1.5 sm:mt-2.5 ${product.inStock ? 'bg-primary text-white hover:bg-primary/90 cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
         >
           {product.inStock ? (
              <>

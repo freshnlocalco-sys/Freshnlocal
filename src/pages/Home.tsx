@@ -231,7 +231,7 @@ export function Home() {
                     to={linkDest}
                     className="flex flex-col items-center group cursor-pointer"
                   >
-                    <div className="w-full aspect-[4/3] rounded-2xl bg-sky-50/50 dark:bg-sky-950/20 overflow-hidden flex items-center justify-center mb-2 sm:mb-3 transition-transform duration-300 group-hover:-translate-y-1 shadow-sm group-hover:shadow-md relative">
+                    <div className="w-full aspect-square rounded-2xl bg-sky-50/50 dark:bg-sky-950/20 overflow-hidden flex items-center justify-center mb-2 sm:mb-3 transition-transform duration-300 group-hover:-translate-y-1 shadow-sm group-hover:shadow-md relative">
                       {(spotlightsLoading || settingsLoading) ? (
                         <div className="w-full h-full bg-border/20 rounded-2xl animate-pulse" />
                       ) : spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false) ? (

@@ -1706,9 +1706,9 @@ export function AdminDashboard() {
                       </label>
                     </div>
                     <div className="flex gap-2">
-                      <div className="w-16 aspect-[4/3] bg-black/5 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-16 aspect-square bg-white dark:bg-white rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
                         {newProduct.imageUrl ? (
-                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-contain object-center" />
+                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-cover object-center" />
                         ) : (
                           <Upload className="w-4 h-4 text-muted-foreground opacity-50" />
                         )}
@@ -1967,8 +1967,8 @@ export function AdminDashboard() {
                           className={`transition-colors cursor-move ${dragOverProductIdx === idx ? 'border-primary border-t-2 border-dashed' : ''} ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}
                         >
                           <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
-                            <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
-                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-contain object-center" />
+                            <div className={`w-10 sm:w-12 md:w-16 aspect-square rounded-lg sm:rounded-xl bg-white dark:bg-white overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
+                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-cover object-center" />
                             </div>
                             <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                           </td>
@@ -2070,7 +2070,7 @@ export function AdminDashboard() {
               {(Object.entries(spotlightsConfig) as [string, {title: string, image: string}][]).map(([key, config]) => (
                 <div key={key} className="slice-card p-4 sm:p-6 bg-secondary border border-border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group">
                   <h3 className="font-extrabold text-xs uppercase tracking-widest text-foreground z-10">{config.title}</h3>
-                  <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-white border border-border z-10">
+                  <div className="w-full aspect-square rounded-xl overflow-hidden bg-white border border-border z-10">
                      <img src={config.image || null} alt={config.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="z-10 bg-white/50 dark:bg-black/50 p-3 rounded-lg backdrop-blur-sm border border-border">
