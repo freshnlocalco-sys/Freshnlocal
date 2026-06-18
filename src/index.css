@@ -64,7 +64,6 @@
 
 .slice-card:hover {
   @apply border-primary/60 shadow-[0_15px_35px_rgba(0,184,83,0.08)];
-  transform: translate3d(0, -6px, 0);
 }
 
 .title-display {
