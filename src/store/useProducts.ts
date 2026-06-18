@@ -4,7 +4,6 @@ import { Product } from './useCart';
 import { collection, getDocs, query, orderBy, limit, startAfter } from 'firebase/firestore';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { idb } from '../lib/indexedDB';
-import { ensureProductThumbnail } from '../lib/thumbnailHelper';
 
 interface ProductsState {
   products: Product[];
@@ -72,7 +71,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
     const { products, lastFetched, loading } = get();
     if (loading) return; // Prevent concurrent requests
 
-    const needsFetch = force || (Date.now() - lastFetched) >= 12 * 60 * 60 * 1000 || products.length === 0;
+    const needsFetch = force || (Date.now() - lastFetched) >= 24 * 60 * 60 * 1000 || products.length === 0;
     if (!needsFetch) return;
 
     if (!force && products.length > 0) {
@@ -113,7 +112,6 @@ export const useProducts = create<ProductsState>((set, get) => ({
           ...data,
           price: pPrice,
           originalPrice: pMrp > pPrice ? pMrp : undefined,
-          thumbnailUrl: data.thumbnailUrl || data.imageUrl || ''
         } as unknown as Product;
 
         const isJuice = (product.category || '').toLowerCase().includes('juice');
@@ -149,8 +147,8 @@ export const useProducts = create<ProductsState>((set, get) => ({
       try {
         cacheManager.set('products_v3', fetchedList);
         cacheManager.set('products_last_fetched_v3', Date.now());
-        await idb.set('products_v3', fetchedList, 12 * 60 * 60 * 1000);
-        await idb.set('products_last_fetched_v3', Date.now(), 12 * 60 * 60 * 1000);
+        await idb.set('products_v3', fetchedList, 24 * 60 * 60 * 1000);
+        await idb.set('products_last_fetched_v3', Date.now(), 24 * 60 * 60 * 1000);
       } catch (cacheErr) {
         console.warn("Cache set failed safely:", cacheErr);
       }
@@ -162,9 +160,6 @@ export const useProducts = create<ProductsState>((set, get) => ({
         hasMore,
         error: null
       });
-
-      // Trigger automatic background thumbnail generation for products that don't have it
-      triggerBackgroundThumbnailGeneration(fetchedList, get, set);
 
     } catch (error: any) {
       console.error("Firestore loading error:", error);
@@ -209,7 +204,6 @@ export const useProducts = create<ProductsState>((set, get) => ({
           ...data,
           price: pPrice,
           originalPrice: pMrp > pPrice ? pMrp : undefined,
-          thumbnailUrl: data.thumbnailUrl || data.imageUrl || ''
         } as unknown as Product);
       });
 
@@ -219,7 +213,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
       const updatedProducts = [...products, ...nextList];
 
       try {
-        await idb.set('products_v3', updatedProducts, 12 * 60 * 60 * 1000);
+        await idb.set('products_v3', updatedProducts, 24 * 60 * 60 * 1000);
       } catch (cacheErr) {
         console.warn("IndexedDB cache update failed safely:", cacheErr);
       }
@@ -230,60 +224,9 @@ export const useProducts = create<ProductsState>((set, get) => ({
         hasMore: nextHasMore
       });
 
-      triggerBackgroundThumbnailGeneration(nextList, get, set);
-
     } catch (error) {
       console.error("Firestore fetch next page error:", error);
       set({ loadingNext: false });
     }
   }
 }));
-
-function triggerBackgroundThumbnailGeneration(
-  items: Product[],
-  get: () => ProductsState,
-  set: (state: Partial<ProductsState>) => void
-) {
-  if (typeof window === 'undefined') return;
-  
-  const email = auth.currentUser?.email;
-  const isAdminUser = email === 'freshnlocalco@gmail.com' || email === 'mohitswami855@gmail.com';
-
-  const itemsNeedingThumbnail = items.filter(
-    item => {
-      const isOldLowRes = !!(item.thumbnailUrl && item.thumbnailUrl.startsWith('data:') && item.thumbnailUrl.length < 24000);
-      return item.imageUrl && (!item.thumbnailUrl || item.thumbnailUrl === item.imageUrl || isOldLowRes);
-    }
-  );
-
-  if (itemsNeedingThumbnail.length === 0) return;
-
-  console.log(`[THUMBNAILS] Found ${itemsNeedingThumbnail.length} products needing optimized thumbnails. Generating in background...`);
-
-  // Run asynchronously without blocking the main UI thread
-  (async () => {
-    for (const item of itemsNeedingThumbnail) {
-      try {
-        await ensureProductThumbnail(
-          item,
-          (updatedItem) => {
-            const currentProducts = get().products;
-            const idx = currentProducts.findIndex(p => p.id === updatedItem.id);
-            if (idx !== -1) {
-              const updatedList = [...currentProducts];
-              updatedList[idx] = updatedItem;
-              set({ products: updatedList });
-
-              // Sync to caches
-              cacheManager.set('products_v3', updatedList);
-              idb.set('products_v3', updatedList, 12 * 60 * 60 * 1000);
-            }
-          },
-          isAdminUser
-        );
-      } catch (err) {
-        console.debug(`Background thumbnail generation failed for ${item.name}:`, err);
-      }
-    }
-  })();
-}

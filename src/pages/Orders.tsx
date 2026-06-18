@@ -270,11 +270,11 @@ export function Orders() {
                     <div key={index} className="flex justify-between items-center pt-4 first:pt-0">
                       <div className="flex items-center gap-4">
                         {product.imageUrl ? (
-                          <div className="w-16 aspect-square rounded-xl overflow-hidden bg-white dark:bg-white border border-border flex-shrink-0">
-                            <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover object-center" />
+                          <div className="w-16 aspect-[4/3] rounded-xl overflow-hidden bg-white dark:bg-white border border-border flex-shrink-0">
+                            <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-contain object-center" />
                           </div>
                         ) : (
-                          <div className="w-16 aspect-square bg-background border border-border rounded-xl flex items-center justify-center flex-shrink-0">
+                          <div className="w-16 aspect-[4/3] bg-background border border-border rounded-xl flex items-center justify-center flex-shrink-0">
                             <Package className="w-4.5 h-4.5 text-muted-foreground" />
                           </div>
                         )}

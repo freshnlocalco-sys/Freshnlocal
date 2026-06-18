@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, db, handleFirestoreError, OperationType, isQuotaError, storage } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { useSettings, compressOversizedBase64 } from '../store/useSettings';
@@ -62,41 +62,7 @@ function OrderStatusDropdown({ currentStatus, onStatusChange }: { currentStatus:
   );
 }
 
-const generateThumbnailForStorage = (base64: string, targetWidth = 500, quality = 0.8): Promise<string> => {
-  return new Promise((resolve) => {
-    if (!base64 || !base64.startsWith('data:image/')) {
-      resolve(base64);
-      return;
-    }
-    const img = new window.Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      let width = img.width;
-      let height = img.height;
-      if (width > targetWidth) {
-        height = Math.round((height * targetWidth) / width);
-        width = targetWidth;
-      }
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0, width, height);
-      }
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.onerror = () => {
-      resolve(base64);
-    };
-    img.src = base64;
-  });
-};
 
-const uploadBase64ToStorage = async (base64: string, path: string): Promise<string> => {
-  const storageRef = ref(storage, path);
-  await uploadString(storageRef, base64, 'data_url');
-  return await getDownloadURL(storageRef);
-};
 
 export function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -217,15 +183,13 @@ export function AdminDashboard() {
           
           try {
             const originalPath = `products/${productId}/original.jpg`;
-            const mainUrl = await uploadBase64ToStorage(base64Img, originalPath);
-
-            const thumbBase64 = await generateThumbnailForStorage(base64Img, 500, 0.8);
-            const thumbPath = `products/${productId}/thumb.jpg`;
-            const thumbUrl = await uploadBase64ToStorage(thumbBase64, thumbPath);
+            const storageRef = ref(storage, originalPath);
+            await uploadString(storageRef, base64Img, 'data_url');
+            const mainUrl = await getDownloadURL(storageRef);
 
             await updateDoc(doc(db, 'products', productId), {
               imageUrl: mainUrl,
-              thumbnailUrl: thumbUrl,
+              thumbnailUrl: null,
               updatedAt: Date.now()
             });
 
@@ -638,9 +602,6 @@ export function AdminDashboard() {
 
       // Save directly to Firestore for auto-save
       const optimizedItem = { ...updatedItem };
-      if (field === 'image' && value.startsWith('data:image/')) {
-        optimizedItem.image = await compressOversizedBase64(value, { targetWidth: 800, targetHeight: 600, quality: 0.92, cropSquare: false });
-      }
 
       await setDoc(doc(db, 'settings', 'spotlights'), {
         [key]: optimizedItem
@@ -657,53 +618,19 @@ export function AdminDashboard() {
     }
   };
 
-  const handleSpotlightImageUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSpotlightImageUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      
-      const img = new window.Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        
-        // Spotlight banners are displayed at a perfect 4/3 aspect ratio
-        const targetRatio = 4 / 3;
-        let sWidth = img.width;
-        let sHeight = img.height;
-        let sx = 0;
-        let sy = 0;
-
-        if (img.width / img.height > targetRatio) {
-          sHeight = img.height;
-          sWidth = img.height * targetRatio;
-          sx = (img.width - sWidth) / 2;
-        } else {
-          sWidth = img.width;
-          sHeight = img.width / targetRatio;
-          sy = (img.height - sHeight) / 2;
-        }
-
-        // Scale down to 800x600 for razor-sharp high-density retina displays
-        const width = 800;
-        const height = 600;
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
-        }
-
-        // Crisp high-fidelity JPEG compression at 0.92 quality for pristine posters
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-        updateSpotlightValue(key, 'image', dataUrl);
-      };
-      img.src = result;
-    };
-    reader.readAsDataURL(file);
+    try {
+      const toastId = toast.loading('Uploading spotlight image...');
+      const url = await uploadRawFileToStorage(file, 'spotlights');
+      updateSpotlightValue(key, 'image', url);
+      toast.success('Spotlight image uploaded!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to upload spotlight image.');
+    }
   };
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
@@ -738,31 +665,8 @@ export function AdminDashboard() {
       const finalCategory = productSection === 'juices' ? 'fnl juices' : newProduct.category;
       const finalSubCategory = productSection === 'juices' ? (newProduct.subCategory || 'cold-pressed') : null;
 
-      let finalImageUrl = newProduct.imageUrl || '';
-      let finalThumbnailUrl = newProduct.thumbnailUrl || newProduct.imageUrl || '';
-
+      const finalImageUrl = newProduct.imageUrl || '';
       const productId = editingProductId || doc(collection(db, 'products')).id;
-
-      if (finalImageUrl.startsWith('data:image/')) {
-        toast.loading('Uploading and processing product images...', { id: 'img-upload' });
-        try {
-          // Upload original to projects/{productId}/original.jpg
-          const originalPath = `products/${productId}/original.jpg`;
-          const mainUrl = await uploadBase64ToStorage(finalImageUrl, originalPath);
-
-          // Generate 500px thumbnail and upload to products/{productId}/thumb.jpg
-          const thumbBase64 = await generateThumbnailForStorage(finalImageUrl, 500, 0.8);
-          const thumbPath = `products/${productId}/thumb.jpg`;
-          const thumbUrl = await uploadBase64ToStorage(thumbBase64, thumbPath);
-
-          finalImageUrl = mainUrl;
-          finalThumbnailUrl = thumbUrl;
-          toast.success('Images successfully saved in Cloud Storage!', { id: 'img-upload' });
-        } catch (uploadErr) {
-          console.error("Storage upload error:", uploadErr);
-          toast.error('Failed to upload images to Storage. Saving anyway...', { id: 'img-upload' });
-        }
-      }
 
       if (editingProductId) {
         await updateDoc(doc(db, 'products', editingProductId), {
@@ -773,11 +677,10 @@ export function AdminDashboard() {
           subCategory: finalSubCategory,
           description: newProduct.description,
           imageUrl: finalImageUrl,
-          thumbnailUrl: finalThumbnailUrl,
           unit: newProduct.unit || '',
           updatedAt: Date.now()
         });
-        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, thumbnailUrl: finalThumbnailUrl, unit: newProduct.unit || '' } as unknown as Product : p));
+        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, unit: newProduct.unit || '' } as unknown as Product : p));
         toast.success('Product updated successfully!');
         setEditingProductId(null);
       } else {
@@ -789,14 +692,13 @@ export function AdminDashboard() {
           subCategory: finalSubCategory,
           description: newProduct.description,
           imageUrl: finalImageUrl,
-          thumbnailUrl: finalThumbnailUrl,
           unit: newProduct.unit || '',
           stock: 100,
           inStock: true,
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
-        setProducts([{ id: productId, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, thumbnailUrl: finalThumbnailUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
+        setProducts([{ id: productId, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
         toast.success('New product cataloged successfully!');
       }
       setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
@@ -829,121 +731,39 @@ export function AdminDashboard() {
     setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
   };
 
-  const processImageFile = (file: File, callback: (base64: string) => void, cropSquare: boolean = false) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      const img = new window.Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        
-        let sx = 0;
-        let sy = 0;
-        let sWidth = width;
-        let sHeight = height;
-        
-        if (cropSquare) {
-          const size = Math.min(width, height);
-          sx = (width - size) / 2;
-          sy = (height - size) / 2;
-          sWidth = size;
-          sHeight = size;
-          // Scale down to max 512px square for category circular items (perfect for pixel-dense Retina screens)
-          width = Math.min(size, 512);
-          height = width;
-        } else {
-          const MAX_WIDTH = 1200;
-          const MAX_HEIGHT = 1200;
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
-        }
-        
-        // Use 90% JPEG quality for square crops, and 92% for higher res assets (maintains lossless visual clarity)
-        const dataUrl = canvas.toDataURL('image/jpeg', cropSquare ? 0.90 : 0.92);
-        callback(dataUrl);
-      };
-      if (result) {
-        img.src = result;
-      }
-    };
-    reader.readAsDataURL(file);
+  const uploadRawFileToStorage = async (file: File, pathPrefix: string): Promise<string> => {
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = `${pathPrefix}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const processImageFile = async (file: File, callback: (url: string) => void, _cropSquare: boolean = false) => {
+    if (!file) return;
+    const toastId = toast.loading('Uploading file...');
+    try {
+      const url = await uploadRawFileToStorage(file, 'categories');
+      callback(url);
+      toast.success('File uploaded successfully!', { id: toastId });
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Failed to upload file.', { id: toastId });
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      const img = new window.Image();
-      
-      img.onload = () => {
-        // Due to user requirement: "Do NOT compress images. Do NOT generate low-quality thumbnails. Do NOT reduce resolution."
-        // We will natively preserve the original image data exactly as uploaded.
-        
-        let dataUrlFull = result;
-        let dataUrlThumb = result;
-
-        // Ensure we don't breach Firestore limits (1MB). Only fallback to slight compression if strictly necessary.
-        const fileSizeKB = (result.length * 0.75) / 1024;
-        if (fileSizeKB > 900) {
-           const canvasFull = document.createElement('canvas');
-           const MAX_WIDTH = 2048; // Preserving high-res up to 2K
-           const MAX_HEIGHT = 2048;
-           let wFull = img.width;
-           let hFull = img.height;
-
-           if (wFull > hFull) {
-             if (wFull > MAX_WIDTH) { hFull *= MAX_WIDTH / wFull; wFull = MAX_WIDTH; }
-           } else {
-             if (hFull > MAX_HEIGHT) { wFull *= MAX_HEIGHT / hFull; hFull = MAX_HEIGHT; }
-           }
-
-           canvasFull.width = wFull;
-           canvasFull.height = hFull;
-           const ctxFull = canvasFull.getContext('2d');
-           ctxFull?.drawImage(img, 0, 0, wFull, hFull);
-           dataUrlFull = canvasFull.toDataURL('image/jpeg', 0.95); // Nearly lossless
-           dataUrlThumb = dataUrlFull; // Never use reduced thumbnails
-        }
-
-        // Add logging for image generation stats
-        console.log(`[Image Upload] Original size: ${img.width}x${img.height} (${Math.round(fileSizeKB)} KB)`);
-        console.log(`[Image Upload] Saved resolution: Saved as strictly original or up to 2K bounding.`);
-        console.log(`[Image Upload] Final Payload size approx: ${Math.round((dataUrlFull.length * 0.75) / 1024)} KB`);
-
-
-        setNewProduct(prev => ({ 
-          ...prev, 
-          imageUrl: dataUrlFull,
-          thumbnailUrl: dataUrlThumb
-        }));
-      };
-      if (result) {
-        img.src = result;
-      }
-    };
-    reader.readAsDataURL(file);
+    const toastId = toast.loading('Uploading image...');
+    try {
+      const url = await uploadRawFileToStorage(file, 'products');
+      setNewProduct(prev => ({ ...prev, imageUrl: url }));
+      toast.success('Image uploaded successfully!', { id: toastId });
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Failed to upload image.', { id: toastId });
+    }
   };
 
   const handleDeleteProduct = (productId: string) => {
@@ -1706,9 +1526,9 @@ export function AdminDashboard() {
                       </label>
                     </div>
                     <div className="flex gap-2">
-                      <div className="w-16 aspect-square bg-white dark:bg-white rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-16 aspect-[4/3] bg-white dark:bg-white rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
                         {newProduct.imageUrl ? (
-                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-cover object-center" />
+                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-contain object-center" />
                         ) : (
                           <Upload className="w-4 h-4 text-muted-foreground opacity-50" />
                         )}
@@ -1967,8 +1787,8 @@ export function AdminDashboard() {
                           className={`transition-colors cursor-move ${dragOverProductIdx === idx ? 'border-primary border-t-2 border-dashed' : ''} ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}
                         >
                           <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
-                            <div className={`w-10 sm:w-12 md:w-16 aspect-square rounded-lg sm:rounded-xl bg-white dark:bg-white overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
-                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-cover object-center" />
+                            <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-white dark:bg-white overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
+                              <img src={product.imageUrl || getCategoryImage(product.category) || undefined} alt="" loading="lazy" className="w-full h-full object-contain object-center" />
                             </div>
                             <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                           </td>

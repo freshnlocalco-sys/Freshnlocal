@@ -47,7 +47,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   }, []);
 
   const catImage = getCategoryImage(displayCategory, categoryImages) || undefined;
-  const productImgSrc = product.thumbnailUrl || product.imageUrl || catImage || undefined;
+  const productImgSrc = product.imageUrl || catImage || undefined;
 
   if (!isVisible) {
     return (
@@ -61,7 +61,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   return (
     <div ref={cardRef} className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border">
       
-      <div className="w-full aspect-square overflow-hidden rounded-t-xl relative bg-white dark:bg-white border-b border-border block shrink-0">
+      <div className="w-full aspect-[4/3] overflow-hidden relative bg-white dark:bg-white border-b border-border shrink-0" style={{ borderRadius: 'inherit', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
         <Link to={`/product/${product.id}`} className="block w-full h-full">
           <img 
             src={productImgSrc} 
@@ -71,7 +71,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             onLoad={() => {
               setImageLoaded(true);
             }}
-            className={`absolute inset-0 w-full h-full object-cover object-center rounded-t-xl transition-all duration-700 group-hover:scale-[1.03] ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 w-full h-full object-contain object-center transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             referrerPolicy="no-referrer"
           />
         </Link>

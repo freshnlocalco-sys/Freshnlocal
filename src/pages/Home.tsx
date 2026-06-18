@@ -62,7 +62,7 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
       {/* Scroll Controls */}
       <button 
         onClick={scrollLeft} 
-        className="absolute left-[-16px] xl:left-[-24px] top-[55%] -translate-y-1/2 z-10 w-12 h-12 bg-white/40 backdrop-blur-md border border-white/50 rounded-full items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.12)] opacity-0 group-hover:opacity-100 transition-all hidden md:flex hover:bg-white/70 hover:text-primary hover:scale-105 active:scale-95"
+        className="absolute left-[-16px] xl:left-[-24px] top-[55%] -translate-y-1/2 z-10 w-12 h-12 bg-white/70 backdrop-blur-md border border-black/10 rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.12)] opacity-70 group-hover:opacity-100 transition-all hover:bg-white hover:text-primary hover:scale-105 active:scale-95 text-foreground"
         aria-label="Scroll left"
       >
         <ChevronLeft className="w-6 h-6" />
@@ -70,7 +70,7 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
 
       <button 
         onClick={scrollRight} 
-        className="absolute right-[-16px] xl:right-[-24px] top-[55%] -translate-y-1/2 z-10 w-12 h-12 bg-white/40 backdrop-blur-md border border-white/50 rounded-full items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.12)] opacity-0 group-hover:opacity-100 transition-all hidden md:flex hover:bg-white/70 hover:text-primary hover:scale-105 active:scale-95"
+        className="absolute right-[-16px] xl:right-[-24px] top-[55%] -translate-y-1/2 z-10 w-12 h-12 bg-white/70 backdrop-blur-md border border-black/10 rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.12)] opacity-70 group-hover:opacity-100 transition-all hover:bg-white hover:text-primary hover:scale-105 active:scale-95 text-foreground"
         aria-label="Scroll right"
       >
         <ChevronRight className="w-6 h-6" />
@@ -82,7 +82,7 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
         style={{ scrollBehavior: 'smooth' }}
       >
         {displayProducts.map(product => (
-          <div key={product.id} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-16px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+          <div key={product.id} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
             <div className="w-full">
               <ProductCard 
                 product={product}
@@ -93,7 +93,7 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
         ))}
         
         {products.length > 0 && (
-          <div className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-16px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+          <div className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
             <Link 
               to={linkDest} 
               className="w-full h-full min-h-[260px] bg-secondary/80 rounded-[28px] border border-dashed border-border flex flex-col items-center justify-center gap-4 hover:bg-secondary hover:border-primary/40 hover:shadow-sm transition-all group/see-all p-4 text-center"
@@ -333,7 +333,7 @@ export function Home() {
                 <CategoryCarousel 
                   key={category.id}
                   category={category}
-                  products={categoryProducts.slice(0, 5)}
+                  products={categoryProducts.slice(0, 13)}
                   handleAddToCart={handleAddToCart}
                 />
               );

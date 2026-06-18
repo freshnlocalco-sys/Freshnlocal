@@ -248,12 +248,12 @@ export function Cart() {
           {cartItems.map((item) => (
             <div key={item.product.id} className="slice-card flex flex-col sm:flex-row gap-6 p-6 items-start sm:items-center relative group">
               {/* Product preview card layout */}
-              <div className="w-[120px] aspect-square bg-white dark:bg-white border border-border flex-shrink-0 relative rounded-2xl overflow-hidden shadow-inner">
+              <div className="w-[120px] aspect-[4/3] bg-white dark:bg-white border border-border flex-shrink-0 relative rounded-2xl overflow-hidden shadow-inner">
                 <img 
-                  src={item.product.imageUrl || getCategoryImage(item.product.category, categoryImages) || null} 
+                  src={item.product.imageUrl || getCategoryImage(item.product.category, categoryImages) || undefined} 
                   alt={item.product.name} 
                   loading="lazy"
-                  className="w-full h-full object-cover object-center"
+                  className="w-full h-full object-contain object-center"
                   referrerPolicy="no-referrer"
                 />
               </div>
