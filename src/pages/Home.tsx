@@ -157,7 +157,7 @@ export function Home() {
       {/* Hero Section */}
       <section className="w-full mx-auto pt-8 md:pt-24 pb-16 md:pb-20 flex flex-col gap-10 lg:gap-12 items-center relative overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-72 h-72 md:w-96 md:h-96 bg-primary/5 rounded-full blur-[80px] md:blur-[120px] pointer-events-none"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 md:w-80 md:h-80 bg-primary/10 rounded-full blur-[80px] md:blur-[100px] pointer-events-none animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 md:w-80 md:h-80 bg-primary/10 rounded-full blur-[80px] md:blur-[100px] pointer-events-none"></div>
 
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
@@ -269,7 +269,6 @@ export function Home() {
               }
               .animate-marquee {
                 animation: marquee var(--marquee-duration, 20s) linear infinite;
-                will-change: transform;
                 transform: translateZ(0);
               }
             `}} />
