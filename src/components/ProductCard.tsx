@@ -71,7 +71,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             onLoad={() => {
               setImageLoaded(true);
             }}
-            className={`absolute inset-0 w-full h-full object-cover object-center rounded-t-xl transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 w-full h-full object-cover object-center rounded-t-xl transition-all duration-700 group-hover:scale-[1.03] ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             referrerPolicy="no-referrer"
           />
         </Link>
@@ -131,7 +131,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             }
           }}
           disabled={!product.inStock}
-          className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1.5 mt-1.5 sm:mt-2.5 ${product.inStock ? 'bg-primary text-white hover:bg-primary/90 cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
+          className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1.5 mt-1.5 sm:mt-2.5 transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${product.inStock ? 'bg-primary text-white hover:bg-[#09120b] hover:shadow-[0_4px_12px_rgba(0,184,83,0.3)] active:scale-[0.97] cursor-pointer' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
         >
           {product.inStock ? (
              <>

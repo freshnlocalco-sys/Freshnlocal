@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navigation, MapPin, Phone, Mail, Heart } from 'lucide-react';
 import { useAuth, signOut } from '../lib/firebase';
 import { useCart } from '../store/useCart';
@@ -12,6 +12,7 @@ export function Layout() {
   const cartItemsCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const location = useLocation();
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white w-full max-w-full box-border overflow-x-clip">
@@ -238,7 +239,18 @@ export function Layout() {
       </AnimatePresence>
 
       <main className="flex-1 flex flex-col">
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, filter: 'blur(4px)' }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="flex-1 flex flex-col"
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       <footer className="bg-secondary border-t border-border/60 py-24 mt-20 text-[10px] uppercase tracking-[0.2em] font-extrabold text-[#506053]">

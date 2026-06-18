@@ -10,6 +10,8 @@ import { ProductSkeleton } from '../components/ProductSkeleton';
 import { ProductCard } from '../components/ProductCard';
 import toast from 'react-hot-toast';
 
+import { motion, AnimatePresence } from 'motion/react';
+
 export function Shop() {
   const { products, loading: storeLoading, error, fetchProducts, fetchNextProducts, hasMore, loadingNext, hydrateFromIDB } = useProducts();
   const { categoryImages, productCategories, fetchCategoryImages, lastFetched } = useSettings();
@@ -459,33 +461,43 @@ export function Shop() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pb-6">
-            {((loading || storeLoading) && products.length === 0) ? (
-              Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
-            ) : isOffline ? (
-              <div className="col-span-full mt-10 py-16 text-center text-muted-foreground font-sans text-sm border border-dashed border-border rounded-3xl p-8 bg-secondary flex flex-col items-center gap-4">
-                <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2">
-                  <Zap className="w-6 h-6" />
-                </div>
-                <b>Connection Issue</b>
-                <span className="text-xs max-w-sm font-medium">Our database is currently blocking access. Refetch failed.</span>
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="col-span-full py-12 text-center text-muted-foreground uppercase tracking-widest text-[10px] font-bold">
-                No matching fresh items available
-              </div>
-            ) : (
-              filteredProducts.map((product) => {
-                const displayCategory = (product.category || '').replace(/ font-bold/gi, '');
-                return (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onAddToCart={handleAddToCart} 
-                    displayCategoryOverride={displayCategory} 
-                  />
-                );
-              })
-            )}
+              <AnimatePresence mode="popLayout">
+                {((loading || storeLoading) && products.length === 0) ? (
+                  Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
+                ) : isOffline ? (
+                  <div className="col-span-full mt-10 py-16 text-center text-muted-foreground font-sans text-sm border border-dashed border-border rounded-3xl p-8 bg-secondary flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                    <b>Connection Issue</b>
+                    <span className="text-xs max-w-sm font-medium">Our database is currently blocking access. Refetch failed.</span>
+                  </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="col-span-full py-12 text-center text-muted-foreground uppercase tracking-widest text-[10px] font-bold">
+                    No matching fresh items available
+                  </div>
+                ) : (
+                  filteredProducts.map((product) => {
+                    const displayCategory = (product.category || '').replace(/ font-bold/gi, '');
+                    return (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                        key={product.id}
+                      >
+                        <ProductCard 
+                          product={product} 
+                          onAddToCart={handleAddToCart} 
+                          displayCategoryOverride={displayCategory} 
+                        />
+                      </motion.div>
+                    );
+                  })
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Pagination scrolling trigger */}
