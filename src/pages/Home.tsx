@@ -28,9 +28,28 @@ export const CATEGORIES = [
 function CategoryCarousel({ category, products, handleAddToCart }: { key?: React.Key | null | undefined; category: any; products: Product[]; handleAddToCart: (product: Product) => void }) {
   const isJuice = category.id === 'fnl juices';
   const linkDest = isJuice ? '/juice' : `/shop?category=${encodeURIComponent(category.id)}`;
+  
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const displayProducts = products.slice(0, 13);
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      const gap = window.innerWidth >= 1024 ? 24 : window.innerWidth >= 768 ? 16 : 12;
+      scrollContainerRef.current.scrollBy({ left: -(containerWidth + gap), behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      const gap = window.innerWidth >= 1024 ? 24 : window.innerWidth >= 768 ? 16 : 12;
+      scrollContainerRef.current.scrollBy({ left: (containerWidth + gap), behavior: 'smooth' });
+    }
+  };
 
   return (
-    <div className="w-full">
+    <div className="w-full relative group">
       <div className="flex justify-between items-end mb-4 sm:mb-6 px-2">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">
           {category.name}
@@ -40,26 +59,55 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
         </Link>
       </div>
       
-      <div className="w-full pb-6 overflow-hidden flex group">
-        <div 
-          className="flex animate-marquee w-max group-hover:[animation-play-state:paused]"
-          style={{ '--marquee-duration': `${Math.max(10, products.length * 5)}s` } as React.CSSProperties}
-        >
-          {[0, 1, 2].map((setIndex) => (
-            <div key={setIndex} className="flex gap-3 sm:gap-4 md:gap-6 pr-3 sm:pr-4 md:pr-6">
-              {products.map(product => (
-                <div key={`${setIndex}-${product.id}`} className="w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] shrink-0 flex">
-                  <div className="w-full">
-                    <ProductCard 
-                      product={product}
-                      onAddToCart={handleAddToCart}
-                    />
-                  </div>
-                </div>
-              ))}
+      {/* Scroll Controls */}
+      <button 
+        onClick={scrollLeft} 
+        className="absolute left-[-16px] xl:left-[-24px] top-[55%] -translate-y-1/2 z-10 w-12 h-12 bg-white/40 backdrop-blur-md border border-white/50 rounded-full items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.12)] opacity-0 group-hover:opacity-100 transition-all hidden md:flex hover:bg-white/70 hover:text-primary hover:scale-105 active:scale-95"
+        aria-label="Scroll left"
+      >
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+
+      <button 
+        onClick={scrollRight} 
+        className="absolute right-[-16px] xl:right-[-24px] top-[55%] -translate-y-1/2 z-10 w-12 h-12 bg-white/40 backdrop-blur-md border border-white/50 rounded-full items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.12)] opacity-0 group-hover:opacity-100 transition-all hidden md:flex hover:bg-white/70 hover:text-primary hover:scale-105 active:scale-95"
+        aria-label="Scroll right"
+      >
+        <ChevronRight className="w-6 h-6" />
+      </button>
+
+      <div 
+        ref={scrollContainerRef}
+        className="w-full pb-6 overflow-x-auto snap-x snap-mandatory no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-2"
+        style={{ scrollBehavior: 'smooth' }}
+      >
+        {displayProducts.map(product => (
+          <div key={product.id} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-16px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+            <div className="w-full">
+              <ProductCard 
+                product={product}
+                onAddToCart={handleAddToCart}
+              />
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+        
+        {products.length > 0 && (
+          <div className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] lg:w-[calc(33.333%-16px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+            <Link 
+              to={linkDest} 
+              className="w-full h-full min-h-[260px] bg-secondary/80 rounded-[28px] border border-dashed border-border flex flex-col items-center justify-center gap-4 hover:bg-secondary hover:border-primary/40 hover:shadow-sm transition-all group/see-all p-4 text-center"
+            >
+               <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center group-hover/see-all:scale-110 group-hover/see-all:bg-primary text-primary group-hover/see-all:text-white transition-all shadow-sm">
+                 <ArrowRight className="w-6 h-6" />
+               </div>
+               <div className="flex flex-col items-center gap-1">
+                 <span className="font-extrabold text-sm uppercase tracking-wider text-muted-foreground group-hover/see-all:text-foreground transition-colors">See All</span>
+                 {products.length > 13 && <span className="text-[10px] font-bold text-muted-foreground/60">+{products.length - 13} More</span>}
+               </div>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
