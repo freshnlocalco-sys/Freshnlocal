@@ -483,6 +483,18 @@ export function AdminDashboard() {
             <div className="flex-grow border-t border-border"></div>
         </div>
 
+        {typeof window !== 'undefined' && window.self !== window.top && (
+          <div className="bg-amber-50 border border-amber-200 p-3 sm:p-4 rounded-xl text-[11px] text-amber-800 leading-normal mb-4 font-semibold text-left">
+            <span className="font-black uppercase tracking-widest mb-1 text-[10px] text-amber-950 block">⚠️ Preview Iframe Warning</span>
+            Google Sign-In popups are restricted inside design preview frames by default browser privacy policies.
+            <div className="mt-2 space-y-1 text-amber-900">
+              <p>• <strong className="text-amber-950">Option 1:</strong> Use the "Admin Email" form above to sign in or register instantly.</p>
+              <p>• <strong className="text-amber-950">Option 2:</strong> Click <strong className="text-amber-950">"Bypass Auth"</strong> below to instantly access the control desk during testing.</p>
+              <p>• <strong className="text-amber-950">Option 3:</strong> Open the app in a new browser tab to use authentic Google Login.</p>
+            </div>
+          </div>
+        )}
+
         <button 
           onClick={async () => {
              const m = await import('../lib/firebase');

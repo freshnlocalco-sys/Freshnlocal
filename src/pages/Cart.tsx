@@ -69,7 +69,13 @@ export function Cart() {
       toast.error("Please remove out of stock items from your cart before checking out.");
       return;
     }
-    if (!user) return signIn();
+    if (!user) {
+      toast.error(
+        "Please Sign In using the profile icon in the top-right corner. If Google Login popups are blocked by your browser inside this preview frame, you can use the Email & Password option!", 
+        { duration: 8000 }
+      );
+      return;
+    }
     
     let formattedAddress = '';
     let orderPhone = phone;

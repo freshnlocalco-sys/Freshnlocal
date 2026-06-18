@@ -119,6 +119,17 @@ export function AuthModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
           <div className="flex-1 border-t border-border"></div>
         </div>
 
+        {typeof window !== 'undefined' && window.self !== window.top && (
+          <div className="bg-amber-50 border border-amber-200 p-3 sm:p-4 rounded-xl text-[11px] text-amber-800 leading-normal mb-4 font-semibold">
+            <span className="font-black uppercase tracking-widest mb-1 text-[10px] text-amber-950 block">⚠️ Nested Iframe Warning</span>
+            Google Sign-In popups are blocked/restricted inside design previews due to browser privacy policies.
+            <div className="mt-2 space-y-1 text-amber-900">
+              <p>• <strong className="text-amber-950">Option 1:</strong> Use the direct <strong className="text-amber-950">Email Address & Password</strong> form above to login or sign up instantly.</p>
+              <p>• <strong className="text-amber-950">Option 2:</strong> Click the <strong className="text-amber-950">"Open in new tab"</strong> button in the top-right of your AI Studio workspace. In a separate tab, Google Login will function perfectly.</p>
+            </div>
+          </div>
+        )}
+
         <button
           type="button"
           disabled={loading}
