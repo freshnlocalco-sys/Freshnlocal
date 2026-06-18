@@ -162,17 +162,28 @@ export const useProducts = create<ProductsState>((set, get) => ({
       });
 
     } catch (error: any) {
-      console.error("Firestore loading error:", error);
-      set({ loading: false });
+      console.warn("Firestore loading error, attempting to fallback to local/IndexedDB cached products:", error);
+      
+      // Load offline fallback products
+      const offline = loadLocalStorageProducts();
+      if (offline.products && offline.products.length > 0) {
+        set({
+          products: offline.products,
+          lastFetched: offline.lastFetched || Date.now(),
+          loading: false,
+          hasMore: false,
+          error: null
+        });
+        console.log(`Successfully recovered ${offline.products.length} products from local cache after connection failure.`);
+      } else {
+        set({ loading: false, error: "Could not connect to server. Please check your internet connection." });
+      }
+
       if (isQuotaError(error)) {
         const errorMsg = error?.message || String(error);
         set({ error: errorMsg });
       } else {
-        if (!isSilent) {
-          handleFirestoreError(error, OperationType.LIST, 'products');
-        } else {
-          console.warn("Background update of products failed safely:", error);
-        }
+        console.warn("Could not reach server, successfully switched to local cache.");
       }
     }
   },

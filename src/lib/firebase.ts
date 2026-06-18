@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { initializeFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeFirestore, doc, getDoc, setDoc, serverTimestamp, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { create } from 'zustand';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -11,6 +11,20 @@ export const storage = getStorage(app);
 export const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true
 }, "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
+
+if (typeof window !== 'undefined') {
+  enableMultiTabIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      // Multiple tabs open, persistence can only be enabled in one tab at a time.
+      console.warn('Firestore multi-tab persistence failed-precondition (multiple tabs)');
+    } else if (err.code === 'unimplemented') {
+      // The current browser does not support all of the features required to enable persistence
+      console.warn('Firestore persistence unimplemented in this browser');
+    } else {
+      console.warn('Firestore persistence error:', err);
+    }
+  });
+}
 
 export enum OperationType {
   CREATE = 'create',
