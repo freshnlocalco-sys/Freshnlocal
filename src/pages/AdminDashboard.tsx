@@ -77,6 +77,7 @@ export function AdminDashboard() {
     return 'orders'; // corresponds to consignments
   }, [location.pathname]);
   
+  const [diagError, setDiagError] = useState<any | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
@@ -495,15 +496,92 @@ export function AdminDashboard() {
           </div>
         )}
 
+        {diagError && (
+          <div className="bg-amber-50 border border-amber-300 p-4 rounded-xl text-xs text-amber-900 leading-normal mb-6 font-medium text-left">
+            <div className="flex justify-between items-start mb-2">
+              <span className="font-extrabold text-amber-950 uppercase tracking-wider text-[9px] block">🔍 Sign-In Diagnostic Helper</span>
+              <button 
+                type="button" 
+                onClick={() => setDiagError(null)} 
+                className="text-amber-600 hover:text-amber-950 font-bold text-[10px] uppercase tracking-wide cursor-pointer"
+              >
+                Clear
+              </button>
+            </div>
+            
+            <p className="font-semibold text-red-700 mb-2">
+              Error code: <code className="bg-red-50 px-1 py-0.5 rounded border border-red-200 font-mono text-[10px]">{diagError.code || 'unknown'}</code>
+            </p>
+            <p className="text-[11px] text-amber-950 mb-3 leading-relaxed break-words">
+              {diagError.message}
+            </p>
+
+            <div className="border-t border-amber-200 pt-3 mt-3 space-y-3">
+              <span className="font-bold uppercase tracking-widest text-[9px] text-amber-950 block">Step-By-Step Solution:</span>
+              
+              {diagError.code === 'auth/unauthorized-domain' || String(diagError.code || '').includes('unauthorized-domain') || String(diagError.message || '').includes('unauthorized domain') ? (
+                <div className="space-y-2 text-[11px] text-amber-900 leading-relaxed">
+                  <p>
+                    Your current domain <strong className="bg-amber-100 px-1.5 py-0.5 text-amber-950 rounded font-mono select-all break-all">{typeof window !== 'undefined' ? window.location.hostname : 'this domain'}</strong> is not whitelisted by Firebase Auth.
+                  </p>
+                  <p className="font-bold">To fix this in 30 seconds:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-1 text-amber-950 font-medium">
+                    <li>Go to your <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline text-blue-700 font-bold hover:text-blue-900">Firebase Console</a></li>
+                    <li>Select project: <strong className="font-mono bg-white px-1 border">freshnlocal-4a420</strong></li>
+                    <li>Go to <strong className="font-sans">Authentication ➔ Settings ➔ Authorized domains</strong></li>
+                    <li>Click <strong className="font-sans">Add Domain</strong> and type or paste: <code className="bg-white px-1.5 py-0.5 border select-all font-mono text-[10px] text-amber-950 font-bold">{typeof window !== 'undefined' ? window.location.hostname : 'your-domain'}</code></li>
+                    <li>Make sure to also add <code className="bg-white px-1 border text-[10px] font-mono">freshnlocal.co</code> if you are testing on your production domain!</li>
+                  </ol>
+                </div>
+              ) : diagError.code === 'auth/operation-not-allowed' ? (
+                <div className="space-y-2 text-[11px] text-amber-900 leading-relaxed">
+                  <p>
+                    Google Sign-In is not enabled inside your Firebase project.
+                  </p>
+                  <p className="font-bold">To fix this:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-1 text-amber-950 font-medium">
+                    <li>Go to your <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline text-blue-700 font-bold">Firebase Console</a></li>
+                    <li>Go to <strong className="font-sans">Authentication ➔ Sign-in method</strong></li>
+                    <li>Click <strong className="font-sans">Add new provider</strong> (or edit existing) and select <strong className="font-sans">Google</strong></li>
+                    <li>Toggle the <strong className="font-bold">Enable</strong> switch, enter a support email, and click <strong className="font-bold">Save</strong></li>
+                  </ol>
+                </div>
+              ) : diagError.code === 'auth/popup-blocked' ? (
+                <div className="space-y-2 text-[11px] text-amber-900 leading-relaxed">
+                  <p>
+                    The browser blocked the authentication popup window.
+                  </p>
+                  <p className="font-bold">To fix this:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-1 text-amber-950 font-medium">
+                    <li>Look at your browser's URL address bar for a blocked popup icon (looks like a key, 🚫 or a popup warning).</li>
+                    <li>Click it and select "Always allow popups from this site".</li>
+                    <li>Or, click "Open in new tab" in the top-right of your AI Studio workspace to log in without iframe blocks.</li>
+                  </ul>
+                </div>
+              ) : (
+                <div className="space-y-2 text-[11px] text-amber-900 leading-relaxed">
+                  <p className="font-bold">General Sign-In suggestions:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-1 text-amber-950 font-medium">
+                    <li>If you are in Incognito / Private browsing, your browser may block cross-origin authentication. Try a standard window.</li>
+                    <li>You can always register a traditional account with any email/password instantly above instead!</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <button 
           onClick={async () => {
              const m = await import('../lib/firebase');
              try {
+               setDiagError(null);
                await m.signIn();
              } catch (error: any) {
                console.error("Sign-in failed", error);
+               setDiagError(error);
                if (error?.code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized domain')) {
-                 toast.error('Vercel Domain Not Authorized: Please add your Vercel URL to Firebase Console -> Authentication -> Settings -> Authorized domains.', { duration: 8000 });
+                 toast.error('Vercel Domain Not Authorized: Please add your URL to Firebase Console -> Authentication -> Settings -> Authorized domains.', { duration: 8000 });
                } else {
                  toast.error(`Sign In Error: ${error.message || 'Firebase block'}`);
                }
