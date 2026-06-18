@@ -165,7 +165,7 @@ export function ProductDetail() {
         <div className="lg:col-span-7 rounded-xl overflow-hidden bg-secondary border border-border relative aspect-[4/3] w-full items-center justify-center flex">
           <div className="absolute top-5 left-5 z-20 flex flex-wrap gap-2 leading-none">
             <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-border shadow-sm">
-              {product.category.replace(/ font-bold/gi, '')}
+              {(product.category || '').replace(/ font-bold/gi, '')}
             </span>
           </div>
           <button
@@ -193,7 +193,7 @@ export function ProductDetail() {
             alt={product.name}
             loading="lazy"
             decoding="async"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain object-center"
             referrerPolicy="no-referrer"
           />
         </div>

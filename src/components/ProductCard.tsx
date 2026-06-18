@@ -19,7 +19,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const cardRef = useRef<HTMLDivElement>(null);
   const { categoryImages } = useSettings();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
-  const displayCategory = displayCategoryOverride || product.category.replace(/ font-bold/gi, '');
+  const displayCategory = displayCategoryOverride || (product.category || '').replace(/ font-bold/gi, '');
   const inWishlist = isInWishlist(product.id!);
 
   const startTimeRef = useRef<number>(0);
@@ -47,7 +47,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   }, []);
 
   const catImage = getCategoryImage(displayCategory, categoryImages) || undefined;
-  const productImgSrc = product.imageUrl || product.thumbnailUrl || catImage || undefined;
+  const productImgSrc = product.thumbnailUrl || product.imageUrl || catImage || undefined;
 
   if (!isVisible) {
     return (
@@ -61,7 +61,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   return (
     <div ref={cardRef} className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border">
       
-      <div className="w-full aspect-[4/3] overflow-hidden relative bg-secondary border-b border-border block shrink-0">
+      <div className="w-full aspect-[4/3] overflow-hidden rounded-t-xl relative bg-secondary border-b border-border block shrink-0">
         <Link to={`/product/${product.id}`} className="block w-full h-full">
           <img 
             src={productImgSrc} 
@@ -69,14 +69,9 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             loading="lazy"
             decoding="async"
             onLoad={() => {
-              const duration = performance.now() - startTimeRef.current;
-              console.log(
-                `%c[PERF METRIC] Image load time for "${product.name}": ${duration.toFixed(2)}ms`, 
-                "color: #f59e0b; font-weight: bold; font-family: monospace; border: 1px solid #f59e0b;"
-              );
               setImageLoaded(true);
             }}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 w-full h-full object-contain object-center rounded-t-xl transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             referrerPolicy="no-referrer"
           />
         </Link>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth, db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
+import { useAuth, db, handleFirestoreError, OperationType, isQuotaError, storage } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { useSettings, compressOversizedBase64 } from '../store/useSettings';
@@ -61,6 +62,42 @@ function OrderStatusDropdown({ currentStatus, onStatusChange }: { currentStatus:
   );
 }
 
+const generateThumbnailForStorage = (base64: string, targetWidth = 500, quality = 0.8): Promise<string> => {
+  return new Promise((resolve) => {
+    if (!base64 || !base64.startsWith('data:image/')) {
+      resolve(base64);
+      return;
+    }
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      if (width > targetWidth) {
+        height = Math.round((height * targetWidth) / width);
+        width = targetWidth;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+      }
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => {
+      resolve(base64);
+    };
+    img.src = base64;
+  });
+};
+
+const uploadBase64ToStorage = async (base64: string, path: string): Promise<string> => {
+  const storageRef = ref(storage, path);
+  await uploadString(storageRef, base64, 'data_url');
+  return await getDownloadURL(storageRef);
+};
+
 export function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
@@ -117,6 +154,109 @@ export function AdminDashboard() {
   // Filter for products
   const [productSearch, setProductSearch] = useState('');
   const [productSection, setProductSection] = useState<'all' | 'veg-fruits' | 'juices'>('veg-fruits');
+
+  const [migrationStatus, setMigrationStatus] = useState<{
+    migrating: boolean;
+    total: number;
+    processed: number;
+    migrated: number;
+    errors: number;
+  }>({
+    migrating: false,
+    total: 0,
+    processed: 0,
+    migrated: 0,
+    errors: 0
+  });
+
+  const runImageMigration = async () => {
+    if (migrationStatus.migrating) return;
+    
+    setMigrationStatus({
+      migrating: true,
+      total: 0,
+      processed: 0,
+      migrated: 0,
+      errors: 0
+    });
+
+    try {
+      toast.loading('Scanning products for base64 images...', { id: 'image-migration' });
+      const productsSnap = await getDocs(collection(db, 'products'));
+      const allDocs = productsSnap.docs;
+      
+      const docsToMigrate = allDocs.filter(d => {
+        const data = d.data();
+        return (data.imageUrl && data.imageUrl.startsWith('data:image/'));
+      });
+
+      const totalCount = docsToMigrate.length;
+      if (totalCount === 0) {
+        toast.success('All product images are already in Cloud Storage! No migration needed.', { id: 'image-migration' });
+        setMigrationStatus(prev => ({ ...prev, migrating: false }));
+        return;
+      }
+
+      toast.loading(`Found ${totalCount} products to migrate. Processing in batches...`, { id: 'image-migration' });
+      setMigrationStatus(prev => ({
+        ...prev,
+        total: totalCount,
+        processed: 0,
+        migrated: 0,
+        errors: 0
+      }));
+
+      const BATCH_SIZE = 3;
+      for (let i = 0; i < docsToMigrate.length; i += BATCH_SIZE) {
+        const batch = docsToMigrate.slice(i, i + BATCH_SIZE);
+        
+        await Promise.all(batch.map(async (docSnap) => {
+          const productId = docSnap.id;
+          const data = docSnap.data();
+          const base64Img = data.imageUrl;
+          
+          try {
+            const originalPath = `products/${productId}/original.jpg`;
+            const mainUrl = await uploadBase64ToStorage(base64Img, originalPath);
+
+            const thumbBase64 = await generateThumbnailForStorage(base64Img, 500, 0.8);
+            const thumbPath = `products/${productId}/thumb.jpg`;
+            const thumbUrl = await uploadBase64ToStorage(thumbBase64, thumbPath);
+
+            await updateDoc(doc(db, 'products', productId), {
+              imageUrl: mainUrl,
+              thumbnailUrl: thumbUrl,
+              updatedAt: Date.now()
+            });
+
+            setMigrationStatus(prev => ({
+              ...prev,
+              processed: prev.processed + 1,
+              migrated: prev.migrated + 1
+            }));
+          } catch (err) {
+            console.error(`Failed to migrate product ${productId}:`, err);
+            setMigrationStatus(prev => ({
+              ...prev,
+              processed: prev.processed + 1,
+              errors: prev.errors + 1
+            }));
+          }
+        }));
+      }
+
+      const m = await import('../store/useProducts');
+      await m.useProducts.getState().fetchProducts(true);
+      setProducts(m.useProducts.getState().products);
+
+      toast.success(`Migration completed! Successfully migrated ${totalCount} images to Firebase Storage.`, { id: 'image-migration', duration: 5000 });
+    } catch (err) {
+      console.error("Migration fatal error:", err);
+      toast.error('Fatal error during image migration.', { id: 'image-migration' });
+    } finally {
+      setMigrationStatus(prev => ({ ...prev, migrating: false }));
+    }
+  };
 
   const filteredProducts = products.filter(product => {
     const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
@@ -601,11 +741,27 @@ export function AdminDashboard() {
       let finalImageUrl = newProduct.imageUrl || '';
       let finalThumbnailUrl = newProduct.thumbnailUrl || newProduct.imageUrl || '';
 
-      if (finalImageUrl.startsWith('data:image/') && finalImageUrl.length > 300000) {
-        finalImageUrl = await compressOversizedBase64(finalImageUrl, { targetWidth: 1200, targetHeight: 1200, quality: 0.92, cropSquare: false });
-      }
-      if (finalThumbnailUrl.startsWith('data:image/') && finalThumbnailUrl.length > 50000) {
-        finalThumbnailUrl = await compressOversizedBase64(finalThumbnailUrl, { targetWidth: 400, targetHeight: 400, quality: 0.85, cropSquare: false });
+      const productId = editingProductId || doc(collection(db, 'products')).id;
+
+      if (finalImageUrl.startsWith('data:image/')) {
+        toast.loading('Uploading and processing product images...', { id: 'img-upload' });
+        try {
+          // Upload original to projects/{productId}/original.jpg
+          const originalPath = `products/${productId}/original.jpg`;
+          const mainUrl = await uploadBase64ToStorage(finalImageUrl, originalPath);
+
+          // Generate 500px thumbnail and upload to products/{productId}/thumb.jpg
+          const thumbBase64 = await generateThumbnailForStorage(finalImageUrl, 500, 0.8);
+          const thumbPath = `products/${productId}/thumb.jpg`;
+          const thumbUrl = await uploadBase64ToStorage(thumbBase64, thumbPath);
+
+          finalImageUrl = mainUrl;
+          finalThumbnailUrl = thumbUrl;
+          toast.success('Images successfully saved in Cloud Storage!', { id: 'img-upload' });
+        } catch (uploadErr) {
+          console.error("Storage upload error:", uploadErr);
+          toast.error('Failed to upload images to Storage. Saving anyway...', { id: 'img-upload' });
+        }
       }
 
       if (editingProductId) {
@@ -625,7 +781,7 @@ export function AdminDashboard() {
         toast.success('Product updated successfully!');
         setEditingProductId(null);
       } else {
-        const docRef = await addDoc(collection(db, 'products'), {
+        await setDoc(doc(db, 'products', productId), {
           name: newProduct.name,
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
@@ -640,7 +796,7 @@ export function AdminDashboard() {
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
-        setProducts([{ id: docRef.id, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, thumbnailUrl: finalThumbnailUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
+        setProducts([{ id: productId, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, thumbnailUrl: finalThumbnailUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
         toast.success('New product cataloged successfully!');
       }
       setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
@@ -1552,7 +1708,7 @@ export function AdminDashboard() {
                     <div className="flex gap-2">
                       <div className="w-16 aspect-[4/3] bg-black/5 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0">
                         {newProduct.imageUrl ? (
-                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-cover" />
+                          <img src={newProduct.imageUrl || undefined} alt="Preview" className="w-full h-full object-contain object-center" />
                         ) : (
                           <Upload className="w-4 h-4 text-muted-foreground opacity-50" />
                         )}
@@ -1646,6 +1802,47 @@ export function AdminDashboard() {
                     onChange={handleFileUpload} 
                   />
                 </label>
+              </div>
+
+              {/* Image Storage Migration Section */}
+              <div className="pt-6 sm:pt-8 border-t border-border space-y-4 sm:space-y-6">
+                <div className="space-y-1 sm:space-y-2">
+                  <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" /> Cloud Storage Migrate
+                  </h3>
+                  <p className="text-muted-foreground text-[9px] sm:text-xxs font-semibold leading-relaxed">
+                    Optimize database storage by shifting embedded base64 product images into secure Firebase Cloud Storage buckets. This prevents slow loads and memory crashes.
+                  </p>
+                </div>
+
+                <div className="p-4 sm:p-5 bg-white border border-border rounded-xl sm:rounded-2xl space-y-3 sm:space-y-4 shadow-sm">
+                  {migrationStatus.migrating ? (
+                    <div className="space-y-3.5">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                        <span>Processing Images...</span>
+                        <span className="text-primary font-mono">{migrationStatus.processed} / {migrationStatus.total}</span>
+                      </div>
+                      <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-primary h-full transition-all duration-300"
+                          style={{ width: `${migrationStatus.total ? (migrationStatus.processed / migrationStatus.total) * 100 : 0}%` }}
+                        ></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-[9px] font-black tracking-widest uppercase text-muted-foreground">
+                        <div>Migrated: <span className="text-primary">{migrationStatus.migrated}</span></div>
+                        <div>Errors: <span className="text-red-500">{migrationStatus.errors}</span></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={runImageMigration}
+                      className="w-full py-3 sm:py-4 bg-[#09120b] hover:bg-neutral-800 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Migrate Images to Cloud Storage
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             
@@ -1771,7 +1968,7 @@ export function AdminDashboard() {
                         >
                           <td className="p-3 sm:p-4 md:p-5 flex items-center gap-2 sm:gap-3">
                             <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-secondary overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
-                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-cover" />
+                              <img src={product.imageUrl || getCategoryImage(product.category) || null} alt="" loading="lazy" className="w-full h-full object-contain object-center" />
                             </div>
                             <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                           </td>
@@ -2415,7 +2612,7 @@ export function AdminDashboard() {
                       <div key={idx} className="flex gap-4 p-3.5 items-center justify-between min-w-0 w-full">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-10 h-10 rounded-lg bg-white border border-border p-1 overflow-hidden flex shrink-0">
-                            <img src={prod.imageUrl || catImg || null} alt={prod.name} className="w-full h-full object-cover" />
+                            <img src={prod.imageUrl || catImg || null} alt={prod.name} className="w-full h-full object-contain object-center" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="font-extrabold text-xs text-foreground uppercase truncate" title={prod.name}>{prod.name}</p>

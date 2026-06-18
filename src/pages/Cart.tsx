@@ -253,14 +253,14 @@ export function Cart() {
                   src={item.product.imageUrl || getCategoryImage(item.product.category, categoryImages) || null} 
                   alt={item.product.name} 
                   loading="lazy"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain object-center"
                   referrerPolicy="no-referrer"
                 />
               </div>
 
               <div className="flex-1 flex flex-col sm:flex-row justify-between w-full">
                 <div className="flex flex-col gap-1.5 mb-4 sm:mb-0">
-                  <span className="text-[8px] font-mono tracking-widest text-muted-foreground uppercase">{item.product.category.replace(/ font-bold/gi, '')}</span>
+                  <span className="text-[8px] font-mono tracking-widest text-muted-foreground uppercase">{(item.product.category || '').replace(/ font-bold/gi, '')}</span>
                   <h3 className="font-black text-[#09120b] hover:text-primary transition-colors text-sm uppercase tracking-wide">
                     {item.product.name}
                   </h3>

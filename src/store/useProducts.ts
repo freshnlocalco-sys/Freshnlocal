@@ -47,8 +47,15 @@ export const useProducts = create<ProductsState>((set, get) => ({
 
   hydrateFromIDB: async () => {
     try {
-      const dbProducts = await idb.get<Product[]>('products_v3');
-      const dbLastFetched = await idb.get<number>('products_last_fetched_v3');
+      let dbProducts = await idb.get<Product[]>('products_v3');
+      let dbLastFetched = await idb.get<number>('products_last_fetched_v3');
+      
+      // Fallback to localStorage if IndexedDB is blocked or empty
+      if (!dbProducts || dbProducts.length === 0) {
+        dbProducts = cacheManager.get<Product[]>('products_v3', true) || [];
+        dbLastFetched = cacheManager.get<number>('products_last_fetched_v3', true) || 0;
+      }
+
       if (dbProducts && dbProducts.length > 0) {
         set({
           products: dbProducts,
@@ -61,34 +68,20 @@ export const useProducts = create<ProductsState>((set, get) => ({
   },
 
   fetchProducts: async (categoryOrForce = false, forceParam = false) => {
+    const force = typeof categoryOrForce === 'boolean' ? categoryOrForce : !!forceParam;
     const { products, lastFetched, loading } = get();
     if (loading) return; // Prevent concurrent requests
 
-    let force = false;
-    if (typeof categoryOrForce === 'boolean') {
-      force = categoryOrForce;
-    } else {
-      force = forceParam;
-    }
+    const needsFetch = force || (Date.now() - lastFetched) >= 12 * 60 * 60 * 1000 || products.length === 0;
+    if (!needsFetch) return;
 
-    const now = Date.now();
-    // Invalidate cache if we have suspiciously few products from previous buggy paginated cache
-    const needsFetch = force || (now - lastFetched) >= 12 * 60 * 60 * 1000 || products.length < 50;
-
-    if (!needsFetch) {
-      return;
-    }
-
-    // SWR trigger:
-    // If we have cached products in memory, return immediately and let the actual Firestore fetch run in the background.
     if (!force && products.length > 0) {
-      get().performActualFetch(true).catch(e => {
-        console.warn("Background products refresh failed safely:", e);
-      });
+      // SILENT background refresh and return immediately
+      get().performActualFetch(true);
       return;
     }
 
-    // Blocking fetch (needed only when we have zero items)
+    // Blocking fetch
     await get().performActualFetch(false);
   },
 
@@ -97,24 +90,20 @@ export const useProducts = create<ProductsState>((set, get) => ({
       set({ loading: true, error: null });
     }
 
-    const startTime = performance.now();
     try {
-      // First page queries all items to make sure all categories display properly
-      const pageSize = 1000;
+      // Query all products without limits or ordering requirements to avoid missing any newly added items
       const q = query(
-        collection(db, 'products'),
-        orderBy('__name__'),
-        limit(pageSize)
+        collection(db, 'products')
       );
-
+      
       const querySnapshot = await getDocs(q);
       const docCount = querySnapshot.size;
-      trackFirestoreRead('products_page_1', docCount);
+      trackFirestoreRead('products_all', docCount);
 
-      // Clean up duplicate juices
+      // Clean up duplicate juices if any, though with storage backend they shouldn't exist
       const byName = new Map<string, string>();
       const duplicatesToDelete: string[] = [];
-      
+
       const fetchedList = querySnapshot.docs.reduce((acc, docSnapshot) => {
         const data = docSnapshot.data();
         const pPrice = Number(data.price) || 0;
@@ -152,20 +141,19 @@ export const useProducts = create<ProductsState>((set, get) => ({
         });
       }
 
-      // Update cursor reference for pagination
-      if (querySnapshot.docs.length > 0) {
-        lastVisibleDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-      } else {
-        lastVisibleDoc = null;
+      // Reset the module-level pagination cursor
+      lastVisibleDoc = null;
+      const hasMore = false;
+
+      // Sync fetched list to IndexedDB and LocalStorage fallback
+      try {
+        cacheManager.set('products_v3', fetchedList);
+        cacheManager.set('products_last_fetched_v3', Date.now());
+        await idb.set('products_v3', fetchedList, 12 * 60 * 60 * 1000);
+        await idb.set('products_last_fetched_v3', Date.now(), 12 * 60 * 60 * 1000);
+      } catch (cacheErr) {
+        console.warn("Cache set failed safely:", cacheErr);
       }
-
-      const hasMore = querySnapshot.docs.length === pageSize;
-
-      // Sync fetched list back to cache
-      cacheManager.set('products_v3', fetchedList);
-      cacheManager.set('products_last_fetched_v3', Date.now());
-      await idb.set('products_v3', fetchedList, 12 * 60 * 60 * 1000);
-      await idb.set('products_last_fetched_v3', Date.now(), 12 * 60 * 60 * 1000);
 
       set({
         products: fetchedList,
@@ -175,17 +163,11 @@ export const useProducts = create<ProductsState>((set, get) => ({
         error: null
       });
 
-      const pageLoadTime = performance.now() - startTime;
-      console.log(
-        `%c[PERF METRIC] Initial 20 products loaded and cached in ${pageLoadTime.toFixed(2)}ms`,
-        "color: #10b981; font-weight: bold; font-family: monospace;"
-      );
-
       // Trigger automatic background thumbnail generation for products that don't have it
       triggerBackgroundThumbnailGeneration(fetchedList, get, set);
 
     } catch (error: any) {
-      console.error("Firestore global page 1 load failure:", error);
+      console.error("Firestore loading error:", error);
       set({ loading: false });
       if (isQuotaError(error)) {
         const errorMsg = error?.message || String(error);
@@ -201,51 +183,46 @@ export const useProducts = create<ProductsState>((set, get) => ({
   },
 
   fetchNextProducts: async () => {
-    const { products, loadingNext, hasMore } = get();
+    const { loadingNext, hasMore, products } = get();
     if (loadingNext || !hasMore || !lastVisibleDoc) return;
 
     set({ loadingNext: true });
-    const startTime = performance.now();
-
     try {
-      const pageSize = 1000;
       const q = query(
         collection(db, 'products'),
         orderBy('__name__'),
         startAfter(lastVisibleDoc),
-        limit(pageSize)
+        limit(50)
       );
 
       const querySnapshot = await getDocs(q);
       const docCount = querySnapshot.size;
       trackFirestoreRead('products_next_page', docCount);
 
-      if (querySnapshot.docs.length > 0) {
-        lastVisibleDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-      } else {
-        lastVisibleDoc = null;
-      }
-
-      const nextProductsList = querySnapshot.docs.reduce((acc, docSnapshot) => {
-        const data = docSnapshot.data();
+      const nextList: Product[] = [];
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         const pPrice = Number(data.price) || 0;
         const pMrp = Number(data.originalPrice) || Number(data.mrp) || Number(data.MRP) || 0;
-        const product = {
-          id: docSnapshot.id,
+        nextList.push({
+          id: docSnap.id,
           ...data,
           price: pPrice,
           originalPrice: pMrp > pPrice ? pMrp : undefined,
           thumbnailUrl: data.thumbnailUrl || data.imageUrl || ''
-        } as unknown as Product;
+        } as unknown as Product);
+      });
 
-        acc.push(product);
-        return acc;
-      }, [] as Product[]);
+      lastVisibleDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+      const nextHasMore = querySnapshot.docs.length === 50;
 
-      const updatedProducts = [...products, ...nextProductsList];
-      updatedProducts.sort((a, b) => (a.orderIndex ?? 999) - (b.orderIndex ?? 999));
+      const updatedProducts = [...products, ...nextList];
 
-      const nextHasMore = querySnapshot.docs.length === pageSize;
+      try {
+        await idb.set('products_v3', updatedProducts, 12 * 60 * 60 * 1000);
+      } catch (cacheErr) {
+        console.warn("IndexedDB cache update failed safely:", cacheErr);
+      }
 
       set({
         products: updatedProducts,
@@ -253,21 +230,10 @@ export const useProducts = create<ProductsState>((set, get) => ({
         hasMore: nextHasMore
       });
 
-      // Update both caches
-      cacheManager.set('products_v3', updatedProducts);
-      await idb.set('products_v3', updatedProducts, 12 * 60 * 60 * 1000);
+      triggerBackgroundThumbnailGeneration(nextList, get, set);
 
-      const loadTime = performance.now() - startTime;
-      console.log(
-        `%c[PERF METRIC] Loaded next 20 products in ${loadTime.toFixed(2)}ms (total count: ${updatedProducts.length})`,
-        "color: #10b981; font-weight: bold; font-family: monospace;"
-      );
-
-      // Run background thumbnail generation
-      triggerBackgroundThumbnailGeneration(nextProductsList, get, set);
-
-    } catch (error: any) {
-      console.error("Firestore pagination next page fetch failure:", error);
+    } catch (error) {
+      console.error("Firestore fetch next page error:", error);
       set({ loadingNext: false });
     }
   }

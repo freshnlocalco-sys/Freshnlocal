@@ -32,7 +32,15 @@ export const cacheManager = {
         data,
         timestamp: Date.now()
       };
-      localStorage.setItem(`fnl_cache_${key}`, JSON.stringify(payload));
+      
+      // Before attempting to save, quick check on string size for products to prevent blocking the thread if massive
+      const stringified = JSON.stringify(payload);
+      if (key.startsWith('products') && stringified.length > 4500000) {
+        // Over 4.5MB, this will likely throw QuotaExceededError anyway, skip saving
+        console.warn('Payload too large for localStorage, skipping cache.');
+        return;
+      }
+      localStorage.setItem(`fnl_cache_${key}`, stringified);
     } catch (err) {
       console.warn(`Failed to write to localStorage for key ${key}:`, err);
     }

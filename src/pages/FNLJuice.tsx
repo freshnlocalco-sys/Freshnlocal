@@ -447,7 +447,13 @@ export function FNLJuice() {
     async function load() {
       setLoading(true);
       await hydrateFromIDB();
-      await fetchProducts();
+      try {
+        await fetchProducts();
+      } catch (err) {
+        console.error("Error fetching juices:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [fetchProducts, hydrateFromIDB]);

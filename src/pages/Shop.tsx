@@ -53,15 +53,13 @@ export function Shop() {
       await hydrateFromIDB();
       
       // Load products and settings config side-by-side
-      await Promise.all([fetchProducts(), fetchCategoryImages()]);
-      
-      setLoading(false);
-      
-      const pageRenderTime = performance.now() - startTime;
-      console.log(
-        `%c[PERF METRIC] Shop page initial products loaded and rendered in ${pageRenderTime.toFixed(2)}ms`, 
-        "color: #3b82f6; font-weight: bold; font-family: monospace; border: 1px solid #3b82f6; padding: 2px;"
-      );
+      try {
+        await Promise.all([fetchProducts(), fetchCategoryImages()]);
+      } catch (err) {
+        console.error("Error fetching live shop data:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [fetchProducts, hydrateFromIDB, fetchCategoryImages]);
@@ -477,7 +475,7 @@ export function Shop() {
               </div>
             ) : (
               filteredProducts.map((product) => {
-                const displayCategory = product.category.replace(/ font-bold/gi, '');
+                const displayCategory = (product.category || '').replace(/ font-bold/gi, '');
                 return (
                   <ProductCard 
                     key={product.id} 
