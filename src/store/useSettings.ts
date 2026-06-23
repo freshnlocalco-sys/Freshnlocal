@@ -62,71 +62,6 @@ interface CropSettings {
   cropSquare: boolean;
 }
 
-export const compressOversizedBase64 = (
-  base64: string,
-  settings: CropSettings = { targetWidth: 2048, targetHeight: 2048, quality: 0.95, cropSquare: false }
-): Promise<string> => {
-  return new Promise((resolve) => {
-    // Due to rigorous user requirements to preserve 100% original quality and NOT compress or resize images,
-    // we bypass compression unless the file is dangerously large for Firestore limit (> 900KB).
-    const isBase64Image = base64 && base64.startsWith('data:image/');
-    if (!isBase64Image) {
-      resolve(base64);
-      return;
-    }
-
-    const fileSizeKB = (base64.length * 0.75) / 1024;
-    // If it's safe for Firestore, preserve original raw upload exactly as is
-    if (fileSizeKB <= 900 && !settings.cropSquare) {
-      resolve(base64);
-      return;
-    }
-
-    const img = new window.Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      let width = img.width;
-      let height = img.height;
-      let sx = 0;
-      let sy = 0;
-      let sWidth = width;
-      let sHeight = height;
-
-      if (settings.cropSquare) {
-        const size = Math.min(width, height);
-        sx = (width - size) / 2;
-        sy = (height - size) / 2;
-        sWidth = size;
-        sHeight = size;
-        width = Math.min(size, settings.targetWidth);
-        height = width;
-      } else {
-        // preserve aspect ratio without cropping
-        if (width > settings.targetWidth) {
-          height = Math.round((height * settings.targetWidth) / width);
-          width = settings.targetWidth;
-        }
-        if (height > settings.targetHeight) {
-          width = Math.round((width * settings.targetHeight) / height);
-          height = settings.targetHeight;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, width, height);
-      }
-      resolve(canvas.toDataURL('image/jpeg', settings.quality));
-    };
-    img.onerror = () => {
-      resolve(base64);
-    };
-    img.src = base64;
-  });
-};
-
 export const useSettings = create<SettingsState>((set, get) => ({
   categoryImages: {},
   productCategories: DEFAULT_PRODUCT_CATEGORIES,
@@ -228,11 +163,8 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const normalizedCategory = category.toLowerCase().replace(/ font-bold/gi, '').trim();
       const currentImages = get().categoryImages;
       
-      // Auto-compress base64 to target square sizing (512x512 at 0.90 quality) for ultra-fast loading & crisp retina visuals
-      let finalUrl = url;
-      if (url && url.startsWith('data:image/')) {
-        finalUrl = await compressOversizedBase64(url, { targetWidth: 512, targetHeight: 512, quality: 0.90, cropSquare: false });
-      }
+      // Utilize raw original URL without downscaling or compression
+      const finalUrl = url;
 
       const newImages = { ...currentImages, [normalizedCategory]: finalUrl };
       
@@ -273,10 +205,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       cacheManager.set('productCategories', updated);
       
       if (imageUrl) {
-        let finalUrl = imageUrl;
-        if (imageUrl.startsWith('data:image/')) {
-          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 512, targetHeight: 512, quality: 0.90, cropSquare: false });
-        }
+        const finalUrl = imageUrl;
         const normalizedImgKey = normalizedNew.toLowerCase().replace(/ font-bold/gi, '').trim();
         const imgRef = doc(db, 'settings', 'categoryImages');
         const imgUpdate: Record<string, string> = { [normalizedImgKey]: finalUrl };
@@ -332,10 +261,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       cacheManager.set('juiceCategories', updated);
 
       if (imageUrl) {
-        let finalUrl = imageUrl;
-        if (imageUrl.startsWith('data:image/')) {
-          finalUrl = await compressOversizedBase64(imageUrl, { targetWidth: 512, targetHeight: 512, quality: 0.90, cropSquare: false });
-        }
+        const finalUrl = imageUrl;
         const normalizedImgKey = normalizedName.toLowerCase().replace(/ font-bold/gi, '');
         const imgRef = doc(db, 'settings', 'categoryImages');
         const imgUpdate: Record<string, string> = { [normalizedImgKey]: finalUrl };

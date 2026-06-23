@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth, db, handleFirestoreError, OperationType, isQuotaError, storage } from '../lib/firebase';
+import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
-import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star } from 'lucide-react';
 import { Product } from '../store/useCart';
-import { useSettings, compressOversizedBase64 } from '../store/useSettings';
+import { useSettings } from '../store/useSettings';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
 import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
@@ -82,6 +82,19 @@ export function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const uploadedUrlsCache = useRef<Record<string, string>>({});
+  const [lastUploadTiming, setLastUploadTiming] = useState<{
+    fileName: string;
+    fileSizeKB: number;
+    selectTime: number;
+    uploadStartTime: number;
+    uploadCompleteTime: number;
+    urlRetrievalCompleteTime: number;
+    uploadDurationMs: number;
+    urlRetrievalDurationMs: number;
+    totalUploadDurationMs: number;
+  } | null>(null);
   
   const { 
     categoryImages, 
@@ -136,6 +149,73 @@ export function AdminDashboard() {
     errors: 0
   });
 
+  const dataURLtoBlob = (dataurl: string): Blob => {
+    try {
+      const arr = dataurl.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    } catch (e) {
+      console.error('Failed to parse base64 directly:', e);
+      throw e;
+    }
+  };
+
+  const compressBase64ToWebP = (base64Str: string): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+          const maxW = 1200;
+
+          if (width > maxW) {
+            const ratio = maxW / width;
+            width = maxW;
+            height = Math.round(height * ratio);
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas 2D context unavailable'));
+            return;
+          }
+
+          ctx.clearRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('WebP compression blob generation failed'));
+                return;
+              }
+              resolve(blob);
+            },
+            'image/webp',
+            0.85
+          );
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.onerror = (err) => {
+        reject(err);
+      };
+      img.src = base64Str;
+    });
+  };
+
   const runImageMigration = async () => {
     if (migrationStatus.migrating) return;
     
@@ -173,6 +253,10 @@ export function AdminDashboard() {
         errors: 0
       }));
 
+      let localProcessed = 0;
+      let localMigrated = 0;
+      let localErrors = 0;
+
       const BATCH_SIZE = 3;
       for (let i = 0; i < docsToMigrate.length; i += BATCH_SIZE) {
         const batch = docsToMigrate.slice(i, i + BATCH_SIZE);
@@ -183,10 +267,30 @@ export function AdminDashboard() {
           const base64Img = data.imageUrl;
           
           try {
-            const originalPath = `products/${productId}/original.jpg`;
-            const storageRef = ref(storage, originalPath);
-            await uploadString(storageRef, base64Img, 'data_url');
-            const mainUrl = await getDownloadURL(storageRef);
+            // Compress the base64 image to webp blob to keep file sizes very lightweight
+            let blobToUpload: Blob;
+            try {
+              blobToUpload = await compressBase64ToWebP(base64Img);
+            } catch (compressErr) {
+              console.warn(`[Migration] Failed to compress image for ${productId} to WebP, falling back to raw data conversion:`, compressErr);
+              blobToUpload = dataURLtoBlob(base64Img);
+            }
+
+            const originalPath = `products/${productId}/original.webp`;
+            let mainUrl = '';
+
+            try {
+              // Try primary storage bucket
+              const storageRef = ref(storage, originalPath);
+              await uploadBytesResumable(storageRef, blobToUpload);
+              mainUrl = await getDownloadURL(storageRef);
+            } catch (primaryStorageErr) {
+              console.warn(`[Migration] Primary storage upload failed for product ${productId}. Retrying with fallback storage bucket...`, primaryStorageErr);
+              // Retry using fallback storage bucket
+              const storageRef = ref(fallbackStorage, originalPath);
+              await uploadBytesResumable(storageRef, blobToUpload);
+              mainUrl = await getDownloadURL(storageRef);
+            }
 
             await updateDoc(doc(db, 'products', productId), {
               imageUrl: mainUrl,
@@ -194,17 +298,21 @@ export function AdminDashboard() {
               updatedAt: Date.now()
             });
 
+            localProcessed++;
+            localMigrated++;
             setMigrationStatus(prev => ({
               ...prev,
-              processed: prev.processed + 1,
-              migrated: prev.migrated + 1
+              processed: localProcessed,
+              migrated: localMigrated
             }));
           } catch (err) {
             console.error(`Failed to migrate product ${productId}:`, err);
+            localProcessed++;
+            localErrors++;
             setMigrationStatus(prev => ({
               ...prev,
-              processed: prev.processed + 1,
-              errors: prev.errors + 1
+              processed: localProcessed,
+              errors: localErrors
             }));
           }
         }));
@@ -214,7 +322,14 @@ export function AdminDashboard() {
       await m.useProducts.getState().fetchProducts(true);
       setProducts(m.useProducts.getState().products);
 
-      toast.success(`Migration completed! Successfully migrated ${totalCount} images to Firebase Storage.`, { id: 'image-migration', duration: 5000 });
+      if (localErrors > 0) {
+        toast.error(
+          `Migration finished with warnings: successfully migrated ${localMigrated} images, but failed on ${localErrors}. If this keeps failing, Firebase Storage is not enabled or its security rules limit uploads. Ensure Storage has been initialized on the Firebase console.`,
+          { id: 'image-migration', duration: 10000 }
+        );
+      } else {
+        toast.success(`Migration completed! Successfully migrated ${localMigrated} images to Firebase Storage.`, { id: 'image-migration', duration: 5000 });
+      }
     } catch (err) {
       console.error("Migration fatal error:", err);
       toast.error('Fatal error during image migration.', { id: 'image-migration' });
@@ -711,15 +826,28 @@ export function AdminDashboard() {
   const handleSpotlightImageUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (isUploading) {
+      toast.error('Another upload is in progress');
+      return;
+    }
 
+    setIsUploading(true);
+    const selectTime = performance.now();
+    console.log(`[Step 1: File Selection] Spotlight image file "${file.name}" selected at ${new Date().toISOString()}`);
+    const toastId = toast.loading('Uploading spotlight image: 0%...');
     try {
-      const toastId = toast.loading('Uploading spotlight image...');
-      const url = await uploadRawFileToStorage(file, 'spotlights');
+      const { url, timing } = await uploadRawFileToStorage(file, 'spotlights', selectTime, (prog) => {
+        toast.loading(`Uploading spotlight image: ${prog.toFixed(0)}%`, { id: toastId });
+      });
+      setLastUploadTiming(timing);
       updateSpotlightValue(key, 'image', url);
       toast.success('Spotlight image uploaded!', { id: toastId });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error('Failed to upload spotlight image.');
+      toast.error(err.message || 'Failed to upload spotlight image.', { id: toastId });
+    } finally {
+      setIsUploading(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -751,6 +879,9 @@ export function AdminDashboard() {
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    const saveStartTime = performance.now();
+    console.log(`[Step 5: Firestore Save Started] Saving product catalog document for "${newProduct.name}" to Firestore...`);
+    console.time('FIRESTORE_SAVE');
     try {
       const finalCategory = productSection === 'juices' ? 'fnl juices' : newProduct.category;
       const finalSubCategory = productSection === 'juices' ? (newProduct.subCategory || 'cold-pressed') : null;
@@ -770,9 +901,6 @@ export function AdminDashboard() {
           unit: newProduct.unit || '',
           updatedAt: Date.now()
         });
-        setProducts(products.map(p => p.id === editingProductId ? { ...p, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, unit: newProduct.unit || '' } as unknown as Product : p));
-        toast.success('Product updated successfully!');
-        setEditingProductId(null);
       } else {
         await setDoc(doc(db, 'products', productId), {
           name: newProduct.name,
@@ -788,11 +916,100 @@ export function AdminDashboard() {
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
-        setProducts([{ id: productId, name: newProduct.name, price: Number(newProduct.price), originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined, category: finalCategory, subCategory: finalSubCategory ? finalSubCategory : undefined, description: newProduct.description, imageUrl: finalImageUrl, unit: newProduct.unit || '', stock: 100, inStock: true, createdAt: Date.now(), updatedAt: Date.now() } as unknown as Product, ...products]);
+      }
+      console.timeEnd('FIRESTORE_SAVE');
+
+      console.time('ADMIN_RERENDER');
+      const updatedProductObj: Product = {
+        id: productId,
+        name: newProduct.name,
+        price: Number(newProduct.price),
+        originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
+        category: finalCategory,
+        subCategory: finalSubCategory ? finalSubCategory : undefined,
+        description: newProduct.description,
+        imageUrl: finalImageUrl,
+        unit: newProduct.unit || '',
+        stock: 100,
+        inStock: true,
+        createdAt: editingProductId ? (products.find(p => p.id === editingProductId)?.createdAt || Date.now()) : Date.now(),
+        updatedAt: Date.now()
+      } as unknown as Product;
+
+      let nextProductsList: Product[];
+      if (editingProductId) {
+        nextProductsList = products.map(p => p.id === editingProductId ? updatedProductObj : p);
+        setProducts(nextProductsList);
+        toast.success('Product updated successfully!');
+        setEditingProductId(null);
+      } else {
+        nextProductsList = [updatedProductObj, ...products];
+        setProducts(nextProductsList);
         toast.success('New product cataloged successfully!');
       }
+      console.timeEnd('ADMIN_RERENDER');
+
+      console.time('CACHE_REBUILD');
+      const mProductsStore = await import('../store/useProducts');
+      const currentStoreProducts = mProductsStore.useProducts.getState().products;
+      let nextStoreProducts: Product[];
+      if (editingProductId) {
+        nextStoreProducts = currentStoreProducts.map(p => p.id === editingProductId ? updatedProductObj : p);
+      } else {
+        nextStoreProducts = [updatedProductObj, ...currentStoreProducts];
+      }
+      mProductsStore.useProducts.getState().products = nextStoreProducts;
+      mProductsStore.useProducts.getState().lastFetched = Date.now();
+
+      const mCache = await import('../lib/cacheManager');
+      const mIdb = await import('../lib/indexedDB');
+      try {
+        mCache.cacheManager.set('products_v3', nextStoreProducts);
+        mCache.cacheManager.set('products_last_fetched_v3', Date.now());
+        mIdb.idb.set('products_v3', nextStoreProducts, 24 * 60 * 60 * 1000).catch(()=>{});
+        mIdb.idb.set('products_last_fetched_v3', Date.now(), 24 * 60 * 60 * 1000).catch(()=>{});
+      } catch (cacheErr) {
+        console.warn("Async Cache sync failed safely:", cacheErr);
+      }
+      console.timeEnd('CACHE_REBUILD');
+
+      console.time('REFRESH_PRODUCTS');
+      mProductsStore.useProducts.getState().performActualFetch(true).then(() => {
+        console.timeEnd('REFRESH_PRODUCTS');
+        const updatedBgProducts = mProductsStore.useProducts.getState().products;
+        setProducts(updatedBgProducts);
+        console.log('[Background Refresh] Catalog fetch completed silently and cache fully updated.');
+      }).catch((bgErr) => {
+        console.warn('Background products refresh failed safely:', bgErr);
+        console.timeEnd('REFRESH_PRODUCTS');
+      });
+
+      const saveEndTime = performance.now();
+      const saveDurationMs = saveEndTime - saveStartTime;
+      console.log(`[Step 5: Firestore Save Complete] Firestore document saved successfully. Duration: ${saveDurationMs.toFixed(2)}ms`);
+
+      if (lastUploadTiming) {
+        const totalPipelineDuration = (saveEndTime - lastUploadTiming.selectTime);
+        console.log(`
+============================================================
+              UPLOAD PIPELINE AUDIT REPORT
+============================================================
+* File Name:                  ${lastUploadTiming.fileName}
+* File Size:                  ${lastUploadTiming.fileSizeKB.toFixed(2)} KB
+* Upload Start Time:          ${new Date(lastUploadTiming.selectTime).toLocaleTimeString()}
+* Upload Duration:            ${lastUploadTiming.uploadDurationMs.toFixed(2)} ms
+* Download URL Duration:      ${lastUploadTiming.urlRetrievalDurationMs.toFixed(2)} ms
+* Firestore Save Duration:    ${saveDurationMs.toFixed(2)} ms
+* Total Pipeline Duration:    ${totalPipelineDuration.toFixed(2)} ms
+============================================================
+        `);
+        toast.success(`Pipeline Success: Saved in ${totalPipelineDuration.toFixed(0)}ms total!`);
+        setLastUploadTiming(null); // Clear log
+      }
+
       setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
     } catch (error) {
+      console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
       toast.error('Could not save product catalog.');
     }
@@ -821,38 +1038,330 @@ export function AdminDashboard() {
     setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
   };
 
-  const uploadRawFileToStorage = async (file: File, pathPrefix: string): Promise<string> => {
-    const ext = file.name.split('.').pop() || 'jpg';
-    const path = `${pathPrefix}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file);
-    return await getDownloadURL(storageRef);
+  const compressToWebP = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      // If it's not actually an image, skip WebP compression
+      if (!file.type.startsWith('image/')) {
+        resolve(file);
+        return;
+      }
+
+      console.time('IMAGE_COMPRESSION');
+      const compressionStartTime = performance.now();
+      console.log(`[Upload Step 2] Starting WebP Compression for "${file.name}" (Original Size: ${(file.size / 1024).toFixed(2)} KB)`);
+      
+      let resolved = false;
+      let objectUrl: string | null = null;
+      
+      const timeoutId = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          console.timeEnd('IMAGE_COMPRESSION');
+          console.error('[WebP Compression Timeout] Compression took longer than 5000ms, falling back to original file.');
+          resolve(file);
+        }
+      }, 5000);
+
+      try {
+        objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        
+        img.onload = () => {
+          if (resolved) return;
+          
+          // Revoke the object URL immediately to release browser memory
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          try {
+            let width = img.naturalWidth || img.width;
+            let height = img.naturalHeight || img.height;
+            const maxDimension = 1600;
+
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              if (!resolved) {
+                resolved = true;
+                clearTimeout(timeoutId);
+                console.warn('[WebP Compression] Canvas 2D context unavailable, falling back to original file.');
+                resolve(file);
+              }
+              return;
+            }
+
+            // Draw image maintaining exact aspect ratio, no stretching/cropping/zooming
+            ctx.clearRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Standardize on image/webp with 90% quality (within 88-92% range)
+            canvas.toBlob(
+              (blob) => {
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(timeoutId);
+                console.timeEnd('IMAGE_COMPRESSION');
+                if (!blob) {
+                  console.warn('[WebP Compression] toBlob returned empty, falling back to original file.');
+                  resolve(file);
+                  return;
+                }
+
+                const originalNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                const webpFile = new File([blob], `${originalNameWithoutExt}.webp`, {
+                  type: 'image/webp',
+                  lastModified: Date.now(),
+                });
+
+                const compressionDuration = performance.now() - compressionStartTime;
+                console.log(`[Upload Step 3] WebP Compression Success in ${compressionDuration.toFixed(2)}ms`);
+                console.log(`[Upload Step 4] Optimized file: "${webpFile.name}" (Size: ${(webpFile.size / 1024).toFixed(2)} KB). Size reduced to ${((webpFile.size / file.size) * 100).toFixed(1)}%`);
+                resolve(webpFile);
+              },
+              'image/webp',
+              0.90 // 88-92% quality range
+            );
+          } catch (err) {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeoutId);
+            console.timeEnd('IMAGE_COMPRESSION');
+            console.error('[WebP Compression Error]', err);
+            resolve(file); // fallback
+          }
+        };
+
+        img.onerror = (err) => {
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timeoutId);
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          console.timeEnd('IMAGE_COMPRESSION');
+          console.error('[WebP Compression Image Load Error]', err);
+          resolve(file); // fallback
+        };
+
+        img.src = objectUrl;
+      } catch (syncErr) {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeoutId);
+          console.timeEnd('IMAGE_COMPRESSION');
+          console.error('[WebP Sync Setup Error]', syncErr);
+          resolve(file);
+        }
+      }
+    });
+  };
+
+  const uploadRawFileToStorage = async (
+    file: File,
+    pathPrefix: string,
+    selectTime: number,
+    onProgress?: (progress: number) => void
+  ): Promise<{
+    url: string;
+    timing: {
+      fileName: string;
+      fileSizeKB: number;
+      selectTime: number;
+      uploadStartTime: number;
+      uploadCompleteTime: number;
+      urlRetrievalCompleteTime: number;
+      uploadDurationMs: number;
+      urlRetrievalDurationMs: number;
+      totalUploadDurationMs: number;
+    };
+  }> => {
+    // 1. Check duplicate cache to prevent redundant uploads (instant retrieval)
+    const cacheKey = `${file.name}_${file.size}`;
+    if (uploadedUrlsCache.current[cacheKey]) {
+      const cachedUrl = uploadedUrlsCache.current[cacheKey];
+      console.log(`[Cache Hit] File "${file.name}" matches an already uploaded session file. Reusing URL: ${cachedUrl}`);
+      if (onProgress) onProgress(100);
+      return {
+        url: cachedUrl,
+        timing: {
+          fileName: `${file.name} (cached)`,
+          fileSizeKB: file.size / 1024,
+          selectTime,
+          uploadStartTime: performance.now(),
+          uploadCompleteTime: performance.now(),
+          urlRetrievalCompleteTime: performance.now(),
+          uploadDurationMs: 0,
+          urlRetrievalDurationMs: 0,
+          totalUploadDurationMs: performance.now() - selectTime
+        }
+      };
+    }
+
+    // 2. Perform client-side WebP compression and optimization first
+    let fileToUpload = file;
+    try {
+      fileToUpload = await compressToWebP(file);
+    } catch (compressErr: any) {
+      throw compressErr;
+    }
+
+    const performUpload = (currentStorage: any, isFallbackAttempt = false): Promise<{
+      url: string;
+      timing: any;
+    }> => {
+      return new Promise((resolve, reject) => {
+        const ext = fileToUpload.name.split('.').pop() || 'webp';
+        const path = `${pathPrefix}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+        const storageRef = ref(currentStorage, path);
+        
+        const uploadStartTime = performance.now();
+        
+        console.log(`[Upload Step 5] Storage Diagnostics:
+- Active bucket (app configuration): ${currentStorage.app.options.storageBucket}
+- Expected Target Bucket URL: gs://${currentStorage.app.options.storageBucket}/${path}
+- Authenticated User UID: ${auth.currentUser?.uid || 'NONE (Unauthenticated)'}
+- Firebase App Project ID: ${currentStorage.app.options.projectId}
+- Uploading: "${fileToUpload.name}" (${(fileToUpload.size / 1024).toFixed(2)} KB) to ${storageRef.fullPath}
+- Storage Bucket configuration object check: ${JSON.stringify(currentStorage.app.options)}
+- Is Fallback Attempt?: ${isFallbackAttempt}`);
+
+        try {
+          console.log(`[Upload Step 6] Calling uploadBytesResumable`);
+          
+          const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+          
+          uploadTask.on('state_changed', 
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log(`[Upload Step 7] Firebase Storage state_changed: ${progress.toFixed(2)}% (${snapshot.bytesTransferred} / ${snapshot.totalBytes} bytes)`);
+              if (onProgress) onProgress(progress);
+            },
+            (error) => {
+              console.error(`[Upload Error] Detailed Firebase Storage Error:`, {
+                code: error.code,
+                name: error.name,
+                message: error.message,
+                customData: error.customData,
+                serverResponse: error.serverResponse,
+              });
+              console.error(`[Upload Error] on ${isFallbackAttempt ? 'fallback' : 'primary'} bucket:`, error);
+              reject(error);
+            },
+            async () => {
+              const uploadCompleteTime = performance.now();
+              const uploadDurationMs = uploadCompleteTime - uploadStartTime;
+              console.log(`[Upload Step 8] Upload completion: Finished transfer. Duration: ${uploadDurationMs.toFixed(2)}ms`);
+              
+              try {
+                const url = await getDownloadURL(uploadTask.snapshot.ref);
+                const urlRetrievalCompleteTime = performance.now();
+                const urlRetrievalDurationMs = urlRetrievalCompleteTime - uploadCompleteTime;
+                console.log(`[Upload Step 9] getDownloadURL result retrieved: ${urlRetrievalDurationMs.toFixed(2)}ms, URL: ${url.substring(0, 50)}...`);
+                
+                const totalUploadDurationMs = urlRetrievalCompleteTime - selectTime;
+                console.log(`[Upload Pipeline Summary] Total upload time: ${totalUploadDurationMs.toFixed(2)}ms`);
+                
+                // Cache successful URL
+                uploadedUrlsCache.current[cacheKey] = url;
+
+                resolve({
+                  url,
+                  timing: {
+                    fileName: fileToUpload.name,
+                    fileSizeKB: fileToUpload.size / 1024,
+                    selectTime,
+                    uploadStartTime,
+                    uploadCompleteTime,
+                    urlRetrievalCompleteTime,
+                    uploadDurationMs,
+                    urlRetrievalDurationMs,
+                    totalUploadDurationMs
+                  }
+                });
+              } catch (urlErr) {
+                console.error('Failed to get download URL:', urlErr);
+                reject(urlErr);
+              }
+            }
+          );
+        } catch (syncErr) {
+          console.error('[Upload Sync Error]', syncErr);
+          reject(syncErr);
+        }
+      });
+    };
+
+    try {
+      const result = await performUpload(storage, false);
+      return result;
+    } catch (primaryErr: any) {
+      console.warn('Primary Firebase Storage upload failed:', primaryErr);
+      const errMsg = primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
+      throw new Error(`Cloud Storage failed: ${errMsg}`);
+    }
   };
 
   const processImageFile = async (file: File, callback: (url: string) => void, _cropSquare: boolean = false) => {
     if (!file) return;
-    const toastId = toast.loading('Uploading file...');
+    if (isUploading) {
+      toast.error('Another upload is in progress');
+      return;
+    }
+    
+    setIsUploading(true);
+    const selectTime = performance.now();
+    console.log(`[Step 1: File Selection] Category image file "${file.name}" selected at ${new Date().toISOString()}`);
+    const toastId = toast.loading('Uploading file: 0%...');
     try {
-      const url = await uploadRawFileToStorage(file, 'categories');
+      const { url, timing } = await uploadRawFileToStorage(file, 'categories', selectTime, (prog) => {
+        toast.loading(`Uploading file: ${prog.toFixed(0)}%`, { id: toastId });
+      });
+      setLastUploadTiming(timing);
       callback(url);
       toast.success('File uploaded successfully!', { id: toastId });
     } catch (err: any) {
       console.error(err);
-      toast.error('Failed to upload file.', { id: toastId });
+      toast.error(err.message || 'Failed to upload file.', { id: toastId });
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const toastId = toast.loading('Uploading image...');
+    if (isUploading) {
+      toast.error('Another upload is in progress');
+      return;
+    }
+
+    setIsUploading(true);
+    const selectTime = performance.now();
+    console.log(`[Step 1: File Selection] Product image file "${file.name}" selected at ${new Date().toISOString()}`);
+    const toastId = toast.loading('Uploading image: 0%...');
     try {
-      const url = await uploadRawFileToStorage(file, 'products');
+      const { url, timing } = await uploadRawFileToStorage(file, 'products', selectTime, (prog) => {
+        toast.loading(`Uploading image: ${prog.toFixed(0)}%`, { id: toastId });
+      });
+      setLastUploadTiming(timing);
       setNewProduct(prev => ({ ...prev, imageUrl: url }));
       toast.success('Image uploaded successfully!', { id: toastId });
     } catch (err: any) {
       console.error(err);
-      toast.error('Failed to upload image.', { id: toastId });
+      toast.error(err.message || 'Failed to upload image.', { id: toastId });
+    } finally {
+      setIsUploading(false);
+      if (e.target) e.target.value = ''; // Reset input to allow re-upload
     }
   };
 
@@ -2059,7 +2568,7 @@ export function AdminDashboard() {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              processImageFile(file, (base64) => setNewProdCatImg(base64), true);
+                              processImageFile(file, (url) => setNewProdCatImg(url), true);
                             }
                           }} 
                           className="hidden" 
@@ -2160,8 +2669,8 @@ export function AdminDashboard() {
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  processImageFile(file, (base64) => {
-                                    updateCategoryImage(cat, base64);
+                                  processImageFile(file, (url) => {
+                                    updateCategoryImage(cat, url);
                                   }, true);
                                 }
                               }} 
@@ -2231,7 +2740,7 @@ export function AdminDashboard() {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              processImageFile(file, (base64) => setNewJuiceCatImg(base64), true);
+                              processImageFile(file, (url) => setNewJuiceCatImg(url), true);
                             }
                           }} 
                           className="hidden" 
@@ -2336,8 +2845,8 @@ export function AdminDashboard() {
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  processImageFile(file, (base64) => {
-                                    updateCategoryImage(cat.name, base64);
+                                  processImageFile(file, (url) => {
+                                    updateCategoryImage(cat.name, url);
                                   }, true);
                                 }
                               }} 

@@ -5,9 +5,18 @@ import { getStorage } from 'firebase/storage';
 import { create } from 'zustand';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+
+// Use a dynamically computed fallback storage bucket (appspot.com vs firebasestorage.app) to ensure reliability
+const primaryBucket = firebaseConfig.storageBucket || "";
+const projectId = firebaseConfig.projectId || "freshnlocal-4a420";
+let fallbackBucketUrl = `gs://${projectId}.appspot.com`;
+if (primaryBucket.endsWith('.appspot.com')) {
+  fallbackBucketUrl = `gs://${primaryBucket.replace('.appspot.com', '.firebasestorage.app')}`;
+}
+export const fallbackStorage = getStorage(app, fallbackBucketUrl);
 export const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true
 }, "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
