@@ -873,6 +873,72 @@ export function AdminDashboard() {
     }
   };
 
+  const handleRemoveItemFromOrder = async (orderId: string, itemIndex: number) => {
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      if (!order.items || order.items.length <= 1) {
+        toast.error("Cannot remove the last item. Cancel or delete the order instead.");
+        return;
+      }
+      const newItems = [...order.items];
+      newItems.splice(itemIndex, 1);
+      
+      const newTotal = newItems.reduce((sum, item) => {
+        const p = item.product || item;
+        return sum + (p.price || 0) * (item.quantity || 1);
+      }, 0);
+
+      await updateDoc(doc(db, 'orders', orderId), { 
+        items: newItems, 
+        totalAmount: newTotal,
+        updatedAt: Date.now() 
+      });
+      
+      const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
+      setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(updatedOrder);
+      }
+      toast.success('Item removed from order');
+    } catch (e: any) {
+      handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
+      toast.error(e?.message || 'Failed to remove item');
+    }
+  };
+
+  const handleUpdateItemQuantityFromOrder = async (orderId: string, itemIndex: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order || !order.items) return;
+      
+      const newItems = [...order.items];
+      newItems[itemIndex] = { ...newItems[itemIndex], quantity: newQuantity };
+      
+      const newTotal = newItems.reduce((sum, item) => {
+        const p = item.product || item;
+        return sum + (p.price || 0) * (item.quantity || 1);
+      }, 0);
+
+      await updateDoc(doc(db, 'orders', orderId), { 
+        items: newItems, 
+        totalAmount: newTotal,
+        updatedAt: Date.now() 
+      });
+      
+      const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
+      setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(updatedOrder);
+      }
+      toast.success('Item quantity updated');
+    } catch (e: any) {
+      handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
+      toast.error(e?.message || 'Failed to update item quantity');
+    }
+  };
+
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
       await updateDoc(doc(db, 'orders', orderId), { status, updatedAt: Date.now() });
@@ -1761,7 +1827,6 @@ export function AdminDashboard() {
   };
 
   const deleteReview = async (reviewId: string) => {
-    if (!window.confirm("Are you sure you want to delete this review?")) return;
     try {
       await deleteDoc(doc(db, 'reviews', reviewId));
       setReviews(reviews.filter(r => r.id !== reviewId));
@@ -3062,9 +3127,52 @@ export function AdminDashboard() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right whitespace-nowrap font-mono shrink-0">
-                          <p className="text-xs font-black text-foreground">₹{(prod.price || 0) * (item.quantity || 1)}</p>
-                          <p className="text-[10px] text-muted-foreground font-bold mt-0.5">{item.quantity || 1} x ₹{prod.price || 0}</p>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="flex items-center gap-2 bg-secondary rounded-lg p-1 border border-border">
+                            <button
+                              type="button"
+                              disabled={selectedOrder.status === 'cancelled' || selectedOrder.status === 'delivered' || (item.quantity || 1) <= 1}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                handleUpdateItemQuantityFromOrder(selectedOrder.id, idx, (item.quantity || 1) - 1);
+                              }}
+                              className="w-6 h-6 flex items-center justify-center rounded bg-background shadow-sm border border-border disabled:opacity-50 text-foreground hover:bg-muted transition-colors"
+                            >
+                              <span className="text-xs font-black">-</span>
+                            </button>
+                            <span className="text-[10px] font-black w-4 text-center">{item.quantity || 1}</span>
+                            <button
+                              type="button"
+                              disabled={selectedOrder.status === 'cancelled' || selectedOrder.status === 'delivered'}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                handleUpdateItemQuantityFromOrder(selectedOrder.id, idx, (item.quantity || 1) + 1);
+                              }}
+                              className="w-6 h-6 flex items-center justify-center rounded bg-background shadow-sm border border-border disabled:opacity-50 text-foreground hover:bg-muted transition-colors"
+                            >
+                              <span className="text-xs font-black">+</span>
+                            </button>
+                          </div>
+                          <div className="text-right whitespace-nowrap font-mono min-w-[60px]">
+                            <p className="text-xs font-black text-foreground">₹{(prod.price || 0) * (item.quantity || 1)}</p>
+                            <p className="text-[10px] text-muted-foreground font-bold mt-0.5">{item.quantity || 1} x ₹{prod.price || 0}</p>
+                          </div>
+                          {selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'delivered' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                handleRemoveItemFromOrder(selectedOrder.id, idx);
+                              }}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors border border-red-500/20 shrink-0"
+                              title="Remove item"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

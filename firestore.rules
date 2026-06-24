@@ -92,7 +92,8 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && isValidOrder(incoming())
         && incoming().userId == request.auth.uid
-        && incoming().status == 'pending';
+        && incoming().status == 'pending'
+        && incoming().totalAmount >= 1000;
         
       allow update: if isSignedIn() 
         && isValidOrder(incoming())
