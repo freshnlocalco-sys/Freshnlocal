@@ -113,6 +113,26 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
   );
 }
 
+function CategoryImage({ src, alt }: { src?: string; alt: string }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  if (!src) return null;
+
+  return (
+    <>
+      {!imageLoaded && <div className="absolute inset-0 bg-muted animate-pulse rounded-[24px]" />}
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setImageLoaded(true)}
+        className={`absolute inset-0 w-full h-full object-cover object-center block transition-all duration-500 group-hover:scale-110 drop-shadow-sm ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        referrerPolicy="no-referrer"
+        loading="lazy"
+      />
+    </>
+  );
+}
+
 export function Home() {
   const { categoryImages, productCategories, loading: settingsLoading } = useSettings();
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
@@ -283,12 +303,9 @@ export function Home() {
                       {(spotlightsLoading || settingsLoading) ? (
                         <div className="w-full h-full bg-border/20 rounded-[24px] animate-pulse" />
                       ) : spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false) ? (
-                        <img
+                        <CategoryImage
                           src={spotlightsConfig[cat.id]?.image || getCategoryImage(cat.name, categoryImages, false) || undefined}
                           alt={cat.name}
-                          className="absolute inset-0 w-full h-full object-cover object-center block transition-transform duration-500 group-hover:scale-110 drop-shadow-sm"
-                          referrerPolicy="no-referrer"
-                          loading="lazy"
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/80 rounded-[24px]">

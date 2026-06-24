@@ -428,7 +428,7 @@ export function AdminDashboard() {
 
   const topProducts = React.useMemo(() => {
     const productCounts: Record<string, { name: string; quantity: number; revenue: number }> = {};
-    filteredOrders.forEach(order => {
+    filteredOrders.filter(o => o.status !== 'cancelled').forEach(order => {
       order.items?.forEach((item: any) => {
         const prod = item?.product || item;
         if (!prod || !prod.id) return;
@@ -1835,7 +1835,7 @@ export function AdminDashboard() {
               </div>
               <div className="slice-bento !p-4 sm:!p-5 flex flex-col gap-1 sm:gap-2">
                 <span className="text-muted-foreground text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Total Revenue</span>
-                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">₹{filteredOrders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0)}</span>
+                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tighter">₹{filteredOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0)}</span>
               </div>
               <div className="slice-bento !p-4 sm:!p-5 flex flex-col gap-1 sm:gap-2">
                 <span className="text-muted-foreground text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Total Pending</span>
