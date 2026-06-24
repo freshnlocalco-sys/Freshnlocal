@@ -149,6 +149,28 @@ export function AdminDashboard() {
     errors: 0
   });
 
+  useEffect(() => {
+    // 4. Audit and Log Firebase Storage initialization at runtime
+    try {
+      const appName = storage?.app?.name || "NONE/Unknown";
+      const projectIdVal = storage?.app?.options?.projectId || "NONE/Unknown";
+      const bucketName = storage?.app?.options?.storageBucket || "NONE/Unknown";
+      const storageExists = typeof storage !== 'undefined' && storage !== null;
+      
+      console.log(`[Storage Audit] Runtime Configuration Debug Check:
+- Firebase App Name: ${appName}
+- Project ID (projectId): ${projectIdVal}
+- Storage Bucket (storageBucket): gs://${bucketName}
+- Storage Instance initialized: ${storageExists}`);
+
+      if (!storageExists) {
+        console.error('[Storage Audit] FAIL: Firebase Storage is null or undefined!');
+      }
+    } catch (err: any) {
+      console.error('[Storage Audit] FAIL: Exception during storage diagnostics check:', err);
+    }
+  }, [storage]);
+
   const dataURLtoBlob = (dataurl: string): Blob => {
     try {
       const arr = dataurl.split(',');

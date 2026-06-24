@@ -382,7 +382,12 @@ export function Home() {
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
             {/* Card 1: COLD CHAIN SUPPLY */}
-            <div className="slice-bento flex flex-col items-start group">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="slice-bento flex flex-col items-start group">
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <Snowflake className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
               </div>
@@ -392,10 +397,15 @@ export function Home() {
                   Temperature-controlled handling from sourcing to delivery, preserving freshness, texture, and nutritional value throughout the journey.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Card 2: LEADING SUPPLIER FOR HORECA */}
-            <div className="slice-bento flex flex-col items-start group">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="slice-bento flex flex-col items-start group">
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -405,10 +415,15 @@ export function Home() {
                   Trusted by hotels, restaurants, cafés, cloud kitchens, and premium food businesses across Surat for consistent quality and reliable supply.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Card 3: WASTE MANAGEMENT */}
-            <div className="slice-bento flex flex-col items-start group">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="slice-bento flex flex-col items-start group">
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <Recycle className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -418,10 +433,15 @@ export function Home() {
                   We minimize food waste through efficient inventory planning, surplus redistribution, and sustainable operational practices.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Card 4: ECO-FRIENDLY PACKAGING */}
-            <div className="slice-bento flex flex-col items-start group">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="slice-bento flex flex-col items-start group">
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -431,10 +451,15 @@ export function Home() {
                   Products are packed using environmentally conscious materials that reduce plastic usage while maintaining product protection.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Card 5: ECO-FRIENDLY DELIVERY */}
-            <div className="slice-bento flex flex-col items-start group">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="slice-bento flex flex-col items-start group">
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <Bike className="w-4 h-4 sm:w-5 sm:h-5 animate-bounce" />
               </div>
@@ -444,10 +469,15 @@ export function Home() {
                   Local deliveries are increasingly powered by electric vehicles, helping reduce emissions and create a cleaner city.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Card 6: FOOD DONATION INITIATIVES */}
-            <div className="slice-bento flex flex-col items-start group">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="slice-bento flex flex-col items-start group">
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <HeartHandshake className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
               </div>
@@ -457,10 +487,15 @@ export function Home() {
                   Safe and consumable surplus produce is redirected to community support programs instead of going to waste.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Card 7: URBAN HEALTH FOCUSED (Symmetric full-width bento style) */}
-            <div className="slice-bento flex flex-col lg:flex-row items-start lg:items-center group col-span-2 lg:col-span-3 gap-4 sm:gap-6 lg:gap-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.7 }}
+              className="slice-bento flex flex-col lg:flex-row items-start lg:items-center group col-span-2 lg:col-span-3 gap-4 sm:gap-6 lg:gap-8">
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-primary/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary border border-primary/20 shrink-0 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                 <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -470,7 +505,7 @@ export function Home() {
                   Curating premium fruits, vegetables, and healthy essentials that help modern families maintain a nutritious lifestyle.
                 </p>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
