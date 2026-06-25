@@ -209,12 +209,19 @@ export function Shop() {
     } catch(e) {}
 
     list.sort((a, b) => {
+      const isOutA = a.inStock === false;
+      const isOutB = b.inStock === false;
+
       const catA = (a.category || '').toLowerCase().trim().replace(' font-bold', '');
       const catB = (b.category || '').toLowerCase().trim().replace(' font-bold', '');
       if (catA !== catB) {
         const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
         const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
         return idxA - idxB;
+      }
+
+      if (isOutA !== isOutB) {
+        return isOutA ? 1 : -1;
       }
 
       return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);

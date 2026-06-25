@@ -596,6 +596,9 @@ export function FNLJuice() {
     juiceCategories.forEach((c, i) => juiceOrder.set(c.id, i));
 
     list.sort((a, b) => {
+      const isOutA = a.inStock === false;
+      const isOutB = b.inStock === false;
+
       const subA = getSubCategory(a);
       const subB = getSubCategory(b);
       
@@ -604,6 +607,11 @@ export function FNLJuice() {
          const idxSubB = juiceOrder.has(subB) ? juiceOrder.get(subB) : 999;
          return idxSubA - idxSubB;
       }
+
+      if (isOutA !== isOutB) {
+        return isOutA ? 1 : -1;
+      }
+
       return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
     });
     return list;

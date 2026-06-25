@@ -381,6 +381,9 @@ export function AdminDashboard() {
     juiceCategories.forEach((c, i) => { if (c && c.id) juiceOrder.set(c.id, i) });
 
     list.sort((a, b) => {
+      const isOutA = a.inStock === false;
+      const isOutB = b.inStock === false;
+
       const catA = (a.category || '').toLowerCase().trim();
       const catB = (b.category || '').toLowerCase().trim();
       if (catA !== catB) {
@@ -400,6 +403,10 @@ export function AdminDashboard() {
             const idxSubB = juiceOrder.has(subB) ? juiceOrder.get(subB) : 999;
             return idxSubA - idxSubB;
          }
+      }
+
+      if (isOutA !== isOutB) {
+        return isOutA ? 1 : -1;
       }
 
       return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
