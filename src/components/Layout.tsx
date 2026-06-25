@@ -299,7 +299,7 @@ export function Layout() {
               <li><Link to="/about" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Our Story & Mission</Link></li>
               <li><Link to="#" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Privacy Policy</Link></li>
               <li><Link to="#" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Terms of Service</Link></li>
-              <li><Link to="#" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Refund & Return Policy</Link></li>
+              <li><Link to="/returns" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Returns & Refund Policy</Link></li>
             </ul>
           </div>
         </div>

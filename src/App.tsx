@@ -12,6 +12,7 @@ import { Orders } from './pages/Orders';
 import { About } from './pages/About';
 import { FNLJuice } from './pages/FNLJuice';
 import { Wishlist } from './pages/Wishlist';
+import { Returns } from './pages/Returns';
 
 import { useSettings } from './store/useSettings';
 
@@ -66,6 +67,7 @@ export default function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="orders" element={<Orders />} />
           <Route path="about" element={<About />} />
+          <Route path="returns" element={<Returns />} />
           <Route path="juice" element={<FNLJuice />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

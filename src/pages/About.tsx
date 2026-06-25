@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Instagram, Facebook } from 'lucide-react';
 
 export function About() {
@@ -69,7 +70,7 @@ export function About() {
       </div>
 
       <div className="mt-32 pt-8 border-t border-border/50 grid grid-cols-1 sm:grid-cols-3 gap-6 text-[10px] font-semibold text-muted-foreground tracking-wide">
-        <span className="hover:text-primary hover:underline cursor-pointer transition-colors block text-left">Return & Refund Policy</span>
+        <Link to="/returns" className="hover:text-primary hover:underline cursor-pointer transition-colors block text-left">Returns & Refund Policy</Link>
         <span className="hover:text-primary hover:underline cursor-pointer transition-colors block sm:text-center text-left">Privacy Policy</span>
         <span className="hover:text-primary hover:underline cursor-pointer transition-colors block sm:text-right text-left">Shipping & Payment Policy</span>
       </div>
