@@ -23,8 +23,8 @@ export function Returns() {
         <h3 className="font-sans font-black text-foreground text-xl mb-4 mt-12">How to Report an Issue</h3>
         <p className="mb-2">Contact us with your order number and details:</p>
         <ul className="mb-6 list-none pl-0 space-y-2">
-          <li><strong>WhatsApp:</strong> +91-XXXXXXXXXX</li>
-          <li><strong>Email:</strong> <a href="mailto:care@freshnlocal.co" className="text-primary hover:underline">care@freshnlocal.co</a></li>
+          <li><strong>WhatsApp / Phone:</strong> +91 7284000881</li>
+          <li><strong>Email:</strong> <a href="mailto:freshnlocalco@gmail.com" className="text-primary hover:underline">freshnlocalco@gmail.com</a></li>
         </ul>
 
         <h3 className="font-sans font-black text-foreground text-xl mb-4 mt-12">Refunds & Replacements</h3>
@@ -49,8 +49,10 @@ export function Returns() {
 
         <h3 className="font-sans font-black text-foreground text-xl mb-4 mt-12">Contact</h3>
         <p className="mb-6">
-          Fresh N Local Co., Surat, Gujarat<br />
-          <strong>Email:</strong> <a href="mailto:care@freshnlocal.co" className="text-primary hover:underline">care@freshnlocal.co</a>
+          <strong>Fresh N Local Co.</strong><br />
+          Gr Floor Hall, Reva Dham Apartment, Uma Bhawan Crossroad, Opp. Ashirwad Palace, Bhatar, Surat, Gujarat<br />
+          <strong>Email:</strong> <a href="mailto:freshnlocalco@gmail.com" className="text-primary hover:underline">freshnlocalco@gmail.com</a><br />
+          <strong>Phone:</strong> +91 7284000881
         </p>
       </div>
     </div>
