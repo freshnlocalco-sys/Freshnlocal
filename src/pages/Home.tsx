@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight, Snowflake, Building2, Recycle, PackageCheck, Bike, HeartHandshake, HeartPulse } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight, Snowflake, Building2, Recycle, PackageCheck, Bike, HeartHandshake, HeartPulse, Search } from 'lucide-react';
 import { db, isQuotaError } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useSettings } from '../store/useSettings';
@@ -169,6 +169,18 @@ export function Home() {
 
   const { products, fetchProducts, hydrateFromIDB } = useProducts();
   const { addItem, items } = useCart();
+  const [heroBanners, setHeroBanners] = useState<{id: string, imageUrl: string, link: string}[]>([]);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [isLoadingHeroBanners, setIsLoadingHeroBanners] = useState(true);
+  const [homeSearchQuery, setHomeSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleHomeSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (homeSearchQuery.trim()) {
+      navigate(`/shop?q=${encodeURIComponent(homeSearchQuery.trim())}`);
+    }
+  };
   
   useEffect(() => {
     async function init() {
@@ -177,6 +189,55 @@ export function Home() {
     }
     init();
   }, [fetchProducts, hydrateFromIDB]);
+
+  useEffect(() => {
+    async function fetchHeroBanners() {
+      try {
+        const docRef = doc(db, 'settings', 'heroBanners');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().banners) {
+          setHeroBanners(docSnap.data().banners);
+        }
+      } catch (err) {
+        console.error("Error fetching hero banners", err);
+      } finally {
+        setIsLoadingHeroBanners(false);
+      }
+    }
+    fetchHeroBanners();
+  }, []);
+
+  const [direction, setDirection] = useState(1); // 1 for right, -1 for left
+  const lastInteractionTimeRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    if (heroBanners.length <= 1) return;
+    const interval = setInterval(() => {
+      if (Date.now() - lastInteractionTimeRef.current >= 10000) {
+        setDirection(1);
+        setCurrentBannerIndex(prev => (prev + 1) % heroBanners.length);
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [heroBanners.length]);
+
+  const slideLeft = () => {
+    lastInteractionTimeRef.current = Date.now();
+    setDirection(-1);
+    setCurrentBannerIndex(prev => (prev - 1 + heroBanners.length) % heroBanners.length);
+  };
+
+  const slideRight = () => {
+    lastInteractionTimeRef.current = Date.now();
+    setDirection(1);
+    setCurrentBannerIndex(prev => (prev + 1) % heroBanners.length);
+  };
+
+  const setBannerIndex = (idx: number) => {
+    lastInteractionTimeRef.current = Date.now();
+    setDirection(idx > currentBannerIndex ? 1 : -1);
+    setCurrentBannerIndex(idx);
+  };
 
   const handleAddToCart = (product: Product) => {
     const currentQty = items.find(item => item.product.id === product.id)?.quantity || 0;
@@ -223,61 +284,159 @@ export function Home() {
     <div className="flex flex-col items-center bg-background text-foreground overflow-x-hidden w-full max-w-full box-border">
       
       {/* Hero Section */}
-      <section className="w-full mx-auto pt-8 md:pt-24 pb-16 md:pb-20 flex flex-col gap-10 lg:gap-12 items-center relative overflow-hidden">
+      <section className="w-full mx-auto pt-8 md:pt-24 pb-16 md:pb-20 flex flex-col gap-8 lg:gap-10 items-center relative overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-72 h-72 md:w-96 md:h-96 bg-primary/5 rounded-full blur-[80px] md:blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 md:w-80 md:h-80 bg-primary/10 rounded-full blur-[80px] md:blur-[100px] pointer-events-none"></div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="space-y-4 md:space-y-6 z-10 flex flex-col items-start lg:items-center text-left lg:text-center w-full max-w-7xl px-4 md:px-8"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-primary/10 text-primary text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-extrabold border border-primary/20 self-start lg:self-center">
-            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary animate-ping"></span>
-            Redefining freshness in Surat
-          </div>
-          
-          <h1 className="title-display text-3xl sm:text-4xl md:text-5xl lg:text-[7rem] leading-[1.1] sm:leading-[1] md:leading-[0.9] font-black tracking-tight uppercase w-full">
-            Freshness <br className="lg:hidden" />
-            <span className="text-foreground">Sliced Simple.</span>
-          </h1>
+        {/* Global Search Bar */}
+        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 relative z-20">
+          <form onSubmit={handleHomeSearch} className="relative w-full shadow-lg shadow-black/5 rounded-full overflow-hidden group border border-border/50 bg-background/80 backdrop-blur-xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300">
+            <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <input
+              type="text"
+              placeholder="Search for fresh fruits, vegetables, or juices..."
+              value={homeSearchQuery}
+              onChange={(e) => setHomeSearchQuery(e.target.value)}
+              className="w-full h-14 sm:h-16 pl-12 sm:pl-16 pr-24 sm:pr-32 bg-transparent border-none outline-none text-base sm:text-lg font-medium placeholder:text-muted-foreground/70"
+            />
+            <button 
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground px-4 sm:px-6 py-2 sm:py-3 rounded-full text-sm font-bold tracking-wide hover:bg-primary/90 transition-colors"
+            >
+              Search
+            </button>
+          </form>
+        </div>
 
-          <p className="text-xs sm:text-sm md:text-base text-muted-foreground w-full max-w-[300px] sm:max-w-md lg:max-w-2xl mx-0 lg:mx-auto leading-relaxed font-sans font-medium text-left lg:text-center">
-            Zero hassle. Ultra-pure quality. Experience Surat's premier tech-driven order bringing crisp, handpicked, local harvests & exotic fruits right to your modern kitchen.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-6 justify-start lg:justify-center w-full sm:w-auto">
-            <Link to="/shop" className="slice-btn-primary px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] w-full sm:w-auto justify-center flex items-center gap-2">
-              SHOP NOW
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-              </span>
-            </Link>
-            <Link to="/juice" className="slice-btn-secondary border-orange-500/20 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5 px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full sm:w-auto">
-              FNL Juice House 🍹
-            </Link>
+        {isLoadingHeroBanners ? (
+          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 relative">
+            <div className="w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-sm bg-secondary animate-pulse" />
           </div>
+        ) : heroBanners.length > 0 ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full max-w-5xl mx-auto px-4 sm:px-6 relative group"
+          >
+            <div className="relative w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-sm bg-secondary/50">
+              <AnimatePresence initial={false} custom={direction}>
+                <motion.div
+                  key={currentBannerIndex}
+                  custom={direction}
+                  initial={{ x: direction > 0 ? '100%' : '-100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: direction > 0 ? '-100%' : '100%' }}
+                  transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
+                  className="absolute inset-0 w-full h-full"
+                >
+                  {heroBanners[currentBannerIndex].link ? (
+                    heroBanners[currentBannerIndex].link.startsWith('http') ? (
+                      <a href={heroBanners[currentBannerIndex].link} target="_blank" rel="noopener noreferrer" className="w-full h-full block">
+                        <img 
+                          src={heroBanners[currentBannerIndex].imageUrl} 
+                          alt="Hero Banner" 
+                          className="w-full h-full object-cover object-center"
+                        />
+                      </a>
+                    ) : (
+                      <Link to={heroBanners[currentBannerIndex].link} className="w-full h-full block">
+                        <img 
+                          src={heroBanners[currentBannerIndex].imageUrl} 
+                          alt="Hero Banner" 
+                          className="w-full h-full object-cover object-center"
+                        />
+                      </Link>
+                    )
+                  ) : (
+                    <img 
+                      src={heroBanners[currentBannerIndex].imageUrl} 
+                      alt="Hero Banner" 
+                      className="w-full h-full object-cover object-center"
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
 
-          <div className="flex flex-wrap justify-start lg:justify-center gap-4 sm:gap-6 md:gap-12 items-center pt-6 md:pt-8 border-t border-border/60 w-full lg:max-w-3xl mt-8 md:mt-10 mx-auto">
-            <div className="text-left lg:text-center flex-1 min-w-[30%]">
-              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">IN 24 HRS</p>
-              <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Guaranteed Delivery</p>
+              {/* Slider Dots */}
+              {heroBanners.length > 1 && (
+                <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+                  {heroBanners.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setBannerIndex(idx)}
+                      className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
+                        idx === currentBannerIndex 
+                          ? 'w-6 sm:w-8 bg-white' 
+                          : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white/80'
+                      }`}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* Navigation Arrows */}
+              {heroBanners.length > 1 && (
+                <>
+                  <button 
+                    onClick={slideLeft}
+                    className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 z-20"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button 
+                    onClick={slideRight}
+                    className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 z-20"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
             </div>
-            <div className="w-px h-8 md:h-10 bg-border/60"></div>
-            <div className="text-left lg:text-center flex-1 min-w-[30%]">
-              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">100%</p>
-              <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Farmer Traceability</p>
-            </div>
-            <div className="hidden sm:block w-px h-8 md:h-10 bg-border/60"></div>
-            <div className="text-left lg:text-center flex-1 min-w-[30%] mt-2 sm:mt-0">
-              <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">0 FEES</p>
-              <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">No Platform Taxes</p>
+          </motion.div>
+        ) : (
+          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6">
+            <div className="relative w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] bg-secondary/30 border border-border/50 flex flex-col items-center justify-center text-center p-6">
+               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mt-16">
+                 <Sparkles className="w-8 h-8 text-primary opacity-50" />
+               </div>
+               <h2 className="text-xl font-black text-foreground mb-2">No Hero Banners Uploaded</h2>
+               <p className="text-sm text-muted-foreground">Admin: Please navigate to the dashboard and upload images (4:3 ratio) for the hero slider.</p>
             </div>
           </div>
-        </motion.div>
+        )}
         
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-6 md:pt-8 justify-center w-full sm:w-auto px-4 z-10">
+          <Link to="/shop" className="slice-btn-primary px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] w-full sm:w-auto justify-center flex items-center gap-2">
+            SHOP NOW
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            </span>
+          </Link>
+          <Link to="/juice" className="slice-btn-secondary border-orange-500/20 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5 px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full sm:w-auto">
+            FNL Juice House 🍹
+          </Link>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-12 items-center pt-6 md:pt-8 w-full lg:max-w-3xl z-10 mx-auto">
+          <div className="text-center flex-1 min-w-[30%]">
+            <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">IN 24 HRS</p>
+            <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Guaranteed Delivery</p>
+          </div>
+          <div className="w-px h-8 md:h-10 bg-border/60"></div>
+          <div className="text-center flex-1 min-w-[30%]">
+            <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">100%</p>
+            <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Farmer Traceability</p>
+          </div>
+          <div className="hidden sm:block w-px h-8 md:h-10 bg-border/60"></div>
+          <div className="text-center flex-1 min-w-[30%] mt-2 sm:mt-0">
+            <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">0 FEES</p>
+            <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">No Platform Taxes</p>
+          </div>
+        </div>
+
         <motion.div
            initial={{ opacity: 0, scale: 0.95 }}
            animate={{ opacity: 1, scale: 1 }}

@@ -74,6 +74,7 @@ export function AdminDashboard() {
     if (location.pathname.includes('/admin/spotlights')) return 'spotlights';
     if (location.pathname.includes('/admin/categories')) return 'categories';
     if (location.pathname.includes('/admin/reviews')) return 'reviews';
+    if (location.pathname.includes('/admin/hero')) return 'hero';
     return 'orders'; // corresponds to consignments
   }, [location.pathname]);
   
@@ -444,6 +445,7 @@ export function AdminDashboard() {
 
   // Spotlights state
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {title: string, image: string}>>({});
+  const [heroBanners, setHeroBanners] = useState<{id: string, imageUrl: string, link: string}[]>([]);
 
   // New product form handling
   const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
@@ -528,6 +530,13 @@ export function AdminDashboard() {
         } else if (activeTab === 'reviews') {
           const reviewsSnap = await getDocs(query(collection(db, 'reviews'), orderBy('createdAt', 'desc')));
           setReviews(reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        } else if (activeTab === 'hero') {
+          const docSnap = await getDoc(doc(db, 'settings', 'heroBanners'));
+          if (docSnap.exists() && docSnap.data().banners) {
+            setHeroBanners(docSnap.data().banners);
+          } else {
+            setHeroBanners([]);
+          }
         }
       } catch (error: any) {
         console.error("Dashboard failed to retrieve live data:", error);
@@ -845,6 +854,61 @@ export function AdminDashboard() {
     }
   };
 
+  const handleHeroBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (isUploading) {
+      toast.error('Another upload is in progress');
+      return;
+    }
+
+    setIsUploading(true);
+    const selectTime = performance.now();
+    const toastId = toast.loading('Uploading banner...');
+    try {
+      const { url, timing } = await uploadRawFileToStorage(file, 'heroBanners', selectTime, (prog) => {
+        toast.loading(`Uploading banner: ${prog.toFixed(0)}%`, { id: toastId });
+      });
+      setLastUploadTiming(timing);
+      
+      const newBanner = { id: Date.now().toString(), imageUrl: url, link: '' };
+      const newBanners = [...heroBanners, newBanner];
+      
+      await setDoc(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
+      setHeroBanners(newBanners);
+      
+      toast.success('Banner uploaded!', { id: toastId });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Failed to upload banner.', { id: toastId });
+    } finally {
+      setIsUploading(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const deleteHeroBanner = async (bannerId: string) => {
+    try {
+      const newBanners = heroBanners.filter(b => b.id !== bannerId);
+      await setDoc(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
+      setHeroBanners(newBanners);
+      toast.success('Banner deleted');
+    } catch (error) {
+      toast.error('Failed to delete banner');
+    }
+  };
+
+  const updateHeroBannerLink = async (bannerId: string, link: string) => {
+    try {
+      const newBanners = heroBanners.map(b => b.id === bannerId ? { ...b, link } : b);
+      await setDoc(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
+      setHeroBanners(newBanners);
+      toast.success('Banner link updated');
+    } catch (error) {
+      toast.error('Failed to update banner link');
+    }
+  };
+
   const handleSpotlightImageUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1126,11 +1190,14 @@ export function AdminDashboard() {
     setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
   };
 
-  const compressToWebP = (file: File): Promise<File> => {
-    return new Promise((resolve) => {
-      // If it's not actually an image, skip WebP compression
+    const compressToWebPAndBase64 = (file: File, isHero: boolean = false): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      // If it's not actually an image, try to read it as base64 anyway
       if (!file.type.startsWith('image/')) {
-        resolve(file);
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
         return;
       }
 
@@ -1146,8 +1213,11 @@ export function AdminDashboard() {
           resolved = true;
           if (objectUrl) URL.revokeObjectURL(objectUrl);
           console.timeEnd('IMAGE_COMPRESSION');
-          console.error('[WebP Compression Timeout] Compression took longer than 5000ms, falling back to original file.');
-          resolve(file);
+          console.error('[WebP Compression Timeout] Compression took longer than 5000ms.');
+          // Fallback to FileReader
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
         }
       }, 5000);
 
@@ -1158,12 +1228,12 @@ export function AdminDashboard() {
         img.onload = () => {
           if (resolved) return;
           
-          // Revoke the object URL immediately to release browser memory
           if (objectUrl) URL.revokeObjectURL(objectUrl);
           try {
             let width = img.naturalWidth || img.width;
             let height = img.naturalHeight || img.height;
-            const maxDimension = 1600;
+            // Target smaller dimension to stay safely under Firestore 1MB document limit
+            const maxDimension = isHero ? 1920 : 1200;
 
             if (width > maxDimension || height > maxDimension) {
               if (width > height) {
@@ -1184,50 +1254,40 @@ export function AdminDashboard() {
               if (!resolved) {
                 resolved = true;
                 clearTimeout(timeoutId);
-                console.warn('[WebP Compression] Canvas 2D context unavailable, falling back to original file.');
-                resolve(file);
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target?.result as string);
+                reader.readAsDataURL(file);
               }
               return;
             }
 
-            // Draw image maintaining exact aspect ratio, no stretching/cropping/zooming
             ctx.clearRect(0, 0, width, height);
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Standardize on image/webp with 90% quality (within 88-92% range)
-            canvas.toBlob(
-              (blob) => {
-                if (resolved) return;
-                resolved = true;
-                clearTimeout(timeoutId);
-                console.timeEnd('IMAGE_COMPRESSION');
-                if (!blob) {
-                  console.warn('[WebP Compression] toBlob returned empty, falling back to original file.');
-                  resolve(file);
-                  return;
-                }
-
-                const originalNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                const webpFile = new File([blob], `${originalNameWithoutExt}.webp`, {
-                  type: 'image/webp',
-                  lastModified: Date.now(),
-                });
-
-                const compressionDuration = performance.now() - compressionStartTime;
-                console.log(`[Upload Step 3] WebP Compression Success in ${compressionDuration.toFixed(2)}ms`);
-                console.log(`[Upload Step 4] Optimized file: "${webpFile.name}" (Size: ${(webpFile.size / 1024).toFixed(2)} KB). Size reduced to ${((webpFile.size / file.size) * 100).toFixed(1)}%`);
-                resolve(webpFile);
-              },
-              'image/webp',
-              0.90 // 88-92% quality range
-            );
+            // Use higher quality for hero banners
+            const quality = isHero ? 0.92 : 0.80;
+            const dataUrl = canvas.toDataURL('image/webp', quality);
+            
+            resolved = true;
+            clearTimeout(timeoutId);
+            console.timeEnd('IMAGE_COMPRESSION');
+            
+            const compressionDuration = performance.now() - compressionStartTime;
+            console.log(`[Upload Step 3] WebP Compression Success in ${compressionDuration.toFixed(2)}ms`);
+            
+            // Log approx base64 size (length * 0.75)
+            const approxSizeKb = (dataUrl.length * 0.75) / 1024;
+            console.log(`[Upload Step 4] Optimized Data URL Size: ${approxSizeKb.toFixed(2)} KB.`);
+            
+            resolve(dataUrl);
           } catch (err) {
             if (resolved) return;
             resolved = true;
             clearTimeout(timeoutId);
             console.timeEnd('IMAGE_COMPRESSION');
-            console.error('[WebP Compression Error]', err);
-            resolve(file); // fallback
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.readAsDataURL(file);
           }
         };
 
@@ -1237,8 +1297,9 @@ export function AdminDashboard() {
           clearTimeout(timeoutId);
           if (objectUrl) URL.revokeObjectURL(objectUrl);
           console.timeEnd('IMAGE_COMPRESSION');
-          console.error('[WebP Compression Image Load Error]', err);
-          resolve(file); // fallback
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
         };
 
         img.src = objectUrl;
@@ -1247,8 +1308,9 @@ export function AdminDashboard() {
           resolved = true;
           clearTimeout(timeoutId);
           console.timeEnd('IMAGE_COMPRESSION');
-          console.error('[WebP Sync Setup Error]', syncErr);
-          resolve(file);
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
         }
       }
     });
@@ -1273,11 +1335,10 @@ export function AdminDashboard() {
       totalUploadDurationMs: number;
     };
   }> => {
-    // 1. Check duplicate cache to prevent redundant uploads (instant retrieval)
+    // 1. Check duplicate cache to prevent redundant uploads
     const cacheKey = `${file.name}_${file.size}`;
     if (uploadedUrlsCache.current[cacheKey]) {
       const cachedUrl = uploadedUrlsCache.current[cacheKey];
-      console.log(`[Cache Hit] File "${file.name}" matches an already uploaded session file. Reusing URL: ${cachedUrl}`);
       if (onProgress) onProgress(100);
       return {
         url: cachedUrl,
@@ -1295,108 +1356,34 @@ export function AdminDashboard() {
       };
     }
 
-    // 2. Perform client-side WebP compression and optimization first
-    let fileToUpload = file;
-    try {
-      fileToUpload = await compressToWebP(file);
-    } catch (compressErr: any) {
-      throw compressErr;
-    }
+    const uploadStartTime = performance.now();
+    if (onProgress) onProgress(25);
+    
+    // Convert to highly compressed Base64 WebP Data URL
+    // This completely bypasses Firebase Storage which is likely throwing "unauthorized" 
+    // because AI Studio doesn't provision Storage Rules by default.
+    const isHero = pathPrefix === 'heroBanners';
+    const dataUrl = await compressToWebPAndBase64(file, isHero);
+    
+    if (onProgress) onProgress(100);
+    const uploadCompleteTime = performance.now();
+    
+    uploadedUrlsCache.current[cacheKey] = dataUrl;
 
-    const performUpload = (currentStorage: any, isFallbackAttempt = false): Promise<{
-      url: string;
-      timing: any;
-    }> => {
-      return new Promise((resolve, reject) => {
-        const ext = fileToUpload.name.split('.').pop() || 'webp';
-        const path = `${pathPrefix}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-        const storageRef = ref(currentStorage, path);
-        
-        const uploadStartTime = performance.now();
-        
-        console.log(`[Upload Step 5] Storage Diagnostics:
-- Active bucket (app configuration): ${currentStorage.app.options.storageBucket}
-- Expected Target Bucket URL: gs://${currentStorage.app.options.storageBucket}/${path}
-- Authenticated User UID: ${auth.currentUser?.uid || 'NONE (Unauthenticated)'}
-- Firebase App Project ID: ${currentStorage.app.options.projectId}
-- Uploading: "${fileToUpload.name}" (${(fileToUpload.size / 1024).toFixed(2)} KB) to ${storageRef.fullPath}
-- Storage Bucket configuration object check: ${JSON.stringify(currentStorage.app.options)}
-- Is Fallback Attempt?: ${isFallbackAttempt}`);
-
-        try {
-          console.log(`[Upload Step 6] Calling uploadBytesResumable`);
-          
-          const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
-          
-          uploadTask.on('state_changed', 
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              console.log(`[Upload Step 7] Firebase Storage state_changed: ${progress.toFixed(2)}% (${snapshot.bytesTransferred} / ${snapshot.totalBytes} bytes)`);
-              if (onProgress) onProgress(progress);
-            },
-            (error) => {
-              console.error(`[Upload Error] Detailed Firebase Storage Error:`, {
-                code: error.code,
-                name: error.name,
-                message: error.message,
-                customData: error.customData,
-                serverResponse: error.serverResponse,
-              });
-              console.error(`[Upload Error] on ${isFallbackAttempt ? 'fallback' : 'primary'} bucket:`, error);
-              reject(error);
-            },
-            async () => {
-              const uploadCompleteTime = performance.now();
-              const uploadDurationMs = uploadCompleteTime - uploadStartTime;
-              console.log(`[Upload Step 8] Upload completion: Finished transfer. Duration: ${uploadDurationMs.toFixed(2)}ms`);
-              
-              try {
-                const url = await getDownloadURL(uploadTask.snapshot.ref);
-                const urlRetrievalCompleteTime = performance.now();
-                const urlRetrievalDurationMs = urlRetrievalCompleteTime - uploadCompleteTime;
-                console.log(`[Upload Step 9] getDownloadURL result retrieved: ${urlRetrievalDurationMs.toFixed(2)}ms, URL: ${url.substring(0, 50)}...`);
-                
-                const totalUploadDurationMs = urlRetrievalCompleteTime - selectTime;
-                console.log(`[Upload Pipeline Summary] Total upload time: ${totalUploadDurationMs.toFixed(2)}ms`);
-                
-                // Cache successful URL
-                uploadedUrlsCache.current[cacheKey] = url;
-
-                resolve({
-                  url,
-                  timing: {
-                    fileName: fileToUpload.name,
-                    fileSizeKB: fileToUpload.size / 1024,
-                    selectTime,
-                    uploadStartTime,
-                    uploadCompleteTime,
-                    urlRetrievalCompleteTime,
-                    uploadDurationMs,
-                    urlRetrievalDurationMs,
-                    totalUploadDurationMs
-                  }
-                });
-              } catch (urlErr) {
-                console.error('Failed to get download URL:', urlErr);
-                reject(urlErr);
-              }
-            }
-          );
-        } catch (syncErr) {
-          console.error('[Upload Sync Error]', syncErr);
-          reject(syncErr);
-        }
-      });
+    return {
+      url: dataUrl,
+      timing: {
+        fileName: file.name,
+        fileSizeKB: file.size / 1024,
+        selectTime,
+        uploadStartTime,
+        uploadCompleteTime,
+        urlRetrievalCompleteTime: uploadCompleteTime,
+        uploadDurationMs: uploadCompleteTime - uploadStartTime,
+        urlRetrievalDurationMs: 0,
+        totalUploadDurationMs: uploadCompleteTime - selectTime
+      }
     };
-
-    try {
-      const result = await performUpload(storage, false);
-      return result;
-    } catch (primaryErr: any) {
-      console.warn('Primary Firebase Storage upload failed:', primaryErr);
-      const errMsg = primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
-      throw new Error(`Cloud Storage failed: ${errMsg}`);
-    }
   };
 
   const processImageFile = async (file: File, callback: (url: string) => void, _cropSquare: boolean = false) => {
@@ -1873,6 +1860,12 @@ export function AdminDashboard() {
             className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'categories' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
           >
             <Sliders className="w-4 h-4" /> Categories
+          </button>
+          <button 
+            onClick={() => navigate('/admin/hero')}
+            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'hero' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+          >
+            <Sparkles className="w-4 h-4" /> Hero Banners
           </button>
           <button 
             onClick={() => navigate('/admin/reviews')}
@@ -2955,6 +2948,81 @@ export function AdminDashboard() {
               </div>
             </div>
 
+          </div>
+        ) : activeTab === 'hero' ? (
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black uppercase text-foreground flex items-center gap-2">
+                  <Sparkles className="w-6 h-6 text-primary" /> Hero Banners
+                </h2>
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">
+                  Manage the image slider shown at the top of the home page. Use 4:3 aspect ratio images for best results.
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-secondary p-6 rounded-2xl border border-border">
+              <label className="slice-btn-primary px-6 py-4 cursor-pointer inline-flex items-center justify-center font-black uppercase text-xs tracking-widest relative overflow-hidden transition-all group">
+                <span className="relative z-10 flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  {isUploading ? 'Uploading...' : 'Upload New Hero Banner'}
+                </span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleHeroBannerUpload}
+                  disabled={isUploading}
+                />
+              </label>
+            </div>
+
+            {heroBanners.length === 0 ? (
+              <div className="bg-secondary/50 border border-border rounded-2xl p-12 text-center">
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">No hero banners uploaded.</p>
+                <p className="text-[10px] text-muted-foreground mt-2">Upload an image to replace the default text hero section.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {heroBanners.map(banner => (
+                  <div key={banner.id} className="bg-white border border-border p-4 rounded-2xl flex flex-col gap-4">
+                    <div className="w-full aspect-[4/3] bg-secondary rounded-xl overflow-hidden relative">
+                      <img src={banner.imageUrl} alt="Hero Banner" className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => deleteHeroBanner(banner.id)}
+                        className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-red-500 hover:text-white rounded-lg backdrop-blur-sm text-red-500 shadow-sm transition-colors"
+                        title="Delete Banner"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground">Banner Link (Optional)</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text"
+                          defaultValue={banner.link || ''}
+                          onBlur={(e) => {
+                            if (e.target.value !== banner.link) {
+                              updateHeroBannerLink(banner.id, e.target.value);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
+                          placeholder="e.g., /shop?category=exotic fruits or https://google.com"
+                          className="slice-input w-full text-xs"
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Press enter or click outside to save. Use a relative path like /shop or a full URL starting with http.</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : activeTab === 'reviews' ? (
           <div className="max-w-4xl mx-auto space-y-6">

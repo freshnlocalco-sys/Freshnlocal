@@ -24,9 +24,18 @@ export function Shop() {
     return ['All Products', ...cleanCategories];
   }, [productCategories]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const { addItem } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '');
+  const { addItem } = useCart();
+  
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null && q !== searchQuery) {
+      setSearchQuery(q);
+    } else if (q === null && searchQuery !== '') {
+      setSearchQuery('');
+    }
+  }, [searchParams]);
   const navigate = useNavigate();
   const categoryFilter = searchParams.get('category') || allUiCategories[0] || 'All Products';
   const [isOffline, setIsOffline] = useState(false);
@@ -112,6 +121,15 @@ export function Shop() {
   const handleSearchSelect = (term: string) => {
     setSearchQuery(term);
     setIsSearchFocused(false);
+    
+    const newParams = new URLSearchParams(searchParams);
+    if (term) {
+      newParams.set('q', term);
+    } else {
+      newParams.delete('q');
+    }
+    setSearchParams(newParams);
+
     if (!term) return;
     
     const newRecent = [term, ...recentSearches.filter(s => s.toLowerCase() !== term.toLowerCase())].slice(0, 5);
@@ -125,7 +143,16 @@ export function Shop() {
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    const val = e.target.value;
+    setSearchQuery(val);
+    
+    const newParams = new URLSearchParams(searchParams);
+    if (val) {
+      newParams.set('q', val);
+    } else {
+      newParams.delete('q');
+    }
+    setSearchParams(newParams, { replace: true });
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -164,7 +191,12 @@ export function Shop() {
     const matchesCategory = categoryFilter && categoryFilter.toLowerCase() !== 'all products'
       ? productCategory === categoryFilter.toLowerCase()
       : true;
-    const matchesSearch = p.name ? p.name.toLowerCase().includes((searchQuery || '').toLowerCase()) : false;
+    const searchLower = (searchQuery || '').toLowerCase();
+    const matchesSearch = searchLower ? (
+      (p.name && p.name.toLowerCase().includes(searchLower)) ||
+      (p.category && p.category.toLowerCase().includes(searchLower)) ||
+      (p.description && p.description.toLowerCase().includes(searchLower))
+    ) : true;
     const matchesPrice = typeof p.price === 'number' ? p.price <= maxPrice : true;
     return matchesCategory && matchesSearch && matchesPrice;
   });
@@ -237,7 +269,7 @@ export function Shop() {
             />
             {searchQuery && (
               <button 
-                onClick={() => setSearchQuery('')}
+                onClick={() => handleSearchSelect('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-muted text-muted-foreground hover:bg-secondary"
               >
                 <X className="w-3 h-3" />
