@@ -208,16 +208,16 @@ export function Home() {
   }, []);
 
   const [direction, setDirection] = useState(1); // 1 for right, -1 for left
-  const lastInteractionTimeRef = useRef<number>(Date.now());
+  const lastInteractionTimeRef = useRef<number>(Date.now() - 4000);
 
   useEffect(() => {
     if (heroBanners.length <= 1) return;
     const interval = setInterval(() => {
-      if (Date.now() - lastInteractionTimeRef.current >= 10000) {
+      if (Date.now() - lastInteractionTimeRef.current >= 7000) {
         setDirection(1);
         setCurrentBannerIndex(prev => (prev + 1) % heroBanners.length);
       }
-    }, 4000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [heroBanners.length]);
 
@@ -309,17 +309,17 @@ export function Home() {
         </div>
 
         {isLoadingHeroBanners ? (
-          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 relative">
-            <div className="w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-sm bg-secondary animate-pulse" />
+          <div className="w-full md:max-w-6xl md:mx-auto md:px-6 relative">
+            <div className="w-full aspect-[4/3] md:rounded-[32px] overflow-hidden bg-secondary animate-pulse" />
           </div>
         ) : heroBanners.length > 0 ? (
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="w-full max-w-5xl mx-auto px-4 sm:px-6 relative group"
+            className="w-full md:max-w-6xl md:mx-auto md:px-6 relative group"
           >
-            <div className="relative w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-sm bg-secondary/50">
+            <div className="relative w-full aspect-[4/3] md:rounded-[32px] overflow-hidden bg-secondary/50 md:shadow-sm">
               <AnimatePresence initial={false} custom={direction}>
                 <motion.div
                   key={currentBannerIndex}
@@ -396,8 +396,8 @@ export function Home() {
             </div>
           </motion.div>
         ) : (
-          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6">
-            <div className="relative w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] bg-secondary/30 border border-border/50 flex flex-col items-center justify-center text-center p-6">
+          <div className="w-full md:max-w-6xl md:mx-auto md:px-6">
+            <div className="relative w-full aspect-[4/3] md:rounded-[32px] bg-secondary/30 md:border border-y border-border/50 flex flex-col items-center justify-center text-center p-6">
                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mt-16">
                  <Sparkles className="w-8 h-8 text-primary opacity-50" />
                </div>
