@@ -22,7 +22,7 @@ export const CATEGORIES = [
   { id: 'imported / super exotic vegetables', name: 'Imported Veggies', tagline: 'Direct from premium international farms', discount: 'Exclusive' },
   { id: 'leafy greens', name: 'Leafy Greens', tagline: 'Hydroponic crisp kale, spinach & lettuce', discount: '100% Organic' },
   { id: 'frozen items', name: 'Frozen Premium', tagline: 'Snap-frozen berries & sweet corn', discount: 'Long Shelf life' },
-  { id: 'mushrooms', name: 'Mushrooms', tagline: 'Fresh oyster, button & exotic funghi', discount: 'Earthy Fresh' }
+  { id: 'mushroom', name: 'Mushroom', tagline: 'Fresh oyster, button & exotic funghi', discount: 'Earthy Fresh' }
 ];
 
 function CategoryCarousel({ category, products, handleAddToCart }: { key?: React.Key | null | undefined; category: any; products: Product[]; handleAddToCart: (product: Product) => void }) {
@@ -142,12 +142,18 @@ export function Home() {
     if (!productCategories || productCategories.length === 0) return CATEGORIES;
     
     return productCategories.map(catName => {
-      const match = CATEGORIES.find(c => 
-        c.name.toLowerCase() === catName.toLowerCase() || 
-        c.id.toLowerCase() === catName.toLowerCase() ||
-        (catName.toLowerCase() === 'exotics' && c.id.includes('imported')) ||
-        (catName.toLowerCase() === 'clean cuts' && c.id.includes('hygenic'))
-      );
+      const match = CATEGORIES.find(c => {
+        const cLower = c.name.toLowerCase();
+        const catLower = catName.toLowerCase();
+        return cLower === catLower || 
+        c.id.toLowerCase() === catLower ||
+        (catLower === 'exotics' && c.id.includes('imported')) ||
+        (catLower === 'clean cuts' && c.id.includes('hygenic')) ||
+        (cLower === 'exotic vegetables' && catLower === 'exotic vegetable') ||
+        (cLower === 'imported vegetables' && catLower === 'imported vegetable') ||
+        (cLower === 'mushrooms' && catLower === 'mushroom') ||
+        (cLower === 'mushroom' && catLower === 'mushrooms');
+      });
       
       if (match) {
         return {
@@ -500,7 +506,22 @@ export function Home() {
               const categoryProducts = products.filter(p => {
                 const pCat = (p.category || '').toLowerCase();
                 const cId = category.id.toLowerCase();
-                return pCat === cId || (category.originalId && pCat === category.originalId.toLowerCase());
+                const isVegMatch = (
+                  (pCat === 'exotic vegetables' && cId === 'exotic vegetable') ||
+                  (pCat === 'exotic vegetable' && cId === 'exotic vegetables') ||
+                  (pCat === 'imported vegetables' && cId === 'imported vegetable') ||
+                  (pCat === 'imported vegetable' && cId === 'imported vegetables') ||
+                  (pCat === 'imported / super exotic vegetables' && (cId === 'exotic vegetable' || cId === 'exotic vegetables')) ||
+                  (pCat === 'mushroom' && cId === 'mushrooms') ||
+                  (pCat === 'mushrooms' && cId === 'mushroom') ||
+                  (pCat === 'exotic vegetables' && category.originalId?.toLowerCase() === 'exotic vegetable') ||
+                  (pCat === 'imported vegetables' && category.originalId?.toLowerCase() === 'imported vegetable') ||
+                  (pCat === 'exotic vegetable' && category.originalId?.toLowerCase() === 'exotic vegetables') ||
+                  (pCat === 'imported vegetable' && category.originalId?.toLowerCase() === 'imported vegetables') ||
+                  (pCat === 'mushroom' && category.originalId?.toLowerCase() === 'mushrooms') ||
+                  (pCat === 'mushrooms' && category.originalId?.toLowerCase() === 'mushroom')
+                );
+                return pCat === cId || (category.originalId && pCat === category.originalId.toLowerCase()) || isVegMatch;
               });
               // Only show category if it has products
               if (categoryProducts.length === 0) return null;

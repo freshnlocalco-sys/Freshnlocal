@@ -26,6 +26,7 @@ interface SettingsState {
   fetchCategoryImages: (force?: boolean) => Promise<void>;
   updateCategoryImage: (category: string, url: string) => Promise<void>;
   addProductCategory: (categoryName: string, imageUrl?: string) => Promise<void>;
+  editProductCategory: (oldCategoryName: string, newCategoryName: string) => Promise<void>;
   addJuiceCategory: (name: string, tagline: string, imageUrl?: string) => Promise<void>;
   deleteProductCategory: (categoryName: string) => Promise<void>;
   deleteJuiceCategory: (id: string, name: string) => Promise<void>;
@@ -225,6 +226,66 @@ export const useSettings = create<SettingsState>((set, get) => ({
 
       set({ productCategories: updated });
       toast.success(`Category "${normalizedNew}" added successfully`);
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
+      throw error;
+    }
+  },
+  editProductCategory: async (oldCategoryName: string, newCategoryName: string) => {
+    try {
+      const current = get().productCategories;
+      const normalizedOld = oldCategoryName.trim();
+      const normalizedNew = newCategoryName.trim();
+      
+      if (!normalizedNew) {
+        throw new Error('New category name cannot be empty');
+      }
+
+      let updated;
+      if (normalizedOld.toLowerCase() === normalizedNew.toLowerCase()) {
+         // Case change only
+         updated = current.map(c => c === oldCategoryName ? normalizedNew : c);
+      } else if (current.some(c => c && c.toLowerCase() === normalizedNew.toLowerCase())) {
+         // Target already exists! Remove the old one instead of renaming to avoid duplicates
+         updated = current.filter(c => c !== oldCategoryName);
+      } else {
+         updated = current.map(c => c === oldCategoryName ? normalizedNew : c);
+      }
+      
+      const docRef = doc(db, 'settings', 'categoriesConfig');
+      await setDoc(docRef, { productCategories: updated }, { merge: true });
+      cacheManager.set('productCategories', updated);
+      
+      // We also update categoryImages to copy over the old image to the new key
+      const oldKey = normalizedOld.toLowerCase().replace(/ font-bold/gi, '').trim();
+      const newKey = normalizedNew.toLowerCase().replace(/ font-bold/gi, '').trim();
+      
+      const currentImages = get().categoryImages;
+      if (currentImages[oldKey]) {
+        const oldImg = currentImages[oldKey];
+        const newImages = { ...currentImages };
+        
+        // Remove old keys
+        delete newImages[oldKey];
+        const oldSingular = oldKey.endsWith('s') ? oldKey.slice(0, -1) : oldKey;
+        const oldPlural = oldKey.endsWith('s') ? oldKey : oldKey + 's';
+        delete newImages[oldSingular];
+        delete newImages[oldPlural];
+        
+        // Add new keys
+        newImages[newKey] = oldImg;
+        const newSingular = newKey.endsWith('s') ? newKey.slice(0, -1) : newKey;
+        const newPlural = newKey.endsWith('s') ? newKey : newKey + 's';
+        newImages[newSingular] = oldImg;
+        newImages[newPlural] = oldImg;
+        
+        const imgRef = doc(db, 'settings', 'categoryImages');
+        await setDoc(imgRef, newImages);
+        cacheManager.set('categoryImages', newImages);
+        set({ categoryImages: newImages });
+      }
+
+      set({ productCategories: updated });
     } catch (error: any) {
       handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
       throw error;

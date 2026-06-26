@@ -125,6 +125,7 @@ export function AdminDashboard() {
   // Confirmation states to avoid iframe-blocking window.confirm
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [prodCatToDelete, setProdCatToDelete] = useState<string | null>(null);
+  const [editingProdCat, setEditingProdCat] = useState<{ oldName: string; newName: string } | null>(null);
   const [juiceCatToDelete, setJuiceCatToDelete] = useState<{ id: string; name: string } | null>(null);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
 
@@ -149,6 +150,72 @@ export function AdminDashboard() {
     migrated: 0,
     errors: 0
   });
+
+  
+
+  useEffect(() => {
+    const fixOrphanedProducts = async () => {
+      if (!user || user.role !== 'admin' || products.length === 0) return;
+      
+      let count = 0;
+      for (const p of products) {
+        const cat = p.category?.toLowerCase().trim();
+        let newCat = null;
+        
+        if (cat === 'exotic vegetables' || cat === 'exotic vegetable' || cat === 'imported / super exotic vegetables') {
+           newCat = 'exotic vegetable';
+        } else if (cat === 'imported vegetables' || cat === 'imported vegetable') {
+           newCat = 'imported vegetable';
+        }
+
+        if (newCat && p.category !== newCat) {
+          try {
+            await updateDoc(doc(db, 'products', p.id), { category: newCat });
+            count++;
+          } catch (e) {}
+        }
+      }
+
+      if (count > 0) {
+        toast.success(`Restored ${count} products to singular category names.`);
+        const m = await import('../store/useProducts');
+        await m.useProducts.getState().fetchProducts(true);
+      }
+
+      const { productCategories, addProductCategory, editProductCategory, deleteProductCategory } = useSettings.getState();
+      
+      const hasPluralImp = productCategories.find(c => c && c.toLowerCase().trim() === 'imported vegetables');
+      const hasSingularImp = productCategories.find(c => c && c.toLowerCase().trim() === 'imported vegetable');
+
+      try {
+        if (hasPluralImp && hasSingularImp) {
+          await deleteProductCategory(hasPluralImp);
+        } else if (hasPluralImp && !hasSingularImp) {
+          await editProductCategory(hasPluralImp, 'Imported Vegetable');
+        } else if (!hasPluralImp && !hasSingularImp) {
+          await addProductCategory('Imported Vegetable');
+        }
+      } catch (e) {
+        console.warn('Failed to fix imported vegetables category:', e);
+      }
+
+      const hasPluralExo = productCategories.find(c => c && c.toLowerCase().trim() === 'exotic vegetables');
+      const hasSingularExo = productCategories.find(c => c && c.toLowerCase().trim() === 'exotic vegetable');
+      
+      try {
+        if (hasPluralExo && hasSingularExo) {
+          await deleteProductCategory(hasPluralExo);
+        } else if (hasPluralExo && !hasSingularExo) {
+          await editProductCategory(hasPluralExo, 'Exotic Vegetable');
+        } else if (!hasPluralExo && !hasSingularExo) {
+          await addProductCategory('Exotic Vegetable');
+        }
+      } catch (e) {
+        console.warn('Failed to fix exotic vegetables category:', e);
+      }
+    };
+    fixOrphanedProducts();
+  }, [products.length, user]);
 
   useEffect(() => {
     // 4. Audit and Log Firebase Storage initialization at runtime
@@ -384,8 +451,15 @@ export function AdminDashboard() {
       const isOutA = a.inStock === false;
       const isOutB = b.inStock === false;
 
-      const catA = (a.category || '').toLowerCase().trim();
-      const catB = (b.category || '').toLowerCase().trim();
+      let catA = (a.category || '').toLowerCase().trim();
+      let catB = (b.category || '').toLowerCase().trim();
+      if (catA === 'exotic vegetables') catA = 'exotic vegetable';
+      if (catA === 'imported vegetables') catA = 'imported vegetable';
+      if (catA === 'mushrooms') catA = 'mushroom';
+      if (catB === 'exotic vegetables') catB = 'exotic vegetable';
+      if (catB === 'imported vegetables') catB = 'imported vegetable';
+      if (catB === 'mushrooms') catB = 'mushroom';
+
       if (catA !== catB) {
         const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
         const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
@@ -1473,6 +1547,62 @@ export function AdminDashboard() {
       toast.error(`Failed to delete category: ${error.message}`);
     } finally {
       setProdCatToDelete(null);
+    }
+  };
+
+  const handleConfirmEditProdCat = async () => {
+    if (!editingProdCat || !editingProdCat.newName.trim() || editingProdCat.newName === editingProdCat.oldName) {
+      setEditingProdCat(null);
+      return;
+    }
+    try {
+      const { editProductCategory } = useSettings.getState();
+      await editProductCategory(editingProdCat.oldName, editingProdCat.newName);
+      
+      const oldCatOriginal = editingProdCat.oldName.toLowerCase().trim();
+      let oCat = oldCatOriginal;
+      if (oCat === 'exotic vegetables') oCat = 'exotic vegetable';
+      if (oCat === 'imported vegetables') oCat = 'imported vegetable';
+      if (oCat === 'mushrooms') oCat = 'mushroom';
+      
+      const newCat = editingProdCat.newName.trim();
+      
+      const productsToUpdate = products.filter(p => {
+        let pCat = p.category?.toLowerCase().trim() || '';
+        if (pCat === 'exotic vegetables') pCat = 'exotic vegetable';
+        if (pCat === 'imported vegetables') pCat = 'imported vegetable';
+        if (pCat === 'mushrooms') pCat = 'mushroom';
+        return pCat === oCat || pCat === oldCatOriginal || p.category?.toLowerCase().trim() === oldCatOriginal;
+      });
+      
+      if (productsToUpdate.length > 0) {
+        let updatedCount = 0;
+        for (const p of productsToUpdate) {
+           try {
+             await updateDoc(doc(db, 'products', p.id), { 
+               category: newCat,
+               updatedAt: Date.now()
+             });
+             updatedCount++;
+           } catch(e: any) {
+             console.error(`Failed to update product category for ${p.name}:`, e.message);
+           }
+        }
+        if (updatedCount > 0) {
+          const m = await import('../store/useProducts');
+          await m.useProducts.getState().fetchProducts(true);
+          toast.success(`Category renamed and ${updatedCount} products updated`);
+        } else {
+          toast.success('Category renamed successfully');
+        }
+      } else {
+        toast.success('Category renamed successfully');
+      }
+
+    } catch (error: any) {
+      toast.error(`Failed to rename category: ${error.message}`);
+    } finally {
+      setEditingProdCat(null);
     }
   };
 
@@ -2732,15 +2862,26 @@ export function AdminDashboard() {
                     >
                       <div className="flex justify-between items-start gap-2 z-10 w-full min-w-0">
                         <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate flex-1 leading-tight self-center" title={cat}>{cat}</h3>
-                        <button
-                          onClick={() => {
-                            setProdCatToDelete(cat);
-                          }}
-                          className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer shrink-0 self-center"
-                          title="Delete Category"
-                        >
-                          <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                        </button>
+                        <div className="flex gap-1 shrink-0 self-center">
+                          <button
+                            onClick={() => {
+                              setEditingProdCat({ oldName: cat, newName: cat });
+                            }}
+                            className="p-1 sm:p-1.5 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary hover:text-green-700 transition-colors cursor-pointer"
+                            title="Edit Category"
+                          >
+                            <Edit2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setProdCatToDelete(cat);
+                            }}
+                            className="p-1 sm:p-1.5 rounded-lg bg-red-500/5 hover:bg-red-500/10 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                            title="Delete Category"
+                          >
+                            <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-white border border-border z-10 flex shrink-0">
                          <img src={currentImg || null} alt={cat} className="w-full h-full object-cover" />
@@ -3357,6 +3498,43 @@ export function AdminDashboard() {
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
               >
                 Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Edit Category Modal */}
+      {editingProdCat && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setEditingProdCat(null)} />
+          <div className="bg-secondary border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-205">
+            <h3 className="text-lg font-black uppercase text-foreground">Edit Category Name</h3>
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Category Name</label>
+                <input 
+                  autoFocus
+                  type="text" 
+                  value={editingProdCat.newName} 
+                  onChange={e => setEditingProdCat({ ...editingProdCat, newName: e.target.value })}
+                  className="slice-input w-full"
+                  placeholder="New category name"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setEditingProdCat(null)}
+                className="px-4 py-2 border border-border rounded-xl text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:bg-muted/10 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmEditProdCat}
+                className="px-4 py-2 bg-primary hover:bg-green-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
+              >
+                Save Changes
               </button>
             </div>
           </div>

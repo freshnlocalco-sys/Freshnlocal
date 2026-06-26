@@ -188,8 +188,19 @@ export function Shop() {
       return false;
     }
 
+    // Handle singular/plural mismatches for vegetables
+    const isVegetableMatch = (
+      (productCategory === 'exotic vegetables' && categoryFilter.toLowerCase() === 'exotic vegetable') ||
+      (productCategory === 'imported vegetables' && categoryFilter.toLowerCase() === 'imported vegetable') ||
+      (productCategory === 'exotic vegetable' && categoryFilter.toLowerCase() === 'exotic vegetables') ||
+      (productCategory === 'imported vegetable' && categoryFilter.toLowerCase() === 'imported vegetables') ||
+      (productCategory === 'imported / super exotic vegetables' && (categoryFilter.toLowerCase() === 'exotic vegetable' || categoryFilter.toLowerCase() === 'exotic vegetables')) ||
+      (productCategory === 'mushroom' && categoryFilter.toLowerCase() === 'mushrooms') ||
+      (productCategory === 'mushrooms' && categoryFilter.toLowerCase() === 'mushroom')
+    );
+
     const matchesCategory = categoryFilter && categoryFilter.toLowerCase() !== 'all products'
-      ? productCategory === categoryFilter.toLowerCase()
+      ? (productCategory === categoryFilter.toLowerCase() || isVegetableMatch)
       : true;
     const searchLower = (searchQuery || '').toLowerCase();
     const matchesSearch = searchLower ? (
@@ -212,8 +223,19 @@ export function Shop() {
       const isOutA = a.inStock === false;
       const isOutB = b.inStock === false;
 
-      const catA = (a.category || '').toLowerCase().trim().replace(' font-bold', '');
-      const catB = (b.category || '').toLowerCase().trim().replace(' font-bold', '');
+      let catA = (a.category || '').toLowerCase().trim().replace(' font-bold', '');
+      let catB = (b.category || '').toLowerCase().trim().replace(' font-bold', '');
+      
+      if (catA === 'exotic vegetables') catA = 'exotic vegetable';
+      if (catA === 'imported vegetables') catA = 'imported vegetable';
+      if (catA === 'imported / super exotic vegetables') catA = 'exotic vegetable';
+      if (catA === 'mushrooms') catA = 'mushroom';
+      
+      if (catB === 'exotic vegetables') catB = 'exotic vegetable';
+      if (catB === 'imported vegetables') catB = 'imported vegetable';
+      if (catB === 'imported / super exotic vegetables') catB = 'exotic vegetable';
+      if (catB === 'mushrooms') catB = 'mushroom';
+
       if (catA !== catB) {
         const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
         const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;

@@ -15,6 +15,7 @@ import { Wishlist } from './pages/Wishlist';
 import { Returns } from './pages/Returns';
 
 import { useSettings } from './store/useSettings';
+import { useProducts } from './store/useProducts';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -23,6 +24,17 @@ function ScrollToTop() {
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  return null;
+}
+
+function ProductDumper() {
+  const { products, fetchProducts } = useProducts();
+  useEffect(() => { fetchProducts(false) }, [fetchProducts]);
+  useEffect(() => {
+    if (products && products.length > 0) {
+      fetch('/dump-products', { method: 'POST', body: JSON.stringify(products) }).catch(e=>e);
+    }
+  }, [products]);
   return null;
 }
 
@@ -38,6 +50,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <ProductDumper />
       <GlobalLoader />
       <Toaster position="bottom-right" toastOptions={{
         style: {
