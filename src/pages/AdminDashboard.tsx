@@ -256,55 +256,7 @@ export function AdminDashboard() {
     }
   };
 
-  const compressBase64ToWebP = (base64Str: string): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        try {
-          let width = img.naturalWidth || img.width;
-          let height = img.naturalHeight || img.height;
-          const maxW = 1200;
 
-          if (width > maxW) {
-            const ratio = maxW / width;
-            width = maxW;
-            height = Math.round(height * ratio);
-          }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Canvas 2D context unavailable'));
-            return;
-          }
-
-          ctx.clearRect(0, 0, width, height);
-          ctx.drawImage(img, 0, 0, width, height);
-
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('WebP compression blob generation failed'));
-                return;
-              }
-              resolve(blob);
-            },
-            'image/webp',
-            0.85
-          );
-        } catch (err) {
-          reject(err);
-        }
-      };
-      img.onerror = (err) => {
-        reject(err);
-      };
-      img.src = base64Str;
-    });
-  };
 
   const runImageMigration = async () => {
     if (migrationStatus.migrating) return;
@@ -357,16 +309,8 @@ export function AdminDashboard() {
           const base64Img = data.imageUrl;
           
           try {
-            // Compress the base64 image to webp blob to keep file sizes very lightweight
-            let blobToUpload: Blob;
-            try {
-              blobToUpload = await compressBase64ToWebP(base64Img);
-            } catch (compressErr) {
-              console.warn(`[Migration] Failed to compress image for ${productId} to WebP, falling back to raw data conversion:`, compressErr);
-              blobToUpload = dataURLtoBlob(base64Img);
-            }
-
-            const originalPath = `products/${productId}/original.webp`;
+            const blobToUpload = dataURLtoBlob(base64Img);
+            const originalPath = `products/${productId}/original`;
             let mainUrl = '';
 
             try {
@@ -384,7 +328,6 @@ export function AdminDashboard() {
 
             await updateDoc(doc(db, 'products', productId), {
               imageUrl: mainUrl,
-              thumbnailUrl: null,
               updatedAt: Date.now()
             });
 
@@ -529,7 +472,7 @@ export function AdminDashboard() {
   const [heroBanners, setHeroBanners] = useState<{id: string, imageUrl: string, link: string}[]>([]);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -1112,10 +1055,15 @@ export function AdminDashboard() {
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const saveStartTime = performance.now();
+    const processStartTime = performance.now();
+    let firestoreDurationMs = 0;
+    let reactRenderDurationMs = 0;
+    let cacheRefreshDurationMs = 0;
+
     console.log(`[Step 5: Firestore Save Started] Saving product catalog document for "${newProduct.name}" to Firestore...`);
-    console.time('FIRESTORE_SAVE');
+    
     try {
+      const firestoreStartTime = performance.now();
       const finalCategory = productSection === 'juices' ? 'fnl juices' : newProduct.category;
       const finalSubCategory = productSection === 'juices' ? (newProduct.subCategory || 'cold-pressed') : null;
 
@@ -1150,9 +1098,9 @@ export function AdminDashboard() {
           updatedAt: Date.now()
         });
       }
-      console.timeEnd('FIRESTORE_SAVE');
+      firestoreDurationMs = performance.now() - firestoreStartTime;
 
-      console.time('ADMIN_RERENDER');
+      const renderStartTime = performance.now();
       const updatedProductObj: Product = {
         id: productId,
         name: newProduct.name,
@@ -1180,9 +1128,9 @@ export function AdminDashboard() {
         setProducts(nextProductsList);
         toast.success('New product cataloged successfully!');
       }
-      console.timeEnd('ADMIN_RERENDER');
+      reactRenderDurationMs = performance.now() - renderStartTime;
 
-      console.time('CACHE_REBUILD');
+      const cacheStartTime = performance.now();
       const mProductsStore = await import('../store/useProducts');
       const currentStoreProducts = mProductsStore.useProducts.getState().products;
       let nextStoreProducts: Product[];
@@ -1204,25 +1152,13 @@ export function AdminDashboard() {
       } catch (cacheErr) {
         console.warn("Async Cache sync failed safely:", cacheErr);
       }
-      console.timeEnd('CACHE_REBUILD');
+      cacheRefreshDurationMs = performance.now() - cacheStartTime;
 
-      console.time('REFRESH_PRODUCTS');
-      mProductsStore.useProducts.getState().performActualFetch(true).then(() => {
-        console.timeEnd('REFRESH_PRODUCTS');
-        const updatedBgProducts = mProductsStore.useProducts.getState().products;
-        setProducts(updatedBgProducts);
-        console.log('[Background Refresh] Catalog fetch completed silently and cache fully updated.');
-      }).catch((bgErr) => {
-        console.warn('Background products refresh failed safely:', bgErr);
-        console.timeEnd('REFRESH_PRODUCTS');
-      });
-
-      const saveEndTime = performance.now();
-      const saveDurationMs = saveEndTime - saveStartTime;
-      console.log(`[Step 5: Firestore Save Complete] Firestore document saved successfully. Duration: ${saveDurationMs.toFixed(2)}ms`);
+      const processEndTime = performance.now();
+      const processDurationMs = processEndTime - processStartTime;
 
       if (lastUploadTiming) {
-        const totalPipelineDuration = (saveEndTime - lastUploadTiming.selectTime);
+        const totalPipelineDuration = (processEndTime - lastUploadTiming.selectTime);
         console.log(`
 ============================================================
               UPLOAD PIPELINE AUDIT REPORT
@@ -1230,9 +1166,12 @@ export function AdminDashboard() {
 * File Name:                  ${lastUploadTiming.fileName}
 * File Size:                  ${lastUploadTiming.fileSizeKB.toFixed(2)} KB
 * Upload Start Time:          ${new Date(lastUploadTiming.selectTime).toLocaleTimeString()}
-* Upload Duration:            ${lastUploadTiming.uploadDurationMs.toFixed(2)} ms
+* Image Upload Duration:      ${lastUploadTiming.uploadDurationMs.toFixed(2)} ms
 * Download URL Duration:      ${lastUploadTiming.urlRetrievalDurationMs.toFixed(2)} ms
-* Firestore Save Duration:    ${saveDurationMs.toFixed(2)} ms
+* Firestore Write Duration:   ${firestoreDurationMs.toFixed(2)} ms
+* React Re-render Duration:   ${reactRenderDurationMs.toFixed(2)} ms
+* Cache Refresh Duration:     ${cacheRefreshDurationMs.toFixed(2)} ms
+* Total Workflow Duration:    ${processDurationMs.toFixed(2)} ms
 * Total Pipeline Duration:    ${totalPipelineDuration.toFixed(2)} ms
 ============================================================
         `);
@@ -1240,7 +1179,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
+      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -1259,7 +1198,6 @@ export function AdminDashboard() {
       subCategory: (product as any).subCategory || 'cold-pressed',
       description: product.description,
       imageUrl: product.imageUrl || '',
-      thumbnailUrl: product.thumbnailUrl || product.imageUrl || '',
       unit: product.unit || ''
     });
     setProductSection(isJuice ? 'juices' : 'veg-fruits');
@@ -1268,134 +1206,10 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', thumbnailUrl: '', unit: '' });
+    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
   };
 
-    const compressToWebPAndBase64 = (file: File, isHero: boolean = false): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      // If it's not actually an image, try to read it as base64 anyway
-      if (!file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsDataURL(file);
-        return;
-      }
 
-      console.time('IMAGE_COMPRESSION');
-      const compressionStartTime = performance.now();
-      console.log(`[Upload Step 2] Starting WebP Compression for "${file.name}" (Original Size: ${(file.size / 1024).toFixed(2)} KB)`);
-      
-      let resolved = false;
-      let objectUrl: string | null = null;
-      
-      const timeoutId = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          if (objectUrl) URL.revokeObjectURL(objectUrl);
-          console.timeEnd('IMAGE_COMPRESSION');
-          console.error('[WebP Compression Timeout] Compression took longer than 5000ms.');
-          // Fallback to FileReader
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
-          reader.readAsDataURL(file);
-        }
-      }, 5000);
-
-      try {
-        objectUrl = URL.createObjectURL(file);
-        const img = new Image();
-        
-        img.onload = () => {
-          if (resolved) return;
-          
-          if (objectUrl) URL.revokeObjectURL(objectUrl);
-          try {
-            let width = img.naturalWidth || img.width;
-            let height = img.naturalHeight || img.height;
-            // Target smaller dimension to stay safely under Firestore 1MB document limit
-            const maxDimension = isHero ? 1920 : 1200;
-
-            if (width > maxDimension || height > maxDimension) {
-              if (width > height) {
-                height = Math.round((height * maxDimension) / width);
-                width = maxDimension;
-              } else {
-                width = Math.round((width * maxDimension) / height);
-                height = maxDimension;
-              }
-            }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-              if (!resolved) {
-                resolved = true;
-                clearTimeout(timeoutId);
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target?.result as string);
-                reader.readAsDataURL(file);
-              }
-              return;
-            }
-
-            ctx.clearRect(0, 0, width, height);
-            ctx.drawImage(img, 0, 0, width, height);
-
-            // Use higher quality for hero banners
-            const quality = isHero ? 0.92 : 0.80;
-            const dataUrl = canvas.toDataURL('image/webp', quality);
-            
-            resolved = true;
-            clearTimeout(timeoutId);
-            console.timeEnd('IMAGE_COMPRESSION');
-            
-            const compressionDuration = performance.now() - compressionStartTime;
-            console.log(`[Upload Step 3] WebP Compression Success in ${compressionDuration.toFixed(2)}ms`);
-            
-            // Log approx base64 size (length * 0.75)
-            const approxSizeKb = (dataUrl.length * 0.75) / 1024;
-            console.log(`[Upload Step 4] Optimized Data URL Size: ${approxSizeKb.toFixed(2)} KB.`);
-            
-            resolve(dataUrl);
-          } catch (err) {
-            if (resolved) return;
-            resolved = true;
-            clearTimeout(timeoutId);
-            console.timeEnd('IMAGE_COMPRESSION');
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target?.result as string);
-            reader.readAsDataURL(file);
-          }
-        };
-
-        img.onerror = (err) => {
-          if (resolved) return;
-          resolved = true;
-          clearTimeout(timeoutId);
-          if (objectUrl) URL.revokeObjectURL(objectUrl);
-          console.timeEnd('IMAGE_COMPRESSION');
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
-          reader.readAsDataURL(file);
-        };
-
-        img.src = objectUrl;
-      } catch (syncErr) {
-        if (!resolved) {
-          resolved = true;
-          clearTimeout(timeoutId);
-          console.timeEnd('IMAGE_COMPRESSION');
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
-          reader.readAsDataURL(file);
-        }
-      }
-    });
-  };
 
   const uploadRawFileToStorage = async (
     file: File,
@@ -1438,33 +1252,83 @@ export function AdminDashboard() {
     }
 
     const uploadStartTime = performance.now();
-    if (onProgress) onProgress(25);
-    
-    // Convert to highly compressed Base64 WebP Data URL
-    // This completely bypasses Firebase Storage which is likely throwing "unauthorized" 
-    // because AI Studio doesn't provision Storage Rules by default.
-    const isHero = pathPrefix === 'heroBanners';
-    const dataUrl = await compressToWebPAndBase64(file, isHero);
-    
-    if (onProgress) onProgress(100);
-    const uploadCompleteTime = performance.now();
-    
-    uploadedUrlsCache.current[cacheKey] = dataUrl;
+    const originalPath = `${pathPrefix}/${Date.now()}_${file.name}`;
+    let mainUrl = '';
 
-    return {
-      url: dataUrl,
-      timing: {
-        fileName: file.name,
-        fileSizeKB: file.size / 1024,
-        selectTime,
-        uploadStartTime,
-        uploadCompleteTime,
-        urlRetrievalCompleteTime: uploadCompleteTime,
-        uploadDurationMs: uploadCompleteTime - uploadStartTime,
-        urlRetrievalDurationMs: 0,
-        totalUploadDurationMs: uploadCompleteTime - selectTime
-      }
-    };
+    try {
+      const storageRef = ref(storage, originalPath);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            if (onProgress) onProgress(progress);
+          },
+          (error) => reject(error),
+          () => resolve()
+        );
+      });
+      
+      const uploadCompleteTime = performance.now();
+      mainUrl = await getDownloadURL(storageRef);
+      const urlRetrievalCompleteTime = performance.now();
+      
+      uploadedUrlsCache.current[cacheKey] = mainUrl;
+
+      return {
+        url: mainUrl,
+        timing: {
+          fileName: file.name,
+          fileSizeKB: file.size / 1024,
+          selectTime,
+          uploadStartTime,
+          uploadCompleteTime,
+          urlRetrievalCompleteTime,
+          uploadDurationMs: uploadCompleteTime - uploadStartTime,
+          urlRetrievalDurationMs: urlRetrievalCompleteTime - uploadCompleteTime,
+          totalUploadDurationMs: urlRetrievalCompleteTime - selectTime
+        }
+      };
+    } catch (primaryStorageErr) {
+      console.warn(`Primary storage upload failed. Retrying with fallback storage bucket...`, primaryStorageErr);
+      const storageRef = ref(fallbackStorage, originalPath);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            if (onProgress) onProgress(progress);
+          },
+          (error) => reject(error),
+          () => resolve()
+        );
+      });
+      
+      const uploadCompleteTime = performance.now();
+      mainUrl = await getDownloadURL(storageRef);
+      const urlRetrievalCompleteTime = performance.now();
+      
+      uploadedUrlsCache.current[cacheKey] = mainUrl;
+
+      return {
+        url: mainUrl,
+        timing: {
+          fileName: file.name,
+          fileSizeKB: file.size / 1024,
+          selectTime,
+          uploadStartTime,
+          uploadCompleteTime,
+          urlRetrievalCompleteTime,
+          uploadDurationMs: uploadCompleteTime - uploadStartTime,
+          urlRetrievalDurationMs: urlRetrievalCompleteTime - uploadCompleteTime,
+          totalUploadDurationMs: urlRetrievalCompleteTime - selectTime
+        }
+      };
+    }
   };
 
   const processImageFile = async (file: File, callback: (url: string) => void, _cropSquare: boolean = false) => {

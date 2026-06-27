@@ -153,6 +153,8 @@ export function ProductDetail() {
   const isJuice = (product.category || '').toLowerCase().includes('juice');
   const backLink = isJuice ? "/juice" : "/shop";
   const backText = isJuice ? "Back to FNL Juices" : "Back to store catalog";
+  
+  const productImgSrc = product.imageUrl || getCategoryImage(product.category, categoryImages) || undefined;
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 w-full bg-background text-foreground">
@@ -189,7 +191,7 @@ export function ProductDetail() {
             />
           </button>
           <img 
-            src={product.imageUrl || getCategoryImage(product.category, categoryImages) || undefined} 
+            src={productImgSrc} 
             alt={product.name}
             loading="lazy"
             decoding="async"

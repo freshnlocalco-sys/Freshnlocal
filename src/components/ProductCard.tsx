@@ -26,7 +26,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
 
   useEffect(() => {
     startTimeRef.current = performance.now();
-  }, [product.imageUrl, product.thumbnailUrl]);
+  }, [product.imageUrl]);
 
   useEffect(() => {
     const el = cardRef.current;

@@ -336,31 +336,40 @@ export function Home() {
                   transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
                   className="absolute inset-0 w-full h-full"
                 >
-                  {heroBanners[currentBannerIndex].link ? (
-                    heroBanners[currentBannerIndex].link.startsWith('http') ? (
-                      <a href={heroBanners[currentBannerIndex].link} target="_blank" rel="noopener noreferrer" className="w-full h-full block">
+                  {(() => {
+                    const banner = heroBanners[currentBannerIndex];
+                    if (banner.link) {
+                      if (banner.link.startsWith('http')) {
+                        return (
+                          <a href={banner.link} target="_blank" rel="noopener noreferrer" className="w-full h-full block">
+                            <img 
+                              src={banner.imageUrl} 
+                              alt="Hero Banner" 
+                              className="w-full h-full object-cover object-center"
+                            />
+                          </a>
+                        );
+                      } else {
+                        return (
+                          <Link to={banner.link} className="w-full h-full block">
+                            <img 
+                              src={banner.imageUrl} 
+                              alt="Hero Banner" 
+                              className="w-full h-full object-cover object-center"
+                            />
+                          </Link>
+                        );
+                      }
+                    } else {
+                      return (
                         <img 
-                          src={heroBanners[currentBannerIndex].imageUrl} 
+                          src={banner.imageUrl} 
                           alt="Hero Banner" 
                           className="w-full h-full object-cover object-center"
                         />
-                      </a>
-                    ) : (
-                      <Link to={heroBanners[currentBannerIndex].link} className="w-full h-full block">
-                        <img 
-                          src={heroBanners[currentBannerIndex].imageUrl} 
-                          alt="Hero Banner" 
-                          className="w-full h-full object-cover object-center"
-                        />
-                      </Link>
-                    )
-                  ) : (
-                    <img 
-                      src={heroBanners[currentBannerIndex].imageUrl} 
-                      alt="Hero Banner" 
-                      className="w-full h-full object-cover object-center"
-                    />
-                  )}
+                      );
+                    }
+                  })()}
                 </motion.div>
               </AnimatePresence>
 
