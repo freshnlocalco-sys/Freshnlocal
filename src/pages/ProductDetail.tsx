@@ -102,7 +102,7 @@ export function ProductDetail() {
       }
     }
     fetchProduct();
-  }, [id]);
+  }, [id, navigate]);
 
   const handleAddToCart = () => {
     if (product && product.inStock) {

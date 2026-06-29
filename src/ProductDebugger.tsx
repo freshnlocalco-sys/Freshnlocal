@@ -8,7 +8,7 @@ export function ProductDebugger() {
   useEffect(() => {
     async function load() {
       const snap = await getDocs(collection(db, 'products'));
-      const prods = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const prods: any[] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const relevant = prods.filter(p => p.category?.toLowerCase().includes('vegetable'));
       setData(relevant);
     }
