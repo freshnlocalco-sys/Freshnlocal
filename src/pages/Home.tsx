@@ -133,6 +133,33 @@ function CategoryImage({ src, alt }: { src?: string; alt: string }) {
   );
 }
 
+const loadedHeroImages = new Set<string>();
+
+function HeroImage({ src, alt }: { src: string, alt: string }) {
+  const [imageLoaded, setImageLoaded] = useState(() => loadedHeroImages.has(src));
+  
+  useEffect(() => {
+    if (loadedHeroImages.has(src)) {
+      setImageLoaded(true);
+    }
+  }, [src]);
+
+  return (
+    <div className="w-full h-full relative">
+      {!imageLoaded && <div className="absolute inset-0 bg-secondary/20 animate-pulse" />}
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => {
+          loadedHeroImages.add(src);
+          setImageLoaded(true);
+        }}
+        className={`w-full h-full object-cover object-center ${!imageLoaded ? 'opacity-0' : 'opacity-100 transition-opacity duration-500'}`}
+      />
+    </div>
+  );
+}
+
 export function Home() {
   const { categoryImages, productCategories, loading: settingsLoading } = useSettings();
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
@@ -202,7 +229,16 @@ export function Home() {
         const docRef = doc(db, 'settings', 'heroBanners');
         const docSnap = await getDoc(docRef);
         if (docSnap.exists() && docSnap.data().banners) {
-          setHeroBanners(docSnap.data().banners);
+          const banners = docSnap.data().banners;
+          setHeroBanners(banners);
+          // Preload images in background
+          banners.forEach((b: any) => {
+            if (b.imageUrl && !loadedHeroImages.has(b.imageUrl)) {
+              const img = new Image();
+              img.src = b.imageUrl;
+              img.onload = () => loadedHeroImages.add(b.imageUrl);
+            }
+          });
         }
       } catch (err) {
         console.error("Error fetching hero banners", err);
@@ -326,52 +362,31 @@ export function Home() {
             className="w-full md:max-w-6xl md:mx-auto md:px-6 relative group"
           >
             <div className="relative w-full aspect-[4/3] md:rounded-[32px] overflow-hidden bg-secondary/50 md:shadow-sm">
-              <AnimatePresence initial={false} custom={direction}>
-                <motion.div
-                  key={currentBannerIndex}
-                  custom={direction}
-                  initial={{ x: direction > 0 ? '100%' : '-100%' }}
-                  animate={{ x: 0 }}
-                  exit={{ x: direction > 0 ? '-100%' : '100%' }}
-                  transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-                  className="absolute inset-0 w-full h-full"
-                >
-                  {(() => {
-                    const banner = heroBanners[currentBannerIndex];
-                    if (banner.link) {
-                      if (banner.link.startsWith('http')) {
-                        return (
-                          <a href={banner.link} target="_blank" rel="noopener noreferrer" className="w-full h-full block">
-                            <img 
-                              src={banner.imageUrl} 
-                              alt="Hero Banner" 
-                              className="w-full h-full object-cover object-center"
-                            />
-                          </a>
-                        );
-                      } else {
-                        return (
-                          <Link to={banner.link} className="w-full h-full block">
-                            <img 
-                              src={banner.imageUrl} 
-                              alt="Hero Banner" 
-                              className="w-full h-full object-cover object-center"
-                            />
-                          </Link>
-                        );
-                      }
-                    } else {
-                      return (
-                        <img 
-                          src={banner.imageUrl} 
-                          alt="Hero Banner" 
-                          className="w-full h-full object-cover object-center"
-                        />
-                      );
-                    }
-                  })()}
-                </motion.div>
-              </AnimatePresence>
+              <motion.div
+                className="flex w-full h-full"
+                animate={{ x: `-${currentBannerIndex * 100}%` }}
+                transition={{ type: "tween", ease: [0.25, 1, 0.5, 1], duration: 0.6 }}
+              >
+                {heroBanners.map((banner, idx) => (
+                  <div key={idx} className="w-full h-full shrink-0 relative">
+                    {banner.link ? (
+                      banner.link.startsWith('http') ? (
+                        <a href={banner.link} target="_blank" rel="noopener noreferrer" className="w-full h-full block relative">
+                          <HeroImage src={banner.imageUrl} alt="Hero Banner" />
+                        </a>
+                      ) : (
+                        <Link to={banner.link} className="w-full h-full block relative">
+                          <HeroImage src={banner.imageUrl} alt="Hero Banner" />
+                        </Link>
+                      )
+                    ) : (
+                      <div className="w-full h-full relative">
+                        <HeroImage src={banner.imageUrl} alt="Hero Banner" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </motion.div>
 
               {/* Slider Dots */}
               {heroBanners.length > 1 && (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { Product } from '../store/useCart';
@@ -13,77 +13,44 @@ interface ProductCardProps {
   key?: React.Key | string | number;
 }
 
+const loadedProductImages = new Set<string>();
+
 export const ProductCard = React.memo(function ProductCard({ product, onAddToCart, displayCategoryOverride }: ProductCardProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
   const { categoryImages } = useSettings();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const displayCategory = displayCategoryOverride || (product.category || '').replace(/ font-bold/gi, '');
   const inWishlist = isInWishlist(product.id!);
-
-  const startTimeRef = useRef<number>(0);
-
-  useEffect(() => {
-    startTimeRef.current = performance.now();
-  }, [product.imageUrl]);
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsVisible(true);
-        observer.unobserve(el); // Keep rendered once loaded to optimize DOM operations
-      }
-    }, {
-      rootMargin: '200px', // Preload before it enters viewport
-      threshold: 0.01
-    });
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
   const catImage = getCategoryImage(displayCategory, categoryImages) || undefined;
   const productImgSrc = product.imageUrl || catImage || undefined;
 
-  if (!isVisible) {
-    return (
-      <div ref={cardRef} className="slice-card h-full flex flex-col justify-between overflow-hidden bg-background rounded-xl border border-border animate-pulse">
-        <div className="w-full aspect-[4/3] bg-muted border-b border-border shrink-0" style={{ borderRadius: 'inherit', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}></div>
-        <div className="p-2.5 sm:p-3 bg-background flex-1 flex flex-col justify-between">
-          <div className="flex flex-col gap-1 w-full">
-            <div className="h-3 sm:h-4 bg-muted rounded w-3/4 mb-1"></div>
-            <div className="h-2.5 sm:h-3 bg-muted rounded w-1/2"></div>
-            <div className="flex items-end justify-between w-full mt-2">
-              <div className="h-4 sm:h-5 bg-muted rounded w-1/3"></div>
-            </div>
-          </div>
-          <div className="w-full h-[28px] sm:h-[36px] bg-muted rounded-lg mt-1.5 sm:mt-2.5"></div>
-        </div>
-      </div>
-    );
-  }
+  const [imageLoaded, setImageLoaded] = useState(() => productImgSrc ? loadedProductImages.has(productImgSrc) : false);
+
+  useEffect(() => {
+    if (productImgSrc && loadedProductImages.has(productImgSrc)) {
+      setImageLoaded(true);
+    }
+  }, [productImgSrc]);
 
   return (
-    <div ref={cardRef} className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border">
+    <div className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border">
       
       <div className="w-full aspect-[4/3] overflow-hidden relative bg-white dark:bg-white border-b border-border shrink-0" style={{ borderRadius: 'inherit', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
         {!imageLoaded && (
-          <div className="absolute inset-0 bg-muted animate-pulse" />
+          <div className="absolute inset-0 bg-secondary/20 animate-pulse" />
         )}
-        <Link to={`/product/${product.id}`} className="block w-full h-full">
+        <Link to={`/product/${product.id}`} className="block w-full h-full relative">
           <img 
             src={productImgSrc} 
             alt={product.name}
             loading="lazy"
             decoding="async"
             onLoad={() => {
+              if (productImgSrc) {
+                loadedProductImages.add(productImgSrc);
+              }
               setImageLoaded(true);
             }}
-            className={`absolute inset-0 w-full h-full object-contain object-center transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 w-full h-full object-contain object-center ${!imageLoaded ? 'opacity-0' : 'opacity-100 transition-opacity duration-300'}`}
             referrerPolicy="no-referrer"
           />
         </Link>
