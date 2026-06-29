@@ -50,7 +50,7 @@ async function generateFeed() {
     let areImageUrlsHosted = true;
 
     // CSV Header
-    const csvHeader = ['id', 'title', 'description', 'availability', 'condition', 'price', 'link', 'image_link', 'brand', 'google_product_category', 'identifier_exists'];
+    const csvHeader = ['id', 'title', 'description', 'availability', 'condition', 'price', 'sale_price', 'link', 'image_link', 'brand', 'google_product_category', 'identifier_exists'];
     let csvContent = csvHeader.join(',') + '\n';
 
     // XML Header
@@ -82,7 +82,21 @@ async function generateFeed() {
       const description = product.description || product.name || '';
       const availability = product.inStock !== false ? 'in stock' : 'out of stock';
       const condition = 'new';
-      const price = `${parseFloat(product.price).toFixed(2)} INR`;
+      
+      const sellingPriceValue = parseFloat(product.price) || 0;
+      const mrpValue = parseFloat(product.originalPrice) || parseFloat(product.mrp) || parseFloat(product.MRP) || 0;
+
+      let feedPrice = '';
+      let feedSalePrice = '';
+
+      if (mrpValue > sellingPriceValue) {
+        feedPrice = `${mrpValue.toFixed(2)} INR`;
+        feedSalePrice = `${sellingPriceValue.toFixed(2)} INR`;
+      } else {
+        feedPrice = `${sellingPriceValue.toFixed(2)} INR`;
+        feedSalePrice = '';
+      }
+
       const link = `${baseUrl}/product/${id}`;
       const image_link = product.imageUrl || product.image;
       const brand = 'Fresh N Local';
@@ -112,7 +126,8 @@ async function generateFeed() {
         escapeCsv(description),
         escapeCsv(availability),
         escapeCsv(condition),
-        escapeCsv(price),
+        escapeCsv(feedPrice),
+        escapeCsv(feedSalePrice),
         escapeCsv(link),
         escapeCsv(image_link),
         escapeCsv(brand),
@@ -127,7 +142,10 @@ async function generateFeed() {
       xmlContent += `      <g:description>${escapeXml(description)}</g:description>\n`;
       xmlContent += `      <g:availability>${escapeXml(availability)}</g:availability>\n`;
       xmlContent += `      <g:condition>${escapeXml(condition)}</g:condition>\n`;
-      xmlContent += `      <g:price>${escapeXml(price)}</g:price>\n`;
+      xmlContent += `      <g:price>${escapeXml(feedPrice)}</g:price>\n`;
+      if (feedSalePrice) {
+        xmlContent += `      <g:sale_price>${escapeXml(feedSalePrice)}</g:sale_price>\n`;
+      }
       xmlContent += `      <g:link>${escapeXml(link)}</g:link>\n`;
       xmlContent += `      <g:image_link>${escapeXml(image_link)}</g:image_link>\n`;
       xmlContent += `      <g:brand>${escapeXml(brand)}</g:brand>\n`;
