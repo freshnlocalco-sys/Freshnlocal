@@ -75,10 +75,39 @@ async function generateFeed() {
       }
 
       const id = product.id;
-      const title = product.name || '';
+      let title = product.name || '';
       if (!title) {
          console.warn(`Product ${id} missing name/title field.`);
+      } else {
+         title = title.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+         
+         if (!title.toLowerCase().startsWith('fresh n local')) {
+           title = `Fresh N Local ${title}`;
+         }
+
+         const unitFields = ['unit', 'weight', 'size', 'pack'];
+         let unitValue = '';
+         for (const field of unitFields) {
+            if (product[field] && String(product[field]).trim()) {
+               unitValue = String(product[field]).trim();
+               break;
+            }
+         }
+
+         if (unitValue) {
+            // Capitalize unit for consistency (e.g. 500gm -> 500Gm)
+            unitValue = unitValue.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+            if (!title.toLowerCase().includes(unitValue.toLowerCase())) {
+               title = `${title} ${unitValue}`;
+            }
+         }
+
+         title = title.replace(/\s+/g, ' ').trim();
+         if (title.length > 150) {
+            title = title.substring(0, 150).trim();
+         }
       }
+
       const description = product.description || product.name || '';
       const availability = product.inStock !== false ? 'in stock' : 'out of stock';
       const condition = 'new';
