@@ -580,8 +580,14 @@ export function FNLJuice() {
 
   // Perform filtering
   const filteredJuicesRaw = juices.filter(item => {
-    const matchesSearch = (item.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
-                          (item.description && item.description.toLowerCase().includes((searchQuery || '').toLowerCase()));
+    const q = (searchQuery || '').toLowerCase();
+    const nameLower = (item.name || '').toLowerCase();
+    const descLower = (item.description || '').toLowerCase();
+    
+    const matchesSearch = q ? (
+      nameLower.startsWith(q) || nameLower.includes(` ${q}`) || nameLower.includes(`-${q}`) ||
+      descLower.startsWith(q) || descLower.includes(` ${q}`) || descLower.includes(`-${q}`)
+    ) : true;
     
     const matchesPrice = typeof item.price === 'number' ? item.price <= maxPrice : true;
     
@@ -619,7 +625,11 @@ export function FNLJuice() {
 
   const searchSuggestions = searchQuery
     ? Array.from(new Set(juices
-        .filter(p => (p.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()))
+        .filter(p => {
+          const nameLower = (p.name || '').toLowerCase();
+          const q = (searchQuery || '').toLowerCase();
+          return nameLower.startsWith(q) || nameLower.includes(` ${q}`) || nameLower.includes(`-${q}`);
+        })
         .map(p => p.name)))
         .slice(0, 5)
     : [];

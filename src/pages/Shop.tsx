@@ -29,13 +29,10 @@ export function Shop() {
   const { addItem } = useCart();
   
   useEffect(() => {
-    const q = searchParams.get('q');
-    if (q !== null && q !== searchQuery) {
-      setSearchQuery(q);
-    } else if (q === null && searchQuery !== '') {
-      setSearchQuery('');
-    }
-  }, [searchParams]);
+    const q = searchParams.get('q') || '';
+    setSearchQuery(q);
+  }, [searchParams.get('q')]);
+
   const navigate = useNavigate();
   const categoryFilter = searchParams.get('category') || allUiCategories[0] || 'All Products';
   const [isOffline, setIsOffline] = useState(false);
@@ -58,7 +55,6 @@ export function Shop() {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const startTime = performance.now();
       
       // Hydrate from IndexedDB first for maximum speed
       await hydrateFromIDB();
@@ -125,6 +121,7 @@ export function Shop() {
     const newParams = new URLSearchParams(searchParams);
     if (term) {
       newParams.set('q', term);
+      newParams.delete('category');
     } else {
       newParams.delete('q');
     }
@@ -149,6 +146,7 @@ export function Shop() {
     const newParams = new URLSearchParams(searchParams);
     if (val) {
       newParams.set('q', val);
+      newParams.delete('category'); // Clear category if they start typing so search is global within shop
     } else {
       newParams.delete('q');
     }
@@ -163,7 +161,11 @@ export function Shop() {
 
   const searchSuggestions = searchQuery
     ? Array.from(new Set(products
-        .filter(p => (p.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) && !(p.category || '').toLowerCase().includes('juice'))
+        .filter(p => {
+          const nameLower = (p.name || '').toLowerCase();
+          const q = (searchQuery || '').toLowerCase();
+          return nameLower.startsWith(q) || nameLower.includes(` ${q}`) || nameLower.includes(`-${q}`);
+        })
         .map(p => p.name)))
         .slice(0, 5)
     : [];
@@ -183,8 +185,11 @@ export function Shop() {
     let productCategory = p.category ? p.category.toLowerCase() : '';
     productCategory = productCategory.replace(' font-bold', ''); // Normalize older data typos
 
-    // Explicitly hide juices from the Shop page, as they belong on the dedicated FNL Juice page
-    if (productCategory.includes('juice')) {
+    const searchLower = (searchQuery || '').toLowerCase();
+
+    // Explicitly hide juices from the Shop page when browsing, as they belong on the dedicated FNL Juice page.
+    // However, if the user is actively searching, allow juices to appear in the global search results.
+    if (productCategory.includes('juice') && !searchLower) {
       return false;
     }
 
@@ -202,12 +207,13 @@ export function Shop() {
     const matchesCategory = categoryFilter && categoryFilter.toLowerCase() !== 'all products'
       ? (productCategory === categoryFilter.toLowerCase() || isVegetableMatch)
       : true;
-    const searchLower = (searchQuery || '').toLowerCase();
+    
     const matchesSearch = searchLower ? (
-      (p.name && p.name.toLowerCase().includes(searchLower)) ||
-      (p.category && p.category.toLowerCase().includes(searchLower)) ||
-      (p.description && p.description.toLowerCase().includes(searchLower))
+      (p.name && (p.name.toLowerCase().startsWith(searchLower) || p.name.toLowerCase().includes(` ${searchLower}`) || p.name.toLowerCase().includes(`-${searchLower}`))) ||
+      (p.category && (p.category.toLowerCase().startsWith(searchLower) || p.category.toLowerCase().includes(` ${searchLower}`) || p.category.toLowerCase().includes(`-${searchLower}`))) ||
+      (p.description && (p.description.toLowerCase().startsWith(searchLower) || p.description.toLowerCase().includes(` ${searchLower}`) || p.description.toLowerCase().includes(`-${searchLower}`)))
     ) : true;
+    
     const matchesPrice = typeof p.price === 'number' ? p.price <= maxPrice : true;
     return matchesCategory && matchesSearch && matchesPrice;
   });
