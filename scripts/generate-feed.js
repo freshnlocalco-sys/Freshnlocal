@@ -41,7 +41,7 @@ async function generateFeed() {
       ...doc.data()
     }));
     
-    const baseUrl = 'https://freshnlocal.co';
+    const baseUrl = 'https://www.freshnlocal.co';
     
     let totalProducts = products.length;
     let skippedProducts = 0;
@@ -58,7 +58,7 @@ async function generateFeed() {
     xmlContent += `<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">\n`;
     xmlContent += `  <channel>\n`;
     xmlContent += `    <title>Fresh N Local Product Feed</title>\n`;
-    xmlContent += `    <link>https://freshnlocal.co</link>\n`;
+    xmlContent += `    <link>https://www.freshnlocal.co</link>\n`;
     xmlContent += `    <description>Fresh N Local Product Feed</description>\n`;
 
     for (const product of products) {

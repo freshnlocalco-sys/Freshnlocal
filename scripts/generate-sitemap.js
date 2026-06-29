@@ -19,7 +19,7 @@ async function generateSitemap() {
       ...doc.data()
     }));
     
-    const baseUrl = 'https://freshnlocal.co';
+    const baseUrl = 'https://www.freshnlocal.co';
     const staticRoutes = [
       '',
       '/shop',

@@ -27,6 +27,23 @@ function ScrollToTop() {
   return null;
 }
 
+function CanonicalLink() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const canonicalUrl = `https://www.freshnlocal.co${pathname}`;
+    let link: HTMLLinkElement | null = document.querySelector("link[rel='canonical']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'canonical';
+      document.head.appendChild(link);
+    }
+    link.href = canonicalUrl;
+  }, [pathname]);
+
+  return null;
+}
+
 function ProductDumper() {
   const { products, fetchProducts } = useProducts();
   useEffect(() => { fetchProducts(false) }, [fetchProducts]);
@@ -50,6 +67,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <CanonicalLink />
       <ProductDumper />
       <GlobalLoader />
       <Toaster position="bottom-right" toastOptions={{
