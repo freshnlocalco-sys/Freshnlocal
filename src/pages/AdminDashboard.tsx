@@ -2092,7 +2092,7 @@ export function AdminDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
               {/* Left form desk: manual additions & CSV operations */}
-              <div className={`col-span-12 lg:col-span-4 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[32px] shadow-sm transition-all ${
+              <div className={`col-span-12 lg:col-span-4 xl:col-span-3 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[32px] shadow-sm transition-all ${
                 productSection === 'juices' ? 'ring-2 ring-orange-500/10' : 'ring-2 ring-emerald-500/10'
               }`}>
                 <div className="space-y-4">
@@ -2352,7 +2352,7 @@ export function AdminDashboard() {
             </div>
             
             {/* Live table view of product catalogs */}
-            <div className="col-span-12 lg:col-span-8 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden min-w-0">
+            <div className="col-span-12 lg:col-span-8 xl:col-span-9 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden min-w-0">
               <div className="p-4 sm:p-5 md:p-6 border-b border-border bg-secondary flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
                   <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><Package className="w-4 h-4" /> Active Catalog</h3>
@@ -2406,14 +2406,14 @@ export function AdminDashboard() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[500px]">
+                <table className="w-full text-left border-collapse min-w-[700px] sm:min-w-[800px] lg:min-w-[900px] xl:min-w-[1000px]">
                   <thead>
                     <tr className="border-b border-border bg-secondary text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      <th className="p-2 sm:p-3 md:p-4 whitespace-nowrap">Product Details</th>
-                      <th className="p-2 sm:p-3 md:p-4 whitespace-nowrap">Catalog Category</th>
-                      <th className="p-2 sm:p-3 md:p-4 whitespace-nowrap">Rate (₹)</th>
-                      <th className="p-2 sm:p-3 md:p-4 whitespace-nowrap text-center">In Stock</th>
-                      <th className="p-2 sm:p-3 md:p-4 text-right whitespace-nowrap">Controls</th>
+                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 whitespace-nowrap">Product Details</th>
+                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 whitespace-nowrap">Catalog Category</th>
+                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 whitespace-nowrap">Rate (₹)</th>
+                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 whitespace-nowrap text-center">In Stock</th>
+                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 text-right whitespace-nowrap">Controls</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
@@ -2471,13 +2471,13 @@ export function AdminDashboard() {
                           }}
                           className={`transition-colors cursor-move ${dragOverProductIdx === idx ? 'border-primary border-t-2 border-dashed' : ''} ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}
                         >
-                          <td className="p-2 sm:p-3 md:p-4 flex items-center gap-2 sm:gap-3">
+                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 flex items-center gap-2 sm:gap-3">
                             <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-white dark:bg-white overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
                               <img src={product.imageUrl || getCategoryImage(product.category) || undefined} alt="" loading="lazy" className="w-full h-full object-contain object-center" />
                             </div>
                             <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
                           </td>
-                          <td className="p-2 sm:p-3 md:p-4 font-bold uppercase tracking-wider text-[8px] sm:text-[10px] whitespace-nowrap">
+                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 font-bold uppercase tracking-wider text-[8px] sm:text-[10px] whitespace-nowrap">
                             {isJuice ? (
                               <span className="bg-orange-500/10 border border-orange-500/20 text-orange-600 px-2 py-0.5 rounded-full inline-block font-extrabold tracking-widest text-[7.5px] uppercase">
                                 🍹 {displayJuiceLabel}
@@ -2488,7 +2488,7 @@ export function AdminDashboard() {
                               </span>
                             )}
                           </td>
-                          <td className="p-2 sm:p-3 md:p-4 font-bold font-mono text-foreground text-[10px] sm:text-xs whitespace-nowrap">
+                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 font-bold font-mono text-foreground text-[10px] sm:text-xs whitespace-nowrap">
                             {isEditingPrice ? (
                               <div className="flex items-center gap-2">
                                 <span className="text-muted-foreground">₹</span>
@@ -2511,7 +2511,7 @@ export function AdminDashboard() {
                               </div>
                             )}
                           </td>
-                          <td className="p-2 sm:p-3 md:p-4 text-center whitespace-nowrap">
+                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 text-center whitespace-nowrap">
                             <button
                               onClick={() => handleToggleStock(product)}
                               className={`relative inline-flex h-5 sm:h-6 w-9 sm:w-11 items-center rounded-full transition-colors ${
@@ -2528,7 +2528,7 @@ export function AdminDashboard() {
                               {product.inStock !== false ? 'In Stock' : 'Out'}
                             </span>
                           </td>
-                          <td className="p-2 sm:p-3 md:p-4 text-right space-x-2 whitespace-nowrap">
+                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 text-right space-x-2 whitespace-nowrap">
                           <button 
                             onClick={() => handleEditSetup(product)} 
                             className="text-muted-foreground hover:text-primary p-1.5 sm:p-2 md:p-2.5 bg-background border border-border rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
