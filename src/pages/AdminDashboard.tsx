@@ -3,9 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { useSettings } from '../store/useSettings';
+import { BrandingSettings } from '../components/BrandingSettings';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
 import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
@@ -18,6 +19,40 @@ const STATUS_OPTIONS = [
   { value: 'delivered', label: 'Delivered', color: 'bg-emerald-500' },
   { value: 'cancelled', label: 'Cancelled', color: 'bg-red-500' },
 ];
+
+class BrandingErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+  state = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Branding Settings Crash:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="max-w-xl mx-auto my-12 p-8 rounded-2xl bg-red-50 border border-red-200 text-left space-y-4">
+          <span className="text-red-600 font-mono text-xs uppercase tracking-widest block font-black">⚠️ Rendering Error Boundary Triggered</span>
+          <h2 className="text-lg font-black uppercase text-red-900 leading-tight">Branding Settings Load Failure</h2>
+          <p className="text-xs text-red-700 font-medium">The branding page failed to render due to a runtime script exception:</p>
+          <pre className="text-[10px] font-mono text-red-800 bg-white p-4 rounded-xl border border-red-100 overflow-x-auto whitespace-pre-wrap leading-relaxed select-text">
+            {this.state.error?.stack || this.state.error?.message || String(this.state.error)}
+          </pre>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all"
+          >
+            🔄 Reload Dashboard
+          </button>
+        </div>
+      );
+    }
+    return (this as any).props.children;
+  }
+}
 
 function OrderStatusDropdown({ currentStatus, onStatusChange }: { currentStatus: string, onStatusChange: (status: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -75,6 +110,7 @@ export function AdminDashboard() {
     if (location.pathname.includes('/admin/categories')) return 'categories';
     if (location.pathname.includes('/admin/reviews')) return 'reviews';
     if (location.pathname.includes('/admin/hero')) return 'hero';
+    if (location.pathname.includes('/admin/branding')) return 'branding';
     return 'orders'; // corresponds to consignments
   }, [location.pathname]);
   
@@ -1879,6 +1915,12 @@ export function AdminDashboard() {
           >
             <Sparkles className="w-4 h-4" /> Reviews
           </button>
+          <button 
+            onClick={() => navigate('/admin/branding')}
+            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'branding' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+          >
+            <Globe className="w-4 h-4" /> Branding Settings
+          </button>
         </nav>
       </div>
 
@@ -3099,6 +3141,10 @@ export function AdminDashboard() {
               </div>
             )}
           </div>
+        ) : activeTab === 'branding' ? (
+          <BrandingErrorBoundary>
+            <BrandingSettings />
+          </BrandingErrorBoundary>
         ) : null
       )}
 

@@ -50,6 +50,14 @@
         "updatedAt": { "type": "number" }
       },
       "required": ["userId", "items", "totalAmount", "status", "paymentMethod", "shippingDetails", "createdAt", "updatedAt"]
+    },
+    "BrandingSettings": {
+      "title": "BrandingSettings",
+      "description": "Website branding and design configurations",
+      "type": "object",
+      "properties": {
+        "faviconUrl": { "type": "string", "description": "URL of the website favicon/tab icon" }
+      }
     }
   },
   "firestore": {
@@ -64,6 +72,10 @@
     "/orders/{orderId}": {
       "schema": { "$ref": "#/entities/Order" },
       "description": "All submitted orders"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/BrandingSettings" },
+      "description": "Global website settings, categories config, category images and branding"
     }
   }
 }

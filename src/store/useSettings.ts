@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, isQuotaError, handleFirestoreError, OperationType } from '../lib/firebase';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
+import { updateFaviconInDOM } from '../lib/utils';
 import toast from 'react-hot-toast';
 
 export interface CategoryImageMapping {
@@ -32,6 +33,9 @@ interface SettingsState {
   deleteJuiceCategory: (id: string, name: string) => Promise<void>;
   reorderProductCategories: (newOrder: string[]) => Promise<void>;
   reorderJuiceCategories: (newOrder: JuiceCategory[]) => Promise<void>;
+  faviconUrl: string | null;
+  fetchFavicon: () => Promise<void>;
+  updateFavicon: (url: string | null) => Promise<void>;
 }
 
 export const DEFAULT_PRODUCT_CATEGORIES = [
@@ -67,6 +71,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   categoryImages: {},
   productCategories: DEFAULT_PRODUCT_CATEGORIES,
   juiceCategories: DEFAULT_JUICE_SECTIONS,
+  faviconUrl: null,
   lastFetched: 0,
   loading: false,
   error: null,
@@ -437,6 +442,35 @@ export const useSettings = create<SettingsState>((set, get) => ({
       set({ juiceCategories: newOrder });
     } catch (error: any) {
       toast.error('Failed to reorder juice menu');
+      throw error;
+    }
+  },
+  fetchFavicon: async () => {
+    try {
+      const docRef = doc(db, 'settings', 'branding');
+      const docSnap = await getDoc(docRef);
+      trackFirestoreRead('settings', 1);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const faviconUrl = data.faviconUrl || null;
+        set({ faviconUrl });
+        updateFaviconInDOM(faviconUrl);
+      } else {
+        set({ faviconUrl: null });
+        updateFaviconInDOM(null);
+      }
+    } catch (error) {
+      console.warn("Could not fetch favicon settings", error);
+    }
+  },
+  updateFavicon: async (url: string | null) => {
+    try {
+      const docRef = doc(db, 'settings', 'branding');
+      await setDoc(docRef, { faviconUrl: url }, { merge: true });
+      set({ faviconUrl: url });
+      updateFaviconInDOM(url);
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.WRITE, 'settings/branding');
       throw error;
     }
   },
