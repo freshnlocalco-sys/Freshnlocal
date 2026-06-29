@@ -2096,8 +2096,8 @@ export function AdminDashboard() {
                 productSection === 'juices' ? 'ring-2 ring-orange-500/10' : 'ring-2 ring-emerald-500/10'
               }`}>
                 <div className="space-y-4">
-                  <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
-                    {editingProductId ? <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" /> : <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />} 
+                  <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground flex items-start gap-2">
+                    {editingProductId ? <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0 mt-0.5" /> : <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0 mt-0.5" />} 
                     {editingProductId ? (
                       productSection === 'juices' ? 'Edit FNL Juice Listing' : 'Edit Produce Listing'
                     ) : (
@@ -2139,7 +2139,7 @@ export function AdminDashboard() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
                       <div className="space-y-1.5 sm:space-y-2">
                         <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Rate Price (₹)</label>
                         <input 
@@ -2406,7 +2406,7 @@ export function AdminDashboard() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[700px] sm:min-w-[800px] lg:min-w-[900px] xl:min-w-[1000px]">
+                <table className="w-full text-left border-collapse min-w-[550px] lg:min-w-full">
                   <thead>
                     <tr className="border-b border-border bg-secondary text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 whitespace-nowrap">Product Details</th>
