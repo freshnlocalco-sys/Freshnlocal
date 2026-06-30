@@ -455,6 +455,11 @@ export const useSettings = create<SettingsState>((set, get) => ({
         const faviconUrl = data.faviconUrl || null;
         set({ faviconUrl });
         updateFaviconInDOM(faviconUrl);
+        if (faviconUrl && 'caches' in window) {
+          caches.open('fnl-branding')
+            .then(cache => cache.put('/branding-icon-url', new Response(faviconUrl)))
+            .catch(err => console.warn("Failed to cache favicon URL:", err));
+        }
       } else {
         set({ faviconUrl: null });
         updateFaviconInDOM(null);
@@ -469,6 +474,17 @@ export const useSettings = create<SettingsState>((set, get) => ({
       await setDoc(docRef, { faviconUrl: url }, { merge: true });
       set({ faviconUrl: url });
       updateFaviconInDOM(url);
+      if ('caches' in window) {
+        caches.open('fnl-branding')
+          .then(async (cache) => {
+            if (url) {
+              await cache.put('/branding-icon-url', new Response(url));
+            } else {
+              await cache.delete('/branding-icon-url');
+            }
+          })
+          .catch(err => console.warn("Failed to update cache favicon URL:", err));
+      }
     } catch (error: any) {
       handleFirestoreError(error, OperationType.WRITE, 'settings/branding');
       throw error;
