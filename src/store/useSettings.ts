@@ -457,7 +457,20 @@ export const useSettings = create<SettingsState>((set, get) => ({
         updateFaviconInDOM(faviconUrl);
         if (faviconUrl && 'caches' in window) {
           caches.open('fnl-branding')
-            .then(cache => cache.put('/branding-icon-url', new Response(faviconUrl)))
+            .then(async (cache) => {
+              await cache.put('/branding-icon-url', new Response(faviconUrl));
+              try {
+                const cachedImg = await cache.match('/branding-icon-image');
+                if (!cachedImg) {
+                  const imgResponse = await fetch(faviconUrl);
+                  if (imgResponse.ok) {
+                    await cache.put('/branding-icon-image', imgResponse);
+                  }
+                }
+              } catch (imgErr) {
+                console.warn("Failed to pre-cache branding icon image:", imgErr);
+              }
+            })
             .catch(err => console.warn("Failed to cache favicon URL:", err));
         }
       } else {
@@ -479,8 +492,17 @@ export const useSettings = create<SettingsState>((set, get) => ({
           .then(async (cache) => {
             if (url) {
               await cache.put('/branding-icon-url', new Response(url));
+              try {
+                const imgResponse = await fetch(url);
+                if (imgResponse.ok) {
+                  await cache.put('/branding-icon-image', imgResponse);
+                }
+              } catch (imgErr) {
+                console.warn("Failed to pre-cache updated branding icon image:", imgErr);
+              }
             } else {
               await cache.delete('/branding-icon-url');
+              await cache.delete('/branding-icon-image');
             }
           })
           .catch(err => console.warn("Failed to update cache favicon URL:", err));

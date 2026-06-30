@@ -232,9 +232,18 @@ export function Cart() {
       {showPwaModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
-            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden border border-primary/20">
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden border border-border/60 shadow-[0_4px_16px_rgba(0,0,0,0.06)] p-3">
               {faviconUrl ? (
-                <img src={faviconUrl} alt="Fresh N Local" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img 
+                  src={faviconUrl} 
+                  alt="Fresh N Local" 
+                  className="w-full h-full object-contain" 
+                  style={{ 
+                    imageRendering: '-webkit-optimize-contrast',
+                    willChange: 'transform'
+                  }}
+                  referrerPolicy="no-referrer" 
+                />
               ) : (
                 <ShoppingBag className="w-10 h-10 text-primary" />
               )}

@@ -3,12 +3,14 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navigation, MapPin, Phone, Mail, Heart } from 'lucide-react';
 import { useAuth, signOut } from '../lib/firebase';
 import { useCart } from '../store/useCart';
+import { useSettings } from '../store/useSettings';
 import { AuthModal } from './AuthModal';
 import { AdminNotifier } from './AdminNotifier';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function Layout() {
   const { user, loading } = useAuth();
+  const { faviconUrl } = useSettings();
   const cartItemsCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -27,7 +29,23 @@ export function Layout() {
       <header className="sticky top-0 z-50 bg-background/70 backdrop-blur-xl shadow-sm border-b border-border/50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-6 shrink-0 z-10 min-w-0 pr-2">
-            <Link to="/" className="flex items-center gap-1 sm:gap-2 group truncate">
+            <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group truncate">
+              {faviconUrl ? (
+                <div className="relative shrink-0 flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-black/5 bg-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-1 transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_4px_12px_rgba(0,184,83,0.15)] group-hover:border-primary/20 overflow-hidden">
+                  <img 
+                    src={faviconUrl} 
+                    alt="Fresh N Local Logo" 
+                    className="w-full h-full object-contain"
+                    style={{ 
+                      imageRendering: '-webkit-optimize-contrast',
+                      willChange: 'transform'
+                    }}
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              ) : (
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary" />
+              )}
               <span className="font-sans font-black text-[0.95rem] min-[360px]:text-lg sm:text-xl md:text-2xl tracking-tighter uppercase transition-colors hover:text-primary duration-300 text-foreground flex items-center gap-0.5 sm:gap-1 truncate">
                 FreshNLocal <span className="text-primary hidden min-[360px]:inline">CO.</span>
               </span>
