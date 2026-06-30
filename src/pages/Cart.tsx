@@ -7,6 +7,7 @@ import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/fi
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
+import { usePWA } from '../store/usePWA';
 import toast from 'react-hot-toast';
 
 export function Cart() {
@@ -15,6 +16,8 @@ export function Cart() {
   const cartItems = items.filter(item => item && item.product && item.product.id);
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
+  const { deferredPrompt, showInstallPrompt } = usePWA();
+  const [showPwaModal, setShowPwaModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [addressLines, setAddressLines] = useState(() => {
     let line1 = user?.address || '';
@@ -193,7 +196,12 @@ export function Cart() {
 
       clearCart();
       toast.success(`Order Placed successfully! Order ID: ${orderNumber}`);
-      navigate('/profile');
+      
+      if (deferredPrompt) {
+        setShowPwaModal(true);
+      } else {
+        navigate('/profile');
+      }
     } catch (error: any) {
       console.error(error);
       const errorMsg = error?.message || error?.error || String(error);
@@ -316,6 +324,43 @@ export function Cart() {
       
       {/* Settlement checkout form */}
       <div className="lg:col-span-5">
+
+      {showPwaModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-xl font-sans font-black uppercase tracking-tight text-foreground">
+              Add Fresh N Local to Home Screen
+            </h3>
+            <p className="text-sm text-muted-foreground font-semibold">
+              Install our app for a faster, seamless shopping experience and easy access to your orders!
+            </p>
+            <div className="flex flex-col gap-3 pt-4">
+              <button
+                onClick={() => {
+                  showInstallPrompt();
+                  setShowPwaModal(false);
+                  navigate('/profile');
+                }}
+                className="w-full slice-btn-primary px-6 py-4 text-xs font-black uppercase"
+              >
+                Install App
+              </button>
+              <button
+                onClick={() => {
+                  setShowPwaModal(false);
+                  navigate('/profile');
+                }}
+                className="w-full px-6 py-4 text-xs font-black uppercase text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
         <div className="bg-secondary border border-border rounded-[32px] p-6 lg:p-8 sticky top-28 space-y-8 shadow-sm">
           <h2 className="text-lg lg:text-xl font-sans font-black uppercase text-foreground tracking-wide border-b border-border pb-4">
             Settlement Summary

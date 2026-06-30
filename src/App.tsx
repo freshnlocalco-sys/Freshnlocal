@@ -16,6 +16,7 @@ import { Returns } from './pages/Returns';
 
 import { useSettings } from './store/useSettings';
 import { useProducts } from './store/useProducts';
+import { usePWA } from './store/usePWA';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -57,10 +58,29 @@ function ProductDumper() {
 
 function GlobalLoader() {
   const { fetchCategoryImages, fetchFavicon } = useSettings();
+  const { setDeferredPrompt } = usePWA();
+  
   useEffect(() => {
     fetchCategoryImages();
     fetchFavicon();
   }, [fetchCategoryImages, fetchFavicon]);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+      console.log('beforeinstallprompt event captured');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, [setDeferredPrompt]);
+  
   return null;
 }
 
