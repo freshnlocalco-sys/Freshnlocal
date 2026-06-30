@@ -18,7 +18,8 @@ if (primaryBucket.endsWith('.appspot.com')) {
 }
 export const fallbackStorage = getStorage(app, fallbackBucketUrl);
 export const db = initializeFirestore(app, {
-  ignoreUndefinedProperties: true
+  ignoreUndefinedProperties: true,
+  experimentalForceLongPolling: true,
 }, "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
 
 if (typeof window !== 'undefined') {
