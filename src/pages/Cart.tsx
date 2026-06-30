@@ -207,7 +207,7 @@ export function Cart() {
     }
   };
 
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 && !showPwaModal) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-36 px-4 text-center max-w-7xl mx-auto w-full bg-background text-foreground">
         <div className="w-20 h-20 bg-secondary border border-border flex items-center justify-center rounded-[24px] mb-8 shadow-inner">
@@ -228,6 +228,67 @@ export function Cart() {
   }
 
   return (
+    <>
+      {showPwaModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-xl font-sans font-black uppercase tracking-tight text-foreground">
+              Add Fresh N Local to Home Screen
+            </h3>
+            <p className="text-sm text-muted-foreground font-semibold">
+              Install our app for a faster, seamless shopping experience and easy access to your orders!
+            </p>
+            <div className="flex flex-col gap-3 pt-4">
+              {deferredPrompt ? (
+                <button
+                  onClick={() => {
+                    showInstallPrompt();
+                    setShowPwaModal(false);
+                    navigate('/profile');
+                  }}
+                  className="w-full slice-btn-primary px-6 py-4 text-xs font-black uppercase"
+                >
+                  Install App
+                </button>
+              ) : (
+                <div className="text-xs text-muted-foreground bg-secondary p-3 rounded-xl border border-border text-left">
+                  To install the app, tap your browser's menu (⋮ or ↗) and select <strong className="text-foreground">"Add to Home Screen"</strong> or <strong className="text-foreground">"Install App"</strong>.
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  setShowPwaModal(false);
+                  navigate('/profile');
+                }}
+                className="w-full px-6 py-4 text-xs font-black uppercase text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {deferredPrompt ? 'Maybe Later' : 'Done'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cartItems.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center py-36 px-4 text-center max-w-7xl mx-auto w-full bg-background text-foreground">
+          <div className="w-20 h-20 bg-secondary border border-border flex items-center justify-center rounded-[24px] mb-8 shadow-inner">
+            <ShoppingBag className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-sans font-black uppercase tracking-tight mb-3 text-foreground">Your order list is empty</h2>
+          <p className="text-muted-foreground text-xs font-semibold max-w-sm mb-8 leading-relaxed">
+            Unlock your fresh gourmet potential by placing hand-vetted local crops inside your checkout order.
+          </p>
+          <button 
+            onClick={() => navigate('/shop')} 
+            className="slice-btn-primary px-8 py-4 text-[10px]"
+          >
+            Begin Exploring Crops <ArrowLeft className="w-4 h-4 rotate-180 ml-1.5 text-white" />
+          </button>
+        </div>
+      ) : (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 bg-background">
       {/* Shopping Bag Items Roster */}
       <div className="lg:col-span-7 space-y-8">
@@ -320,49 +381,6 @@ export function Cart() {
       
       {/* Settlement checkout form */}
       <div className="lg:col-span-5">
-
-      {showPwaModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ShoppingBag className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-xl font-sans font-black uppercase tracking-tight text-foreground">
-              Add Fresh N Local to Home Screen
-            </h3>
-            <p className="text-sm text-muted-foreground font-semibold">
-              Install our app for a faster, seamless shopping experience and easy access to your orders!
-            </p>
-            <div className="flex flex-col gap-3 pt-4">
-              {deferredPrompt ? (
-                <button
-                  onClick={() => {
-                    showInstallPrompt();
-                    setShowPwaModal(false);
-                    navigate('/profile');
-                  }}
-                  className="w-full slice-btn-primary px-6 py-4 text-xs font-black uppercase"
-                >
-                  Install App
-                </button>
-              ) : (
-                <div className="text-xs text-muted-foreground bg-secondary p-3 rounded-xl border border-border text-left">
-                  To install the app, tap your browser's menu (⋮ or ↗) and select <strong className="text-foreground">"Add to Home Screen"</strong> or <strong className="text-foreground">"Install App"</strong>.
-                </div>
-              )}
-              <button
-                onClick={() => {
-                  setShowPwaModal(false);
-                  navigate('/profile');
-                }}
-                className="w-full px-6 py-4 text-xs font-black uppercase text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {deferredPrompt ? 'Maybe Later' : 'Done'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
         <div className="bg-secondary border border-border rounded-[32px] p-6 lg:p-8 sticky top-28 space-y-8 shadow-sm">
           <h2 className="text-lg lg:text-xl font-sans font-black uppercase text-foreground tracking-wide border-b border-border pb-4">
             Settlement Summary
@@ -572,5 +590,7 @@ export function Cart() {
         </div>
       </div>
     </div>
+    )}
+    </>
   );
 }

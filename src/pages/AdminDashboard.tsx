@@ -667,7 +667,7 @@ export function AdminDashboard() {
              
              // If they use Google Sign In, Firebase throws invalid-credential if you try to use a password
              if (errMsg.includes('invalid-credential') || errMsg.includes('auth/invalid-login-credentials')) {
-                 toast.error(`Invalid credentials. If this was a Google account, you cannot use a password. Instead, Sign Up with an email starting with 'admin@' to create an email/password admin.`);
+                 toast.error(`Invalid credentials. If this was a Google account, you cannot use a password.`);
                  return;
              }
 

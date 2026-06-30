@@ -138,7 +138,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
       import('./cacheManager').then(m => m.trackFirestoreRead('users', 1)).catch(() => {});
-      const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com' || firebaseUser.email?.toLowerCase() === 'mohitswami855@gmail.com' || firebaseUser.email?.startsWith('admin@');
+      const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com' || firebaseUser.email?.toLowerCase() === 'mohitswami855@gmail.com';
       if (userSnap.exists()) {
         const userData = userSnap.data() as Omit<AppUser, 'uid'>;
         if (isAdmin && userData.role !== 'admin') {
@@ -148,7 +148,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         useAuth.getState().setUser({ uid: firebaseUser.uid, ...userData } as AppUser);
       } else {
         // Create new user record
-        const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com' || firebaseUser.email?.toLowerCase() === 'mohitswami855@gmail.com' || firebaseUser.email?.startsWith('admin@');
         const newUser: Omit<AppUser, 'uid'> = {
           email: firebaseUser.email || '',
           displayName: firebaseUser.displayName || '',
@@ -161,7 +160,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     } catch (e: any) {
       console.warn("Using fallback user due to Firestore quota error or setup error");
       // Fallback if Firestore quota is exceeded so user is still authenticated locally
-      const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com' || firebaseUser.email?.toLowerCase() === 'mohitswami855@gmail.com' || firebaseUser.email?.startsWith('admin@');
+      const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com' || firebaseUser.email?.toLowerCase() === 'mohitswami855@gmail.com';
       const fallbackUser: Omit<AppUser, 'uid'> = {
         email: firebaseUser.email || '',
         displayName: firebaseUser.displayName || '',
