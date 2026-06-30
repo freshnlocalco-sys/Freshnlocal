@@ -57,7 +57,7 @@ function ProductDumper() {
 }
 
 function GlobalLoader() {
-  const { fetchCategoryImages, fetchFavicon } = useSettings();
+  const { fetchCategoryImages, fetchFavicon, faviconUrl } = useSettings();
   const { setDeferredPrompt } = usePWA();
   
   useEffect(() => {
@@ -80,6 +80,57 @@ function GlobalLoader() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, [setDeferredPrompt]);
+
+  useEffect(() => {
+    const iconUrl = faviconUrl || '/icon-192.svg';
+    const mimeType = iconUrl.endsWith('.svg') ? 'image/svg+xml' : (iconUrl.endsWith('.png') ? 'image/png' : 'image/jpeg');
+
+    const manifest = {
+      name: "Fresh N Local",
+      short_name: "FNL",
+      description: "Fresh N Local - Local delivery app",
+      start_url: "/",
+      display: "standalone",
+      background_color: "#ffffff",
+      theme_color: "#2c3e30",
+      icons: [
+        {
+          src: iconUrl,
+          type: mimeType,
+          sizes: "192x192",
+          purpose: "any"
+        },
+        {
+          src: iconUrl,
+          type: mimeType,
+          sizes: "512x512",
+          purpose: "any"
+        },
+        {
+          src: iconUrl,
+          type: mimeType,
+          sizes: "1024x1024",
+          purpose: "any"
+        }
+      ]
+    };
+
+    const stringified = JSON.stringify(manifest);
+    const blob = new Blob([stringified], { type: 'application/json' });
+    const manifestUrl = URL.createObjectURL(blob);
+
+    let link: HTMLLinkElement | null = document.querySelector("link[rel='manifest']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'manifest';
+      document.head.appendChild(link);
+    }
+    link.href = manifestUrl;
+
+    return () => {
+      URL.revokeObjectURL(manifestUrl);
+    };
+  }, [faviconUrl]);
   
   return null;
 }

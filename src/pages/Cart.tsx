@@ -11,7 +11,7 @@ import { usePWA } from '../store/usePWA';
 import toast from 'react-hot-toast';
 
 export function Cart() {
-  const { categoryImages } = useSettings();
+  const { categoryImages, faviconUrl } = useSettings();
   const { items, removeItem, updateQuantity, total, clearCart } = useCart();
   const cartItems = items.filter(item => item && item.product && item.product.id);
   const { user, setUser } = useAuth();
@@ -232,8 +232,12 @@ export function Cart() {
       {showPwaModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ShoppingBag className="w-8 h-8 text-primary" />
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden border border-primary/20">
+              {faviconUrl ? (
+                <img src={faviconUrl} alt="Fresh N Local" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <ShoppingBag className="w-10 h-10 text-primary" />
+              )}
             </div>
             <h3 className="text-xl font-sans font-black uppercase tracking-tight text-foreground">
               Add Fresh N Local to Home Screen
