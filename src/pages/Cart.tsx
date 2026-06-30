@@ -197,11 +197,7 @@ export function Cart() {
       clearCart();
       toast.success(`Order Placed successfully! Order ID: ${orderNumber}`);
       
-      if (deferredPrompt) {
-        setShowPwaModal(true);
-      } else {
-        navigate('/profile');
-      }
+      setShowPwaModal(true);
     } catch (error: any) {
       console.error(error);
       const errorMsg = error?.message || error?.error || String(error);
@@ -338,16 +334,22 @@ export function Cart() {
               Install our app for a faster, seamless shopping experience and easy access to your orders!
             </p>
             <div className="flex flex-col gap-3 pt-4">
-              <button
-                onClick={() => {
-                  showInstallPrompt();
-                  setShowPwaModal(false);
-                  navigate('/profile');
-                }}
-                className="w-full slice-btn-primary px-6 py-4 text-xs font-black uppercase"
-              >
-                Install App
-              </button>
+              {deferredPrompt ? (
+                <button
+                  onClick={() => {
+                    showInstallPrompt();
+                    setShowPwaModal(false);
+                    navigate('/profile');
+                  }}
+                  className="w-full slice-btn-primary px-6 py-4 text-xs font-black uppercase"
+                >
+                  Install App
+                </button>
+              ) : (
+                <div className="text-xs text-muted-foreground bg-secondary p-3 rounded-xl border border-border text-left">
+                  To install the app, tap your browser's menu (⋮ or ↗) and select <strong className="text-foreground">"Add to Home Screen"</strong> or <strong className="text-foreground">"Install App"</strong>.
+                </div>
+              )}
               <button
                 onClick={() => {
                   setShowPwaModal(false);
@@ -355,7 +357,7 @@ export function Cart() {
                 }}
                 className="w-full px-6 py-4 text-xs font-black uppercase text-muted-foreground hover:text-foreground transition-colors"
               >
-                Maybe Later
+                {deferredPrompt ? 'Maybe Later' : 'Done'}
               </button>
             </div>
           </div>

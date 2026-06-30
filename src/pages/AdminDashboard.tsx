@@ -701,8 +701,7 @@ export function AdminDashboard() {
             Google Sign-In popups are restricted inside design preview frames by default browser privacy policies.
             <div className="mt-2 space-y-1 text-amber-900">
               <p>• <strong className="text-amber-950">Option 1:</strong> Use the "Admin Email" form above to sign in or register instantly.</p>
-              <p>• <strong className="text-amber-950">Option 2:</strong> Click <strong className="text-amber-950">"Bypass Auth"</strong> below to instantly access the control desk during testing.</p>
-              <p>• <strong className="text-amber-950">Option 3:</strong> Open the app in a new browser tab to use authentic Google Login.</p>
+              <p>• <strong className="text-amber-950">Option 2:</strong> Open the app in a new browser tab to use authentic Google Login.</p>
             </div>
           </div>
         )}
@@ -802,27 +801,6 @@ export function AdminDashboard() {
         >
           Sign In with Google
         </button>
-
-        <button 
-          onClick={async () => {
-             const m = await import('../lib/firebase');
-             const adminUser: any = {
-               uid: 'admin_bypass_owner',
-               email: 'freshnlocalco@gmail.com',
-               displayName: 'Owner Developer',
-               role: 'admin',
-               createdAt: Date.now()
-             };
-             m.useAuth.getState().setUser(adminUser);
-             toast.success("Bypassed network/iframe block! Welcome, freshnlocalco@gmail.com.");
-          }}
-          className="w-full py-4 mt-6 bg-orange-600/10 hover:bg-orange-600/20 text-orange-600 text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all border border-orange-500/20"
-        >
-          🔑 Bypass Auth (Owner Only)
-        </button>
-        <p className="text-[10px] text-center text-muted-foreground max-w-xs mx-auto leading-relaxed mt-2 font-mono">
-          Click the bypass button above if you are the owner (freshnlocalco@gmail.com) and cannot use Google Sign-In right now.
-        </p>
       </div>
     );
   }
