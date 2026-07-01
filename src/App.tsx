@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
@@ -20,10 +20,49 @@ import { usePWA } from './store/usePWA';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
+  const navigationType = useNavigationType();
+  const scrollPositions = React.useRef<Record<string, number>>({});
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
+
+  useEffect(() => {
+    let timeoutId: any;
+    const handleScroll = () => {
+      // Throttle scroll saving to avoid performance issues
+      if (timeoutId) return;
+      timeoutId = setTimeout(() => {
+        scrollPositions.current[pathname] = window.scrollY;
+        sessionStorage.setItem(`scroll-${pathname}`, window.scrollY.toString());
+        timeoutId = null;
+      }, 100);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [pathname]);
+
+  useEffect(() => {
+    if (navigationType === 'POP') {
+      const savedStr = sessionStorage.getItem(`scroll-${pathname}`);
+      const savedPosition = savedStr ? parseInt(savedStr, 10) : (scrollPositions.current[pathname] || 0);
+      
+      // Try multiple times to account for async rendering and image loading
+      window.scrollTo(0, savedPosition);
+      const timeouts = [10, 50, 150, 300, 500].map(ms => 
+        setTimeout(() => window.scrollTo(0, savedPosition), ms)
+      );
+      return () => timeouts.forEach(clearTimeout);
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, navigationType]);
 
   return null;
 }

@@ -157,6 +157,15 @@ export function ProductDetail() {
   
   const productImgSrc = product.imageUrl || getCategoryImage(product.category, categoryImages) || undefined;
 
+  const handleBack = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate(backLink);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 w-full bg-background text-foreground">
       <Helmet>
@@ -164,9 +173,9 @@ export function ProductDetail() {
         <meta name="description" content={`Buy ${product.name} online at best price in India on Fresh N Local Co.${product.unit ? ` (${product.unit})` : ''}`} />
         <link rel="canonical" href={`https://www.freshnlocal.co/product/${product.id}`} />
       </Helmet>
-      <Link to={backLink} className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-secondary border border-border text-[10px] uppercase tracking-widest font-black text-foreground hover:text-primary hover:border-primary transition-colors mb-8">
+      <a href={backLink} onClick={handleBack} className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-secondary border border-border text-[10px] uppercase tracking-widest font-black text-foreground hover:text-primary hover:border-primary transition-colors mb-8">
         <ArrowLeft className="w-4.5 h-4.5" /> {backText}
-      </Link>
+      </a>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Product Image Panel */}

@@ -55,7 +55,9 @@ export function Shop() {
 
   useEffect(() => {
     async function load() {
-      setLoading(true);
+      if (products.length === 0) {
+        setLoading(true);
+      }
       
       // Hydrate from IndexedDB first for maximum speed
       await hydrateFromIDB();

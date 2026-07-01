@@ -64,7 +64,6 @@ export function Profile() {
             </div>
             
             <div className="space-y-1 mt-2">
-              <span className="glass-pill text-[8px] mb-2 inline-block">PRO MEMBER</span>
               <h2 className="text-xl font-black uppercase text-foreground tracking-tight mt-2">{user?.displayName || 'Customer'}</h2>
               <p className="text-xs text-muted-foreground font-mono tracking-wide">{user?.email}</p>
             </div>
@@ -78,10 +77,6 @@ export function Profile() {
             <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-border">
               <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> Member Since</span>
               <span className="text-foreground font-mono">{new Date(user?.createdAt || Date.now()).toLocaleDateString()}</span>
-            </div>
-            <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-border">
-              <span className="flex items-center gap-2"><Award className="w-4 h-4 text-primary" /> Delivery Grade</span>
-              <span className="text-primary font-black">PLATINUM (₹0)</span>
             </div>
             {user?.addresses && user.addresses.length > 0 ? (
               <div className="bg-background p-4 rounded-xl border border-border space-y-3">
