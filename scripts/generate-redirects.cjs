@@ -152,17 +152,44 @@ confidentMatches.forEach(m => console.log(`${m.oldId} -> ${m.newName}`));
 console.log('\n=== UNMATCHED URLs (Redirecting to /shop) ===');
 unmatched.forEach(u => console.log(`${u.oldId} | ${u.slug}`));
 
-// Filter out existing product redirects
-vercelJson.redirects = vercelJson.redirects.filter(r => !r.source.startsWith('/product/'));
+// Filter out existing product redirects and the custom catch-all redirects
+vercelJson.redirects = vercelJson.redirects.filter(r => 
+  !r.source.startsWith('/product/') && 
+  r.source !== '/shop/:path+'
+);
 
 // Add new redirects at the top (after the other specific ones we added previously)
 // Find index of the wildcard catch-all if it exists
 let catchAllIndex = vercelJson.redirects.findIndex(r => r.source === '/(.*)');
 if (catchAllIndex === -1) catchAllIndex = vercelJson.redirects.length;
 
-// Insert product redirects just before the catch-all
-vercelJson.redirects.splice(catchAllIndex, 0, ...redirects);
+// Define robust catch-alls
+const catchAlls = [
+  {
+    "source": "/product/:id(\\d+)/:slug+",
+    "destination": "/shop",
+    "permanent": true
+  },
+  {
+    "source": "/product/:id(\\d+)/",
+    "destination": "/shop",
+    "permanent": true
+  },
+  {
+    "source": "/product/:id(\\d+)",
+    "destination": "/shop",
+    "permanent": true
+  },
+  {
+    "source": "/shop/:path+",
+    "destination": "/shop",
+    "permanent": true
+  }
+];
+
+// Insert product redirects and catch-alls just before the main site wildcard/host catch-all
+vercelJson.redirects.splice(catchAllIndex, 0, ...redirects, ...catchAlls);
 
 fs.writeFileSync(vercelJsonPath, JSON.stringify(vercelJson, null, 2));
 
-console.log(`\nSuccessfully added ${redirects.length} product redirects to vercel.json!`);
+console.log(`\nSuccessfully added ${redirects.length} product redirects and 4 catch-alls to vercel.json!`);
