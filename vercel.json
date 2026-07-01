@@ -346,6 +346,21 @@
       "permanent": true
     },
     {
+      "source": "/product/:id(\\d+)/:slug*",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/:id(\\d+)",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/shop/:path+",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
       "source": "/(.*)",
       "has": [
         {
