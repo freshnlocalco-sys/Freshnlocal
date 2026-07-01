@@ -1,6 +1,351 @@
 {
   "redirects": [
     {
+      "source": "/shop/:category",
+      "destination": "/shop?category=:category",
+      "permanent": true
+    },
+    {
+      "source": "/p/business",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/p/social",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/product/28988508/:slug",
+      "destination": "/product/3V8eiq04J3E7nComyh5o",
+      "permanent": true
+    },
+    {
+      "source": "/product/28884640/:slug",
+      "destination": "/product/e1UfCbv9syHZrvE62YUU",
+      "permanent": true
+    },
+    {
+      "source": "/product/28884636/:slug",
+      "destination": "/product/I1iclDWz3L2NoID3AMeS",
+      "permanent": true
+    },
+    {
+      "source": "/product/31938694/:slug",
+      "destination": "/product/nMGLsQSOU4B4vVkl8Sdo",
+      "permanent": true
+    },
+    {
+      "source": "/product/30313120/:slug",
+      "destination": "/product/dm5fX1LM3V0cA7tmoeGE",
+      "permanent": true
+    },
+    {
+      "source": "/product/30313140/:slug",
+      "destination": "/product/tO01kbNZKd3ZfZ8powjs",
+      "permanent": true
+    },
+    {
+      "source": "/product/29434148/:slug",
+      "destination": "/product/Vh5czL2MpqgGGPe1XFqN",
+      "permanent": true
+    },
+    {
+      "source": "/product/28719690/:slug",
+      "destination": "/product/GCRB4zJ5ARDMHJA3KwBe",
+      "permanent": true
+    },
+    {
+      "source": "/product/31350863/:slug",
+      "destination": "/product/hlK9DI29YBf9UHziBQ1W",
+      "permanent": true
+    },
+    {
+      "source": "/product/30099332/:slug",
+      "destination": "/product/o4IfYwoHGBORj2H3Qn5W",
+      "permanent": true
+    },
+    {
+      "source": "/product/31350656/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/29902690/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/30313228/:slug",
+      "destination": "/product/8xFlPOiBunod5R342usS",
+      "permanent": true
+    },
+    {
+      "source": "/product/30314530/:slug",
+      "destination": "/product/ZGeRvUlEYMDGpAkd9Xx1",
+      "permanent": true
+    },
+    {
+      "source": "/product/30313022/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/26868841/:slug",
+      "destination": "/product/kfrA8LTgiUhc537eP3m0",
+      "permanent": true
+    },
+    {
+      "source": "/product/29127573/:slug",
+      "destination": "/product/50bZEreLPg6adCRrkVtj",
+      "permanent": true
+    },
+    {
+      "source": "/product/33073712/:slug",
+      "destination": "/product/0qe24Zt8DRDbkBRwPWtb",
+      "permanent": true
+    },
+    {
+      "source": "/product/29766402/:slug",
+      "destination": "/product/BkMo261EBgxXOZ4ymi1A",
+      "permanent": true
+    },
+    {
+      "source": "/product/29062463/:slug",
+      "destination": "/product/ZevJErAbwc0otoHfdR0Y",
+      "permanent": true
+    },
+    {
+      "source": "/product/33054628/:slug",
+      "destination": "/product/7htH89QUF6Brth3K7ruJ",
+      "permanent": true
+    },
+    {
+      "source": "/product/30107331/:slug",
+      "destination": "/product/Y5gEEQDB6BGnJaCsMmMi",
+      "permanent": true
+    },
+    {
+      "source": "/product/33073653/:slug",
+      "destination": "/product/bpCoLNRon5PPYi5CaUbC",
+      "permanent": true
+    },
+    {
+      "source": "/product/30312854/:slug",
+      "destination": "/product/tQNgLRsDx4QxUo17US3G",
+      "permanent": true
+    },
+    {
+      "source": "/product/30313135/:slug",
+      "destination": "/product/jBXCyXytXrbW3n9fMiwg",
+      "permanent": true
+    },
+    {
+      "source": "/product/28727901/:slug",
+      "destination": "/product/RTYitI6N4U5bk53nrfWm",
+      "permanent": true
+    },
+    {
+      "source": "/product/28548734/:slug",
+      "destination": "/product/5FUly3iriFyrLilFsymr",
+      "permanent": true
+    },
+    {
+      "source": "/product/33054594/:slug",
+      "destination": "/product/fkeRAw3AY1r7kvey7esH",
+      "permanent": true
+    },
+    {
+      "source": "/product/28211547/:slug",
+      "destination": "/product/9WUfl85kffqwWKJwbTrm",
+      "permanent": true
+    },
+    {
+      "source": "/product/30313101/:slug",
+      "destination": "/product/5HEDUKsIOy0fsOL7d61e",
+      "permanent": true
+    },
+    {
+      "source": "/product/33113371/:slug",
+      "destination": "/product/npuCK6yCgGgT6hHPzfAL",
+      "permanent": true
+    },
+    {
+      "source": "/product/29236048/:slug",
+      "destination": "/product/010UpSjAs6rFU1A8iI9K",
+      "permanent": true
+    },
+    {
+      "source": "/product/32979065/:slug",
+      "destination": "/product/Xh0r4gg6JnNjfhUXstMq",
+      "permanent": true
+    },
+    {
+      "source": "/product/30312982/:slug",
+      "destination": "/product/Vh5czL2MpqgGGPe1XFqN",
+      "permanent": true
+    },
+    {
+      "source": "/product/32979079/:slug",
+      "destination": "/product/KtnAUE639C8iX9UtAP4h",
+      "permanent": true
+    },
+    {
+      "source": "/product/29236038/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/28988505/:slug",
+      "destination": "/product/9MHhk45ZgyB5hbHGdODZ",
+      "permanent": true
+    },
+    {
+      "source": "/product/27547847/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/30313128/:slug",
+      "destination": "/product/wzJHg2Xun3eQWiOU6y7D",
+      "permanent": true
+    },
+    {
+      "source": "/product/26870077/:slug",
+      "destination": "/product/DpRZ3XALNJjDRi6lYFOO",
+      "permanent": true
+    },
+    {
+      "source": "/product/33054642/:slug",
+      "destination": "/product/mPWifKJGPbG1MaJn9feT",
+      "permanent": true
+    },
+    {
+      "source": "/product/30874903/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/28554301/:slug",
+      "destination": "/product/vOMf7RADB7ADITvhN3O6",
+      "permanent": true
+    },
+    {
+      "source": "/product/29236032/:slug",
+      "destination": "/product/1nCTKP8KvrQU8faxjMxz",
+      "permanent": true
+    },
+    {
+      "source": "/product/33073640/:slug",
+      "destination": "/product/ghEBnRmtYbV1a3FnX8Ix",
+      "permanent": true
+    },
+    {
+      "source": "/product/27009154/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/28988471/:slug",
+      "destination": "/product/S7BCYYlqvS9lRtPSUZzM",
+      "permanent": true
+    },
+    {
+      "source": "/product/28961125/:slug",
+      "destination": "/product/4Ib8sjjwT1EVptOYM9Zh",
+      "permanent": true
+    },
+    {
+      "source": "/product/33073670/:slug",
+      "destination": "/product/4OjqPIZsyAsAYWcvIqj1",
+      "permanent": true
+    },
+    {
+      "source": "/product/30462627/:slug",
+      "destination": "/product/7REj0zZK7E7AfkbY3u0d",
+      "permanent": true
+    },
+    {
+      "source": "/product/26868814/:slug",
+      "destination": "/product/Lb7lIct6fhTIVZiU8FkW",
+      "permanent": true
+    },
+    {
+      "source": "/product/31307855/:slug",
+      "destination": "/product/VyXSTd5JAcN6L98QYcWi",
+      "permanent": true
+    },
+    {
+      "source": "/product/28053846/:slug",
+      "destination": "/product/oIxfC5UMj5KwoT6J9vyO",
+      "permanent": true
+    },
+    {
+      "source": "/product/33073706/:slug",
+      "destination": "/product/knW0rUp6Zo4n9d2AOv9Q",
+      "permanent": true
+    },
+    {
+      "source": "/product/26869524/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/33073638/:slug",
+      "destination": "/product/79s9cRRPCJWJR46jaxhW",
+      "permanent": true
+    },
+    {
+      "source": "/product/26834944/:slug",
+      "destination": "/product/MmmtVRVd5TwwcWfWRMOW",
+      "permanent": true
+    },
+    {
+      "source": "/product/30313030/:slug",
+      "destination": "/product/PufQtZxDNDAuIhWcf3MC",
+      "permanent": true
+    },
+    {
+      "source": "/product/31350796/:slug",
+      "destination": "/product/F88TmUMUBMdeFLR6sTls",
+      "permanent": true
+    },
+    {
+      "source": "/product/33054619/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/33073698/:slug",
+      "destination": "/shop",
+      "permanent": true
+    },
+    {
+      "source": "/product/30313125/:slug",
+      "destination": "/product/t48y3w1X21vdyZ7mLqAo",
+      "permanent": true
+    },
+    {
+      "source": "/product/31938694/:slug",
+      "destination": "/product/nMGLsQSOU4B4vVkl8Sdo",
+      "permanent": true
+    },
+    {
+      "source": "/product/28884636/:slug",
+      "destination": "/product/I1iclDWz3L2NoID3AMeS",
+      "permanent": true
+    },
+    {
+      "source": "/product/30312982/:slug",
+      "destination": "/product/Vh5czL2MpqgGGPe1XFqN",
+      "permanent": true
+    },
+    {
+      "source": "/product/28988508/:slug",
+      "destination": "/product/3V8eiq04J3E7nComyh5o",
+      "permanent": true
+    },
+    {
       "source": "/(.*)",
       "has": [
         {

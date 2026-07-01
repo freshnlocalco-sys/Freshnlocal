@@ -1,0 +1,108 @@
+{
+  "confidentMatches": [
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/28988508/Portobello-Mushroom-250gm",
+      "oldId": "28988508",
+      "slug": "Portobello-Mushroom-250gm",
+      "newId": "3V8eiq04J3E7nComyh5o",
+      "newName": "Portobello Mushroom "
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/28884640/Fresh-Mulberry-200gm",
+      "oldId": "28884640",
+      "slug": "Fresh-Mulberry-200gm",
+      "newId": "e1UfCbv9syHZrvE62YUU",
+      "newName": "Fresh Mulberry "
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/28884636/Fresh-Raspberry-80gm",
+      "oldId": "28884636",
+      "slug": "Fresh-Raspberry-80gm",
+      "newId": "I1iclDWz3L2NoID3AMeS",
+      "newName": "Raspberry Fresh "
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/30313120/Thai-kafir-lime",
+      "oldId": "30313120",
+      "slug": "Thai-kafir-lime",
+      "newId": "dm5fX1LM3V0cA7tmoeGE",
+      "newName": "Thai Kafir Lime Leaves "
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/30313140/Thai-Pandan-Leaves-20gm",
+      "oldId": "30313140",
+      "slug": "Thai-Pandan-Leaves-20gm",
+      "newId": "tO01kbNZKd3ZfZ8powjs",
+      "newName": "Thai Pandan Leaves "
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/29434148/Sweet-Passion-Fruit-500gm",
+      "oldId": "29434148",
+      "slug": "Sweet-Passion-Fruit-500gm",
+      "newId": "Vh5czL2MpqgGGPe1XFqN",
+      "newName": "Purple Passion Fruit "
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/28719690/Hass-Avocado-Riped-3pc",
+      "oldId": "28719690",
+      "slug": "Hass-Avocado-Riped-3pc",
+      "newId": "kYPiy40Y66wpl1wSqqPc",
+      "newName": "Hass Avocado ripe"
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/31350863/Thai-Jumbo-Lotus-Root-400gm",
+      "oldId": "31350863",
+      "slug": "Thai-Jumbo-Lotus-Root-400gm",
+      "newId": "hlK9DI29YBf9UHziBQ1W",
+      "newName": "Thai Jumbo Lotus Root"
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/30099332/BABY-CORN-500GM",
+      "oldId": "30099332",
+      "slug": "BABY-CORN-500GM",
+      "newId": "o4IfYwoHGBORj2H3Qn5W",
+      "newName": "Baby corn "
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/31350656/Thai-Ice-Mango-2pc",
+      "oldId": "31350656",
+      "slug": "Thai-Ice-Mango-2pc",
+      "newId": "6eX4w6XSQDdwLXp6Qjqq",
+      "newName": "Thai Mangosteen"
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/30313228/Iceberg-Lettuce-500gm",
+      "oldId": "30313228",
+      "slug": "Iceberg-Lettuce-500gm",
+      "newId": "8xFlPOiBunod5R342usS",
+      "newName": "Iceberg Luttuce 500Gm"
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/30314530/Napa-cabbage-500gm",
+      "oldId": "30314530",
+      "slug": "Napa-cabbage-500gm",
+      "newId": "ZGeRvUlEYMDGpAkd9Xx1",
+      "newName": "Napa Cabbage "
+    }
+  ],
+  "unmatched": [
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/31938694/Imported-jumbo-Strawberry-200gm",
+      "oldId": "31938694",
+      "slug": "Imported-jumbo-Strawberry-200gm",
+      "cleanedSlug": "imported jumbo strawberry 200gm"
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/29902690/Turkish-Red-Apple-4pc",
+      "oldId": "29902690",
+      "slug": "Turkish-Red-Apple-4pc",
+      "cleanedSlug": "turkish red apple 4pc"
+    },
+    {
+      "oldUrl": "https://www.freshnlocal.co/product/30313022/Frozen-Blackberry-500gm",
+      "oldId": "30313022",
+      "slug": "Frozen-Blackberry-500gm",
+      "cleanedSlug": "frozen blackberry 500gm"
+    }
+  ]
+}
