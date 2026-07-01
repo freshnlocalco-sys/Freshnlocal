@@ -9,7 +9,9 @@ async function generateSitemap() {
     const config = JSON.parse(await readFile(configPath, 'utf8'));
     
     const app = initializeApp(config);
-    const db = initializeFirestore(app, {}, "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
+    const db = initializeFirestore(app, {
+      experimentalForceLongPolling: true
+    }, "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
     
     const productsRef = collection(db, 'products');
     const snapshot = await getDocs(productsRef);

@@ -63,8 +63,8 @@ export function Profile() {
               {user?.displayName ? user.displayName[0].toUpperCase() : 'U'}
             </div>
             
-            <div className="space-y-1">
-              <span className="glass-pill text-[8px]">PRO MEMBER</span>
+            <div className="space-y-1 mt-2">
+              <span className="glass-pill text-[8px] mb-2 inline-block">PRO MEMBER</span>
               <h2 className="text-xl font-black uppercase text-foreground tracking-tight mt-2">{user?.displayName || 'Customer'}</h2>
               <p className="text-xs text-muted-foreground font-mono tracking-wide">{user?.email}</p>
             </div>

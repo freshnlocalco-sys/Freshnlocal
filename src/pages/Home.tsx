@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight, Snowflake, Building2, Recycle, PackageCheck, Bike, HeartHandshake, HeartPulse, Search } from 'lucide-react';
@@ -324,6 +325,11 @@ export function Home() {
 
   return (
     <div className="flex flex-col items-center bg-background text-foreground overflow-x-hidden w-full max-w-full box-border">
+      <Helmet>
+        <title>Fresh n Local Co. | Organic Produce Delivery</title>
+        <meta name="description" content="Surat's premium organic delivery engine. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your door." />
+        <link rel="canonical" href="https://www.freshnlocal.co/" />
+      </Helmet>
       
       {/* Hero Section */}
       <section className="w-full mx-auto pt-8 md:pt-24 pb-16 md:pb-20 flex flex-col gap-8 lg:gap-10 items-center relative overflow-hidden">
