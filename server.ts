@@ -19,7 +19,7 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '5mb' }));
 
   // API routes FIRST
   app.post("/api/gemini/recipe", async (req, res) => {
@@ -39,7 +39,7 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - Use the EXACT product name as it appears in the catalog.`;
       
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",

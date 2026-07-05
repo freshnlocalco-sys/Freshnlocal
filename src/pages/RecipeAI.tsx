@@ -54,9 +54,14 @@ export function RecipeAI() {
       
       let data;
       try {
-        data = await response.json();
-      } catch(e) {
-        throw new Error("Invalid response format");
+        const text = await response.text();
+        try {
+          data = JSON.parse(text);
+        } catch(e) {
+          throw new Error(`Server returned invalid JSON. Status: ${response.status}. Response: ${text.slice(0, 100)}...`);
+        }
+      } catch(e: any) {
+        throw new Error(e.message || "Invalid response format");
       }
 
       if (response.ok) {
@@ -77,8 +82,8 @@ export function RecipeAI() {
       } else {
         setError(data.error || 'Oops! Something went wrong. Please try again.');
       }
-    } catch (error) {
-      setError('Failed to connect to the recipe server. Please check your connection.');
+    } catch (error: any) {
+      setError(error.message || 'Failed to connect to the recipe server. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
