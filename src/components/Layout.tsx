@@ -22,7 +22,7 @@ export function Layout() {
       <div className="bg-primary text-white text-[8px] sm:text-[9px] md:text-[10px] tracking-[0.1em] sm:tracking-[0.2em] md:tracking-[0.25em] uppercase font-black py-2.5 sm:py-3 px-2 sm:px-4 text-center select-none flex items-center justify-center gap-1.5 sm:gap-2 relative z-50">
         <span className="inline-block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white/80 animate-pulse shrink-0"></span>
         <span className="leading-tight">
-          SURAT'S PREMIUM ORGANIC DELIVERY ENGINE - FREE DELIVERY ABOVE ₹1000/-
+          SURAT'S PREMIUM FRESH DELIVERY ENGINE - FREE DELIVERY ABOVE ₹1000/-
         </span>
       </div>
 
@@ -291,7 +291,7 @@ export function Layout() {
               <span>FreshNLocal <span className="text-primary">CO.</span></span>
             </h3>
             <p className="text-muted-foreground max-w-sm leading-relaxed normal-case tracking-normal text-xs font-sans font-medium">
-              Surat's finest technology-driven organic delivery order. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your micro-kitchen.
+              Surat's finest technology-driven fresh delivery order. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your micro-kitchen.
             </p>
             <div className="text-muted-foreground space-y-3.5 normal-case tracking-normal text-xs font-sans font-semibold">
               <p className="flex items-start gap-2.5">
@@ -335,7 +335,7 @@ export function Layout() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 md:px-8 mt-20 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-[9px] text-muted-foreground">
-          <p>© {new Date().getFullYear()} FreshNLocal Co. Vetted organic farming, delivered cold in Surat.</p>
+          <p>© {new Date().getFullYear()} FreshNLocal Co. Vetted fresh farming, delivered cold in Surat.</p>
           <p className="font-serif italic lowercase tracking-normal text-xs text-muted-foreground/80">sliced with precision engineering</p>
         </div>
       </footer>

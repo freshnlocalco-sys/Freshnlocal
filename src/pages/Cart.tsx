@@ -335,7 +335,7 @@ export function Cart() {
           </div>
         </div>
         
-        {/* Banner with organic gradient mimicking fintech benefits */}
+        {/* Banner with fresh gradient mimicking fintech benefits */}
         <div className="rounded-[22px] bg-secondary border border-primary/30 p-5 flex items-center justify-between text-foreground relative overflow-hidden">
           <div className="absolute -left-10 top-[-50px] w-24 h-24 bg-primary/10 rounded-full blur-xl"></div>
           <div className="flex items-center gap-3 z-10">

@@ -155,7 +155,7 @@ export function Profile() {
               onClick={() => navigate('/shop')} 
               className="slice-btn-primary px-8 py-4.5 text-[10px] flex items-center gap-1.5 shadow-none mt-2"
             >
-              Order Organic Now <ChevronRight className="w-4.5 h-4.5" />
+              Order Fresh Now <ChevronRight className="w-4.5 h-4.5" />
             </button>
           </div>
         ) : (

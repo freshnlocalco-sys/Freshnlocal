@@ -17,11 +17,11 @@ export const CATEGORIES = [
   { id: 'in season fruits', name: 'In Season Fruits', tagline: 'Fresh seasonal picks', discount: 'Seasonal' },
   { id: 'indian fruits', name: 'Indian Fruits', tagline: 'Devgad Alphonso & Sweetest Mangoes', discount: 'Flat ₹50 Off' },
   { id: 'exotic fruits', name: 'Exotic Fruits', tagline: 'Premium berries & Japanese plums', discount: 'Trending' },
-  { id: 'exotic vegetables', name: 'Exotic Vegetables', tagline: 'Pristine organic broccoli & bell peppers', discount: 'Best Seller' },
+  { id: 'exotic vegetables', name: 'Exotic Vegetables', tagline: 'Pristine fresh broccoli & bell peppers', discount: 'Best Seller' },
   { id: 'herbs & seasoning', name: 'Herbs & Seasoning', tagline: 'Aromatic basil, mint & rosemary', discount: 'Freshly Cut' },
   { id: 'fresh & hygenic cut fruits and vegetables', name: 'Clean Cuts', tagline: 'Pre-washed, chopped & ready to cook', discount: 'Super Safe' },
   { id: 'imported / super exotic vegetables', name: 'Imported Veggies', tagline: 'Direct from premium international farms', discount: 'Exclusive' },
-  { id: 'leafy greens', name: 'Leafy Greens', tagline: 'Hydroponic crisp kale, spinach & lettuce', discount: '100% Organic' },
+  { id: 'leafy greens', name: 'Leafy Greens', tagline: 'Hydroponic crisp kale, spinach & lettuce', discount: '100% Fresh' },
   { id: 'frozen items', name: 'Frozen Premium', tagline: 'Snap-frozen berries & sweet corn', discount: 'Long Shelf life' },
   { id: 'mushroom', name: 'Mushroom', tagline: 'Fresh oyster, button & exotic funghi', discount: 'Earthy Fresh' }
 ];
@@ -226,26 +226,39 @@ export function Home() {
 
   useEffect(() => {
     async function fetchHeroBanners() {
-      try {
-        const docRef = doc(db, 'settings', 'heroBanners');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && docSnap.data().banners) {
-          const banners = docSnap.data().banners;
-          setHeroBanners(banners);
-          // Preload images in background
-          banners.forEach((b: any) => {
-            if (b.imageUrl && !loadedHeroImages.has(b.imageUrl)) {
-              const img = new Image();
-              img.src = b.imageUrl;
-              img.onload = () => loadedHeroImages.add(b.imageUrl);
-            }
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching hero banners", err);
-      } finally {
+      const cachedBanners = cacheManager.get<any[]>('heroBanners', true);
+      const isCacheFresh = cacheManager.isValid('heroBanners');
+      
+      if (cachedBanners) {
+        setHeroBanners(cachedBanners);
         setIsLoadingHeroBanners(false);
+        if (isCacheFresh) return;
       }
+
+      await cacheManager.fetchDeduplicated('hero_banners_fetch', async () => {
+        try {
+          const docRef = doc(db, 'settings', 'heroBanners');
+          const docSnap = await getDoc(docRef);
+          trackFirestoreRead('settings', 1);
+          if (docSnap.exists() && docSnap.data().banners) {
+            const banners = docSnap.data().banners;
+            cacheManager.set('heroBanners', banners);
+            setHeroBanners(banners);
+            // Preload images in background
+            banners.forEach((b: any) => {
+              if (b.imageUrl && !loadedHeroImages.has(b.imageUrl)) {
+                const img = new Image();
+                img.src = b.imageUrl;
+                img.onload = () => loadedHeroImages.add(b.imageUrl);
+              }
+            });
+          }
+        } catch (err) {
+          console.error("Error fetching hero banners", err);
+        } finally {
+          setIsLoadingHeroBanners(false);
+        }
+      });
     }
     fetchHeroBanners();
   }, []);
@@ -326,8 +339,8 @@ export function Home() {
   return (
     <div className="flex flex-col items-center bg-background text-foreground overflow-x-hidden w-full max-w-full box-border">
       <Helmet>
-        <title>Fresh n Local Co. | Organic Produce Delivery</title>
-        <meta name="description" content="Surat's premium organic delivery engine. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your door." />
+        <title>Fresh n Local Co. | Fresh Produce Delivery</title>
+        <meta name="description" content="Surat's premium fresh delivery engine. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your door." />
         <link rel="canonical" href="https://www.freshnlocal.co/" />
       </Helmet>
       

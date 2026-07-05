@@ -293,7 +293,7 @@ export function Shop() {
     <div className="w-full max-w-full box-border overflow-x-hidden bg-background text-foreground">
       <Helmet>
         <title>{categoryFilter === 'All Products' ? 'Shop All' : formatCategoryName(categoryFilter)} | Fresh N Local Co.</title>
-        <meta name="description" content={`Browse our complete catalog of ${categoryFilter === 'All Products' ? 'organic fruits, vegetables, dry fruits, and more' : categoryFilter}.`} />
+        <meta name="description" content={`Browse our complete catalog of ${categoryFilter === 'All Products' ? 'fresh fruits, vegetables, dry fruits, and more' : categoryFilter}.`} />
         <link rel="canonical" href={`https://www.freshnlocal.co/shop${categoryFilter !== 'All Products' ? `?category=${encodeURIComponent(categoryFilter)}` : ''}`} />
       </Helmet>
       

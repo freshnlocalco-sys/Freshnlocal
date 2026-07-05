@@ -278,7 +278,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     price: 200,
     category: "fnl juices",
     subCategory: "smoothies",
-    description: "Extreme green boost: organic moringa leaves, creamy avocado, and ripe naturally sweet banana.",
+    description: "Extreme green boost: fresh moringa leaves, creamy avocado, and ripe naturally sweet banana.",
     
     stock: 100,
     inStock: true
@@ -288,7 +288,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     price: 150,
     category: "fnl juices",
     subCategory: "smoothies",
-    description: "Creamy whipped Alphonso mango pulp blended with unsweetened organic almond milk.",
+    description: "Creamy whipped Alphonso mango pulp blended with unsweetened fresh almond milk.",
     
     stock: 100,
     inStock: true
@@ -392,7 +392,7 @@ export const AUTHENTIC_FNL_JUICES: Array<Omit<Product, 'id' | 'createdAt' | 'upd
     price: 300,
     category: "fnl juices",
     subCategory: "special",
-    description: "Stunning layer of organic stoneground Japanese matcha whisked over fresh sweet mango nectar.",
+    description: "Stunning layer of fresh stoneground Japanese matcha whisked over fresh sweet mango nectar.",
     
     stock: 100,
     inStock: true

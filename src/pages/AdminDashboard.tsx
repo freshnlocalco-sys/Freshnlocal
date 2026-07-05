@@ -578,7 +578,7 @@ export function AdminDashboard() {
                 id: catName.toLowerCase()
               };
             }
-            return { id: catName.toLowerCase(), name: catName, tagline: 'Fresh & Organic', discount: 'New' };
+            return { id: catName.toLowerCase(), name: catName, tagline: 'Fresh & Fresh', discount: 'New' };
           }) : defaultSpots;
           
           activeSpots.forEach(cat => {
@@ -1780,7 +1780,7 @@ export function AdminDashboard() {
     const headers = ['Name', 'Price', 'MRP', 'Category', 'Description', 'ImageUrl', 'Stock'];
     const sampleData = [
       ['Gourmet Red Apples', '180', '250', 'Exotic Fruits', 'Sweet and crisp red apples imported from premium orchards.', 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=800', '100'],
-      ['Fresh Broccoli Crown', '95', '', 'Exotic Vegetables', 'Grown organic Broccoli clusters rich in vitamin C.', 'https://images.pexels.com/photos/1359421/pexels-photo-1359421.jpeg?auto=compress&cs=tinysrgb&w=800', '80']
+      ['Fresh Broccoli Crown', '95', '', 'Exotic Vegetables', 'Grown fresh Broccoli clusters rich in vitamin C.', 'https://images.pexels.com/photos/1359421/pexels-photo-1359421.jpeg?auto=compress&cs=tinysrgb&w=800', '80']
     ];
 
     const csvRows = [
