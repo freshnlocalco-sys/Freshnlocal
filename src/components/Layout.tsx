@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navigation, MapPin, Phone, Mail, Heart } from 'lucide-react';
+import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navigation, MapPin, Phone, Mail, Heart, ChefHat } from 'lucide-react';
 import { useAuth, signOut } from '../lib/firebase';
 import { useCart } from '../store/useCart';
 import { useSettings } from '../store/useSettings';
@@ -48,7 +48,12 @@ export function Layout() {
             <nav className="hidden md:flex items-center gap-8 ml-10 text-[10px] uppercase tracking-[0.25em] font-extrabold text-[#506053]">
               <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Home</Link>
               <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Catalog</Link>
-              <Link to="/recipe-ai" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150">FNL Recipes</Link>
+              <Link to="/recipe-ai" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150 flex items-center gap-1.5">
+                FNL Recipes
+                <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                  <ChefHat className="w-3 h-3 text-primary" />
+                </div>
+              </Link>
               <Link to="/juice" className="nav-link-underline hover:text-orange-500 transition-colors hover:scale-105 transform duration-150 text-orange-600 font-black">FNL Juice 🍹</Link>
               <Link to="/about" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Story</Link>
             </nav>
@@ -177,7 +182,13 @@ export function Layout() {
                     onClick={() => setIsMobileNavOpen(false)} 
                     className="py-2 text-primary hover:text-primary transition-colors flex justify-between items-center font-black"
                   >
-                    <span>FNL Recipes</span> <span className="opacity-30">→</span>
+                    <span className="flex items-center gap-2">
+                      FNL Recipes
+                      <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                        <ChefHat className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                    </span> 
+                    <span className="opacity-30">→</span>
                   </Link>
                   <Link 
                     to="/juice" 
@@ -198,7 +209,7 @@ export function Layout() {
                     onClick={() => setIsMobileNavOpen(false)} 
                     className="py-2 hover:text-red-500 transition-colors flex justify-between items-center text-red-500 font-extrabold"
                   >
-                    <span className="flex items-center gap-2"><Heart className="w-4 h-4 fill-red-500" /> Wishlist</span> <span className="opacity-30">→</span>
+                    <span className="flex items-center gap-2">Wishlist <Heart className="w-4 h-4 fill-red-500" /></span> <span className="opacity-30">→</span>
                   </Link>
                   
                   {user && (
