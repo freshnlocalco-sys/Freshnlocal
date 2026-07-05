@@ -259,18 +259,9 @@ export function Layout() {
       </AnimatePresence>
 
       <main className="flex-1 flex flex-col">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="flex-1 flex flex-col"
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        <div className="flex-1 flex flex-col">
+          <Outlet />
+        </div>
       </main>
 
       <footer className="bg-secondary border-t border-border/60 py-24 mt-20 text-[10px] uppercase tracking-[0.2em] font-extrabold text-[#506053]">

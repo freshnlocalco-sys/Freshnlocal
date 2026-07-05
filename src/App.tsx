@@ -49,18 +49,31 @@ function ScrollToTop() {
   }, [pathname]);
 
   useEffect(() => {
+    // Force instant scroll on navigation
+    document.documentElement.style.scrollBehavior = 'auto';
+    
     if (navigationType === 'POP') {
       const savedStr = sessionStorage.getItem(`scroll-${pathname}`);
       const savedPosition = savedStr ? parseInt(savedStr, 10) : (scrollPositions.current[pathname] || 0);
       
       // Try multiple times to account for async rendering and image loading
-      window.scrollTo(0, savedPosition);
+      window.scrollTo({ top: savedPosition, behavior: 'instant' });
       const timeouts = [10, 50, 150, 300, 500].map(ms => 
-        setTimeout(() => window.scrollTo(0, savedPosition), ms)
+        setTimeout(() => window.scrollTo({ top: savedPosition, behavior: 'instant' }), ms)
       );
-      return () => timeouts.forEach(clearTimeout);
+      
+      setTimeout(() => { document.documentElement.style.scrollBehavior = ''; }, 600);
+      return () => {
+        timeouts.forEach(clearTimeout);
+        document.documentElement.style.scrollBehavior = '';
+      };
     } else {
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      const timeout = setTimeout(() => { document.documentElement.style.scrollBehavior = ''; }, 50);
+      return () => {
+        clearTimeout(timeout);
+        document.documentElement.style.scrollBehavior = '';
+      };
     }
   }, [pathname, navigationType]);
 
