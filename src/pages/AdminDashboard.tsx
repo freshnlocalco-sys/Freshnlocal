@@ -2132,7 +2132,7 @@ export function AdminDashboard() {
                         <span className="text-[10px] font-black uppercase tracking-wider text-orange-700">Signature Juice Menu Sync</span>
                       </div>
                       <p className="text-[9px] text-[#4a4a4a] leading-relaxed font-semibold">
-                        Instantly deploy the 36 authentic Fresh N Local menu products (Smoothies, detox cold-presses, satvik hydration) directly into your active store database.
+                        Instantly deploy the 36 authentic FreshNLocal.CO menu products (Smoothies, detox cold-presses, satvik hydration) directly into your active store database.
                       </p>
                       <button
                         type="button"
@@ -3133,7 +3133,7 @@ export function AdminDashboard() {
             {/* Header */}
             <div className="flex justify-between items-start border-b border-border pb-4 sm:pb-5 mb-5 sm:mb-6">
               <div>
-                <span className="text-primary font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-widest block mb-1">FRESH N LOCAL ORDER RECEIPT</span>
+                <span className="text-primary font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-widest block mb-1">FreshNLocal.CO ORDER RECEIPT</span>
                 <h2 className="text-lg sm:text-2xl font-black uppercase text-foreground shrink-0 leading-tight">
                   Invoice {selectedOrder.orderNumber || `#FNL-${selectedOrder.id.slice(0, 8).toUpperCase()}`}
                 </h2>

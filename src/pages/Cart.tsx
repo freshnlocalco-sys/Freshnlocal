@@ -160,7 +160,7 @@ export function Cart() {
         }),
         totalAmount: finalTotal,
         discount: discount,
-        pointsEarned: 10,
+        pointsEarned: Math.floor(finalTotal / 100) * 2,
         pointsRedeemed: discount > 0 ? 100 : 0,
         status: 'pending',
         paymentMethod: 'COD',
@@ -197,7 +197,8 @@ export function Cart() {
       // Save address and points to user profile
       try {
         const userRef = doc(db, 'users', user.uid);
-        const newPoints = userPoints + 10 - (discount > 0 ? 100 : 0);
+        const pointsEarned = Math.floor(finalTotal / 100) * 2;
+        const newPoints = userPoints + pointsEarned - (discount > 0 ? 100 : 0);
         await updateDoc(userRef, { 
           address: formattedAddress, 
           phone: orderPhone, 
@@ -257,7 +258,7 @@ export function Cart() {
               {faviconUrl ? (
                 <img 
                   src={faviconUrl} 
-                  alt="Fresh N Local" 
+                  alt="FreshNLocal.CO" 
                   className="w-full h-full object-contain" 
                   style={{ 
                     imageRendering: '-webkit-optimize-contrast',
@@ -270,7 +271,7 @@ export function Cart() {
               )}
             </div>
             <h3 className="text-xl font-sans font-black uppercase tracking-tight text-foreground">
-              Add Fresh N Local to Home Screen
+              Add FreshNLocal.CO to Home Screen
             </h3>
             <p className="text-sm text-muted-foreground font-semibold">
               Install our app for a faster, seamless shopping experience and easy access to your orders!
@@ -603,24 +604,32 @@ export function Cart() {
                   <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span> FNL Points
                 </h3>
                 <div className="p-4 bg-background border border-border rounded-2xl">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2 pb-2 border-b border-border/50">
                     <span className="text-xs font-semibold">Available Points: <span className="font-bold text-primary">{userPoints}</span></span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                      Earns {Math.floor(finalTotal / 100) * 2} PTS
+                    </span>
                   </div>
                   {canUsePoints ? (
-                    <label className="flex items-center gap-3 cursor-pointer mt-3">
-                      <input 
-                        type="checkbox" 
-                        checked={usePoints} 
-                        onChange={(e) => setUsePoints(e.target.checked)} 
-                        className="w-4.5 h-4.5 accent-primary" 
-                      />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-foreground">
-                        Redeem 100 points for ₹100 off
-                      </span>
-                    </label>
+                    <div className="space-y-3">
+                      <label className="flex items-center gap-3 cursor-pointer mt-3">
+                        <input 
+                          type="checkbox" 
+                          checked={usePoints} 
+                          onChange={(e) => setUsePoints(e.target.checked)} 
+                          className="w-4.5 h-4.5 accent-primary" 
+                        />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground">
+                          Redeem 100 points for ₹100 off
+                        </span>
+                      </label>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest leading-relaxed mt-2">
+                        Earn 2 FNL points on every ₹100 spent.
+                      </p>
+                    </div>
                   ) : (
                     <p className="text-[9px] text-muted-foreground uppercase tracking-widest leading-relaxed mt-2">
-                      Reach 100 points to get up to ₹100 off. Every order gets 10 points.
+                      Reach 100 points to get up to ₹100 off. Earn 2 FNL points on every ₹100 spent.
                     </p>
                   )}
                 </div>

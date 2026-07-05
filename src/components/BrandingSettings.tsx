@@ -370,7 +370,7 @@ export function BrandingSettings() {
                   ) : (
                     <div className="w-3.5 h-3.5 bg-neutral-200 rounded animate-pulse" />
                   )}
-                  <span className="truncate">Fresh n Local</span>
+                  <span className="truncate">FreshNLocal.CO</span>
                 </div>
               </div>
 

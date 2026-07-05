@@ -9,7 +9,7 @@ export function Returns() {
 
       <div className="prose prose-sm max-w-none text-muted-foreground font-medium leading-relaxed">
         <p className="mb-8 text-base text-foreground/90 font-semibold">
-          Fresh N Local Co. delivers fresh, perishable produce, so our policy is built 
+          FreshNLocal.CO delivers fresh, perishable produce, so our policy is built 
           around the quality and condition of items at the time of delivery.
         </p>
 
@@ -49,7 +49,7 @@ export function Returns() {
 
         <h3 className="font-sans font-black text-foreground text-xl mb-4 mt-12">Contact</h3>
         <p className="mb-6">
-          <strong>Fresh N Local Co.</strong><br />
+          <strong>FreshNLocal.CO</strong><br />
           Gr Floor Hall, Reva Dham Apartment, Uma Bhawan Crossroad, Opp. Ashirwad Palace, Bhatar, Surat, Gujarat<br />
           <strong>Email:</strong> <a href="mailto:freshnlocalco@gmail.com" className="text-primary hover:underline">freshnlocalco@gmail.com</a><br />
           <strong>Phone:</strong> +91 7284000881

@@ -339,7 +339,7 @@ export function Home() {
   return (
     <div className="flex flex-col items-center bg-background text-foreground overflow-x-hidden w-full max-w-full box-border">
       <Helmet>
-        <title>Fresh n Local Co. | Fresh Produce Delivery</title>
+        <title>FreshNLocal.CO | Fresh Produce Delivery</title>
         <meta name="description" content="Surat's premium fresh delivery engine. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your door." />
         <link rel="canonical" href="https://www.freshnlocal.co/" />
       </Helmet>

@@ -488,7 +488,7 @@ export function FNLJuice() {
             await batch.commit();
           }
 
-          toast.success("Synchronized Fresh N Local signature menu board to cloud databases!");
+          toast.success("Synchronized FreshNLocal.CO signature menu board to cloud databases!");
           
           await fetchProducts(true);
           setSeeding(false);
@@ -933,7 +933,7 @@ export function FNLJuice() {
               <Leaf className="w-8 h-8 text-[#059669] mx-auto animate-pulse" />
               <h3 className="text-sm font-black uppercase tracking-widest text-foreground">The Cold-Pressed Commitment</h3>
               <p className="text-xs text-muted-foreground leading-relaxed max-w-xl mx-auto normal-case font-medium">
-                At Fresh N Local Juice House, we do not compromise. We never use pasteurization or heat treatment, which kills living vitamins and enzymes. Absolutely no chemical colors, artificial fillers, table sugars, or frozen syrups. Pure goodness in every bottle.
+                At FreshNLocal.CO Juice House, we do not compromise. We never use pasteurization or heat treatment, which kills living vitamins and enzymes. Absolutely no chemical colors, artificial fillers, table sugars, or frozen syrups. Pure goodness in every bottle.
               </p>
               <div className="pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
                 <div>

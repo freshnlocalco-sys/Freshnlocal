@@ -169,8 +169,8 @@ export function ProductDetail() {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 w-full bg-background text-foreground">
       <Helmet>
-        <title>{product.name} - Buy Online | Fresh N Local</title>
-        <meta name="description" content={`Buy ${product.name} online at best price in India on Fresh N Local Co.${product.unit ? ` (${product.unit})` : ''}`} />
+        <title>{product.name} - Buy Online | FreshNLocal.CO</title>
+        <meta name="description" content={`Buy ${product.name} online at best price in India on FreshNLocal.CO${product.unit ? ` (${product.unit})` : ''}`} />
         <link rel="canonical" href={`https://www.freshnlocal.co/product/${product.id}`} />
       </Helmet>
       <a href={backLink} onClick={handleBack} className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-secondary border border-border text-[10px] uppercase tracking-widest font-black text-foreground hover:text-primary hover:border-primary transition-colors mb-8">
