@@ -48,6 +48,7 @@ export function Layout() {
             <nav className="hidden md:flex items-center gap-8 ml-10 text-[10px] uppercase tracking-[0.25em] font-extrabold text-[#506053]">
               <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Home</Link>
               <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Catalog</Link>
+              <Link to="/recipe-ai" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150">FNL Recipes</Link>
               <Link to="/juice" className="nav-link-underline hover:text-orange-500 transition-colors hover:scale-105 transform duration-150 text-orange-600 font-black">FNL Juice 🍹</Link>
               <Link to="/about" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Story</Link>
             </nav>
@@ -170,6 +171,13 @@ export function Layout() {
                     className="py-2 hover:text-primary transition-colors flex justify-between items-center"
                   >
                     <span>Shop All</span> <span className="opacity-30">→</span>
+                  </Link>
+                  <Link 
+                    to="/recipe-ai" 
+                    onClick={() => setIsMobileNavOpen(false)} 
+                    className="py-2 text-primary hover:text-primary transition-colors flex justify-between items-center font-black"
+                  >
+                    <span>FNL Recipes</span> <span className="opacity-30">→</span>
                   </Link>
                   <Link 
                     to="/juice" 

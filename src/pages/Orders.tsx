@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, useAuth, isQuotaError } from '../lib/firebase';
 import { trackFirestoreRead } from '../lib/cacheManager';
-import { Order, useCart } from '../store/useCart';
+import { Order, useCart, Product } from '../store/useCart';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -265,7 +265,7 @@ export function Orders() {
               {/* Items List */}
               <div className="space-y-4 divide-y divide-border">
                 {order.items.map((item, index) => {
-                  const product = item.product || item;
+                  const product = (item.product || item) as unknown as Product;
                   return (
                     <div key={index} className="flex justify-between items-center pt-4 first:pt-0">
                       <div className="flex items-center gap-4">

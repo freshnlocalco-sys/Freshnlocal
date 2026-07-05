@@ -33,6 +33,11 @@ export interface Order {
   items: CartItem[];
   address?: string;
   phone?: string;
+  shippingDetails?: {
+    name?: string;
+    phone?: string;
+    address?: string;
+  };
 }
 
 interface CartState {

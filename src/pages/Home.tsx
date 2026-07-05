@@ -166,7 +166,7 @@ export function Home() {
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
   const [spotlightsLoading, setSpotlightsLoading] = useState(true);
 
-  const activeCategories = React.useMemo(() => {
+  const activeCategories: { id: string; name: string; tagline: string; discount: string; originalId?: string }[] = React.useMemo(() => {
     if (!productCategories || productCategories.length === 0) return CATEGORIES;
     
     return productCategories.map(catName => {
@@ -196,7 +196,8 @@ export function Home() {
         id: catName.toLowerCase(),
         name: catName,
         tagline: 'Fresh harvest daily',
-        discount: ''
+        discount: '',
+        originalId: catName.toLowerCase()
       };
     });
   }, [productCategories]);

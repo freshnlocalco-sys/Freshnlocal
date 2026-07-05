@@ -7,6 +7,7 @@ import { Shop } from './pages/Shop';
 import { Cart } from './pages/Cart';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { Profile } from './pages/Profile';
+import { RecipeAI } from './pages/RecipeAI';
 import { ProductDetail } from './pages/ProductDetail';
 import { Orders } from './pages/Orders';
 import { About } from './pages/About';
@@ -175,6 +176,7 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="shop" element={<Shop />} />
+          <Route path="recipe-ai" element={<RecipeAI />} />
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path="cart" element={<Cart />} />
           <Route path="wishlist" element={<Wishlist />} />
