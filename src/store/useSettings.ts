@@ -67,11 +67,19 @@ interface CropSettings {
   cropSquare: boolean;
 }
 
+const getInitialFaviconUrl = () => {
+  try {
+    return localStorage.getItem('fnl_favicon_url') || null;
+  } catch (e) {
+    return null;
+  }
+};
+
 export const useSettings = create<SettingsState>((set, get) => ({
   categoryImages: {},
   productCategories: DEFAULT_PRODUCT_CATEGORIES,
   juiceCategories: DEFAULT_JUICE_SECTIONS,
-  faviconUrl: null,
+  faviconUrl: getInitialFaviconUrl(),
   lastFetched: 0,
   loading: false,
   error: null,
@@ -453,6 +461,11 @@ export const useSettings = create<SettingsState>((set, get) => ({
       if (docSnap.exists()) {
         const data = docSnap.data();
         const faviconUrl = data.faviconUrl || null;
+        if (faviconUrl) {
+          try { localStorage.setItem('fnl_favicon_url', faviconUrl); } catch(e) {}
+        } else {
+          try { localStorage.removeItem('fnl_favicon_url'); } catch(e) {}
+        }
         set({ faviconUrl });
         updateFaviconInDOM(faviconUrl);
         if (faviconUrl && 'caches' in window) {
@@ -485,6 +498,11 @@ export const useSettings = create<SettingsState>((set, get) => ({
     try {
       const docRef = doc(db, 'settings', 'branding');
       await setDoc(docRef, { faviconUrl: url }, { merge: true });
+      if (url) {
+        try { localStorage.setItem('fnl_favicon_url', url); } catch(e) {}
+      } else {
+        try { localStorage.removeItem('fnl_favicon_url'); } catch(e) {}
+      }
       set({ faviconUrl: url });
       updateFaviconInDOM(url);
       if ('caches' in window) {

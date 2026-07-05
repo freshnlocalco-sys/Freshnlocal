@@ -63,6 +63,12 @@ export function Cart() {
     return 'new';
   });
 
+  const [usePoints, setUsePoints] = useState(false);
+  const userPoints = user?.points || 0;
+  const canUsePoints = userPoints >= 100;
+  const discount = usePoints && canUsePoints ? 100 : 0;
+  const finalTotal = total() - discount;
+
   const hasOutOfStockItems = cartItems.some(item => !item.product.inStock);
 
   const handleCheckout = async (e: React.FormEvent) => {
@@ -152,7 +158,10 @@ export function Cart() {
           Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
           return { product: p, quantity: i.quantity };
         }),
-        totalAmount: total(),
+        totalAmount: finalTotal,
+        discount: discount,
+        pointsEarned: 10,
+        pointsRedeemed: discount > 0 ? 100 : 0,
         status: 'pending',
         paymentMethod: 'COD',
         shippingDetails: {
@@ -185,11 +194,23 @@ export function Cart() {
       const ordersRef = collection(db, 'orders');
       await addDoc(ordersRef, orderData);
 
-      // Save address to user profile
+      // Save address and points to user profile
       try {
         const userRef = doc(db, 'users', user.uid);
-        await updateDoc(userRef, { address: formattedAddress, phone: orderPhone, addresses: finalAddresses });
-        setUser({ ...user, address: formattedAddress, phone: orderPhone, addresses: finalAddresses });
+        const newPoints = userPoints + 10 - (discount > 0 ? 100 : 0);
+        await updateDoc(userRef, { 
+          address: formattedAddress, 
+          phone: orderPhone, 
+          addresses: finalAddresses,
+          points: newPoints
+        });
+        setUser({ 
+          ...user, 
+          address: formattedAddress, 
+          phone: orderPhone, 
+          addresses: finalAddresses,
+          points: newPoints
+        });
       } catch (err) {
         console.error("Failed to save user address profile details", err);
       }
@@ -410,9 +431,15 @@ export function Cart() {
                 0 FEES
               </span>
             </div>
+            {discount > 0 && (
+              <div className="flex justify-between items-center text-primary">
+                <span>FNL Points Discount</span>
+                <span className="font-mono font-bold">-₹{discount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="pt-5 border-t border-border flex justify-between items-end">
               <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Total Indebtedness</span>
-              <span className="font-sans font-black text-3xl text-foreground">₹{total().toFixed(2)}</span>
+              <span className="font-sans font-black text-3xl text-foreground">₹{finalTotal.toFixed(2)}</span>
             </div>
           </div>
           
@@ -570,6 +597,36 @@ export function Cart() {
               </label>
             </div>
             
+            {user && (
+              <div className="space-y-3">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span> FNL Points
+                </h3>
+                <div className="p-4 bg-background border border-border rounded-2xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold">Available Points: <span className="font-bold text-primary">{userPoints}</span></span>
+                  </div>
+                  {canUsePoints ? (
+                    <label className="flex items-center gap-3 cursor-pointer mt-3">
+                      <input 
+                        type="checkbox" 
+                        checked={usePoints} 
+                        onChange={(e) => setUsePoints(e.target.checked)} 
+                        className="w-4.5 h-4.5 accent-primary" 
+                      />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-foreground">
+                        Redeem 100 points for ₹100 off
+                      </span>
+                    </label>
+                  ) : (
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest leading-relaxed mt-2">
+                      Reach 100 points to get up to ₹100 off. Every order gets 10 points.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {hasOutOfStockItems && (
               <div className="bg-orange-500/10 text-orange-500 border border-orange-500/15 p-4 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest">
                 Remove Out of Stock items to proceed

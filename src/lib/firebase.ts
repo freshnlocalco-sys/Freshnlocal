@@ -115,6 +115,7 @@ export interface AppUser {
   phone?: string;
   address?: string; // legacy address
   addresses?: Address[];
+  points?: number;
   createdAt: number;
 }
 
@@ -153,6 +154,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
           email: firebaseUser.email || '',
           displayName: firebaseUser.displayName || '',
           role: isAdmin ? 'admin' : 'customer',
+          points: 0,
           createdAt: Date.now(),
         };
         await setDoc(userRef, newUser);
@@ -166,6 +168,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         email: firebaseUser.email || '',
         displayName: firebaseUser.displayName || '',
         role: isAdmin ? 'admin' : 'customer',
+        points: 0,
         createdAt: Date.now(),
       };
       console.warn("Using fallback user due to Firestore quota error");

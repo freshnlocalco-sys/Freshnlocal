@@ -74,6 +74,12 @@ export function Profile() {
               <span className="flex items-center gap-2"><Key className="w-4 h-4 text-primary" /> Authority level</span>
               <span className="text-primary font-black uppercase tracking-widest">{user?.role}</span>
             </div>
+            {user?.points !== undefined && (
+              <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-border">
+                <span className="flex items-center gap-2"><Award className="w-4 h-4 text-primary" /> FNL Points</span>
+                <span className="text-primary font-black uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded-md">{user.points} PTS</span>
+              </div>
+            )}
             <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-border">
               <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> Member Since</span>
               <span className="text-foreground font-mono">{new Date(user?.createdAt || Date.now()).toLocaleDateString()}</span>

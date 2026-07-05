@@ -29,7 +29,10 @@ export function Layout() {
       <header className="sticky top-0 z-50 bg-background/70 backdrop-blur-xl shadow-sm border-b border-border/50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-6 shrink-0 z-10 min-w-0 pr-2">
-            <Link to="/" className="flex items-center gap-1 sm:gap-2 group truncate">
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 group truncate">
+              {faviconUrl && (
+                <img src={faviconUrl} alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-lg" />
+              )}
               <span className="font-sans font-black text-[0.95rem] min-[360px]:text-lg sm:text-xl md:text-2xl tracking-tighter uppercase transition-colors hover:text-primary duration-300 text-foreground flex items-center gap-0.5 sm:gap-1 truncate">
                 FreshNLocal <span className="text-primary hidden min-[360px]:inline">CO.</span>
               </span>
@@ -69,6 +72,12 @@ export function Layout() {
                       </Link>
                     )}
                     <div className="relative group flex items-center gap-2 sm:gap-4">
+                      {user.points !== undefined && (
+                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full cursor-pointer hover:bg-primary/20 transition-colors">
+                           <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                           <span className="text-[10px] uppercase font-black tracking-widest text-primary">{user.points} PTS</span>
+                        </div>
+                      )}
                       <span className="text-[10px] uppercase tracking-[0.2em] font-black hidden sm:block text-[#506053] group-hover:text-primary cursor-pointer transition-colors">
                         {user.displayName?.split(' ')[0] || 'User'}
                       </span>
@@ -210,9 +219,17 @@ export function Layout() {
               <div className="pt-6 border-t border-border/45 mt-auto">
                 {user ? (
                   <div className="space-y-4">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold">
-                      Active Session: <span className="text-primary block font-mono text-sm mt-1">{user.displayName || user.email}</span>
-                    </p>
+                    <div className="flex justify-between items-start">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold">
+                        Active Session: <span className="text-primary block font-mono text-sm mt-1">{user.displayName || user.email}</span>
+                      </p>
+                      {user.points !== undefined && (
+                        <div className="flex flex-col items-end">
+                          <span className="text-[8px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Rewards</span>
+                          <span className="text-xs text-primary font-black uppercase tracking-widest bg-primary/10 px-2 py-1 rounded-md">{user.points} PTS</span>
+                        </div>
+                      )}
+                    </div>
                     <button 
                       onClick={() => {
                         signOut();
@@ -258,8 +275,11 @@ export function Layout() {
       <footer className="bg-secondary border-t border-border/60 py-24 mt-20 text-[10px] uppercase tracking-[0.2em] font-extrabold text-[#506053]">
         <div className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 text-[#2c3e30]">
           <div className="md:col-span-2 space-y-6">
-            <h3 className="font-sans font-black text-foreground text-2xl tracking-tighter uppercase normal-case">
-              FreshNLocal <span className="text-primary">CO.</span>
+            <h3 className="font-sans font-black text-foreground text-2xl tracking-tighter uppercase normal-case flex items-center gap-3">
+              {faviconUrl && (
+                <img src={faviconUrl} alt="Logo" className="w-10 h-10 object-contain rounded-lg" />
+              )}
+              <span>FreshNLocal <span className="text-primary">CO.</span></span>
             </h3>
             <p className="text-muted-foreground max-w-sm leading-relaxed normal-case tracking-normal text-xs font-sans font-medium">
               Surat's finest technology-driven organic delivery order. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your micro-kitchen.
