@@ -10,6 +10,7 @@ export function RecipeAI() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [recipe, setRecipe] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [suggestedItems, setSuggestedItems] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { products } = useProducts();
@@ -41,6 +42,7 @@ export function RecipeAI() {
     
     setIsLoading(true);
     setRecipe(null);
+    setError(null);
     setSuggestedItems([]);
     
     try {
@@ -50,7 +52,13 @@ export function RecipeAI() {
         body: JSON.stringify({ products: selectedProducts, catalog: availableProducts }),
       });
       
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch(e) {
+        throw new Error("Invalid response format");
+      }
+
       if (response.ok) {
         setRecipe(data.recipeMarkdown || data.text);
         
@@ -67,10 +75,10 @@ export function RecipeAI() {
           setSuggestedItems(suggestions);
         }
       } else {
-        setRecipe('Oops! Something went wrong. Please try again.');
+        setError(data.error || 'Oops! Something went wrong. Please try again.');
       }
     } catch (error) {
-      setRecipe('Failed to connect to the recipe server. Please check your connection.');
+      setError('Failed to connect to the recipe server. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +197,21 @@ export function RecipeAI() {
           </div>
         )}
 
-        {recipe && !isLoading && (
+        {error && !isLoading && (
+          <div className="bg-red-50 border border-red-100 shadow-sm rounded-2xl p-6 md:p-8 space-y-8 flex flex-col items-center">
+            <p className="text-red-500 font-bold uppercase tracking-wider text-sm text-center">{error}</p>
+            <button
+              onClick={() => {
+                setError(null);
+              }}
+              className="w-full bg-white text-foreground border border-border px-6 py-4 rounded-xl text-sm font-black uppercase tracking-wider hover:bg-primary/5 hover:border-primary/30 transition-colors mt-8"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {recipe && !isLoading && !error && (
           <div className="bg-background border border-border shadow-sm rounded-2xl p-6 md:p-8 space-y-8">
             <div className="prose prose-sm md:prose-base prose-green max-w-none text-foreground font-sans">
               <Markdown>{recipe}</Markdown>
