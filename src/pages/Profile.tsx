@@ -53,10 +53,10 @@ export function Profile() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 w-full grid lg:grid-cols-12 gap-8 bg-background text-foreground">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 pt-6 pb-16 w-full grid lg:grid-cols-12 gap-8 bg-background text-foreground">
       {/* Left Sidebar Member Profile Card */}
       <div className="lg:col-span-4">
-        <div className="slice-card p-8 space-y-8 sticky top-28 bg-secondary border border-border shadow-sm">
+        <div className="slice-card p-8 space-y-8 sticky top-24 bg-secondary border border-border shadow-sm">
           <div className="space-y-4 text-center">
             {/* User Icon resembling slice credit details */}
             <div className="mx-auto w-24 h-24 bg-gradient-to-tr from-primary/20 to-secondary border border-primary/30 text-primary rounded-[24px] flex items-center justify-center text-3xl font-black shadow-none">
