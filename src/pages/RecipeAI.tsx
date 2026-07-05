@@ -27,8 +27,23 @@ export function RecipeAI() {
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    const query = searchQuery.toLowerCase();
-    return availableProducts.filter(p => p.toLowerCase().includes(query));
+    const queryParts = searchQuery.toLowerCase().trim().split(/\s+/);
+    
+    const matches = availableProducts.filter(p => {
+      const pLower = p.toLowerCase();
+      return queryParts.every(part => pLower.includes(part));
+    });
+
+    return matches.sort((a, b) => {
+       const aLower = a.toLowerCase();
+       const bLower = b.toLowerCase();
+       const query = searchQuery.toLowerCase().trim();
+       if (aLower === query && bLower !== query) return -1;
+       if (bLower === query && aLower !== query) return 1;
+       if (aLower.startsWith(query) && !bLower.startsWith(query)) return -1;
+       if (bLower.startsWith(query) && !aLower.startsWith(query)) return 1;
+       return 0;
+    });
   }, [searchQuery, availableProducts]);
 
   const toggleProduct = (product: string) => {

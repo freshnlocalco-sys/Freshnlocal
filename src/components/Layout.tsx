@@ -48,7 +48,7 @@ export function Layout() {
             <nav className="hidden md:flex items-center gap-8 ml-10 text-[10px] uppercase tracking-[0.25em] font-extrabold text-[#506053]">
               <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Home</Link>
               <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Catalog</Link>
-              <Link to="/recipe-ai" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150 flex items-center gap-1.5">
+              <Link to="/fnl-recipes" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150 flex items-center gap-1.5">
                 FNL Recipes
                 <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                   <ChefHat className="w-3 h-3 text-primary" />
@@ -178,7 +178,7 @@ export function Layout() {
                     <span>Shop All</span> <span className="opacity-30">→</span>
                   </Link>
                   <Link 
-                    to="/recipe-ai" 
+                    to="/fnl-recipes" 
                     onClick={() => setIsMobileNavOpen(false)} 
                     className="py-2 text-primary hover:text-primary transition-colors flex justify-between items-center font-black"
                   >
@@ -207,9 +207,10 @@ export function Layout() {
                   <Link 
                     to="/wishlist" 
                     onClick={() => setIsMobileNavOpen(false)} 
-                    className="py-2 hover:text-red-500 transition-colors flex justify-between items-center text-red-500 font-extrabold"
+                    className="py-2 hover:text-red-500 transition-colors flex justify-between items-center text-red-500 font-extrabold uppercase tracking-widest"
                   >
-                    <span className="flex items-center gap-2">Wishlist <Heart className="w-4 h-4 fill-red-500" /></span> <span className="opacity-30">→</span>
+                    <span>Wishlist</span>
+                    <Heart className="w-4 h-4 fill-red-500" />
                   </Link>
                   
                   {user && (
