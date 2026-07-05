@@ -15,7 +15,6 @@ export function BrandingSettings() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Initialize or update preview when faviconUrl from store loads
   useEffect(() => {
     if (faviconUrl) {
