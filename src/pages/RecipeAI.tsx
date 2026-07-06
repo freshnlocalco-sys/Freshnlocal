@@ -326,7 +326,7 @@ export function RecipeAI() {
                     type="text"
                     value={recipeNameQuery}
                     onChange={(e) => setRecipeNameQuery(e.target.value)}
-                    placeholder="ENTER YOUR RECIPE NAME"
+                    placeholder="ASK FRESHI"
                     className="w-full bg-secondary border border-border rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/70 uppercase font-medium tracking-wide"
                   />
 
@@ -403,7 +403,7 @@ export function RecipeAI() {
               }`}
             >
               <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
-              {(searchMode === 'ingredients' ? selectedProducts.length > 0 : !!recipeNameQuery.trim()) ? 'Generate Recipe' : (searchMode === 'ingredients' ? 'Select Ingredients' : 'Enter Recipe Name')}
+              {(searchMode === 'ingredients' ? selectedProducts.length > 0 : !!recipeNameQuery.trim()) ? 'Generate Recipe' : (searchMode === 'ingredients' ? 'Select Ingredients' : 'Ask Freshi')}
             </button>
           </div>
         )}

@@ -348,13 +348,15 @@ export function Home() {
         {/* Global Search Bar */}
         <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 relative z-20">
           <form onSubmit={handleHomeSearch} className="relative w-full shadow-lg shadow-black/5 rounded-full overflow-hidden group border border-border/50 bg-background/80 backdrop-blur-xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300">
-            <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex items-center justify-center bg-white/50 z-10 pointer-events-none">
+              <img src="/freshi-icon.png?v=2" alt="Freshi" className="w-full h-full object-cover" />
+            </div>
             <input
               type="text"
-              placeholder="Search for fresh fruits, vegetables, or juices..."
+              placeholder="Ask Freshi"
               value={homeSearchQuery}
               onChange={(e) => setHomeSearchQuery(e.target.value)}
-              className="w-full h-14 sm:h-16 pl-12 sm:pl-16 pr-24 sm:pr-32 bg-transparent border-none outline-none text-base sm:text-lg font-medium placeholder:text-muted-foreground/70"
+              className="w-full h-14 sm:h-16 pl-[4.5rem] sm:pl-[5.5rem] pr-24 sm:pr-32 bg-transparent border-none outline-none text-base sm:text-lg font-medium placeholder:text-muted-foreground/70"
             />
             <button 
               type="submit"
