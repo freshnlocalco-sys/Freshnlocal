@@ -100,6 +100,7 @@ export function Layout() {
                       <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 p-2 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
                         <Link to="/profile" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">My Profile</Link>
                         <Link to="/orders" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">My Orders</Link>
+                        <Link to="/profile?tab=recipes" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">Saved Recipes</Link>
                         {user.role === 'admin' && (
                           <Link to="/admin" className="block lg:hidden px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-primary transition-all">Admin Portal</Link>
                         )}
@@ -228,6 +229,13 @@ export function Layout() {
                         className="py-2 hover:text-primary transition-colors flex justify-between items-center"
                       >
                         <span>My Orders</span> <span className="opacity-30">→</span>
+                      </Link>
+                      <Link 
+                        to="/profile?tab=recipes" 
+                        onClick={() => setIsMobileNavOpen(false)} 
+                        className="py-2 hover:text-primary transition-colors flex justify-between items-center"
+                      >
+                        <span>Saved Recipes</span> <span className="opacity-30">→</span>
                       </Link>
                       {user.role === 'admin' && (
                         <Link 

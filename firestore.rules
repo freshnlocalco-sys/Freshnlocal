@@ -18,6 +18,18 @@ service cloud.firestore {
     }
     
     match /users/{userId} {
+      match /savedRecipes/{recipeId} {
+        function isValidSavedRecipe(data) {
+          return data.size() >= 2 && data.size() <= 4
+            && data.keys().hasAll(['recipeMarkdown', 'createdAt'])
+            && data.recipeMarkdown is string && data.recipeMarkdown.size() <= 50000
+            && data.createdAt is number;
+        }
+        allow read, list: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidSavedRecipe(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidSavedRecipe(incoming()) && incoming().createdAt == existing().createdAt;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
       function isValidUser(data) {
         return data.size() >= 3 && data.size() <= 10
           && data.keys().hasAll(['email', 'role', 'createdAt'])

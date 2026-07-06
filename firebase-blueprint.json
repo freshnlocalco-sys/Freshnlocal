@@ -65,6 +65,18 @@
       "schema": { "$ref": "#/entities/User" },
       "description": "Store users and admins (tied to Auth UUID)"
     },
+    "/users/{userId}/savedRecipes/{recipeId}": {
+      "schema": {
+        "title": "SavedRecipe",
+        "type": "object",
+        "properties": {
+          "recipeMarkdown": { "type": "string" },
+          "createdAt": { "type": "number" }
+        },
+        "required": ["recipeMarkdown", "createdAt"]
+      },
+      "description": "User's saved recipes"
+    },
     "/products/{productId}": {
       "schema": { "$ref": "#/entities/Product" },
       "description": "Global catalog of products"

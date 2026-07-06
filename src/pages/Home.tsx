@@ -96,15 +96,14 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
         {products.length > 0 && (
           <div className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
             <Link 
-              to={linkDest} 
+              to={`/shop?category=${encodeURIComponent(category.id)}`} 
               className="w-full h-full min-h-[260px] bg-secondary/80 rounded-[28px] border border-dashed border-border flex flex-col items-center justify-center gap-4 hover:bg-secondary hover:border-primary/40 hover:shadow-sm transition-all group/see-all p-4 text-center"
             >
                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center group-hover/see-all:scale-110 group-hover/see-all:bg-primary text-primary group-hover/see-all:text-white transition-all shadow-sm">
                  <ArrowRight className="w-6 h-6" />
                </div>
                <div className="flex flex-col items-center gap-1">
-                 <span className="font-extrabold text-sm uppercase tracking-wider text-muted-foreground group-hover/see-all:text-foreground transition-colors">See All</span>
-                 {products.length > 13 && <span className="text-[10px] font-bold text-muted-foreground/60">+{products.length - 13} More</span>}
+                 <span className="font-extrabold text-sm uppercase tracking-wider text-primary group-hover/see-all:text-primary/80 transition-colors">See All</span>
                </div>
             </Link>
           </div>
@@ -176,11 +175,7 @@ export function Home() {
         return cLower === catLower || 
         c.id.toLowerCase() === catLower ||
         (catLower === 'exotics' && c.id.includes('imported')) ||
-        (catLower === 'clean cuts' && c.id.includes('hygenic')) ||
-        (cLower === 'exotic vegetables' && catLower === 'exotic vegetable') ||
-        (cLower === 'imported vegetables' && catLower === 'imported vegetable') ||
-        (cLower === 'mushrooms' && catLower === 'mushroom') ||
-        (cLower === 'mushroom' && catLower === 'mushrooms');
+        (catLower === 'clean cuts' && c.id.includes('hygenic'));
       });
       
       if (match) {
@@ -500,12 +495,12 @@ export function Home() {
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
               {activeCategories.map((cat) => {
-                const isJuice = cat.id === 'fnl juices';
-                const linkDest = isJuice ? '/juice' : `/shop?category=${encodeURIComponent(cat.id)}`;
-                return (
-                  <Link
-                    key={cat.id}
-                    to={linkDest}
+                  const isJuice = cat.id === 'fnl juices';
+                  const linkDest = isJuice ? '/juice' : `/shop?category=${encodeURIComponent(cat.id)}`;
+                  return (
+                    <Link
+                      key={cat.id}
+                      to={linkDest}
                     className="flex flex-col items-center group cursor-pointer w-full"
                   >
                     <div className="w-full aspect-[4/3] rounded-[24px] bg-sky-50/50 dark:bg-sky-950/20 overflow-hidden flex items-center justify-center mb-2 sm:mb-3 transition-transform duration-300 group-hover:-translate-y-1 shadow-sm group-hover:shadow-md relative">
@@ -550,22 +545,7 @@ export function Home() {
               const categoryProducts = products.filter(p => {
                 const pCat = (p.category || '').toLowerCase();
                 const cId = category.id.toLowerCase();
-                const isVegMatch = (
-                  (pCat === 'exotic vegetables' && cId === 'exotic vegetable') ||
-                  (pCat === 'exotic vegetable' && cId === 'exotic vegetables') ||
-                  (pCat === 'imported vegetables' && cId === 'imported vegetable') ||
-                  (pCat === 'imported vegetable' && cId === 'imported vegetables') ||
-                  (pCat === 'imported / super exotic vegetables' && (cId === 'exotic vegetable' || cId === 'exotic vegetables')) ||
-                  (pCat === 'mushroom' && cId === 'mushrooms') ||
-                  (pCat === 'mushrooms' && cId === 'mushroom') ||
-                  (pCat === 'exotic vegetables' && category.originalId?.toLowerCase() === 'exotic vegetable') ||
-                  (pCat === 'imported vegetables' && category.originalId?.toLowerCase() === 'imported vegetable') ||
-                  (pCat === 'exotic vegetable' && category.originalId?.toLowerCase() === 'exotic vegetables') ||
-                  (pCat === 'imported vegetable' && category.originalId?.toLowerCase() === 'imported vegetables') ||
-                  (pCat === 'mushroom' && category.originalId?.toLowerCase() === 'mushrooms') ||
-                  (pCat === 'mushrooms' && category.originalId?.toLowerCase() === 'mushroom')
-                );
-                return pCat === cId || (category.originalId && pCat === category.originalId.toLowerCase()) || isVegMatch;
+                return pCat === cId || (category.originalId && pCat === category.originalId.toLowerCase());
               });
               // Only show category if it has products
               if (categoryProducts.length === 0) return null;
@@ -579,7 +559,6 @@ export function Home() {
                 />
               );
             })}
-
             {/* Dedicated FNL Juices Showcase at the bottom of categories */}
             {(() => {
               const juiceProducts = products.filter(p => {

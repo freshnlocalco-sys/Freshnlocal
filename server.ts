@@ -24,10 +24,11 @@ async function startServer() {
   // API routes FIRST
   app.post("/api/gemini/recipe", async (req, res) => {
     try {
-      const { products, catalog } = req.body;
+      const { products, catalog, preferences } = req.body;
       const catalogText = catalog ? catalog.join(" | ") : "";
       
-      const prompt = `You are a culinary AI for FNL Recipes. The user has selected these ingredients they already have: ${products.join(", ")}.
+      const preferencesText = preferences && preferences.length > 0 ? ` The user has the following preferences for the recipe: ${preferences.join(", ")}.` : "";
+      const prompt = `You are a culinary AI for FNL Recipes. The user has selected these ingredients they already have: ${products.join(", ")}.${preferencesText}
       
 1. Provide a delicious recipe using some or all of these ingredients. Format it in Markdown.
 2. Recommend 2 to 4 OTHER complementary products that the user should buy from our store to make this recipe even better (e.g. spices, garnishes, side dishes, or premium ingredients).
@@ -36,6 +37,7 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - You MUST select recommendations ONLY from the following exact store catalog:
 [ ${catalogText} ]
 - Do NOT suggest any product that is already in the user's selected list.
+- Do NOT suggest any juices, beverages, or drinks. Focus on solid foods, spices, or garnishes.
 - Use the EXACT product name as it appears in the catalog.`;
       
       const response = await ai.models.generateContent({
@@ -61,8 +63,10 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
       const data = JSON.parse(response.text || "{}");
       res.json(data);
     } catch (error: any) {
-      console.error(error);
-      res.status(500).json({ error: error.message || "Failed to generate recipe" });
+      console.error("Gemini API Error:", error);
+      const errMsg = error?.message || "";
+      const isRateLimit = error?.status === 429 || errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota');
+      res.status(isRateLimit ? 429 : 500).json({ error: isRateLimit ? "Recipe AI is currently overloaded with requests. Please try again in a few moments." : errMsg || "Failed to generate recipe" });
     }
   });
 

@@ -1,25 +1,72 @@
 import React, { useState, useMemo } from 'react';
-import { ChefHat, MessageSquare, Loader2, Utensils, Search, X, ShoppingBag } from 'lucide-react';
+import { ChefHat, MessageSquare, Loader2, Utensils, Search, X, ShoppingBag, Heart } from 'lucide-react';
 import { useProducts } from '../store/useProducts';
 import { useCart, Product } from '../store/useCart';
 import Markdown from 'react-markdown';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
+import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 
 export function RecipeAI() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [recipe, setRecipe] = useState<string | null>(null);
+  const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [suggestedItems, setSuggestedItems] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { products } = useProducts();
   const addToCart = useCart(state => state.addItem);
+  const { user } = useAuth();
+
+  const handleSaveRecipe = async () => {
+    if (!user) {
+      toast.error('Please log in to save recipes');
+      return;
+    }
+    if (!recipe) return;
+
+    setIsSaving(true);
+    try {
+      if (savedRecipeId) {
+        await deleteDoc(doc(db, 'users', user.uid, 'savedRecipes', savedRecipeId));
+        setSavedRecipeId(null);
+        toast.success('Recipe removed from favorites');
+      } else {
+        const docRef = await addDoc(collection(db, 'users', user.uid, 'savedRecipes'), {
+          recipeMarkdown: recipe,
+          createdAt: Date.now()
+        });
+        setSavedRecipeId(docRef.id);
+        toast.success('Recipe saved to favorites!');
+      }
+    } catch (err) {
+      handleFirestoreError(err, savedRecipeId ? OperationType.DELETE : OperationType.CREATE, 'users/savedRecipes');
+      toast.error('Failed to save recipe');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const filterCategories = ['Vegan', 'Quick', 'Dessert', 'Healthy'];
+
+  const togglePreference = (pref: string) => {
+    setSelectedPreferences(prev => 
+      prev.includes(pref) ? prev.filter(p => p !== pref) : [...prev, pref]
+    );
+  };
 
   // Filter to unique, available products that might be good for recipes
   const availableProducts = useMemo(() => {
     return products
-      .filter(p => !p.category?.toLowerCase().includes('juice'))
+      .filter(p => {
+        const cat = p.category?.toLowerCase() || '';
+        const name = p.name.toLowerCase();
+        return !cat.includes('juice') && !cat.includes('fnl') && !name.includes('juice');
+      })
       .map(p => p.name)
       .filter((value, index, self) => self.indexOf(value) === index)
       .sort();
@@ -57,16 +104,23 @@ export function RecipeAI() {
     
     setIsLoading(true);
     setRecipe(null);
+    setSavedRecipeId(null);
     setError(null);
     setSuggestedItems([]);
     
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
+
       const response = await fetch('/api/gemini/recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products: selectedProducts, catalog: availableProducts }),
+        body: JSON.stringify({ products: selectedProducts, catalog: availableProducts, preferences: selectedPreferences }),
+        signal: controller.signal
       });
       
+      clearTimeout(timeoutId);
+
       let data;
       try {
         const text = await response.text();
@@ -98,7 +152,11 @@ export function RecipeAI() {
         setError(data.error || 'Oops! Something went wrong. Please try again.');
       }
     } catch (error: any) {
-      setError(error.message || 'Failed to connect to the recipe server. Please check your connection.');
+      if (error.name === 'AbortError') {
+        setError('The request took too long and timed out. Please try again.');
+      } else {
+        setError(error.message || 'Failed to connect to the recipe server. Please check your connection.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -193,6 +251,25 @@ export function RecipeAI() {
               </p>
             )}
 
+            <div className="pt-2 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Recipe Preferences (Optional):</p>
+              <div className="flex flex-wrap gap-2">
+                {filterCategories.map(pref => (
+                  <button
+                    key={pref}
+                    onClick={() => togglePreference(pref)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
+                      selectedPreferences.includes(pref)
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'bg-secondary text-foreground border-border hover:border-primary/50'
+                    }`}
+                  >
+                    {pref}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               onClick={getRecipe}
               disabled={selectedProducts.length === 0}
@@ -232,8 +309,24 @@ export function RecipeAI() {
         )}
 
         {recipe && !isLoading && !error && (
-          <div className="bg-background border border-border shadow-sm rounded-2xl p-6 md:p-8 space-y-8">
-            <div className="prose prose-sm md:prose-base prose-green max-w-none text-foreground font-sans">
+          <div className="bg-background border border-border shadow-sm rounded-2xl p-6 md:p-8 space-y-8 relative overflow-hidden">
+            <button
+              onClick={handleSaveRecipe}
+              disabled={isSaving}
+              className={`absolute top-4 right-4 md:top-6 md:right-6 p-3 rounded-full transition-all flex items-center justify-center shadow-sm ${
+                savedRecipeId 
+                  ? 'bg-primary text-white border border-primary hover:bg-primary/90' 
+                  : 'bg-secondary text-muted-foreground border border-border hover:text-primary hover:border-primary/50'
+              }`}
+              title={savedRecipeId ? "Remove from Favorites" : "Save to Favorites"}
+            >
+              {isSaving ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Heart className={`w-5 h-5 ${savedRecipeId ? 'fill-current' : ''}`} />
+              )}
+            </button>
+            <div className="prose prose-sm md:prose-base prose-green max-w-none text-foreground font-sans mt-4">
               <Markdown>{recipe}</Markdown>
             </div>
             
@@ -304,7 +397,9 @@ export function RecipeAI() {
             <button
               onClick={() => {
                 setRecipe(null);
+                setSavedRecipeId(null);
                 setSelectedProducts([]);
+                setSelectedPreferences([]);
                 setSuggestedItems([]);
               }}
               className="w-full bg-secondary text-foreground border border-border px-6 py-4 rounded-xl text-sm font-black uppercase tracking-wider hover:bg-primary/5 hover:border-primary/30 transition-colors mt-8"
