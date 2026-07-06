@@ -12,6 +12,8 @@ export function RecipeAI() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchMode, setSearchMode] = useState<'ingredients' | 'recipe'>('ingredients');
+  const [recipeNameQuery, setRecipeNameQuery] = useState('');
   const [recipe, setRecipe] = useState<string | null>(null);
   const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -100,7 +102,8 @@ export function RecipeAI() {
   };
 
   const getRecipe = async () => {
-    if (selectedProducts.length === 0) return;
+    if (searchMode === 'ingredients' && selectedProducts.length === 0) return;
+    if (searchMode === 'recipe' && !recipeNameQuery.trim()) return;
     
     setIsLoading(true);
     setRecipe(null);
@@ -112,10 +115,18 @@ export function RecipeAI() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 90000);
 
+      const payload: any = { catalog: availableProducts, preferences: selectedPreferences };
+      if (searchMode === 'ingredients') {
+        payload.products = selectedProducts;
+      } else {
+        payload.recipeName = recipeNameQuery.trim();
+        payload.products = [];
+      }
+
       const response = await fetch('/api/gemini/recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products: selectedProducts, catalog: availableProducts, preferences: selectedPreferences }),
+        body: JSON.stringify(payload),
         signal: controller.signal
       });
       
@@ -174,15 +185,31 @@ export function RecipeAI() {
             <ChefHat className="w-7 h-7 md:w-8 md:h-8 text-primary" />
           </div>
           <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tight text-foreground">FNL RECIPES</h1>
-          <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto">Select the ingredients you have, and our AI chef will craft a delicious recipe for you instantly.</p>
+          <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto">{searchMode === "ingredients" ? "Select the ingredients you have, and our AI chef will craft a delicious recipe for you instantly." : "Search for a specific recipe by name, and we will provide the instructions and ingredients."}</p>
         </div>
 
         {!recipe && !isLoading && (
           <div className="bg-background border border-border shadow-sm rounded-2xl p-5 md:p-8 space-y-6">
-            <h2 className="text-base md:text-lg font-bold flex items-center gap-2">
-              <Utensils className="w-5 h-5 text-primary" />
-              What ingredients do you have?
-            </h2>
+                        <div className="flex bg-secondary p-1 rounded-xl border border-border mb-6">
+              <button
+                onClick={() => setSearchMode('ingredients')}
+                className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${searchMode === 'ingredients' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                By Ingredients
+              </button>
+              <button
+                onClick={() => setSearchMode('recipe')}
+                className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${searchMode === 'recipe' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                By Recipe Name
+              </button>
+            </div>
+            {searchMode === 'ingredients' ? (
+              <>
+                <h2 className="text-base md:text-lg font-bold flex items-center gap-2">
+                  <Utensils className="w-5 h-5 text-primary" />
+                  What ingredients do you have?
+                </h2>
 
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -250,6 +277,34 @@ export function RecipeAI() {
                 Search to find your ingredients
               </p>
             )}
+            </>
+            ) : (
+              <>
+                <h2 className="text-base md:text-lg font-bold flex items-center gap-2">
+                  <ChefHat className="w-5 h-5 text-primary" />
+                  What recipe do you want to make?
+                </h2>
+                
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={recipeNameQuery}
+                    onChange={(e) => setRecipeNameQuery(e.target.value)}
+                    placeholder="E.G. BUTTER CHICKEN, PASTA CARBONARA"
+                    className="w-full bg-secondary border border-border rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/70 uppercase font-medium tracking-wide"
+                  />
+                  {recipeNameQuery && (
+                    <button 
+                      onClick={() => setRecipeNameQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-black/5 rounded-full"
+                    >
+                      <X className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
 
             <div className="pt-2 space-y-3">
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Recipe Preferences (Optional):</p>
@@ -272,15 +327,15 @@ export function RecipeAI() {
 
             <button
               onClick={getRecipe}
-              disabled={selectedProducts.length === 0}
+              disabled={searchMode === "ingredients" ? selectedProducts.length === 0 : !recipeNameQuery.trim()}
               className={`w-full flex items-center justify-center gap-2 py-3.5 md:py-4 rounded-xl text-xs md:text-sm font-black uppercase tracking-widest transition-all shadow-sm mt-4 ${
-                selectedProducts.length > 0
+                (searchMode === 'ingredients' ? selectedProducts.length > 0 : !!recipeNameQuery.trim())
                   ? 'bg-primary text-white hover:bg-primary/90 hover:scale-[1.01]'
                   : 'bg-secondary text-muted-foreground cursor-not-allowed opacity-70'
               }`}
             >
               <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
-              {selectedProducts.length > 0 ? 'Generate Recipe' : 'Select Ingredients'}
+              {(searchMode === 'ingredients' ? selectedProducts.length > 0 : !!recipeNameQuery.trim()) ? 'Generate Recipe' : (searchMode === 'ingredients' ? 'Select Ingredients' : 'Enter Recipe Name')}
             </button>
           </div>
         )}

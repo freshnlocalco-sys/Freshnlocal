@@ -24,12 +24,26 @@ async function startServer() {
   // API routes FIRST
   app.post("/api/gemini/recipe", async (req, res) => {
     try {
-      const { products, catalog, preferences } = req.body;
+      const { products, catalog, preferences, recipeName } = req.body;
       const catalogText = catalog ? catalog.join(" | ") : "";
       
       const preferencesText = preferences && preferences.length > 0 ? ` The user has the following preferences for the recipe: ${preferences.join(", ")}.` : "";
-      const prompt = `You are a culinary AI for FNL Recipes. The user has selected these ingredients they already have: ${products.join(", ")}.${preferencesText}
       
+      let prompt = '';
+      if (recipeName) {
+        prompt = `You are a culinary AI for FNL Recipes. The user wants to make a specific recipe: "${recipeName}".${preferencesText}
+        
+1. Provide the full recipe for "${recipeName}", including the required ingredients and step-by-step instructions. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
+2. Recommend 2 to 4 complementary products that the user should buy from our store to make this recipe (e.g. main ingredients, spices, garnishes, side dishes, or premium ingredients).
+
+CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
+- You MUST select recommendations ONLY from the following exact store catalog:
+[ ${catalogText} ]
+- Do NOT suggest any juices, beverages, or drinks unless explicitly part of the recipe. Focus on solid foods, spices, or garnishes.
+- Use the EXACT product name as it appears in the catalog.`;
+      } else {
+        prompt = `You are a culinary AI for FNL Recipes. The user has selected these ingredients they already have: ${products.join(", ")}.${preferencesText}
+        
 1. Provide a delicious recipe using some or all of these ingredients. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
 2. Recommend 2 to 4 OTHER complementary products that the user should buy from our store to make this recipe even better (e.g. spices, garnishes, side dishes, or premium ingredients).
 
@@ -39,6 +53,7 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - Do NOT suggest any product that is already in the user's selected list.
 - Do NOT suggest any juices, beverages, or drinks. Focus on solid foods, spices, or garnishes.
 - Use the EXACT product name as it appears in the catalog.`;
+      }
       
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
