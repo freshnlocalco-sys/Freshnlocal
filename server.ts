@@ -34,7 +34,7 @@ async function startServer() {
         prompt = `You are a culinary AI for FNL Recipes. The user wants to make a specific recipe: "${recipeName}".${preferencesText}
         
 1. Provide the full recipe for "${recipeName}", including the required ingredients and step-by-step instructions. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
-2. Recommend 2 to 4 complementary products that the user should buy from our store to make this recipe (e.g. main ingredients, spices, garnishes, side dishes, or premium ingredients).
+2. Recommend ALL complementary products (ingredients) that the user should buy from our store to make this recipe. Identify as many required ingredients from the catalog as possible.
 
 CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - You MUST select recommendations ONLY from the following exact store catalog:
@@ -45,7 +45,7 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
         prompt = `You are a culinary AI for FNL Recipes. The user has selected these ingredients they already have: ${products.join(", ")}.${preferencesText}
         
 1. Provide a delicious recipe using some or all of these ingredients. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
-2. Recommend 2 to 4 OTHER complementary products that the user should buy from our store to make this recipe even better (e.g. spices, garnishes, side dishes, or premium ingredients).
+2. Recommend ALL OTHER complementary products that the user should buy from our store to make this recipe even better. Identify as many required ingredients from the catalog as possible.
 
 CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - You MUST select recommendations ONLY from the following exact store catalog:
@@ -56,7 +56,7 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
       }
       
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.5-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",

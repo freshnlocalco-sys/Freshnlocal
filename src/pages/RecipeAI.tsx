@@ -8,6 +8,41 @@ import toast from 'react-hot-toast';
 import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 
+
+const POPULAR_RECIPES = [
+  "Avocado Toast", "Banana Bread", "Butter Chicken", "Caesar Salad", "Chicken Curry", 
+  "Chicken Tikka Masala", "Chocolate Chip Cookies", "French Toast", "Fruit Smoothie", 
+  "Greek Salad", "Grilled Cheese", "Lemonade", "Margherita Pizza", "Oatmeal", 
+  "Pancakes", "Paneer Butter Masala", "Pasta Carbonara", "Pesto Pasta", "Smoothie Bowl", 
+  "Tomato Soup", "Vegetable Stir Fry", "Mango Lassi", "Chole Bhature", "Palak Paneer", 
+  "Dal Makhani", "Biryani", "Mushroom Risotto", "Tacos", "Guacamole", "Sushi", "Sushi Rolls", 
+  "Sweet and Sour Chicken", "Pad Thai", "Ramen", "Pho", "Fajitas", "Enchiladas", "Quesadillas", "Burritos",
+  "Fried Rice", "Macaroni and Cheese", "Lasagna",
+  "Clam Chowder", "French Onion Soup", "Caprese Salad",
+  "Eggplant Parmesan", "Chicken Alfredo", "Shrimp Scampi", 
+  "Chicken Noodle Soup", "Fish and Chips", "Chicken Pot Pie",
+  "Baked Ziti", "Stuffed Peppers", "Roast Chicken",
+  "Chicken Wings", "Nachos", "Spring Rolls", "Dumplings",
+  "Teriyaki Chicken", "Katsu Curry", "Bibimbap", "Kimchi Fried Rice",
+  "Falafel", "Shawarma", "Hummus", "Baba Ganoush", "Moussaka",
+  "Paella", "Gazpacho", "Tortilla Española", "Croissants", "Quiche Lorraine",
+  "Ratatouille", "Coq au Vin", "Crepes",
+  "Waffles", "Eggs Benedict", "Shakshuka", "Huevos Rancheros", "Chilaquiles",
+  "Tostadas", "Ceviche", "Empanadas", "Arepas", "Pupusas",
+  "Tamales", "Pozole", "Carnitas",
+  "Aloo Gobi", "Samosa", "Naan", "Matar Paneer", "Malai Kofta", "Rajma Chawal",
+  "Kadai Paneer", "Masala Dosa", "Idli Sambar", "Pav Bhaji", "Pani Puri", "Vada Pav",
+  "Aloo Tikki", "Paneer Tikka", "Chicken Korma", "Mutton Biryani", "Aloo Paratha",
+  "Bhindi Masala", "Chana Masala", "Gulab Jamun", "Rasgulla", "Jalebi", "Kheer",
+  "Prawn Masala", "Fish Curry", "Chicken Shawarma", "Tandoori Chicken", "Keema", "Mutton Curry",
+  "Chicken 65", "Chicken Chettinad", "Chicken Manchurian", "Paneer Makhani", "Shahi Paneer",
+  "Dal Tadka", "Jeera Rice", "Pulao", "Kashmiri Pulao", "Veg Biryani", "Egg Biryani",
+  "Chicken Reshmi Kebab", "Chicken Seekh Kebab", "Paneer Bhurji", "Egg Curry", "Omelette",
+  "Scrambled Eggs", "Boiled Eggs", "Egg Fried Rice", "Chicken Fried Rice", "Veg Noodles",
+  "Chicken Noodles", "Hakka Noodles", "Chilli Chicken", "Chilli Paneer", "Gobi Manchurian",
+  "Mushroom Chilli", "Baby Corn Manchurian", "Veg Manchurian", "Chicken Lollipops"
+].sort();
+
 export function RecipeAI() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
@@ -291,9 +326,10 @@ export function RecipeAI() {
                     type="text"
                     value={recipeNameQuery}
                     onChange={(e) => setRecipeNameQuery(e.target.value)}
-                    placeholder="E.G. BUTTER CHICKEN, PASTA CARBONARA"
+                    placeholder="ENTER YOUR RECIPE NAME"
                     className="w-full bg-secondary border border-border rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/70 uppercase font-medium tracking-wide"
                   />
+
                   {recipeNameQuery && (
                     <button 
                       onClick={() => setRecipeNameQuery('')}
@@ -303,6 +339,38 @@ export function RecipeAI() {
                     </button>
                   )}
                 </div>
+                {recipeNameQuery.trim() && (
+                  <div className="mt-2 bg-background border border-border rounded-xl shadow-lg overflow-hidden max-h-[200px] overflow-y-auto custom-scrollbar">
+                    {POPULAR_RECIPES
+                      .filter(r => r.toLowerCase().includes(recipeNameQuery.toLowerCase()) && r.toLowerCase() !== recipeNameQuery.toLowerCase())
+                      .sort((a, b) => {
+                        const aLower = a.toLowerCase();
+                        const bLower = b.toLowerCase();
+                        const query = recipeNameQuery.toLowerCase();
+                        if (aLower.startsWith(query) && !bLower.startsWith(query)) return -1;
+                        if (bLower.startsWith(query) && !aLower.startsWith(query)) return 1;
+                        return aLower.localeCompare(bLower);
+                      })
+                      .slice(0, 5)
+                      .map(recipe => (
+                      <button
+                        key={recipe}
+                        onClick={() => setRecipeNameQuery(recipe)}
+                        className="w-full text-left px-4 py-3 text-sm hover:bg-secondary transition-colors uppercase font-medium tracking-wide border-b border-border/50 last:border-0"
+                      >
+                        {recipe}
+                      </button>
+                    ))}
+                    {POPULAR_RECIPES.filter(r => r.toLowerCase().includes(recipeNameQuery.toLowerCase()) && r.toLowerCase() !== recipeNameQuery.toLowerCase()).length === 0 && (
+                       <button
+                         onClick={getRecipe}
+                         className="w-full text-center px-4 py-3 text-sm text-primary uppercase font-bold tracking-wide hover:bg-secondary transition-colors"
+                       >
+                          Generate Custom Recipe: "{recipeNameQuery}"
+                        </button>
+                    )}
+                  </div>
+                )}
               </>
             )}
 
@@ -416,6 +484,18 @@ export function RecipeAI() {
                     );
                   })}
                 </div>
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => {
+                      suggestedItems.forEach(item => addToCart(item));
+                      toast.success(`${suggestedItems.length} items added to cart`);
+                    }}
+                    className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full text-xs font-black uppercase tracking-wider hover:bg-primary/90 transition-all shadow-sm"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    Add All Recommendations to Cart
+                  </button>
+                </div>
               </div>
             )}
             
@@ -446,6 +526,35 @@ export function RecipeAI() {
                     </div>
                   ))}
                 </div>
+                
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => {
+                      let count = 0;
+                      if (selectedProducts.length > 0) {
+                        selectedProducts.forEach(name => {
+                          const item = products.find(p => p.name === name);
+                          if (item) {
+                            addToCart(item);
+                            count++;
+                          }
+                        });
+                      }
+                      if (suggestedItems.length > 0) {
+                        suggestedItems.forEach(item => {
+                          addToCart(item);
+                          count++;
+                        });
+                      }
+                      toast.success(`${count} items added to cart`);
+                    }}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-xl text-sm font-black uppercase tracking-wider hover:bg-primary/90 transition-all shadow-sm border border-primary/20"
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    Add All Items to Cart
+                  </button>
+                </div>
+                
               </div>
             )}
 
