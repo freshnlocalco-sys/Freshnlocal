@@ -69,9 +69,9 @@ async function generateMeta() {
 
     // Static routes
     const staticRoutes = [
-      { route: '', title: 'Fresh n Local Co. | Organic Produce Delivery', desc: 'Surat\'s premium organic delivery engine. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your door.' },
-      { route: 'shop', title: 'Shop All | Fresh N Local Co.', desc: 'Browse our complete catalog of organic fruits, vegetables, dry fruits, and more.' },
-      { route: 'about', title: 'About Us | Fresh N Local Co.', desc: 'Learn about our mission to bring the freshest local organic produce to your table.' },
+      { route: '', title: 'Fresh n Local Co. | Fresh Produce Delivery', desc: 'Surat\'s premium fresh delivery engine. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your door.' },
+      { route: 'shop', title: 'Shop All | Fresh N Local Co.', desc: 'Browse our complete catalog of fresh fruits, vegetables, dry fruits, and more.' },
+      { route: 'about', title: 'About Us | Fresh N Local Co.', desc: 'Learn about our mission to bring the freshest local fresh produce to your table.' },
       { route: 'juice', title: 'Cold Pressed Juices | Fresh N Local Co.', desc: 'Freshly squeezed, 100% natural cold pressed juices delivered to your doorstep.' },
       { route: 'returns', title: 'Returns & Refunds | Fresh N Local Co.', desc: 'Information about our return and refund policies for a smooth shopping experience.' }
     ];
