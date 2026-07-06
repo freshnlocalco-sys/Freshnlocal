@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { useSettings } from '../store/useSettings';
 import { BrandingSettings } from '../components/BrandingSettings';
@@ -511,6 +511,7 @@ export function AdminDashboard() {
   // Spotlights state
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {title: string, image: string}>>({});
   const [heroBanners, setHeroBanners] = useState<{id: string, imageUrl: string, link: string}[]>([]);
+  const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
   const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
@@ -949,6 +950,34 @@ export function AdminDashboard() {
       toast.success('Banner link updated');
     } catch (error) {
       toast.error('Failed to update banner link');
+    }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedBannerIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedBannerIndex === null || draggedBannerIndex === dropIndex) return;
+
+    const newBanners = [...heroBanners];
+    const draggedBanner = newBanners[draggedBannerIndex];
+    newBanners.splice(draggedBannerIndex, 1);
+    newBanners.splice(dropIndex, 0, draggedBanner);
+
+    setHeroBanners(newBanners);
+    setDraggedBannerIndex(null);
+
+    try {
+      await setDoc(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
+      toast.success('Banners rearranged');
+    } catch (error) {
+      toast.error('Failed to rearrange banners');
     }
   };
 
@@ -3022,10 +3051,20 @@ export function AdminDashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {heroBanners.map(banner => (
-                  <div key={banner.id} className="bg-white border border-border p-4 rounded-2xl flex flex-col gap-4">
-                    <div className="w-full aspect-[4/3] bg-secondary rounded-xl overflow-hidden relative">
-                      <img src={banner.imageUrl} alt="Hero Banner" className="w-full h-full object-cover" />
+                {heroBanners.map((banner, index) => (
+                  <div 
+                    key={banner.id} 
+                    className={`bg-white border border-border p-4 rounded-2xl flex flex-col gap-4 relative transition-all ${draggedBannerIndex === index ? 'opacity-50 scale-95 border-primary shadow-lg' : ''}`}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    <div className="absolute top-2 left-2 z-10 p-2 cursor-grab active:cursor-grabbing bg-white/80 hover:bg-white rounded-lg backdrop-blur-sm shadow-sm transition-colors" title="Drag to reorder">
+                      <GripVertical className="w-4 h-4 text-foreground/50" />
+                    </div>
+                    <div className="w-full aspect-[4/3] bg-secondary rounded-xl overflow-hidden relative group">
+                      <img src={banner.imageUrl} alt="Hero Banner" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       <button
                         onClick={() => deleteHeroBanner(banner.id)}
                         className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-red-500 hover:text-white rounded-lg backdrop-blur-sm text-red-500 shadow-sm transition-colors"
@@ -3034,7 +3073,7 @@ export function AdminDashboard() {
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1.5 mt-auto">
                       <label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground">Banner Link (Optional)</label>
                       <div className="flex gap-2">
                         <input 
