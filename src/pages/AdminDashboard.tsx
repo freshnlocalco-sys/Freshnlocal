@@ -3337,8 +3337,16 @@ export function AdminDashboard() {
             <div className="border-t border-border mt-6 pt-5 space-y-3.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground font-bold uppercase tracking-wider">Subtotal Value</span>
-                <span className="font-mono font-bold text-foreground">₹{selectedOrder.totalAmount}</span>
+                <span className="font-mono font-bold text-foreground">₹{selectedOrder.totalAmount + (selectedOrder.discount || (selectedOrder.pointsRedeemed ? 100 : 0))}</span>
               </div>
+              {(selectedOrder.discount > 0 || selectedOrder.pointsRedeemed > 0) && (
+                <div className="flex justify-between items-center text-xs text-red-500 font-extrabold bg-red-50 px-3 py-2 rounded-xl border border-red-100/50">
+                  <span className="uppercase tracking-wider flex items-center gap-1.5">
+                    🪙 FNL Points Discount (100 PTS)
+                  </span>
+                  <span className="font-mono">-₹{selectedOrder.discount || 100}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground font-bold uppercase tracking-wider">Delivery Fee</span>
                 <span className="font-mono font-extrabold text-[#10b981] uppercase tracking-widest text-[10px]">FREE SHIPPING</span>
