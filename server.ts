@@ -30,7 +30,7 @@ async function startServer() {
       const preferencesText = preferences && preferences.length > 0 ? ` The user has the following preferences for the recipe: ${preferences.join(", ")}.` : "";
       const prompt = `You are a culinary AI for FNL Recipes. The user has selected these ingredients they already have: ${products.join(", ")}.${preferencesText}
       
-1. Provide a delicious recipe using some or all of these ingredients. Format it in Markdown.
+1. Provide a delicious recipe using some or all of these ingredients. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
 2. Recommend 2 to 4 OTHER complementary products that the user should buy from our store to make this recipe even better (e.g. spices, garnishes, side dishes, or premium ingredients).
 
 CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
