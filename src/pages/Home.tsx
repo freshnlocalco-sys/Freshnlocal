@@ -208,7 +208,7 @@ export function Home() {
   const handleHomeSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (homeSearchQuery.trim()) {
-      navigate(`/shop?q=${encodeURIComponent(homeSearchQuery.trim())}`);
+      navigate(`/fnl-recipes?q=${encodeURIComponent(homeSearchQuery.trim())}`);
     }
   };
   

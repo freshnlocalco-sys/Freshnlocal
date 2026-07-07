@@ -7,6 +7,7 @@ import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useSearchParams } from 'react-router-dom';
 
 
 const POPULAR_RECIPES = [
@@ -44,11 +45,14 @@ const POPULAR_RECIPES = [
 ].sort();
 
 export function RecipeAI() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+  
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchMode, setSearchMode] = useState<'ingredients' | 'recipe'>('ingredients');
-  const [recipeNameQuery, setRecipeNameQuery] = useState('');
+  const [searchMode, setSearchMode] = useState<'ingredients' | 'recipe'>(initialQuery ? 'recipe' : 'ingredients');
+  const [recipeNameQuery, setRecipeNameQuery] = useState(initialQuery);
   const [recipe, setRecipe] = useState<string | null>(null);
   const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
