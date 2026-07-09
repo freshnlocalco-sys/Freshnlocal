@@ -1,104 +1,64 @@
-import React, { useState, useMemo } from 'react';
-import { ChefHat, MessageSquare, Loader2, Utensils, Search, X, ShoppingBag, Heart } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { ChefHat, MessageSquare, Loader2, Heart, Send, Trash2, RotateCcw, ShoppingBag, HelpCircle } from 'lucide-react';
 import { useProducts } from '../store/useProducts';
 import { useCart, Product } from '../store/useCart';
 import Markdown from 'react-markdown';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
 
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'bot';
+  text: string;
+  timestamp: number;
+  suggestedProducts?: Product[];
+  isLoading?: boolean;
+  error?: string | null;
+}
 
-const POPULAR_RECIPES = [
-  "Avocado Toast", "Banana Bread", "Butter Chicken", "Caesar Salad", "Chicken Curry", 
-  "Chicken Tikka Masala", "Chocolate Chip Cookies", "French Toast", "Fruit Smoothie", 
-  "Greek Salad", "Grilled Cheese", "Lemonade", "Margherita Pizza", "Oatmeal", 
-  "Pancakes", "Paneer Butter Masala", "Pasta Carbonara", "Pesto Pasta", "Smoothie Bowl", 
-  "Tomato Soup", "Vegetable Stir Fry", "Mango Lassi", "Chole Bhature", "Palak Paneer", 
-  "Dal Makhani", "Biryani", "Mushroom Risotto", "Tacos", "Guacamole", "Sushi", "Sushi Rolls", 
-  "Sweet and Sour Chicken", "Pad Thai", "Ramen", "Pho", "Fajitas", "Enchiladas", "Quesadillas", "Burritos",
-  "Fried Rice", "Macaroni and Cheese", "Lasagna",
-  "Clam Chowder", "French Onion Soup", "Caprese Salad",
-  "Eggplant Parmesan", "Chicken Alfredo", "Shrimp Scampi", 
-  "Chicken Noodle Soup", "Fish and Chips", "Chicken Pot Pie",
-  "Baked Ziti", "Stuffed Peppers", "Roast Chicken",
-  "Chicken Wings", "Nachos", "Spring Rolls", "Dumplings",
-  "Teriyaki Chicken", "Katsu Curry", "Bibimbap", "Kimchi Fried Rice",
-  "Falafel", "Shawarma", "Hummus", "Baba Ganoush", "Moussaka",
-  "Paella", "Gazpacho", "Tortilla Española", "Croissants", "Quiche Lorraine",
-  "Ratatouille", "Coq au Vin", "Crepes",
-  "Waffles", "Eggs Benedict", "Shakshuka", "Huevos Rancheros", "Chilaquiles",
-  "Tostadas", "Ceviche", "Empanadas", "Arepas", "Pupusas",
-  "Tamales", "Pozole", "Carnitas",
-  "Aloo Gobi", "Samosa", "Naan", "Matar Paneer", "Malai Kofta", "Rajma Chawal",
-  "Kadai Paneer", "Masala Dosa", "Idli Sambar", "Pav Bhaji", "Pani Puri", "Vada Pav",
-  "Aloo Tikki", "Paneer Tikka", "Chicken Korma", "Mutton Biryani", "Aloo Paratha",
-  "Bhindi Masala", "Chana Masala", "Gulab Jamun", "Rasgulla", "Jalebi", "Kheer",
-  "Prawn Masala", "Fish Curry", "Chicken Shawarma", "Tandoori Chicken", "Keema", "Mutton Curry",
-  "Chicken 65", "Chicken Chettinad", "Chicken Manchurian", "Paneer Makhani", "Shahi Paneer",
-  "Dal Tadka", "Jeera Rice", "Pulao", "Kashmiri Pulao", "Veg Biryani", "Egg Biryani",
-  "Chicken Reshmi Kebab", "Chicken Seekh Kebab", "Paneer Bhurji", "Egg Curry", "Omelette",
-  "Scrambled Eggs", "Boiled Eggs", "Egg Fried Rice", "Chicken Fried Rice", "Veg Noodles",
-  "Chicken Noodles", "Hakka Noodles", "Chilli Chicken", "Chilli Paneer", "Gobi Manchurian",
-  "Mushroom Chilli", "Baby Corn Manchurian", "Veg Manchurian", "Chicken Lollipops"
-].sort();
+const POPULAR_PROMPTS = [
+  "🥑 Quick breakfast idea",
+  "🥗 High-protein lunch",
+  "🍰 Healthy dessert",
+  "🌶️ Surat street food recipe"
+];
 
 export function RecipeAI() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchMode, setSearchMode] = useState<'ingredients' | 'recipe'>(initialQuery ? 'recipe' : 'ingredients');
-  const [recipeNameQuery, setRecipeNameQuery] = useState(initialQuery);
-  const [recipe, setRecipe] = useState<string | null>(null);
-  const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [suggestedItems, setSuggestedItems] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // State for Chat Messages
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    {
+      id: 'welcome',
+      sender: 'bot',
+      text: "Hi! I'm **Freshi**, your personal AI chef and culinary assistant for **FreshNLocal.co**! 🥑\n\nI can help you:\n1. 🍳 **Suggest delicious recipes** or answer any food, grocery, and culinary questions.\n2. 🛒 **Recommend matching premium products** from our catalog in Surat that you can add to your cart immediately!\n\nWhat are we cooking today? Ask me any food-related questions!",
+      timestamp: Date.now()
+    }
+  ]);
+  
+  const [chatInput, setChatInput] = useState('');
+  const [savingMsgId, setSavingMsgId] = useState<string | null>(null);
+  const [savedRecipeIds, setSavedRecipeIds] = useState<Record<string, string>>({}); // msgId -> savedDocId
+  
   const { products } = useProducts();
   const addToCart = useCart(state => state.addItem);
   const { user } = useAuth();
+  
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleSaveRecipe = async () => {
-    if (!user) {
-      toast.error('Please log in to save recipes');
-      return;
+  // Auto scroll to bottom of chat
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
-    if (!recipe) return;
-
-    setIsSaving(true);
-    try {
-      if (savedRecipeId) {
-        await deleteDoc(doc(db, 'users', user.uid, 'savedRecipes', savedRecipeId));
-        setSavedRecipeId(null);
-        toast.success('Recipe removed from favorites');
-      } else {
-        const docRef = await addDoc(collection(db, 'users', user.uid, 'savedRecipes'), {
-          recipeMarkdown: recipe,
-          createdAt: Date.now()
-        });
-        setSavedRecipeId(docRef.id);
-        toast.success('Recipe saved to favorites!');
-      }
-    } catch (err) {
-      handleFirestoreError(err, savedRecipeId ? OperationType.DELETE : OperationType.CREATE, 'users/savedRecipes');
-      toast.error('Failed to save recipe');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const filterCategories = ['Vegan', 'Quick', 'Dessert', 'Healthy'];
-
-  const togglePreference = (pref: string) => {
-    setSelectedPreferences(prev => 
-      prev.includes(pref) ? prev.filter(p => p !== pref) : [...prev, pref]
-    );
-  };
+  }, [messages]);
 
   // Filter to unique, available products that might be good for recipes
   const availableProducts = useMemo(() => {
@@ -113,54 +73,42 @@ export function RecipeAI() {
       .sort();
   }, [products]);
 
-  const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const queryParts = searchQuery.toLowerCase().trim().split(/\s+/);
-    
-    const matches = availableProducts.filter(p => {
-      const pLower = p.toLowerCase();
-      return queryParts.every(part => pLower.includes(part));
-    });
+  // Conversational sending function
+  const handleSend = async (text: string) => {
+    const trimmedText = text.trim();
+    if (!trimmedText) return;
 
-    return matches.sort((a, b) => {
-       const aLower = a.toLowerCase();
-       const bLower = b.toLowerCase();
-       const query = searchQuery.toLowerCase().trim();
-       if (aLower === query && bLower !== query) return -1;
-       if (bLower === query && aLower !== query) return 1;
-       if (aLower.startsWith(query) && !bLower.startsWith(query)) return -1;
-       if (bLower.startsWith(query) && !aLower.startsWith(query)) return 1;
-       return 0;
-    });
-  }, [searchQuery, availableProducts]);
+    // 1. Generate user message
+    const userMsgId = 'user-' + Date.now();
+    const newUserMsg: ChatMessage = {
+      id: userMsgId,
+      sender: 'user',
+      text: trimmedText,
+      timestamp: Date.now()
+    };
 
-  const toggleProduct = (product: string) => {
-    setSelectedProducts(prev =>
-      prev.includes(product) ? prev.filter(p => p !== product) : [...prev, product]
-    );
-  };
+    // 2. Generate temporary bot message (with loader)
+    const botMsgId = 'bot-' + (Date.now() + 1);
+    const tempBotMsg: ChatMessage = {
+      id: botMsgId,
+      sender: 'bot',
+      text: '',
+      timestamp: Date.now(),
+      isLoading: true
+    };
 
-  const getRecipe = async () => {
-    if (searchMode === 'ingredients' && selectedProducts.length === 0) return;
-    if (searchMode === 'recipe' && !recipeNameQuery.trim()) return;
-    
-    setIsLoading(true);
-    setRecipe(null);
-    setSavedRecipeId(null);
-    setError(null);
-    setSuggestedItems([]);
-    
+    // Update messages array
+    setMessages(prev => [...prev, newUserMsg, tempBotMsg]);
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 90000);
 
-      const payload: any = { catalog: availableProducts, preferences: selectedPreferences };
-      if (searchMode === 'ingredients') {
-        payload.products = selectedProducts;
-      } else {
-        payload.recipeName = recipeNameQuery.trim();
-        payload.products = [];
-      }
+      const payload = { 
+        catalog: availableProducts, 
+        recipeName: trimmedText,
+        products: []
+      };
 
       const response = await fetch('/api/gemini/recipe', {
         method: 'POST',
@@ -173,410 +121,460 @@ export function RecipeAI() {
 
       let data;
       try {
-        const text = await response.text();
+        const textResponse = await response.text();
         try {
-          data = JSON.parse(text);
+          data = JSON.parse(textResponse);
         } catch(e) {
-          throw new Error(`Server returned invalid JSON. Status: ${response.status}. Response: ${text.slice(0, 100)}...`);
+          throw new Error(`Server returned invalid JSON. Status: ${response.status}.`);
         }
       } catch(e: any) {
         throw new Error(e.message || "Invalid response format");
       }
 
       if (response.ok) {
-        setRecipe(data.recipeMarkdown || data.text);
-        
         // Find matching products in store based on AI suggestions
+        const suggestions: Product[] = [];
         if (data.suggestedProductNames && Array.isArray(data.suggestedProductNames)) {
-          const suggestions: Product[] = [];
           data.suggestedProductNames.forEach((name: string) => {
-            const match = products.find(p => p.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(p.name.toLowerCase()));
-            // Only add if we found a match and it wasn't already selected by the user, and not already in suggestions
-            if (match && !selectedProducts.includes(match.name) && !suggestions.find(s => s.id === match.id)) {
+            const match = products.find(p => 
+              p.name.toLowerCase().includes(name.toLowerCase()) || 
+              name.toLowerCase().includes(p.name.toLowerCase())
+            );
+            if (match && !suggestions.find(s => s.id === match.id)) {
               suggestions.push(match);
             }
           });
-          setSuggestedItems(suggestions);
         }
+
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === botMsgId) {
+            return {
+              ...msg,
+              isLoading: false,
+              text: data.recipeMarkdown || data.text || "No recipe returned.",
+              suggestedProducts: suggestions
+            };
+          }
+          return msg;
+        }));
       } else {
-        setError(data.error || 'Oops! Something went wrong. Please try again.');
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === botMsgId) {
+            return {
+              ...msg,
+              isLoading: false,
+              text: '',
+              error: data.error || 'Oops! Something went wrong. Please try again.'
+            };
+          }
+          return msg;
+        }));
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        setError('The request took too long and timed out. Please try again.');
-      } else {
-        setError(error.message || 'Failed to connect to the recipe server. Please check your connection.');
+      const isAbort = error.name === 'AbortError';
+      const friendlyError = isAbort 
+        ? 'The request took too long and timed out. Please try again.' 
+        : (error.message || 'Failed to connect to the recipe server. Please check your connection.');
+
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === botMsgId) {
+          return {
+            ...msg,
+            isLoading: false,
+            text: '',
+            error: friendlyError
+          };
+        }
+        return msg;
+      }));
+    }
+  };
+
+  // Trigger search if coming from Home Search with "?q=..."
+  const hasTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (initialQuery && !hasTriggeredRef.current && availableProducts.length > 0) {
+      hasTriggeredRef.current = true;
+      // Clean query parameter from address bar
+      setSearchParams({}, { replace: true });
+      // Trigger search
+      handleSend(initialQuery);
+    }
+  }, [initialQuery, availableProducts, setSearchParams]);
+
+  // Form Submission
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    const query = chatInput;
+    setChatInput('');
+    handleSend(query);
+  };
+
+  // Clear Chat History
+  const handleClearChat = () => {
+    setMessages([
+      {
+        id: 'welcome',
+        sender: 'bot',
+        text: "Hi! I'm **Freshi**, your personal AI chef and culinary assistant for **FreshNLocal.co**! 🥑\n\nI can help you:\n1. 🍳 **Suggest delicious recipes** or answer any food, grocery, and culinary questions.\n2. 🛒 **Recommend matching premium products** from our catalog in Surat that you can add to your cart immediately!\n\nWhat are we cooking today? Ask me any food-related questions!",
+        timestamp: Date.now()
       }
+    ]);
+    setSavedRecipeIds({});
+    toast.success('Chat history cleared!');
+  };
+
+  // Retry generating a specific message
+  const handleRetry = async (botMsgId: string) => {
+    const botIndex = messages.findIndex(m => m.id === botMsgId);
+    if (botIndex <= 0) return;
+    const userMsg = messages[botIndex - 1];
+    if (userMsg.sender !== 'user') return;
+
+    // Reset bot message to loading state and clear error
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === botMsgId) {
+        return { ...msg, isLoading: true, error: null, text: '' };
+      }
+      return msg;
+    }));
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+      const payload = { 
+        catalog: availableProducts, 
+        recipeName: userMsg.text,
+        products: []
+      };
+
+      const response = await fetch('/api/gemini/recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+
+      let data;
+      try {
+        const textResponse = await response.text();
+        try {
+          data = JSON.parse(textResponse);
+        } catch(e) {
+          throw new Error(`Server returned invalid JSON. Status: ${response.status}.`);
+        }
+      } catch(e: any) {
+        throw new Error(e.message || "Invalid response format");
+      }
+
+      if (response.ok) {
+        const suggestions: Product[] = [];
+        if (data.suggestedProductNames && Array.isArray(data.suggestedProductNames)) {
+          data.suggestedProductNames.forEach((name: string) => {
+            const match = products.find(p => 
+              p.name.toLowerCase().includes(name.toLowerCase()) || 
+              name.toLowerCase().includes(p.name.toLowerCase())
+            );
+            if (match && !suggestions.find(s => s.id === match.id)) {
+              suggestions.push(match);
+            }
+          });
+        }
+
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === botMsgId) {
+            return {
+              ...msg,
+              isLoading: false,
+              text: data.recipeMarkdown || data.text,
+              suggestedProducts: suggestions
+            };
+          }
+          return msg;
+        }));
+      } else {
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === botMsgId) {
+            return {
+              ...msg,
+              isLoading: false,
+              text: '',
+              error: data.error || 'Oops! Something went wrong. Please try again.'
+            };
+          }
+          return msg;
+        }));
+      }
+    } catch (error: any) {
+      const isAbort = error.name === 'AbortError';
+      const friendlyError = isAbort 
+        ? 'The request took too long and timed out. Please try again.' 
+        : (error.message || 'Failed to connect to the recipe server. Please check your connection.');
+
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === botMsgId) {
+          return {
+            ...msg,
+            isLoading: false,
+            text: '',
+            error: friendlyError
+          };
+        }
+        return msg;
+      }));
+    }
+  };
+
+  // Save recipe message to favorites
+  const handleSaveRecipeMsg = async (msgId: string, recipeText: string) => {
+    if (!user) {
+      toast.error('Please log in to save recipes');
+      return;
+    }
+    if (!recipeText) return;
+
+    setSavingMsgId(msgId);
+    try {
+      const existingDocId = savedRecipeIds[msgId];
+      if (existingDocId) {
+        await deleteDoc(doc(db, 'users', user.uid, 'savedRecipes', existingDocId));
+        setSavedRecipeIds(prev => {
+          const updated = { ...prev };
+          delete updated[msgId];
+          return updated;
+        });
+        toast.success('Recipe removed from favorites');
+      } else {
+        const docRef = await addDoc(collection(db, 'users', user.uid, 'savedRecipes'), {
+          recipeMarkdown: recipeText,
+          createdAt: Date.now()
+        });
+        setSavedRecipeIds(prev => ({
+          ...prev,
+          [msgId]: docRef.id
+        }));
+        toast.success('Recipe saved to favorites!');
+      }
+    } catch (err) {
+      handleFirestoreError(err, savedRecipeIds[msgId] ? OperationType.DELETE : OperationType.CREATE, 'users/savedRecipes');
+      toast.error('Failed to save recipe');
     } finally {
-      setIsLoading(false);
+      setSavingMsgId(null);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 md:py-12 w-full flex-1">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6 md:space-y-8"
-      >
-        <div className="text-center space-y-3">
-          <div className="w-14 h-14 md:w-16 md:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-            <ChefHat className="w-7 h-7 md:w-8 md:h-8 text-primary" />
+    <div className="max-w-4xl mx-auto px-4 py-6 md:py-8 w-full flex-1 flex flex-col">
+      <div className="text-center space-y-2 mb-6 shrink-0">
+        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+          <ChefHat className="w-6 h-6 text-primary" />
+        </div>
+        <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">FNL RECIPES</h1>
+        <p className="text-xs md:text-sm text-muted-foreground max-w-lg mx-auto">
+          Interactive culinary assistant powered by Freshi AI
+        </p>
+      </div>
+
+      {/* Main Single Column Chat Container */}
+      <div className="flex flex-col h-full bg-background border border-border shadow-sm rounded-2xl overflow-hidden flex-1 min-h-[500px] lg:h-[calc(100vh-230px)] lg:max-h-[800px]">
+        
+        {/* Chat Pane Header */}
+        <div className="shrink-0 px-4 py-3 border-b border-border bg-card flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-primary/20 shrink-0 bg-white shadow-xs">
+              <img src="/freshi-icon.png?v=3" alt="Freshi" className="w-full h-full object-cover" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-black uppercase tracking-wide text-foreground">Freshi Assistant</span>
+                <span className="text-[9px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded-md">SURAT</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Culinary & Grocery AI</p>
+            </div>
           </div>
-          <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tight text-foreground">FNL RECIPES</h1>
-          <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto">{searchMode === "ingredients" ? "Select the ingredients you have, and our AI chef will craft a delicious recipe for you instantly." : "Search for a specific recipe by name, and we will provide the instructions and ingredients."}</p>
+          
+          <button
+            onClick={handleClearChat}
+            className="p-2 text-muted-foreground hover:text-red-500 rounded-lg hover:bg-red-50/50 transition-colors"
+            title="Clear Chat History"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
 
-        {!recipe && !isLoading && (
-          <div className="bg-background border border-border shadow-sm rounded-2xl p-5 md:p-8 space-y-6">
-                        <div className="flex bg-secondary p-1 rounded-xl border border-border mb-6">
-              <button
-                onClick={() => setSearchMode('ingredients')}
-                className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${searchMode === 'ingredients' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                By Ingredients
-              </button>
-              <button
-                onClick={() => setSearchMode('recipe')}
-                className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${searchMode === 'recipe' ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                By Recipe Name
-              </button>
-            </div>
-            {searchMode === 'ingredients' ? (
-              <>
-                <h2 className="text-base md:text-lg font-bold flex items-center gap-2">
-                  <Utensils className="w-5 h-5 text-primary" />
-                  What ingredients do you have?
-                </h2>
-
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="SEARCH YOUR PRODUCTS"
-                className="w-full bg-secondary border border-border rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/70 uppercase font-medium tracking-wide"
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-black/5 rounded-full"
+        {/* Chat Message Scrollable List */}
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-secondary/5 custom-scrollbar">
+          <AnimatePresence initial={false}>
+            {messages.map((msg) => {
+              const isBot = msg.sender === 'bot';
+              return (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex gap-3 max-w-full ${isBot ? 'justify-start' : 'justify-end'}`}
                 >
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-
-            {selectedProducts.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Selected:</p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedProducts.map(product => (
-                    <button
-                      key={product}
-                      onClick={() => toggleProduct(product)}
-                      className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all bg-primary text-white border-primary shadow-sm flex items-center gap-1"
-                    >
-                      {product} <X className="w-3 h-3" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {searchQuery.trim() && (
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Results:</p>
-                <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
-                  {filteredProducts.map(product => {
-                    if (selectedProducts.includes(product)) return null;
-                    return (
-                      <button
-                        key={product}
-                        onClick={() => toggleProduct(product)}
-                        className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border bg-secondary text-foreground border-border hover:border-primary/50"
-                      >
-                        {product}
-                      </button>
-                    );
-                  })}
-                  {filteredProducts.length === 0 && (
-                    <p className="text-xs text-muted-foreground w-full py-4 text-center">
-                      No matching products found.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {!searchQuery.trim() && selectedProducts.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4 uppercase font-semibold tracking-wider">
-                Search to find your ingredients
-              </p>
-            )}
-            </>
-            ) : (
-              <>
-                <h2 className="text-base md:text-lg font-bold flex items-center gap-2">
-                  <ChefHat className="w-5 h-5 text-primary" />
-                  What recipe do you want to make?
-                </h2>
-                
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={recipeNameQuery}
-                    onChange={(e) => setRecipeNameQuery(e.target.value)}
-                    placeholder="ASK FRESHI"
-                    className="w-full bg-secondary border border-border rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/70 uppercase font-medium tracking-wide"
-                  />
-
-                  {recipeNameQuery && (
-                    <button 
-                      onClick={() => setRecipeNameQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-black/5 rounded-full"
-                    >
-                      <X className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  )}
-                </div>
-                {recipeNameQuery.trim() && (
-                  <div className="mt-2 bg-background border border-border rounded-xl shadow-lg overflow-hidden max-h-[200px] overflow-y-auto custom-scrollbar">
-                    {POPULAR_RECIPES
-                      .filter(r => r.toLowerCase().includes(recipeNameQuery.toLowerCase()) && r.toLowerCase() !== recipeNameQuery.toLowerCase())
-                      .sort((a, b) => {
-                        const aLower = a.toLowerCase();
-                        const bLower = b.toLowerCase();
-                        const query = recipeNameQuery.toLowerCase();
-                        if (aLower.startsWith(query) && !bLower.startsWith(query)) return -1;
-                        if (bLower.startsWith(query) && !aLower.startsWith(query)) return 1;
-                        return aLower.localeCompare(bLower);
-                      })
-                      .slice(0, 5)
-                      .map(recipe => (
-                      <button
-                        key={recipe}
-                        onClick={() => setRecipeNameQuery(recipe)}
-                        className="w-full text-left px-4 py-3 text-sm hover:bg-secondary transition-colors uppercase font-medium tracking-wide border-b border-border/50 last:border-0"
-                      >
-                        {recipe}
-                      </button>
-                    ))}
-                    {POPULAR_RECIPES.filter(r => r.toLowerCase().includes(recipeNameQuery.toLowerCase()) && r.toLowerCase() !== recipeNameQuery.toLowerCase()).length === 0 && (
-                       <button
-                         onClick={getRecipe}
-                         className="w-full text-center px-4 py-3 text-sm text-primary uppercase font-bold tracking-wide hover:bg-secondary transition-colors"
-                       >
-                          Generate Custom Recipe: "{recipeNameQuery}"
-                        </button>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
-            <div className="pt-2 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Recipe Preferences (Optional):</p>
-              <div className="flex flex-wrap gap-2">
-                {filterCategories.map(pref => (
-                  <button
-                    key={pref}
-                    onClick={() => togglePreference(pref)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
-                      selectedPreferences.includes(pref)
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-secondary text-foreground border-border hover:border-primary/50'
-                    }`}
-                  >
-                    {pref}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={getRecipe}
-              disabled={searchMode === "ingredients" ? selectedProducts.length === 0 : !recipeNameQuery.trim()}
-              className={`w-full flex items-center justify-center gap-2 py-3.5 md:py-4 rounded-xl text-xs md:text-sm font-black uppercase tracking-widest transition-all shadow-sm mt-4 ${
-                (searchMode === 'ingredients' ? selectedProducts.length > 0 : !!recipeNameQuery.trim())
-                  ? 'bg-primary text-white hover:bg-primary/90 hover:scale-[1.01]'
-                  : 'bg-secondary text-muted-foreground cursor-not-allowed opacity-70'
-              }`}
-            >
-              <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
-              {(searchMode === 'ingredients' ? selectedProducts.length > 0 : !!recipeNameQuery.trim()) ? 'Generate Recipe' : (searchMode === 'ingredients' ? 'Select Ingredients' : 'Ask Freshi')}
-            </button>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20 space-y-6">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
-            <p className="text-sm uppercase font-bold tracking-widest text-muted-foreground animate-pulse">
-              Crafting your recipe...
-            </p>
-          </div>
-        )}
-
-        {error && !isLoading && (
-          <div className="bg-red-50 border border-red-100 shadow-sm rounded-2xl p-6 md:p-8 space-y-8 flex flex-col items-center">
-            <p className="text-red-500 font-bold uppercase tracking-wider text-sm text-center">{error}</p>
-            <button
-              onClick={() => {
-                setError(null);
-              }}
-              className="w-full bg-white text-foreground border border-border px-6 py-4 rounded-xl text-sm font-black uppercase tracking-wider hover:bg-primary/5 hover:border-primary/30 transition-colors mt-8"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
-
-        {recipe && !isLoading && !error && (
-          <div className="bg-background border border-border shadow-sm rounded-2xl p-6 md:p-8 space-y-8 relative overflow-hidden">
-            <button
-              onClick={handleSaveRecipe}
-              disabled={isSaving}
-              className={`absolute top-4 right-4 md:top-6 md:right-6 p-3 rounded-full transition-all flex items-center justify-center shadow-sm ${
-                savedRecipeId 
-                  ? 'bg-primary text-white border border-primary hover:bg-primary/90' 
-                  : 'bg-secondary text-muted-foreground border border-border hover:text-primary hover:border-primary/50'
-              }`}
-              title={savedRecipeId ? "Remove from Favorites" : "Save to Favorites"}
-            >
-              {isSaving ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Heart className={`w-5 h-5 ${savedRecipeId ? 'fill-current' : ''}`} />
-              )}
-            </button>
-            <div className="prose prose-sm md:prose-base prose-green max-w-none text-foreground font-sans mt-4">
-              <Markdown>{recipe}</Markdown>
-            </div>
-            
-            {selectedProducts.length > 0 && (
-              <div className="pt-8 border-t border-border space-y-6">
-                <h3 className="text-sm font-black uppercase tracking-widest text-foreground text-center">
-                  Required Ingredients
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {selectedProducts.map(name => {
-                    const item = products.find(p => p.name === name);
-                    if (!item) return null;
-                    return (
-                      <div key={`req-${item.id}`} className="flex items-center gap-4 p-3 rounded-xl border border-border hover:border-primary/30 transition-colors bg-secondary/30">
-                        <div className="w-16 h-16 rounded-lg bg-white shrink-0 p-2 border border-border/50">
-                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-xs font-bold uppercase truncate">{item.name}</h4>
-                          <p className="text-xs font-medium text-primary mt-1">₹{item.price}</p>
-                        </div>
-                        <button 
-                          onClick={() => {
-                            addToCart(item);
-                            toast.success(`${item.name} added to cart`);
-                          }}
-                          className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors shrink-0"
-                        >
-                          <ShoppingBag className="w-4 h-4" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-center mt-6">
-                  <button
-                    onClick={() => {
-                      suggestedItems.forEach(item => addToCart(item));
-                      toast.success(`${suggestedItems.length} items added to cart`);
-                    }}
-                    className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full text-xs font-black uppercase tracking-wider hover:bg-primary/90 transition-all shadow-sm"
-                  >
-                    <ShoppingBag className="w-4 h-4" />
-                    Add All Recommendations to Cart
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            {suggestedItems.length > 0 && (
-              <div className="pt-8 border-t border-border space-y-6">
-                <h3 className="text-sm font-black uppercase tracking-widest text-foreground text-center">
-                  Recommended for this recipe
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {suggestedItems.map(item => (
-                    <div key={item.id} className="flex items-center gap-4 p-3 rounded-xl border border-border hover:border-primary/30 transition-colors bg-secondary/30">
-                      <div className="w-16 h-16 rounded-lg bg-white shrink-0 p-2 border border-border/50">
-                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-bold uppercase truncate">{item.name}</h4>
-                        <p className="text-xs font-medium text-primary mt-1">₹{item.price}</p>
-                      </div>
-                      <button 
-                        onClick={() => {
-                          addToCart(item);
-                          toast.success(`${item.name} added to cart`);
-                        }}
-                        className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors shrink-0"
-                      >
-                        <ShoppingBag className="w-4 h-4" />
-                      </button>
+                  {/* Round Avatar for Bot */}
+                  {isBot && (
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/20 shrink-0 bg-white shadow-xs mt-1">
+                      <img src="/freshi-icon.png?v=3" alt="Freshi" className="w-full h-full object-cover" />
                     </div>
-                  ))}
-                </div>
-                
-                <div className="flex justify-center mt-6">
-                  <button
-                    onClick={() => {
-                      let count = 0;
-                      if (selectedProducts.length > 0) {
-                        selectedProducts.forEach(name => {
-                          const item = products.find(p => p.name === name);
-                          if (item) {
-                            addToCart(item);
-                            count++;
-                          }
-                        });
-                      }
-                      if (suggestedItems.length > 0) {
-                        suggestedItems.forEach(item => {
-                          addToCart(item);
-                          count++;
-                        });
-                      }
-                      toast.success(`${count} items added to cart`);
-                    }}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-xl text-sm font-black uppercase tracking-wider hover:bg-primary/90 transition-all shadow-sm border border-primary/20"
-                  >
-                    <ShoppingBag className="w-5 h-5" />
-                    Add All Items to Cart
-                  </button>
-                </div>
-                
-              </div>
-            )}
+                  )}
 
-            <button
-              onClick={() => {
-                setRecipe(null);
-                setSavedRecipeId(null);
-                setSelectedProducts([]);
-                setSelectedPreferences([]);
-                setSuggestedItems([]);
-              }}
-              className="w-full bg-secondary text-foreground border border-border px-6 py-4 rounded-xl text-sm font-black uppercase tracking-wider hover:bg-primary/5 hover:border-primary/30 transition-colors mt-8"
-            >
-              Create Another Recipe
-            </button>
+                  {/* Text Bubble */}
+                  <div className={`relative max-w-[85%] rounded-2xl p-4 md:p-5 shadow-xs space-y-3 ${
+                    isBot 
+                      ? 'bg-card border border-border rounded-tl-none text-foreground' 
+                      : 'bg-primary text-white rounded-tr-none font-medium'
+                  }`}>
+                    
+                    {/* Favorite button for recipes inside Bot bubble */}
+                    {isBot && msg.text && !msg.isLoading && !msg.error && (
+                      <button
+                        onClick={() => handleSaveRecipeMsg(msg.id, msg.text)}
+                        disabled={savingMsgId === msg.id}
+                        className={`absolute top-3 right-3 p-2 rounded-full transition-all border shrink-0 ${
+                          savedRecipeIds[msg.id]
+                            ? 'bg-primary text-white border-primary hover:bg-primary/95 shadow-sm'
+                            : 'bg-secondary text-muted-foreground border-border hover:text-primary hover:border-primary/40'
+                        }`}
+                        title={savedRecipeIds[msg.id] ? "Remove from Favorites" : "Save to Favorites"}
+                      >
+                        {savingMsgId === msg.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Heart className={`w-3.5 h-3.5 ${savedRecipeIds[msg.id] ? 'fill-current' : ''}`} />
+                        )}
+                      </button>
+                    )}
+
+                    {/* Rendering loading indicator */}
+                    {msg.isLoading && (
+                      <div className="flex items-center space-x-2 py-2">
+                        <div className="flex space-x-1">
+                          <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                        <span className="text-xs text-muted-foreground animate-pulse font-bold uppercase tracking-wider">Freshi is cooking a response...</span>
+                      </div>
+                    )}
+
+                    {/* Rendering errors with Try Again trigger */}
+                    {msg.error && (
+                      <div className="space-y-3 py-1">
+                        <p className="text-xs text-red-500 font-bold uppercase tracking-wider text-center">{msg.error}</p>
+                        <button
+                          onClick={() => handleRetry(msg.id)}
+                          className="w-full flex items-center justify-center gap-1.5 bg-secondary hover:bg-primary/10 hover:text-primary text-foreground border border-border px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          Try Again
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Text message content */}
+                    {msg.text && (
+                      <div className={`markdown-body prose prose-sm md:prose-base max-w-none ${isBot ? 'prose-green text-foreground' : 'prose-invert text-white'}`}>
+                        <Markdown>{msg.text}</Markdown>
+                      </div>
+                    )}
+
+                    {/* Interactive shopping cards inside Bot bubble */}
+                    {isBot && msg.suggestedProducts && msg.suggestedProducts.length > 0 && (
+                      <div className="pt-4 border-t border-border space-y-3 shrink-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                            Recommended Store Ingredients
+                          </span>
+                          <button
+                            onClick={() => {
+                              msg.suggestedProducts?.forEach(item => addToCart(item));
+                              toast.success(`Added all recommendations to cart`);
+                            }}
+                            className="text-[10px] font-black text-primary uppercase tracking-wider hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            Add All to Cart →
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {msg.suggestedProducts.map(item => (
+                            <div key={`${msg.id}-item-${item.id}`} className="flex items-center gap-3 p-2.5 rounded-xl border border-border/70 hover:border-primary/40 transition-all bg-secondary/15">
+                              <div className="w-12 h-12 rounded-lg bg-white shrink-0 p-1 border border-border/40 flex items-center justify-center overflow-hidden">
+                                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h5 className="text-[10px] font-black uppercase truncate text-foreground">{item.name}</h5>
+                                <p className="text-[10px] font-bold text-primary mt-0.5">₹{item.price}</p>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  addToCart(item);
+                                  toast.success(`${item.name} added to cart`);
+                                }}
+                                className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors shrink-0 cursor-pointer"
+                                title="Add to Cart"
+                              >
+                                <ShoppingBag className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className={`text-[9px] text-right mt-1.5 opacity-60 font-semibold ${isBot ? 'text-muted-foreground' : 'text-white'}`}>
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+
+        {/* Chat Input Bar Footer */}
+        <div className="shrink-0 p-3 md:p-4 border-t border-border bg-card space-y-3">
+          {/* Quick suggestions pill tags */}
+          <div className="flex items-center gap-2 overflow-x-auto py-1 pr-1 scrollbar-none shrink-0">
+            <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground whitespace-nowrap">Try asking:</span>
+            {POPULAR_PROMPTS.map(prompt => (
+              <button
+                key={prompt}
+                onClick={() => handleSend(prompt.replace(/^[^a-zA-Z]*/, '').trim())}
+                className="px-3 py-1 rounded-full border border-border bg-background text-[10px] font-bold uppercase tracking-wider whitespace-nowrap text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors shrink-0"
+              >
+                {prompt}
+              </button>
+            ))}
           </div>
-        )}
-      </motion.div>
+
+          {/* Chat Text Input Form */}
+          <form onSubmit={handleFormSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask Freshi (e.g. 'How do I cook Avocado Toast?' or ask food questions)..."
+              className="flex-1 bg-secondary border border-border/80 rounded-xl px-4 py-3 text-xs md:text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all text-foreground placeholder:text-muted-foreground/60 font-medium"
+            />
+            <button
+              type="submit"
+              disabled={!chatInput.trim()}
+              className="bg-primary text-white px-4 md:px-5 py-3 rounded-xl hover:bg-primary/95 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:pointer-events-none shadow-sm flex items-center justify-center shrink-0 cursor-pointer"
+            >
+              <Send className="w-4 h-4 md:w-4.5 md:h-4.5" />
+            </button>
+          </form>
+        </div>
+
+      </div>
     </div>
   );
 }
