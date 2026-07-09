@@ -53,6 +53,20 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
     res.status(200).json(data);
   } catch (error: any) {
     console.error(error);
-    res.status(500).json({ error: error.message || "Failed to generate recipe" });
+    const errMsg = typeof error?.message === 'string' ? error.message.toLowerCase() : JSON.stringify(error?.message || error).toLowerCase();
+    const isCreditsDepleted = errMsg.includes('prepayment') || errMsg.includes('credits are depleted') || errMsg.includes('depleted') || errMsg.includes('resource_exhausted');
+    const isRateLimit = !isCreditsDepleted && (error?.status === 429 || errMsg.includes('429') || errMsg.includes('quota'));
+    const isUnavailable = error?.status === 503 || errMsg.includes('503') || errMsg.includes('unavailable') || errMsg.includes('overloaded');
+    
+    let friendlyError = "Failed to generate recipe. Please try again later.";
+    if (isCreditsDepleted) {
+      friendlyError = "Freshi AI Chef is currently under active development and getting polished with new recipes! 🍳✨ This feature is in its building stage. Please check back soon!";
+    } else if (isRateLimit) {
+      friendlyError = "Recipe AI is currently experiencing high demand. Please try again in a few moments.";
+    } else if (isUnavailable) {
+      friendlyError = "Recipe AI is currently unavailable or overloaded. Please try again later.";
+    }
+    
+    res.status(isCreditsDepleted || isRateLimit ? 429 : (isUnavailable ? 503 : 500)).json({ error: friendlyError });
   }
 }

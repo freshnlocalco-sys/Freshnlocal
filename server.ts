@@ -89,10 +89,10 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
       res.json(data);
     } catch (error: any) {
       console.error("Gemini API Error:", error);
-      const errMsg = typeof error?.message === 'string' ? error.message : JSON.stringify(error?.message || error);
-      const isCreditsDepleted = errMsg.includes('prepayment') || errMsg.includes('credits are depleted') || errMsg.includes('depleted') || errMsg.includes('RESOURCE_EXHAUSTED');
+      const errMsg = typeof error?.message === 'string' ? error.message.toLowerCase() : JSON.stringify(error?.message || error).toLowerCase();
+      const isCreditsDepleted = errMsg.includes('prepayment') || errMsg.includes('credits are depleted') || errMsg.includes('depleted') || errMsg.includes('resource_exhausted');
       const isRateLimit = !isCreditsDepleted && (error?.status === 429 || errMsg.includes('429') || errMsg.includes('quota'));
-      const isUnavailable = error?.status === 503 || errMsg.includes('503') || errMsg.includes('UNAVAILABLE') || errMsg.includes('overloaded');
+      const isUnavailable = error?.status === 503 || errMsg.includes('503') || errMsg.includes('unavailable') || errMsg.includes('overloaded');
       
       let friendlyError = "Failed to generate recipe. Please try again later.";
       if (isCreditsDepleted) {
