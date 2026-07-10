@@ -816,6 +816,42 @@ export function AdminDashboard() {
     );
   }
 
+  const handleExportCSV = () => {
+    try {
+      const headers = ["PRODUCT NAME", "CATEGORY", "UNIT", "MRP", "RATE PRICE", "DESCRIPTION"];
+      const csvRows = [];
+      csvRows.push(headers.join(","));
+      
+      filteredProducts.forEach(product => {
+        const row = [
+          `"${(product.name || '').replace(/"/g, '""')}"`,
+          `"${(product.category || '').replace(/"/g, '""')}"`,
+          `"${(product.unit || '').replace(/"/g, '""')}"`,
+          `"${product.originalPrice || product.price || ''}"`,
+          `"${product.price || ''}"`,
+          `"${(product.description || '').replace(/"/g, '""')}"`
+        ];
+        csvRows.push(row.join(","));
+      });
+      
+      const csvString = csvRows.join("\n");
+      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `products_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success("Products exported successfully.");
+    } catch (err) {
+      console.error("Export error:", err);
+      toast.error("Failed to export products.");
+    }
+  };
+
   const handleSeedSignatureJuices = async () => {
     try {
       setSeedingJuices(true);
@@ -2411,13 +2447,21 @@ export function AdminDashboard() {
                     {productSection === 'juices' && "FNL Cold-Pressed Juices Showcase"}
                   </p>
                 </div>
-                <input 
-                  type="search"
-                  placeholder="Search inventory..."
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  className="w-full max-w-[200px] sm:max-w-xs border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
-                />
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={handleExportCSV}
+                    className="flex-shrink-0 flex items-center gap-1.5 bg-neutral-900 hover:bg-black text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm"
+                  >
+                    <Download className="w-3.5 h-3.5" /> CSV
+                  </button>
+                  <input 
+                    type="search"
+                    placeholder="Search inventory..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="w-full max-w-[200px] sm:max-w-xs border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
+                  />
+                </div>
               </div>
 
               {/* SECTION NAVIGATION FOR FRUITS/VEGETABLES VS JUICE SECTIONS */}
