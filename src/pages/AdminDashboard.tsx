@@ -2085,7 +2085,7 @@ export function AdminDashboard() {
                         <td className="p-3 sm:p-4 md:p-5 leading-relaxed max-w-[200px] sm:max-w-xs whitespace-normal">
                           <span className="font-extrabold text-foreground uppercase block text-[10px] sm:text-xs">{order.shippingDetails?.name || 'Customer'}</span>
                           <span className="text-muted-foreground font-mono text-[10px] sm:text-xs tracking-wider block mt-0.5 font-bold">{order.shippingDetails?.phone || 'No phone'}</span>
-                          <span className="text-muted-foreground text-[8px] sm:text-[9px] block mt-1 leading-snug">{order.shippingDetails?.address || 'No address provided'}</span>
+                          <span className="text-muted-foreground text-[8px] sm:text-[9px] block mt-1 leading-snug">{order.shippingDetails?.address?.includes('Store Pickup') ? 'STORE PICKUP' : (order.shippingDetails?.address || 'No address provided')}</span>
                         </td>
                         <td className="p-3 sm:p-4 md:p-5 leading-normal max-w-[220px] whitespace-normal">
                           <div className="space-y-1">
@@ -3283,7 +3283,7 @@ export function AdminDashboard() {
                   <p className="font-extrabold uppercase text-foreground text-sm">{selectedOrder.shippingDetails?.name || 'Valued Customer'}</p>
                   <p className="font-bold text-primary font-mono text-xs">{selectedOrder.shippingDetails?.phone || 'No Phone provided'}</p>
                   <p className="text-muted-foreground leading-relaxed mt-1 text-[11px] whitespace-normal bg-secondary p-2.5 rounded-xl border border-border/40">
-                    {selectedOrder.shippingDetails?.address || 'No shipping address provided'}
+                    {selectedOrder.shippingDetails?.address?.includes('Store Pickup') ? 'STORE PICKUP' : (selectedOrder.shippingDetails?.address || 'No shipping address provided')}
                   </p>
                 </div>
               </div>
