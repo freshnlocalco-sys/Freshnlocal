@@ -15,19 +15,46 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { products, catalog } = req.body;
+    const { products, catalog, preferences, recipeName } = req.body;
     const catalogText = catalog ? catalog.join(" | ") : "";
     
-    const prompt = `You are a culinary AI for FNL Recipes. The user has selected these ingredients they already have: ${products.join(", ")}.
+    const preferencesText = preferences && preferences.length > 0 ? ` The user has the following preferences for the recipe: ${preferences.join(", ")}.` : "";
+    
+    let prompt = '';
+    if (recipeName) {
+      prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO (a premium fresh produce delivery engine in Surat). The user wants to make a specific recipe or asked a question: "${recipeName}".${preferencesText}
+      
+CRITICAL GUARD RAILS:
+- You MUST ONLY answer questions or provide recipes that are related to food, cooking, culinary arts, groceries, fresh produce, or the FreshNLocal business.
+- If the user's request is NOT related to these topics, you MUST politely refuse to answer and remind them that you are a culinary assistant for FreshNLocal. In this case, return the refusal message in the \`recipeMarkdown\` field and an empty array for \`suggestedProductNames\`. Do not provide a recipe.
 
-1. Provide a delicious recipe using some or all of these ingredients. Format it in Markdown.
-2. Recommend 2 to 4 OTHER complementary products that the user should buy from our store to make this recipe even better (e.g. spices, garnishes, side dishes, or premium ingredients).
+If the request IS related to food or cooking:
+1. Provide the full recipe for "${recipeName}" (or answer their food-related question), including the required ingredients and step-by-step instructions if applicable. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
+2. Recommend ALL complementary products (ingredients) that the user should buy from our store to make this recipe. Identify as many required ingredients from the catalog as possible.
+
+CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
+- You MUST select recommendations ONLY from the following exact store catalog:
+[ ${catalogText} ]
+- Do NOT suggest any juices, beverages, or drinks unless explicitly part of the recipe. Focus on solid foods, spices, or garnishes.
+- Use the EXACT product name as it appears in the catalog.`;
+    } else {
+      prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO. The user has selected these ingredients they already have: ${(products || []).join(", ")}.${preferencesText}
+      
+CRITICAL GUARD RAILS:
+- You MUST ONLY answer questions or provide recipes that are related to food, cooking, culinary arts, groceries, fresh produce, or the FreshNLocal business.
+- If the user's request is somehow NOT related to these topics (even with ingredients provided), politely refuse in the \`recipeMarkdown\` field.
+
+If the request IS related to food or cooking:
+1. Provide a delicious recipe using some or all of these ingredients. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
+2. Recommend ALL OTHER complementary products that the user should buy from our store to make this recipe even better. Identify as many required ingredients from the catalog as possible.
 
 CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - You MUST select recommendations ONLY from the following exact store catalog:
 [ ${catalogText} ]
 - Do NOT suggest any product that is already in the user's selected list.
+- Do NOT suggest any juices, beverages, or drinks. Focus on solid foods, spices, or garnishes.
 - Use the EXACT product name as it appears in the catalog.`;
+    }
     
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
@@ -52,7 +79,6 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
     const data = JSON.parse(response.text || "{}");
     res.status(200).json(data);
   } catch (error: any) {
-    console.error(error);
     const errMsg = typeof error?.message === 'string' ? error.message.toLowerCase() : JSON.stringify(error?.message || error).toLowerCase();
     const isCreditsDepleted = errMsg.includes('prepayment') || errMsg.includes('credits are depleted') || errMsg.includes('depleted') || errMsg.includes('resource_exhausted');
     const isRateLimit = !isCreditsDepleted && (error?.status === 429 || errMsg.includes('429') || errMsg.includes('quota'));

@@ -88,7 +88,6 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
       const data = JSON.parse(response.text || "{}");
       res.json(data);
     } catch (error: any) {
-      console.error("Gemini API Error:", error);
       const errMsg = typeof error?.message === 'string' ? error.message.toLowerCase() : JSON.stringify(error?.message || error).toLowerCase();
       const isCreditsDepleted = errMsg.includes('prepayment') || errMsg.includes('credits are depleted') || errMsg.includes('depleted') || errMsg.includes('resource_exhausted');
       const isRateLimit = !isCreditsDepleted && (error?.status === 429 || errMsg.includes('429') || errMsg.includes('quota'));
