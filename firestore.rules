@@ -87,14 +87,12 @@ service cloud.firestore {
     
     match /orders/{orderId} {
       function isValidOrder(data) {
-        return data.keys().hasAll(['userId', 'items', 'totalAmount', 'status', 'paymentMethod', 'shippingDetails', 'createdAt', 'updatedAt'])
+        return data.keys().hasAll(['userId', 'items', 'totalAmount', 'status', 'paymentMethod', 'createdAt', 'updatedAt'])
         && data.userId is string && data.userId.size() <= 128
         && data.items is list && data.items.size() <= 100 && data.items.size() > 0
         && data.totalAmount is number && data.totalAmount >= 0
-        && data.status is string && (data.status == 'pending' || data.status == 'confirmed' || data.status == 'shipped' || data.status == 'delivered' || data.status == 'cancelled')
+        && data.status is string && (data.status == 'pending' || data.status == 'confirmed' || data.status == 'shipped' || data.status == 'delivered' || data.status == 'cancelled' || data.status == 'ready' || data.status == 'takeaway')
         && data.paymentMethod == 'COD'
-        && data.shippingDetails is map
-        && data.shippingDetails.keys().hasAll(['address', 'phone', 'name'])
         && data.createdAt is number
         && data.updatedAt is number;
       }

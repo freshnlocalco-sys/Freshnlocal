@@ -4,7 +4,7 @@ import { db, handleFirestoreError, OperationType, useAuth, isQuotaError } from '
 import { trackFirestoreRead } from '../lib/cacheManager';
 import { Order, useCart, Product } from '../store/useCart';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck, RefreshCw } from 'lucide-react';
+import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck, RefreshCw, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const TIMELINE_STEPS = [
@@ -12,6 +12,13 @@ const TIMELINE_STEPS = [
   { id: 'confirmed', label: 'Processing', desc: 'Preparing dispatch', icon: Package },
   { id: 'shipped', label: 'On the Way', desc: 'Out for delivery', icon: Truck },
   { id: 'delivered', label: 'Delivered', desc: 'Order completed', icon: CheckCircle2 }
+];
+
+const PICKUP_TIMELINE_STEPS = [
+  { id: 'pending', label: 'Order Placed', desc: 'We received your order', icon: FileCheck },
+  { id: 'confirmed', label: 'Confirmed', desc: 'Preparing your pickup', icon: Package },
+  { id: 'ready', label: 'Ready for Pickup', desc: 'Waiting at store', icon: ShoppingBag },
+  { id: 'takeaway', label: 'Take Away', desc: 'Order completed', icon: CheckCircle2 }
 ];
 
 function OrderTimeline({ order }: { order: Order }) {
@@ -23,8 +30,14 @@ function OrderTimeline({ order }: { order: Order }) {
     );
   }
   
-  const normalizedStatus = order.status === 'processing' ? 'confirmed' : order.status;
-  const currentIndex = TIMELINE_STEPS.findIndex(s => s.id === normalizedStatus);
+  const isPickup = order.shippingDetails?.address?.includes('Store Pickup');
+  const steps = isPickup ? PICKUP_TIMELINE_STEPS : TIMELINE_STEPS;
+  
+  let normalizedStatus = order.status === 'processing' ? 'confirmed' : order.status;
+  if (isPickup && normalizedStatus === 'delivered') normalizedStatus = 'takeaway';
+  if (isPickup && normalizedStatus === 'shipped') normalizedStatus = 'ready';
+
+  const currentIndex = steps.findIndex(s => s.id === normalizedStatus);
   const activeIndex = currentIndex === -1 ? 0 : currentIndex;
 
   const formatDate = (timestamp: number) => {
@@ -42,10 +55,10 @@ function OrderTimeline({ order }: { order: Order }) {
         <div className="hidden sm:block absolute top-[1.25rem] left-[12%] right-[12%] h-[2px] bg-border -z-10"></div>
         <div 
           className="hidden sm:block absolute top-[1.25rem] left-[12%] h-[2px] bg-primary transition-all duration-700 delay-300 -z-10" 
-          style={{ width: `${(activeIndex / (TIMELINE_STEPS.length - 1)) * 76}%` }}
+          style={{ width: `${(activeIndex / (steps.length - 1)) * 76}%` }}
         ></div>
 
-        {TIMELINE_STEPS.map((step, index) => {
+        {steps.map((step, index) => {
           const isActive = index <= activeIndex;
           const isCurrent = index === activeIndex;
           const Icon = step.icon;
@@ -53,15 +66,15 @@ function OrderTimeline({ order }: { order: Order }) {
           let dateStr = '';
           if (index === 0) dateStr = formatDate(order.createdAt);
           else if (isCurrent && order.updatedAt) dateStr = formatDate(order.updatedAt);
-          else if (isActive && order.updatedAt && index === TIMELINE_STEPS.length - 1) dateStr = formatDate(order.updatedAt);
+          else if (isActive && order.updatedAt && index === steps.length - 1) dateStr = formatDate(order.updatedAt);
           
           return (
             <div key={step.id} className="flex sm:flex-col items-start sm:items-center relative z-10 sm:w-1/4">
                {/* Mobile vertical lines */}
-               {index !== TIMELINE_STEPS.length - 1 && (
+               {index !== steps.length - 1 && (
                  <div className="sm:hidden absolute left-5 top-10 bottom-[-32px] w-[2px] bg-border -z-10"></div>
                )}
-               {index !== TIMELINE_STEPS.length - 1 && isActive && (
+               {index !== steps.length - 1 && isActive && (
                  <div 
                    className="sm:hidden absolute left-5 top-10 w-[2px] bg-primary -z-10 transition-all duration-700" 
                    style={{ 
@@ -251,8 +264,8 @@ export function Orders() {
                   <span className={`px-4.5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                     order.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/25' :
                     (order.status === 'processing' || order.status === 'confirmed') ? 'bg-blue-500/10 text-blue-500 border-blue-500/25' :
-                    order.status === 'shipped' ? 'bg-purple-500/10 text-purple-500 border-purple-500/25' :
-                    order.status === 'delivered' ? 'bg-primary/10 text-primary border-primary/25 shadow-sm' :
+                    (order.status === 'shipped' || order.status === 'ready') ? 'bg-purple-500/10 text-purple-500 border-purple-500/25' :
+                    (order.status === 'delivered' || order.status === 'takeaway') ? 'bg-primary/10 text-primary border-primary/25 shadow-sm' :
                     'bg-red-500/10 text-red-500 border-red-500/25'
                   }`}>
                     {order.status}
@@ -309,7 +322,7 @@ export function Orders() {
                   </div>
                 )}
                 
-                {order.status === 'delivered' && (
+                {(order.status === 'delivered' || order.status === 'takeaway') && (
                   <button 
                     onClick={() => handleOrderAgain(order)}
                     className="slice-btn-primary w-full sm:w-auto self-end px-6 py-3.5 text-[10px] flex items-center justify-center gap-2 group shadow-sm mt-2"

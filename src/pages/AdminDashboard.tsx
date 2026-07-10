@@ -20,6 +20,14 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelled', color: 'bg-red-500' },
 ];
 
+const PICKUP_STATUS_OPTIONS = [
+  { value: 'pending', label: 'Pending', color: 'bg-amber-400' },
+  { value: 'confirmed', label: 'Confirmed', color: 'bg-blue-500' },
+  { value: 'ready', label: 'Ready for Pickup', color: 'bg-indigo-500' },
+  { value: 'takeaway', label: 'Take Away', color: 'bg-emerald-500' },
+  { value: 'cancelled', label: 'Cancelled', color: 'bg-red-500' },
+];
+
 class BrandingErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
   state = { hasError: false, error: null };
 
@@ -54,10 +62,11 @@ class BrandingErrorBoundary extends React.Component<{ children: React.ReactNode 
   }
 }
 
-function OrderStatusDropdown({ currentStatus, onStatusChange }: { currentStatus: string, onStatusChange: (status: string) => void }) {
+function OrderStatusDropdown({ currentStatus, onStatusChange, isPickup }: { currentStatus: string, onStatusChange: (status: string) => void, isPickup?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   
-  const currentOption = STATUS_OPTIONS.find(o => o.value === currentStatus) || STATUS_OPTIONS[0];
+  const options = isPickup ? PICKUP_STATUS_OPTIONS : STATUS_OPTIONS;
+  const currentOption = options.find(o => o.value === currentStatus) || options[0];
 
   return (
     <div className="relative inline-block text-left w-[130px] sm:w-[150px]">
@@ -77,7 +86,7 @@ function OrderStatusDropdown({ currentStatus, onStatusChange }: { currentStatus:
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
           <div className="absolute z-50 mt-1 w-full rounded-xl bg-white shadow-lg border border-border overflow-hidden">
-            {STATUS_OPTIONS.map((option) => (
+            {options.map((option) => (
               <button
                 key={option.value}
                 onClick={() => {
@@ -2020,7 +2029,7 @@ export function AdminDashboard() {
                     className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full sm:w-[160px] uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm"
                   >
                     <option value="all">ANY STATUS</option>
-                    {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
+                    {Array.from(new Map([...STATUS_OPTIONS, ...PICKUP_STATUS_OPTIONS].map(item => [item.value, item])).values()).map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
                   </select>
                 </div>
               </div>
@@ -2116,6 +2125,7 @@ export function AdminDashboard() {
                             <OrderStatusDropdown 
                               currentStatus={order.status} 
                               onStatusChange={(newStatus) => handleUpdateOrderStatus(order.id, newStatus)} 
+                              isPickup={order.shippingDetails?.address?.includes('Store Pickup')}
                             />
                             <button
                               type="button"
@@ -3235,7 +3245,7 @@ export function AdminDashboard() {
                 <span className="text-[9px] font-black uppercase tracking-widest text-[#4a4a4a] block mb-1">Status desk</span>
                 <div className="flex items-center gap-2">
                   <span className={`w-2.5 h-2.5 rounded-full ${
-                    STATUS_OPTIONS.find(o => o.value === selectedOrder.status)?.color || 'bg-neutral-400'
+                    (selectedOrder.shippingDetails?.address?.includes('Store Pickup') ? PICKUP_STATUS_OPTIONS : STATUS_OPTIONS).find(o => o.value === selectedOrder.status)?.color || 'bg-neutral-400'
                   }`} />
                   <span className="font-extrabold uppercase text-[11px] sm:text-xs text-foreground tracking-wider">
                     {selectedOrder.status}
@@ -3252,7 +3262,7 @@ export function AdminDashboard() {
                   }}
                   className="border border-border rounded-lg px-2.5 py-1.5 text-[10px] sm:text-xs bg-white font-extrabold uppercase tracking-widest text-foreground cursor-pointer shadow-sm focus:border-primary outline-none"
                 >
-                  {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
+                  {(selectedOrder.shippingDetails?.address?.includes('Store Pickup') ? PICKUP_STATUS_OPTIONS : STATUS_OPTIONS).map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
                 </select>
                 <button
                   type="button"
