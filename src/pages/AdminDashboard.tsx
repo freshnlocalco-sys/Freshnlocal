@@ -523,7 +523,7 @@ export function AdminDashboard() {
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
+  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; variants: { unit: string; price: string; originalPrice: string }[] }>({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -1173,6 +1173,7 @@ export function AdminDashboard() {
           description: newProduct.description,
           imageUrl: finalImageUrl,
           unit: newProduct.unit || '',
+          variants: newProduct.variants || [],
           updatedAt: Date.now()
         });
       } else {
@@ -1185,6 +1186,7 @@ export function AdminDashboard() {
           description: newProduct.description,
           imageUrl: finalImageUrl,
           unit: newProduct.unit || '',
+          variants: newProduct.variants || [],
           stock: 100,
           inStock: true,
           createdAt: Date.now(),
@@ -1204,6 +1206,7 @@ export function AdminDashboard() {
         description: newProduct.description,
         imageUrl: finalImageUrl,
         unit: newProduct.unit || '',
+        variants: newProduct.variants || [],
         stock: 100,
         inStock: true,
         createdAt: editingProductId ? (products.find(p => p.id === editingProductId)?.createdAt || Date.now()) : Date.now(),
@@ -1238,9 +1241,9 @@ export function AdminDashboard() {
       const mCache = await import('../lib/cacheManager');
       const mIdb = await import('../lib/indexedDB');
       try {
-        mCache.cacheManager.set('products_v3', nextStoreProducts);
+        mCache.cacheManager.set('products_v4', nextStoreProducts);
         mCache.cacheManager.set('products_last_fetched_v3', Date.now());
-        mIdb.idb.set('products_v3', nextStoreProducts, 24 * 60 * 60 * 1000).catch(()=>{});
+        mIdb.idb.set('products_v4', nextStoreProducts, 24 * 60 * 60 * 1000).catch(()=>{});
         mIdb.idb.set('products_last_fetched_v3', Date.now(), 24 * 60 * 60 * 1000).catch(()=>{});
       } catch (cacheErr) {
         console.warn("Async Cache sync failed safely:", cacheErr);
@@ -1272,7 +1275,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
+      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -1291,7 +1294,8 @@ export function AdminDashboard() {
       subCategory: (product as any).subCategory || 'cold-pressed',
       description: product.description,
       imageUrl: product.imageUrl || '',
-      unit: product.unit || ''
+      unit: product.unit || '',
+      variants: (product as any).variants || []
     });
     setProductSection(isJuice ? 'juices' : 'veg-fruits');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1299,7 +1303,7 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '' });
+    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
   };
 
 
@@ -2267,8 +2271,78 @@ export function AdminDashboard() {
                           onChange={e => setNewProduct({...newProduct, unit: e.target.value})} 
                         />
                       </div>
+                    
+                    {/* Variants Management */}
+                    <div className="space-y-3 bg-secondary/30 p-4 rounded-xl border border-border/50 col-span-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-foreground">Different Sizes / Variants</label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewProduct({
+                              ...newProduct,
+                              variants: [...(newProduct.variants || []), { unit: '', price: '', originalPrice: '' }]
+                            });
+                          }}
+                          className="text-[10px] bg-primary text-white px-2 py-1 rounded flex items-center gap-1 font-bold"
+                        >
+                          <Plus className="w-3 h-3" /> Add Variant
+                        </button>
+                      </div>
                       
-                      {productSection === 'veg-fruits' ? (
+                      {newProduct.variants && newProduct.variants.length > 0 && (
+                        <div className="space-y-3">
+                          {newProduct.variants.map((variant, vIdx) => (
+                            <div key={vIdx} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center bg-white p-2 rounded-lg border border-border">
+                              <input 
+                                placeholder="Size (e.g. 500g)"
+                                value={variant.unit}
+                                onChange={(e) => {
+                                  const newVariants = [...newProduct.variants];
+                                  newVariants[vIdx].unit = e.target.value;
+                                  setNewProduct({...newProduct, variants: newVariants});
+                                }}
+                                className="w-full border-none bg-transparent text-[10px] sm:text-xs outline-none"
+                              />
+                              <input 
+                                placeholder="Price"
+                                type="number"
+                                value={variant.price}
+                                onChange={(e) => {
+                                  const newVariants = [...newProduct.variants];
+                                  newVariants[vIdx].price = e.target.value;
+                                  setNewProduct({...newProduct, variants: newVariants});
+                                }}
+                                className="w-full border-none bg-transparent text-[10px] sm:text-xs outline-none"
+                              />
+                              <input 
+                                placeholder="MRP"
+                                type="number"
+                                value={variant.originalPrice}
+                                onChange={(e) => {
+                                  const newVariants = [...newProduct.variants];
+                                  newVariants[vIdx].originalPrice = e.target.value;
+                                  setNewProduct({...newProduct, variants: newVariants});
+                                }}
+                                className="w-full border-none bg-transparent text-[10px] sm:text-xs outline-none"
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const newVariants = newProduct.variants.filter((_, i) => i !== vIdx);
+                                  setNewProduct({...newProduct, variants: newVariants});
+                                }}
+                                className="text-red-500 p-1 hover:bg-red-50 rounded"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {productSection === 'veg-fruits' ? (
                         <div className="space-y-1.5 sm:space-y-2">
                           <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#059669] font-extrabold">Produce Category</label>
                           <select 

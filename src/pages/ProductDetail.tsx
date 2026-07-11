@@ -22,8 +22,25 @@ export function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [offlineError, setOfflineError] = useState('');
+  
+  const variants = product?.variants || [];
+  const allVariants = React.useMemo(() => {
+    if (!product) return [];
+    const defaults = { unit: product.unit || '', price: product.price, originalPrice: product.originalPrice };
+    if (variants.length === 0) return [defaults];
+    return [defaults, ...variants.map(v => ({ unit: v.unit, price: Number(v.price), originalPrice: v.originalPrice ? Number(v.originalPrice) : undefined }))];
+  }, [variants, product]);
+
+  const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
+  const currentVariant = allVariants[selectedVariantIdx] || allVariants[0] || { unit: '', price: 0, originalPrice: 0 };
+  
+  const currentPrice = currentVariant.price;
+  const currentOriginalPrice = currentVariant.originalPrice;
+  const currentUnit = currentVariant.unit;
+  const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;
+
   const [quantity, setQuantity] = useState(1);
-  const { addItem } = useCart();
+  const { items, addItem } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const allProducts = useProducts(state => state.products);
 
@@ -48,7 +65,7 @@ export function ProductDetail() {
 
         // 2. Check localStorage cached products
         if (!found) {
-          const cachedProducts = cacheManager.get<Product[]>('products_v3', true);
+          const cachedProducts = cacheManager.get<Product[]>('products_v4', true);
           if (cachedProducts) {
             found = cachedProducts.find(p => p.id === id);
           }
@@ -107,8 +124,8 @@ export function ProductDetail() {
 
   const handleAddToCart = () => {
     if (product && product.inStock) {
-      addItem(product, quantity);
-      toast.success(`${quantity} ${product.name} added to cart!`);
+      addItem({ ...product, id: cartProductId, price: currentPrice, originalPrice: currentOriginalPrice, unit: currentUnit }, quantity);
+      toast.success(`${quantity} ${product.name} (${currentUnit || 'item'}) added to cart!`);
     }
   };
 
@@ -222,21 +239,48 @@ export function ProductDetail() {
               {product.name}
             </h1>
 
-            {product.unit && (
+            {allVariants.length > 1 ? (
+              <div className="flex flex-wrap gap-2">
+                {allVariants.map((v, idx) => {
+                  const vProductId = v.unit ? `${product.id}-${v.unit.trim()}` : product.id;
+                  const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === v.unit);
+                  const vQty = vCartItem ? vCartItem.quantity : 0;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedVariantIdx(idx)}
+                      className={`relative px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-extrabold transition-all border shadow-sm ${
+                        selectedVariantIdx === idx 
+                          ? 'bg-primary text-white border-primary shadow-[0_4px_15px_rgba(0,184,83,0.2)]' 
+                          : 'bg-white text-muted-foreground border-border/80 hover:border-primary/50'
+                      }`}
+                    >
+                      {v.unit}
+                      {vQty > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">
+                          {vQty}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : currentUnit && (
               <div className="text-xs uppercase tracking-wider font-extrabold text-muted-foreground bg-white border border-border/80 px-4 py-2 rounded-xl inline-block shadow-xs">
-                Pack / Unit Size: <span className="text-primary font-black ml-1 font-sans">{product.unit}</span>
+                Pack / Unit Size: <span className="text-primary font-black ml-1 font-sans">{currentUnit}</span>
               </div>
             )}
             
             <div className="flex items-end gap-3 tracking-tighter">
-              <div className="text-4xl font-black text-primary">₹{product.price}</div>
-              {product.originalPrice && product.originalPrice > product.price && (
+              <div className="text-4xl font-black text-primary">₹{currentPrice}</div>
+              {currentOriginalPrice && currentOriginalPrice > currentPrice && (
                 <div className="flex items-center gap-2 mb-1">
                   <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50">
-                    MRP ₹{product.originalPrice}
+                    MRP ₹{currentOriginalPrice}
                   </div>
                   <span className="text-sm font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded">
-                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                    {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
                   </span>
                 </div>
               )}
@@ -271,7 +315,7 @@ export function ProductDetail() {
             
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Total Settlement</span>
-              <div className="font-sans font-black text-2xl text-foreground">₹{(product.price * quantity).toFixed(2)}</div>
+              <div className="font-sans font-black text-2xl text-foreground">₹{(currentPrice * quantity).toFixed(2)}</div>
             </div>
           </div>
 

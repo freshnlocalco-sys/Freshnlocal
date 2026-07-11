@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export interface ProductVariant {
+  unit: string;
+  price: number;
+  originalPrice?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -10,6 +16,7 @@ export interface Product {
   category: string;
   description: string;
   unit?: string;
+  variants?: ProductVariant[];
   stock: number;
   inStock: boolean;
   orderIndex?: number;

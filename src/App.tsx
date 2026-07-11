@@ -19,6 +19,8 @@ import { useSettings } from './store/useSettings';
 import { useProducts } from './store/useProducts';
 import { usePWA } from './store/usePWA';
 
+import { TestCart } from './pages/TestCart';
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   const navigationType = useNavigationType();
@@ -179,6 +181,7 @@ export default function App() {
           <Route path="fnl-recipes" element={<RecipeAI />} />
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path="cart" element={<Cart />} />
+          <Route path="testcart" element={<TestCart />} />
           <Route path="wishlist" element={<Wishlist />} />
           <Route path="admin" element={<Navigate to="/admin/consignments" replace />} />
           <Route path="admin/consignments" element={<AdminDashboard />} />
