@@ -32,25 +32,50 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const displayProducts = products.slice(0, 13);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      const containerWidth = scrollContainerRef.current.clientWidth;
-      const gap = window.innerWidth >= 1024 ? 24 : window.innerWidth >= 768 ? 16 : 12;
-      scrollContainerRef.current.scrollBy({ left: -(containerWidth + gap), behavior: 'smooth' });
-    }
-  };
+  // Auto-scroll loop
+  useEffect(() => {
+    let animationFrameId: number;
+    let accumulatedScroll = 0;
+    const pixelsPerFrame = 0.5; // Adjust this value for speed
+    
+    const smoothScroll = () => {
+      if (!isHovered && scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        
+        accumulatedScroll += pixelsPerFrame;
+        
+        if (accumulatedScroll >= 1) {
+          const scrollPixels = Math.floor(accumulatedScroll);
+          accumulatedScroll -= scrollPixels;
+          
+          if (container.scrollLeft >= maxScrollLeft - 1) {
+            // Reached the end, scroll back to start seamlessly
+            container.scrollLeft = 0;
+          } else {
+            container.scrollLeft += scrollPixels;
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(smoothScroll);
+    };
 
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      const containerWidth = scrollContainerRef.current.clientWidth;
-      const gap = window.innerWidth >= 1024 ? 24 : window.innerWidth >= 768 ? 16 : 12;
-      scrollContainerRef.current.scrollBy({ left: (containerWidth + gap), behavior: 'smooth' });
-    }
-  };
+    animationFrameId = requestAnimationFrame(smoothScroll);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isHovered]);
+
 
   return (
-    <div className="w-full relative group">
+    <div 
+      className="w-full relative group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="flex justify-between items-end mb-4 sm:mb-6 px-2">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">
           {category.name}
@@ -60,27 +85,9 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
         </Link>
       </div>
       
-      {/* Scroll Controls */}
-      <button 
-        onClick={scrollLeft} 
-        className="absolute left-[-16px] xl:left-[-24px] top-[55%] -translate-y-1/2 z-10 w-12 h-12 bg-white/70 backdrop-blur-md border border-black/10 rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.12)] opacity-70 group-hover:opacity-100 transition-all hover:bg-white hover:text-primary hover:scale-105 active:scale-95 text-foreground"
-        aria-label="Scroll left"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-
-      <button 
-        onClick={scrollRight} 
-        className="absolute right-[-16px] xl:right-[-24px] top-[55%] -translate-y-1/2 z-10 w-12 h-12 bg-white/70 backdrop-blur-md border border-black/10 rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.12)] opacity-70 group-hover:opacity-100 transition-all hover:bg-white hover:text-primary hover:scale-105 active:scale-95 text-foreground"
-        aria-label="Scroll right"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
-
       <div 
         ref={scrollContainerRef}
-        className="w-full pb-6 overflow-x-auto snap-x snap-mandatory no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-2"
-        style={{ scrollBehavior: 'smooth' }}
+        className="w-full pb-6 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-2"
       >
         {displayProducts.map(product => (
           <div key={product.id} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
