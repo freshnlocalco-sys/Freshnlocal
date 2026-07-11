@@ -99,22 +99,6 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
             </div>
           </div>
         ))}
-        
-        {products.length > 0 && (
-          <div className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
-            <Link 
-              to={`/shop?category=${encodeURIComponent(category.id)}`} 
-              className="w-full h-full min-h-[260px] bg-secondary/80 rounded-[28px] border border-dashed border-border flex flex-col items-center justify-center gap-4 hover:bg-secondary hover:border-primary/40 hover:shadow-sm transition-all group/see-all p-4 text-center"
-            >
-               <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center group-hover/see-all:scale-110 group-hover/see-all:bg-primary text-primary group-hover/see-all:text-white transition-all shadow-sm">
-                 <ArrowRight className="w-6 h-6" />
-               </div>
-               <div className="flex flex-col items-center gap-1">
-                 <span className="font-extrabold text-sm uppercase tracking-wider text-primary group-hover/see-all:text-primary/80 transition-colors">See All</span>
-               </div>
-            </Link>
-          </div>
-        )}
       </div>
     </div>
   );
