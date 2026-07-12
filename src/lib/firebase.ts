@@ -111,7 +111,7 @@ export interface AppUser {
   uid: string;
   email: string;
   displayName: string;
-  role: 'admin' | 'customer';
+  role: 'admin' | 'customer' | 'horeca';
   phone?: string;
   address?: string; // legacy address
   addresses?: Address[];

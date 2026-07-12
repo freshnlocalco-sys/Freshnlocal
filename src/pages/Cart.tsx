@@ -153,6 +153,7 @@ export function Cart() {
       const rawOrderData = {
         orderNumber,
         userId: user.uid,
+        customerType: user.role || 'customer',
         items: cartItems.map(i => {
           const p: any = {
             id: i.product.id,

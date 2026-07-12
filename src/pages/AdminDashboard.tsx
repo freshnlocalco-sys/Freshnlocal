@@ -115,6 +115,7 @@ export function AdminDashboard() {
   
   const activeTab = useMemo(() => {
     if (location.pathname.includes('/admin/inventory')) return 'products';
+    if (location.pathname.includes('/admin/customers')) return 'customers';
     if (location.pathname.includes('/admin/spotlights')) return 'spotlights';
     if (location.pathname.includes('/admin/categories')) return 'categories';
     if (location.pathname.includes('/admin/reviews')) return 'reviews';
@@ -125,6 +126,49 @@ export function AdminDashboard() {
   
   const [diagError, setDiagError] = useState<any | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
+
+  const [customers, setCustomers] = useState<AppUser[]>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
+
+  const fetchCustomers = async () => {
+    setLoadingCustomers(true);
+    try {
+      const q = query(collection(db, 'users'), orderBy('displayName'));
+      const snapshot = await getDocs(q);
+      import('../lib/cacheManager').then(m => m.trackFirestoreRead('users', snapshot.docs.length)).catch(() => {});
+      const usersData = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AppUser));
+      setCustomers(usersData);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      toast.error('Failed to load customers');
+    } finally {
+      setLoadingCustomers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'customers') {
+      fetchCustomers();
+    }
+  }, [activeTab]);
+
+  const handleToggleHoreca = async (customerUser: AppUser) => {
+    if (customerUser.role === 'admin') {
+      toast.error('Cannot change admin role');
+      return;
+    }
+    const newRole = customerUser.role === 'horeca' ? 'customer' : 'horeca';
+    try {
+      await updateDoc(doc(db, 'users', customerUser.uid), { role: newRole });
+      setCustomers(customers.map(c => c.uid === customerUser.uid ? { ...c, role: newRole } : c));
+      toast.success(`User role updated to ${newRole}`);
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast.error('Failed to update role');
+    }
+  };
+
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -523,7 +567,7 @@ export function AdminDashboard() {
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; variants: { unit: string; price: string; originalPrice: string }[] }>({ name: '', price: '', originalPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
+  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; variants: { unit: string; price: string; originalPrice: string; horecaPrice: string }[] }>({ name: '', price: '', originalPrice: '', horecaPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -1162,18 +1206,27 @@ export function AdminDashboard() {
 
       const finalImageUrl = newProduct.imageUrl || '';
       const productId = editingProductId || doc(collection(db, 'products')).id;
+      const variantsToSave = (newProduct.variants || []).map(v => ({
+        ...v,
+        price: Number(v.price),
+        originalPrice: v.originalPrice ? Number(v.originalPrice) : null,
+        horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : null,
+      }));
+
+
 
       if (editingProductId) {
         await updateDoc(doc(db, 'products', editingProductId), {
           name: newProduct.name,
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
+          horecaPrice: newProduct.horecaPrice ? Number(newProduct.horecaPrice) : null,
           category: finalCategory,
           subCategory: finalSubCategory,
           description: newProduct.description,
           imageUrl: finalImageUrl,
           unit: newProduct.unit || '',
-          variants: newProduct.variants || [],
+          variants: variantsToSave,
           updatedAt: Date.now()
         });
       } else {
@@ -1181,12 +1234,13 @@ export function AdminDashboard() {
           name: newProduct.name,
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
+          horecaPrice: newProduct.horecaPrice ? Number(newProduct.horecaPrice) : null,
           category: finalCategory,
           subCategory: finalSubCategory,
           description: newProduct.description,
           imageUrl: finalImageUrl,
           unit: newProduct.unit || '',
-          variants: newProduct.variants || [],
+          variants: variantsToSave,
           stock: 100,
           inStock: true,
           createdAt: Date.now(),
@@ -1201,12 +1255,13 @@ export function AdminDashboard() {
         name: newProduct.name,
         price: Number(newProduct.price),
         originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
+        horecaPrice: newProduct.horecaPrice ? Number(newProduct.horecaPrice) : undefined,
         category: finalCategory,
         subCategory: finalSubCategory ? finalSubCategory : undefined,
         description: newProduct.description,
         imageUrl: finalImageUrl,
         unit: newProduct.unit || '',
-        variants: newProduct.variants || [],
+        variants: variantsToSave,
         stock: 100,
         inStock: true,
         createdAt: editingProductId ? (products.find(p => p.id === editingProductId)?.createdAt || Date.now()) : Date.now(),
@@ -1275,7 +1330,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
+      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -1290,12 +1345,18 @@ export function AdminDashboard() {
       name: product.name,
       price: product.price.toString(),
       originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
+      horecaPrice: product.horecaPrice ? product.horecaPrice.toString() : '',
       category: product.category,
       subCategory: (product as any).subCategory || 'cold-pressed',
       description: product.description,
       imageUrl: product.imageUrl || '',
       unit: product.unit || '',
-      variants: (product as any).variants || []
+      variants: ((product as any).variants || []).map((v: any) => ({
+        unit: v.unit,
+        price: v.price ? v.price.toString() : '',
+        originalPrice: v.originalPrice ? v.originalPrice.toString() : '',
+        horecaPrice: v.horecaPrice ? v.horecaPrice.toString() : ''
+      }))
     });
     setProductSection(isJuice ? 'juices' : 'veg-fruits');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1303,10 +1364,8 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
+    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
   };
-
-
 
   const uploadRawFileToStorage = async (
     file: File,
@@ -1960,6 +2019,12 @@ export function AdminDashboard() {
             <Sliders className="w-4 h-4" /> Categories
           </button>
           <button 
+            onClick={() => navigate('/admin/customers')}
+            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'customers' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+          >
+            <Users className="w-4 h-4" /> Customers
+          </button>
+          <button 
             onClick={() => navigate('/admin/hero')}
             className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'hero' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
           >
@@ -2057,6 +2122,7 @@ export function AdminDashboard() {
                     className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full font-mono font-bold tracking-wider text-foreground shadow-sm uppercase min-h-[40px]"
                   />
                 </div>
+
               </div>
             </div>
             
@@ -2088,6 +2154,9 @@ export function AdminDashboard() {
                         </td>
                         <td className="p-3 sm:p-4 md:p-5 leading-relaxed max-w-[200px] sm:max-w-xs whitespace-normal">
                           <span className="font-extrabold text-foreground uppercase block text-[10px] sm:text-xs">{order.shippingDetails?.name || 'Customer'}</span>
+                          <span className={`inline-flex px-1.5 py-0.5 mt-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${order.customerType === 'horeca' ? 'bg-orange-500/10 text-orange-600' : 'bg-blue-500/10 text-blue-600'}`}>
+                            {order.customerType || 'retail'}
+                          </span>
                           <span className="text-muted-foreground font-mono text-[10px] sm:text-xs tracking-wider block mt-0.5 font-bold">{order.shippingDetails?.phone || 'No phone'}</span>
                           <span className="text-muted-foreground text-[8px] sm:text-[9px] block mt-1 leading-snug">{order.shippingDetails?.address?.includes('Store Pickup') ? 'STORE PICKUP' : (order.shippingDetails?.address || 'No address provided')}</span>
                         </td>
@@ -2263,6 +2332,17 @@ export function AdminDashboard() {
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-2">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Price (Optional ₹)</label>
+                        <input 
+                          type="number" 
+                          placeholder="150" 
+                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
+                          value={newProduct.horecaPrice} 
+                          onChange={e => setNewProduct({...newProduct, horecaPrice: e.target.value})} 
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 sm:space-y-2">
                         <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Unit / Quantity</label>
                         <input 
                           placeholder="400 g, 1 pc, 500 ml..." 
@@ -2281,7 +2361,7 @@ export function AdminDashboard() {
                           onClick={() => {
                             setNewProduct({
                               ...newProduct,
-                              variants: [...(newProduct.variants || []), { unit: '', price: '', originalPrice: '' }]
+                              variants: [...(newProduct.variants || []), { unit: '', price: '', originalPrice: '', horecaPrice: '' }]
                             });
                           }}
                           className="text-[10px] bg-primary text-white px-2 py-1 rounded flex items-center gap-1 font-bold"
@@ -2293,7 +2373,7 @@ export function AdminDashboard() {
                       {newProduct.variants && newProduct.variants.length > 0 && (
                         <div className="space-y-3">
                           {newProduct.variants.map((variant, vIdx) => (
-                            <div key={vIdx} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center bg-white p-2 rounded-lg border border-border">
+                            <div key={vIdx} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center bg-white p-2 rounded-lg border border-border">
                               <input 
                                 placeholder="Size (e.g. 500g)"
                                 value={variant.unit}
@@ -2322,6 +2402,17 @@ export function AdminDashboard() {
                                 onChange={(e) => {
                                   const newVariants = [...newProduct.variants];
                                   newVariants[vIdx].originalPrice = e.target.value;
+                                  setNewProduct({...newProduct, variants: newVariants});
+                                }}
+                                className="w-full border-none bg-transparent text-[10px] sm:text-xs outline-none"
+                              />
+                              <input 
+                                placeholder="HoReCa Price"
+                                type="number"
+                                value={variant.horecaPrice}
+                                onChange={(e) => {
+                                  const newVariants = [...newProduct.variants];
+                                  newVariants[vIdx].horecaPrice = e.target.value;
                                   setNewProduct({...newProduct, variants: newVariants});
                                 }}
                                 className="w-full border-none bg-transparent text-[10px] sm:text-xs outline-none"
@@ -2792,6 +2883,82 @@ export function AdminDashboard() {
               ))}
             </div>
 
+          </div>
+        ) : activeTab === 'customers' ? (
+          <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border shadow-sm">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">Customers</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">Manage user roles and HoReCa access</p>
+              </div>
+            </div>
+            
+            
+            <div className="bg-white rounded-2xl sm:rounded-3xl border border-border shadow-sm overflow-hidden">
+              <div className="p-4 sm:p-6 border-b border-border">
+                <input 
+                  type="text" 
+                  placeholder="Search customers by name, email, or phone..." 
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  className="w-full sm:max-w-md border border-border rounded-xl px-4 py-3 bg-muted/30 outline-none focus:border-primary text-xs"
+                />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-muted/30 text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground border-b border-border">
+                      <th className="px-4 sm:px-6 py-4">Customer</th>
+                      <th className="px-4 sm:px-6 py-4">Contact</th>
+                      <th className="px-4 sm:px-6 py-4">Role</th>
+                      <th className="px-4 sm:px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingCustomers ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 sm:px-6 py-8 text-center text-xs text-muted-foreground">Loading customers...</td>
+                      </tr>
+                    ) : customers.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 sm:px-6 py-8 text-center text-xs text-muted-foreground">No customers found.</td>
+                      </tr>
+                    ) : (
+                      customers.filter(c => 
+                        (c.displayName || '').toLowerCase().includes(customerSearch.toLowerCase()) || 
+                        (c.email || '').toLowerCase().includes(customerSearch.toLowerCase()) ||
+                        (c.phone || '').includes(customerSearch)
+                      ).map(customer => (
+                        <tr key={customer.uid} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
+                          <td className="px-4 sm:px-6 py-4">
+                            <div className="text-xs sm:text-sm font-bold text-foreground">{customer.displayName || 'Unknown'}</div>
+                          </td>
+                          <td className="px-4 sm:px-6 py-4">
+                            <div className="text-[10px] sm:text-xs text-muted-foreground">{customer.email}</div>
+                            {customer.phone && <div className="text-[10px] sm:text-xs text-muted-foreground">{customer.phone}</div>}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4">
+                            <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${customer.role === 'admin' ? 'bg-red-500/10 text-red-600' : customer.role === 'horeca' ? 'bg-orange-500/10 text-orange-600' : 'bg-blue-500/10 text-blue-600'}`}>
+                              {customer.role || 'customer'}
+                            </span>
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-right">
+                            {customer.role !== 'admin' && (
+                              <button 
+                                onClick={() => handleToggleHoreca(customer)}
+                                className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-colors ${customer.role === 'horeca' ? 'bg-muted text-foreground hover:bg-muted/80' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
+                              >
+                                {customer.role === 'horeca' ? 'Revoke HoReCa' : 'Make HoReCa'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         ) : activeTab === 'categories' ? (
           <div className="max-w-4xl mx-auto space-y-12">

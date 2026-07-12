@@ -34,7 +34,7 @@ service cloud.firestore {
         return data.size() >= 3 && data.size() <= 10
           && data.keys().hasAll(['email', 'role', 'createdAt'])
           && data.email is string && data.email.size() <= 100
-          && data.role is string && (data.role == 'customer' || data.role == 'admin')
+          && data.role is string && (data.role == 'customer' || data.role == 'admin' || data.role == 'horeca')
           && data.createdAt is number
           && data.get('displayName', '') is string
           && data.get('phone', '') is string
@@ -63,17 +63,23 @@ service cloud.firestore {
     match /products/{productId} {
       function isValidProduct(data) {
         return data.keys().hasAll(['name', 'price', 'createdAt', 'updatedAt'])
-        && data.size() >= 4 && data.size() <= 15
+        && data.size() >= 4 && data.size() <= 30
         && data.name is string && data.name.size() <= 150 && data.name.size() > 0
         && data.price is number && data.price >= 0
         && data.createdAt is number
         && data.updatedAt is number
-        && data.get('description', '') is string && data.get('description', '').size() <= 1000
+        && data.get('description', '') is string && data.get('description', '').size() <= 5000
         && data.get('imageUrl', '') is string
         && data.get('category', '') is string && data.get('category', '').size() <= 50
         && (data.get('originalPrice', 0) == null || data.get('originalPrice', 0) is number)
+        && (data.get('horecaPrice', 0) == null || data.get('horecaPrice', 0) is number)
         && (data.get('stock', 0) == null || data.get('stock', 0) is number)
-        && (data.get('inStock', true) == null || data.get('inStock', true) is bool);
+        && (data.get('orderIndex', 0) == null || data.get('orderIndex', 0) is number)
+        && (data.get('inStock', true) == null || data.get('inStock', true) is bool)
+        && (data.get('unit', '') == null || data.get('unit', '') is string)
+        && (data.get('subCategory', '') == null || data.get('subCategory', '') is string)
+        && (data.get('ingredients', []) == null || data.get('ingredients', []) is list)
+        && (data.get('variants', []) == null || data.get('variants', []) is list);
       }
       
       allow read, list: if true;

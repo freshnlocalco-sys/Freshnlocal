@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType, isQuotaError, useAuth } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
 import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, ShieldCheck, Truck, RotateCcw, Zap, Heart } from 'lucide-react';
 import { getCategoryImage } from '../lib/constants';
@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 
 export function ProductDetail() {
   const { categoryImages } = useSettings();
+  const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
@@ -26,15 +27,21 @@ export function ProductDetail() {
   const variants = product?.variants || [];
   const allVariants = React.useMemo(() => {
     if (!product) return [];
-    const defaults = { unit: product.unit || '', price: product.price, originalPrice: product.originalPrice };
+    const defaults = { unit: product.unit || '', price: product.price, originalPrice: product.originalPrice, horecaPrice: product.horecaPrice };
     if (variants.length === 0) return [defaults];
-    return [defaults, ...variants.map(v => ({ unit: v.unit, price: Number(v.price), originalPrice: v.originalPrice ? Number(v.originalPrice) : undefined }))];
+    return [defaults, ...variants.map(v => ({ 
+      unit: v.unit, 
+      price: Number(v.price), 
+      originalPrice: v.originalPrice ? Number(v.originalPrice) : undefined,
+      horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : undefined
+    }))];
   }, [variants, product]);
 
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0] || { unit: '', price: 0, originalPrice: 0 };
   
-  const currentPrice = currentVariant.price;
+  const isHoreca = user?.role === 'horeca';
+  const currentPrice = isHoreca && currentVariant.horecaPrice ? currentVariant.horecaPrice : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   const currentUnit = currentVariant.unit;
   const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;

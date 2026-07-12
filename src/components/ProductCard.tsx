@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Heart, Plus, Minus } from 'lucide-react';
 import { useCart, Product } from '../store/useCart';
+import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
@@ -19,21 +20,27 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const { categoryImages } = useSettings();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { items, updateQuantity, removeItem, addItem } = useCart();
-  
+  const { user } = useAuth();
   const displayCategory = displayCategoryOverride || (product.category || '').replace(/ font-bold/gi, '');
   const inWishlist = isInWishlist(product.id!);
   
   const variants = product.variants || [];
   const allVariants = React.useMemo(() => {
-    const defaults = { unit: product.unit || '', price: product.price, originalPrice: product.originalPrice };
+    const defaults = { unit: product.unit || '', price: product.price, originalPrice: product.originalPrice, horecaPrice: product.horecaPrice };
     if (variants.length === 0) return [defaults];
-    return [defaults, ...variants.map(v => ({ unit: v.unit, price: Number(v.price), originalPrice: v.originalPrice ? Number(v.originalPrice) : undefined }))];
+    return [defaults, ...variants.map(v => ({ 
+      unit: v.unit, 
+      price: Number(v.price), 
+      originalPrice: v.originalPrice ? Number(v.originalPrice) : undefined,
+      horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : undefined
+    }))];
   }, [variants, product]);
 
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
   
-  const currentPrice = currentVariant.price;
+  const isHoreca = user?.role === 'horeca';
+  const currentPrice = isHoreca && currentVariant.horecaPrice ? currentVariant.horecaPrice : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   const currentUnit = currentVariant.unit;
   
