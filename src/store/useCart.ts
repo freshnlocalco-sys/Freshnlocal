@@ -6,6 +6,7 @@ export interface ProductVariant {
   price: number;
   originalPrice?: number;
   horecaPrice?: number;
+  horecaUnit?: string;
 }
 
 export interface Product {
@@ -14,6 +15,7 @@ export interface Product {
   price: number;
   originalPrice?: number;
   horecaPrice?: number;
+  horecaUnit?: string;
   imageUrl: string;
   category: string;
   description: string;

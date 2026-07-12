@@ -27,13 +27,14 @@ export function ProductDetail() {
   const variants = product?.variants || [];
   const allVariants = React.useMemo(() => {
     if (!product) return [];
-    const defaults = { unit: product.unit || '', price: product.price, originalPrice: product.originalPrice, horecaPrice: product.horecaPrice };
+    const defaults = { unit: product.unit || '', price: product.price, originalPrice: product.originalPrice, horecaPrice: product.horecaPrice, horecaUnit: product.horecaUnit || '' };
     if (variants.length === 0) return [defaults];
     return [defaults, ...variants.map(v => ({ 
       unit: v.unit, 
       price: Number(v.price), 
       originalPrice: v.originalPrice ? Number(v.originalPrice) : undefined,
-      horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : undefined
+      horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : undefined,
+      horecaUnit: v.horecaUnit || ''
     }))];
   }, [variants, product]);
 
@@ -43,7 +44,7 @@ export function ProductDetail() {
   const isHoreca = user?.role === 'horeca';
   const currentPrice = isHoreca && currentVariant.horecaPrice ? currentVariant.horecaPrice : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
-  const currentUnit = currentVariant.unit;
+  const currentUnit = isHoreca && currentVariant.horecaUnit ? currentVariant.horecaUnit : currentVariant.unit;
   const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;
 
   const [quantity, setQuantity] = useState(1);
@@ -263,7 +264,7 @@ export function ProductDetail() {
                           : 'bg-white text-muted-foreground border-border/80 hover:border-primary/50'
                       }`}
                     >
-                      {v.unit}
+                      {isHoreca && v.horecaUnit ? v.horecaUnit : v.unit}
                       {vQty > 0 && (
                         <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">
                           {vQty}

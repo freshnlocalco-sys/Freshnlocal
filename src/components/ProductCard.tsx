@@ -26,13 +26,14 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   
   const variants = product.variants || [];
   const allVariants = React.useMemo(() => {
-    const defaults = { unit: product.unit || '', price: product.price, originalPrice: product.originalPrice, horecaPrice: product.horecaPrice };
+    const defaults = { unit: product.unit || '', price: product.price, originalPrice: product.originalPrice, horecaPrice: product.horecaPrice, horecaUnit: product.horecaUnit || '' };
     if (variants.length === 0) return [defaults];
     return [defaults, ...variants.map(v => ({ 
       unit: v.unit, 
       price: Number(v.price), 
       originalPrice: v.originalPrice ? Number(v.originalPrice) : undefined,
-      horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : undefined
+      horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : undefined,
+      horecaUnit: v.horecaUnit || ''
     }))];
   }, [variants, product]);
 
@@ -42,7 +43,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const isHoreca = user?.role === 'horeca';
   const currentPrice = isHoreca && currentVariant.horecaPrice ? currentVariant.horecaPrice : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
-  const currentUnit = currentVariant.unit;
+  const currentUnit = isHoreca && currentVariant.horecaUnit ? currentVariant.horecaUnit : currentVariant.unit;
   
   // Ensure cartProductId is strictly unique per variant
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;

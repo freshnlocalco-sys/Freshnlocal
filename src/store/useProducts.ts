@@ -26,7 +26,7 @@ const loadLocalStorageProducts = (): { products: Product[]; lastFetched: number 
     return { products: [], lastFetched: 0 };
   }
   try {
-    const products = cacheManager.get<Product[]>('products_v4', true) || [];
+    const products = cacheManager.get<Product[]>('products_v5', true) || [];
     const lastFetched = cacheManager.get<number>('products_last_fetched_v3', true) || 0;
     return { products, lastFetched };
   } catch {
@@ -46,12 +46,12 @@ export const useProducts = create<ProductsState>((set, get) => ({
 
   hydrateFromIDB: async () => {
     try {
-      let dbProducts = await idb.get<Product[]>('products_v4');
+      let dbProducts = await idb.get<Product[]>('products_v5');
       let dbLastFetched = await idb.get<number>('products_last_fetched_v3');
       
       // Fallback to localStorage if IndexedDB is blocked or empty
       if (!dbProducts || dbProducts.length === 0) {
-        dbProducts = cacheManager.get<Product[]>('products_v4', true) || [];
+        dbProducts = cacheManager.get<Product[]>('products_v5', true) || [];
         dbLastFetched = cacheManager.get<number>('products_last_fetched_v3', true) || 0;
       }
 
@@ -145,9 +145,9 @@ export const useProducts = create<ProductsState>((set, get) => ({
 
       // Sync fetched list to IndexedDB and LocalStorage fallback
       try {
-        cacheManager.set('products_v4', fetchedList);
+        cacheManager.set('products_v5', fetchedList);
         cacheManager.set('products_last_fetched_v3', Date.now());
-        await idb.set('products_v4', fetchedList, 24 * 60 * 60 * 1000);
+        await idb.set('products_v5', fetchedList, 24 * 60 * 60 * 1000);
         await idb.set('products_last_fetched_v3', Date.now(), 24 * 60 * 60 * 1000);
       } catch (cacheErr) {
         console.warn("Cache set failed safely:", cacheErr);
@@ -224,7 +224,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
       const updatedProducts = [...products, ...nextList];
 
       try {
-        await idb.set('products_v4', updatedProducts, 24 * 60 * 60 * 1000);
+        await idb.set('products_v5', updatedProducts, 24 * 60 * 60 * 1000);
       } catch (cacheErr) {
         console.warn("IndexedDB cache update failed safely:", cacheErr);
       }

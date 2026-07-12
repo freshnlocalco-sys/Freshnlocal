@@ -567,7 +567,7 @@ export function AdminDashboard() {
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; variants: { unit: string; price: string; originalPrice: string; horecaPrice: string }[] }>({ name: '', price: '', originalPrice: '', horecaPrice: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
+  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; variants: { unit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[] }>({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -1211,6 +1211,7 @@ export function AdminDashboard() {
         price: Number(v.price),
         originalPrice: v.originalPrice ? Number(v.originalPrice) : null,
         horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : null,
+        horecaUnit: v.horecaUnit || '',
       }));
 
 
@@ -1221,6 +1222,7 @@ export function AdminDashboard() {
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
           horecaPrice: newProduct.horecaPrice ? Number(newProduct.horecaPrice) : null,
+          horecaUnit: newProduct.horecaUnit || '',
           category: finalCategory,
           subCategory: finalSubCategory,
           description: newProduct.description,
@@ -1256,6 +1258,7 @@ export function AdminDashboard() {
         price: Number(newProduct.price),
         originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
         horecaPrice: newProduct.horecaPrice ? Number(newProduct.horecaPrice) : undefined,
+        horecaUnit: newProduct.horecaUnit || '',
         category: finalCategory,
         subCategory: finalSubCategory ? finalSubCategory : undefined,
         description: newProduct.description,
@@ -1296,9 +1299,9 @@ export function AdminDashboard() {
       const mCache = await import('../lib/cacheManager');
       const mIdb = await import('../lib/indexedDB');
       try {
-        mCache.cacheManager.set('products_v4', nextStoreProducts);
+        mCache.cacheManager.set('products_v5', nextStoreProducts);
         mCache.cacheManager.set('products_last_fetched_v3', Date.now());
-        mIdb.idb.set('products_v4', nextStoreProducts, 24 * 60 * 60 * 1000).catch(()=>{});
+        mIdb.idb.set('products_v5', nextStoreProducts, 24 * 60 * 60 * 1000).catch(()=>{});
         mIdb.idb.set('products_last_fetched_v3', Date.now(), 24 * 60 * 60 * 1000).catch(()=>{});
       } catch (cacheErr) {
         console.warn("Async Cache sync failed safely:", cacheErr);
@@ -1330,7 +1333,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
+      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -1346,6 +1349,7 @@ export function AdminDashboard() {
       price: product.price.toString(),
       originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
       horecaPrice: product.horecaPrice ? product.horecaPrice.toString() : '',
+      horecaUnit: product.horecaUnit || '',
       category: product.category,
       subCategory: (product as any).subCategory || 'cold-pressed',
       description: product.description,
@@ -1355,7 +1359,8 @@ export function AdminDashboard() {
         unit: v.unit,
         price: v.price ? v.price.toString() : '',
         originalPrice: v.originalPrice ? v.originalPrice.toString() : '',
-        horecaPrice: v.horecaPrice ? v.horecaPrice.toString() : ''
+        horecaPrice: v.horecaPrice ? v.horecaPrice.toString() : '',
+        horecaUnit: v.horecaUnit || ''
       }))
     });
     setProductSection(isJuice ? 'juices' : 'veg-fruits');
@@ -1364,7 +1369,7 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
+    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
   };
 
   const uploadRawFileToStorage = async (
@@ -2351,6 +2356,16 @@ export function AdminDashboard() {
                           onChange={e => setNewProduct({...newProduct, unit: e.target.value})} 
                         />
                       </div>
+                      
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Unit (Optional)</label>
+                        <input 
+                          placeholder="Bulk: 1 kg, 5L, Carton..." 
+                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
+                          value={newProduct.horecaUnit || ''} 
+                          onChange={e => setNewProduct({...newProduct, horecaUnit: e.target.value})} 
+                        />
+                      </div>
                     
                     {/* Variants Management */}
                     <div className="space-y-3 bg-secondary/30 p-4 rounded-xl border border-border/50 col-span-2">
@@ -2361,7 +2376,7 @@ export function AdminDashboard() {
                           onClick={() => {
                             setNewProduct({
                               ...newProduct,
-                              variants: [...(newProduct.variants || []), { unit: '', price: '', originalPrice: '', horecaPrice: '' }]
+                              variants: [...(newProduct.variants || []), { unit: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '' }]
                             });
                           }}
                           className="text-[10px] bg-primary text-white px-2 py-1 rounded flex items-center gap-1 font-bold"
@@ -2439,6 +2454,20 @@ export function AdminDashboard() {
                                     onChange={(e) => {
                                       const newVariants = [...newProduct.variants];
                                       newVariants[vIdx].unit = e.target.value;
+                                      setNewProduct({...newProduct, variants: newVariants});
+                                    }}
+                                    className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
+                                  />
+                                </div>
+                                
+                                <div className="space-y-1.5 sm:space-y-2">
+                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Unit</label>
+                                  <input 
+                                    placeholder="Bulk Unit" 
+                                    value={variant.horecaUnit || ''}
+                                    onChange={(e) => {
+                                      const newVariants = [...newProduct.variants];
+                                      newVariants[vIdx].horecaUnit = e.target.value;
                                       setNewProduct({...newProduct, variants: newVariants});
                                     }}
                                     className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
