@@ -96,8 +96,16 @@ export function Profile() {
               {user?.displayName ? user.displayName[0].toUpperCase() : 'U'}
             </div>
             
-            <div className="space-y-1 mt-2">
-              <h2 className="text-xl font-black uppercase text-foreground tracking-tight mt-2">{user?.displayName || 'Customer'}</h2>
+            <div className="space-y-1 mt-2 flex flex-col items-center">
+              <h2 className="text-xl font-black uppercase text-foreground tracking-tight mt-2 flex items-center justify-center gap-2">
+                {user?.displayName || 'Customer'}
+                {user?.role === 'horeca' && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded-md" title="HoReCa Partner">
+                    <ChefHat className="w-4 h-4 text-orange-600" />
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-orange-600">Partner</span>
+                  </span>
+                )}
+              </h2>
               <p className="text-xs text-muted-foreground font-mono tracking-wide">{user?.email}</p>
             </div>
           </div>

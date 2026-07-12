@@ -85,6 +85,12 @@ export function Layout() {
                       </Link>
                     )}
                     <div className="relative group flex items-center gap-1 sm:gap-4">
+                      {user.role === 'horeca' && (
+                        <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full cursor-help" title="HoReCa Partner">
+                          <ChefHat className="w-3 h-3 text-orange-600" />
+                          <span className="text-[9px] uppercase font-bold tracking-widest text-orange-600">Partner</span>
+                        </div>
+                      )}
                       {user.points !== undefined && (
                         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full cursor-pointer hover:bg-primary/20 transition-colors">
                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
@@ -94,8 +100,17 @@ export function Layout() {
                       <span className="text-[10px] uppercase tracking-[0.2em] font-black hidden sm:block text-[#506053] group-hover:text-primary cursor-pointer transition-colors">
                         {user.displayName?.split(' ')[0] || 'User'}
                       </span>
-                      <Link to="/profile" className="flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
-                        <User className="w-4 h-4 sm:w-4 sm:h-4 text-foreground" />
+                      <Link to="/profile" className="relative flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
+                        {user.role === 'horeca' ? (
+                          <ChefHat className="w-4 h-4 sm:w-4 sm:h-4 text-orange-600" />
+                        ) : (
+                          <User className="w-4 h-4 sm:w-4 sm:h-4 text-foreground" />
+                        )}
+                        {user.role === 'horeca' && (
+                          <span className="sm:hidden absolute -bottom-1.5 bg-orange-100 border border-orange-500/20 text-orange-600 text-[6px] font-black uppercase tracking-widest px-1 py-0.5 rounded-sm whitespace-nowrap">
+                            Partner
+                          </span>
+                        )}
                       </Link>
                       <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 p-2 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
                         <Link to="/profile" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">My Profile</Link>
@@ -256,6 +271,12 @@ export function Layout() {
                     <div className="flex justify-between items-start">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold">
                         Active Session: <span className="text-primary block font-mono text-sm mt-1">{user.displayName || user.email}</span>
+                        {user.role === 'horeca' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-2 bg-orange-500/10 border border-orange-500/20 rounded-md">
+                            <ChefHat className="w-3.5 h-3.5 text-orange-600" />
+                            <span className="text-[9px] uppercase font-bold tracking-widest text-orange-600">Partner</span>
+                          </span>
+                        )}
                       </p>
                     </div>
                     <button 
