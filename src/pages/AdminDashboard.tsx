@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage } from '../lib/firebase';
+import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical } from 'lucide-react';
@@ -567,7 +567,7 @@ export function AdminDashboard() {
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; variants: { unit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[] }>({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
+  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[] }>({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -1208,6 +1208,8 @@ export function AdminDashboard() {
       const productId = editingProductId || doc(collection(db, 'products')).id;
       const variantsToSave = (newProduct.variants || []).map(v => ({
         ...v,
+        quantityValue: v.quantityValue ? Number(v.quantityValue) : null,
+        quantityUnit: v.quantityUnit || 'Kg',
         price: Number(v.price),
         originalPrice: v.originalPrice ? Number(v.originalPrice) : null,
         horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : null,
@@ -1228,6 +1230,8 @@ export function AdminDashboard() {
           description: newProduct.description,
           imageUrl: finalImageUrl,
           unit: newProduct.unit || '',
+          quantityValue: newProduct.quantityValue ? Number(newProduct.quantityValue) : null,
+          quantityUnit: newProduct.quantityUnit || 'Kg',
           variants: variantsToSave,
           updatedAt: Date.now()
         });
@@ -1237,11 +1241,14 @@ export function AdminDashboard() {
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
           horecaPrice: newProduct.horecaPrice ? Number(newProduct.horecaPrice) : null,
+          horecaUnit: newProduct.horecaUnit || '',
           category: finalCategory,
           subCategory: finalSubCategory,
           description: newProduct.description,
           imageUrl: finalImageUrl,
           unit: newProduct.unit || '',
+          quantityValue: newProduct.quantityValue ? Number(newProduct.quantityValue) : null,
+          quantityUnit: newProduct.quantityUnit || 'Kg',
           variants: variantsToSave,
           stock: 100,
           inStock: true,
@@ -1264,6 +1271,8 @@ export function AdminDashboard() {
         description: newProduct.description,
         imageUrl: finalImageUrl,
         unit: newProduct.unit || '',
+        quantityValue: newProduct.quantityValue ? Number(newProduct.quantityValue) : undefined,
+        quantityUnit: newProduct.quantityUnit || 'Kg',
         variants: variantsToSave,
         stock: 100,
         inStock: true,
@@ -1299,10 +1308,10 @@ export function AdminDashboard() {
       const mCache = await import('../lib/cacheManager');
       const mIdb = await import('../lib/indexedDB');
       try {
-        mCache.cacheManager.set('products_v5', nextStoreProducts);
-        mCache.cacheManager.set('products_last_fetched_v3', Date.now());
-        mIdb.idb.set('products_v5', nextStoreProducts, 24 * 60 * 60 * 1000).catch(()=>{});
-        mIdb.idb.set('products_last_fetched_v3', Date.now(), 24 * 60 * 60 * 1000).catch(()=>{});
+        mCache.cacheManager.set('products_v6', nextStoreProducts);
+        mCache.cacheManager.set('products_last_fetched_v4', Date.now());
+        mIdb.idb.set('products_v6', nextStoreProducts, 24 * 60 * 60 * 1000).catch(()=>{});
+        mIdb.idb.set('products_last_fetched_v4', Date.now(), 24 * 60 * 60 * 1000).catch(()=>{});
       } catch (cacheErr) {
         console.warn("Async Cache sync failed safely:", cacheErr);
       }
@@ -1333,7 +1342,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
+      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -1341,9 +1350,39 @@ export function AdminDashboard() {
     }
   };
 
+  const parseQuantityAndUnit = (unitStr: string | undefined): { qVal: string, qUnit: string } => {
+    if (!unitStr) return { qVal: '', qUnit: 'Kg' };
+    const match = unitStr.match(/^([\d.]+)\s*(.*)$/);
+    if (match) {
+      let u = match[2].trim();
+      if (u.toLowerCase() === 'kg') u = 'Kg';
+      else if (u.toLowerCase() === 'gm' || u.toLowerCase() === 'g') u = 'g';
+      else if (u.toLowerCase() === 'l') u = 'L';
+      else if (u.toLowerCase() === 'ml') u = 'ml';
+      else if (u.toLowerCase() === 'pc' || u.toLowerCase() === 'piece') u = 'Pc';
+      else if (u.toLowerCase() === 'pack') u = 'Pack';
+      else if (u.toLowerCase() === 'box') u = 'Box';
+      else if (u.toLowerCase() === 'bottle') u = 'Bottle';
+      else if (u.toLowerCase() === 'can') u = 'Can';
+      else if (u.toLowerCase() === 'dozen') u = 'Dozen';
+      else if (u.toLowerCase() === 'bunch') u = 'Bunch';
+      else if (u.toLowerCase() === 'tray') u = 'Tray';
+      else u = 'Kg';
+      return { qVal: match[1], qUnit: u };
+    }
+    return { qVal: '', qUnit: 'Kg' };
+  };
+
   const handleEditSetup = (product: Product) => {
     setEditingProductId(product.id);
     const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
+    
+    const parsedMain = parseQuantityAndUnit(product.unit);
+    const mainQuantityValue = product.quantityValue ? product.quantityValue.toString() : parsedMain.qVal;
+    const mainQuantityUnit = product.quantityUnit || parsedMain.qUnit;
+    
+    const parsedHoreca = parseQuantityAndUnit(product.horecaUnit || '');
+
     setNewProduct({
       name: product.name,
       price: product.price.toString(),
@@ -1355,13 +1394,25 @@ export function AdminDashboard() {
       description: product.description,
       imageUrl: product.imageUrl || '',
       unit: product.unit || '',
-      variants: ((product as any).variants || []).map((v: any) => ({
-        unit: v.unit,
-        price: v.price ? v.price.toString() : '',
-        originalPrice: v.originalPrice ? v.originalPrice.toString() : '',
-        horecaPrice: v.horecaPrice ? v.horecaPrice.toString() : '',
-        horecaUnit: v.horecaUnit || ''
-      }))
+      quantityValue: mainQuantityValue,
+      quantityUnit: mainQuantityUnit,
+      horecaQuantityValue: parsedHoreca.qVal,
+      horecaQuantityUnit: parsedHoreca.qUnit,
+      variants: ((product as any).variants || []).map((v: any) => {
+        const parsedV = parseQuantityAndUnit(v.unit);
+        const parsedVHoreca = parseQuantityAndUnit(v.horecaUnit || '');
+        return {
+          unit: v.unit,
+          quantityValue: v.quantityValue ? v.quantityValue.toString() : parsedV.qVal,
+          quantityUnit: v.quantityUnit || parsedV.qUnit,
+          price: v.price ? v.price.toString() : '',
+          originalPrice: v.originalPrice ? v.originalPrice.toString() : '',
+          horecaPrice: v.horecaPrice ? v.horecaPrice.toString() : '',
+          horecaUnit: v.horecaUnit || '',
+          horecaQuantityValue: parsedVHoreca.qVal,
+          horecaQuantityUnit: parsedVHoreca.qUnit
+        };
+      })
     });
     setProductSection(isJuice ? 'juices' : 'veg-fruits');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1369,7 +1420,7 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', variants: [] });
+    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
   };
 
   const uploadRawFileToStorage = async (
@@ -2100,7 +2151,7 @@ export function AdminDashboard() {
                   <select 
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full sm:w-[160px] uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm"
+                    className="appearance-none border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full sm:w-[160px] uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_12px_center] bg-no-repeat"
                   >
                     <option value="all">ANY STATUS</option>
                     {Array.from(new Map([...STATUS_OPTIONS, ...PICKUP_STATUS_OPTIONS].map(item => [item.value, item])).values()).map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
@@ -2348,23 +2399,50 @@ export function AdminDashboard() {
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-2">
-                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Unit / Quantity</label>
-                        <input 
-                          placeholder="400 g, 1 pc, 500 ml..." 
-                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
-                          value={newProduct.unit} 
-                          onChange={e => setNewProduct({...newProduct, unit: e.target.value})} 
-                        />
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Quantity & Unit</label>
+                        <div className="flex gap-2">
+                          <input 
+                            required
+                            type="number"
+                            step="any"
+                            placeholder="Qty (e.g. 1, 500)" 
+                            className="flex-1 min-w-0 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
+                            value={newProduct.quantityValue || ''} 
+                            onChange={e => setNewProduct({...newProduct, quantityValue: e.target.value, unit: `${e.target.value} ${newProduct.quantityUnit || 'Kg'}`})} 
+                          />
+                          <select
+                            className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
+                            value={newProduct.quantityUnit || 'Kg'}
+                            onChange={e => setNewProduct({...newProduct, quantityUnit: e.target.value, unit: `${newProduct.quantityValue || ''} ${e.target.value}`})}
+                          >
+                            {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
+                              <option key={u} value={u}>{u}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                       
                       <div className="space-y-1.5 sm:space-y-2">
                         <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Unit (Optional)</label>
-                        <input 
-                          placeholder="Bulk: 1 kg, 5L, Carton..." 
-                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
-                          value={newProduct.horecaUnit || ''} 
-                          onChange={e => setNewProduct({...newProduct, horecaUnit: e.target.value})} 
-                        />
+                        <div className="flex gap-2">
+                          <input 
+                            type="number"
+                            step="any"
+                            placeholder="Qty" 
+                            className="flex-1 min-w-0 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
+                            value={newProduct.horecaQuantityValue || ''} 
+                            onChange={e => setNewProduct({...newProduct, horecaQuantityValue: e.target.value, horecaUnit: e.target.value ? `${e.target.value} ${newProduct.horecaQuantityUnit || 'Kg'}` : ''})} 
+                          />
+                          <select
+                            className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
+                            value={newProduct.horecaQuantityUnit || 'Kg'}
+                            onChange={e => setNewProduct({...newProduct, horecaQuantityUnit: e.target.value, horecaUnit: newProduct.horecaQuantityValue ? `${newProduct.horecaQuantityValue} ${e.target.value}` : ''})}
+                          >
+                            {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
+                              <option key={u} value={u}>{u}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     
                     {/* Variants Management */}
@@ -2376,7 +2454,7 @@ export function AdminDashboard() {
                           onClick={() => {
                             setNewProduct({
                               ...newProduct,
-                              variants: [...(newProduct.variants || []), { unit: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '' }]
+                              variants: [...(newProduct.variants || []), { unit: '', quantityValue: '', quantityUnit: 'Kg', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '' }]
                             });
                           }}
                           className="text-[10px] bg-primary text-white px-2 py-1 rounded flex items-center gap-1 font-bold"
@@ -2446,32 +2524,71 @@ export function AdminDashboard() {
                                   />
                                 </div>
 
-                                <div className="space-y-1.5 sm:space-y-2">
-                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Unit / Quantity</label>
-                                  <input 
-                                    placeholder="400 g, 1 pc, 500 ml..." 
-                                    value={variant.unit}
-                                    onChange={(e) => {
-                                      const newVariants = [...newProduct.variants];
-                                      newVariants[vIdx].unit = e.target.value;
-                                      setNewProduct({...newProduct, variants: newVariants});
-                                    }}
-                                    className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
-                                  />
+                                <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-1">
+                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Quantity & Unit</label>
+                                  <div className="flex gap-2">
+                                    <input 
+                                      required
+                                      type="number"
+                                      step="any"
+                                      placeholder="Qty" 
+                                      value={variant.quantityValue || ''}
+                                      onChange={(e) => {
+                                        const newVariants = [...newProduct.variants];
+                                        newVariants[vIdx].quantityValue = e.target.value;
+                                        newVariants[vIdx].unit = `${e.target.value} ${newVariants[vIdx].quantityUnit || 'Kg'}`;
+                                        setNewProduct({...newProduct, variants: newVariants});
+                                      }}
+                                      className="flex-1 min-w-0 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
+                                    />
+                                    <select
+                                      className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
+                                      value={variant.quantityUnit || 'Kg'}
+                                      onChange={(e) => {
+                                        const newVariants = [...newProduct.variants];
+                                        newVariants[vIdx].quantityUnit = e.target.value;
+                                        newVariants[vIdx].unit = `${newVariants[vIdx].quantityValue || ''} ${e.target.value}`;
+                                        setNewProduct({...newProduct, variants: newVariants});
+                                      }}
+                                    >
+                                      {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
+                                        <option key={u} value={u}>{u}</option>
+                                      ))}
+                                    </select>
+                                  </div>
                                 </div>
                                 
                                 <div className="space-y-1.5 sm:space-y-2">
                                   <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Unit</label>
-                                  <input 
-                                    placeholder="Bulk Unit" 
-                                    value={variant.horecaUnit || ''}
-                                    onChange={(e) => {
-                                      const newVariants = [...newProduct.variants];
-                                      newVariants[vIdx].horecaUnit = e.target.value;
-                                      setNewProduct({...newProduct, variants: newVariants});
-                                    }}
-                                    className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
-                                  />
+                                  <div className="flex gap-2">
+                                    <input 
+                                      type="number"
+                                      step="any"
+                                      placeholder="Qty" 
+                                      value={variant.horecaQuantityValue || ''}
+                                      onChange={(e) => {
+                                        const newVariants = [...newProduct.variants];
+                                        newVariants[vIdx].horecaQuantityValue = e.target.value;
+                                        newVariants[vIdx].horecaUnit = e.target.value ? `${e.target.value} ${newVariants[vIdx].horecaQuantityUnit || 'Kg'}` : '';
+                                        setNewProduct({...newProduct, variants: newVariants});
+                                      }}
+                                      className="flex-1 min-w-0 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
+                                    />
+                                    <select
+                                      className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
+                                      value={variant.horecaQuantityUnit || 'Kg'}
+                                      onChange={(e) => {
+                                        const newVariants = [...newProduct.variants];
+                                        newVariants[vIdx].horecaQuantityUnit = e.target.value;
+                                        newVariants[vIdx].horecaUnit = newVariants[vIdx].horecaQuantityValue ? `${newVariants[vIdx].horecaQuantityValue} ${e.target.value}` : '';
+                                        setNewProduct({...newProduct, variants: newVariants});
+                                      }}
+                                    >
+                                      {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
+                                        <option key={u} value={u}>{u}</option>
+                                      ))}
+                                    </select>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -2484,7 +2601,7 @@ export function AdminDashboard() {
                         <div className="space-y-1.5 sm:space-y-2">
                           <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#059669] font-extrabold">Produce Category</label>
                           <select 
-                            className="w-full border border-border rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 bg-white outline-none focus:border-[#059669] text-foreground transition-colors text-[9px] sm:text-[10px] uppercase font-bold tracking-wider" 
+                            className="w-full appearance-none border border-border rounded-xl sm:rounded-2xl py-2.5 sm:py-3.5 pl-3 sm:pl-4 pr-10 bg-white outline-none focus:border-primary text-foreground transition-colors text-[9px] sm:text-[10px] uppercase font-bold tracking-wider bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[right_14px_center] bg-no-repeat" 
                             value={newProduct.category === 'fnl juices' ? (productCategories[0]?.toLowerCase() || 'indian fruits') : newProduct.category} 
                             onChange={e => setNewProduct({...newProduct, category: e.target.value})}
                           >
@@ -2497,7 +2614,7 @@ export function AdminDashboard() {
                         <div className="space-y-1.5 sm:space-y-2">
                           <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-orange-600 font-extrabold">Juice Menu Section</label>
                           <select 
-                            className="w-full border border-orange-500/20 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 bg-white outline-none focus:border-orange-500 text-[#151515] transition-colors text-[9px] sm:text-[10px] uppercase font-black tracking-wider bg-orange-50/20" 
+                            className="w-full appearance-none border border-orange-500/20 rounded-xl sm:rounded-2xl py-2.5 sm:py-3.5 pl-3 sm:pl-4 pr-10 bg-orange-50/20 outline-none focus:border-orange-500 text-[#151515] transition-colors text-[9px] sm:text-[10px] uppercase font-black tracking-wider bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23f97316%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:14px_14px] bg-[right_14px_center] bg-no-repeat" 
                             value={newProduct.subCategory || 'cold-pressed'} 
                             onChange={e => setNewProduct({...newProduct, category: 'fnl juices', subCategory: e.target.value})}
                           >
@@ -3548,7 +3665,7 @@ export function AdminDashboard() {
                     handleUpdateOrderStatus(selectedOrder.id, e.target.value);
                     setSelectedOrder(prev => prev ? { ...prev, status: e.target.value } : null);
                   }}
-                  className="border border-border rounded-lg px-2.5 py-1.5 text-[10px] sm:text-xs bg-white font-extrabold uppercase tracking-widest text-foreground cursor-pointer shadow-sm focus:border-primary outline-none"
+                  className="appearance-none border border-border rounded-lg px-2.5 py-1.5 text-[10px] sm:text-xs bg-white font-extrabold uppercase tracking-widest text-foreground cursor-pointer shadow-sm focus:border-primary outline-none pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_10px_center] bg-no-repeat"
                 >
                   {(selectedOrder.shippingDetails?.address?.includes('Store Pickup') ? PICKUP_STATUS_OPTIONS : STATUS_OPTIONS).map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
                 </select>

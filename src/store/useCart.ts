@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware';
 
 export interface ProductVariant {
   unit: string;
+  quantityValue?: number;
+  quantityUnit?: string;
   price: number;
   originalPrice?: number;
   horecaPrice?: number;
@@ -20,6 +22,8 @@ export interface Product {
   category: string;
   description: string;
   unit?: string;
+  quantityValue?: number;
+  quantityUnit?: string;
   variants?: ProductVariant[];
   stock: number;
   inStock: boolean;

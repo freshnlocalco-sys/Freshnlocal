@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'motion/react';
 export function Layout() {
   const { user, loading } = useAuth();
   const { faviconUrl } = useSettings();
+  const [logoError, setLogoError] = useState(false);
   const cartItemsCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -30,13 +31,14 @@ export function Layout() {
         <div className="max-w-7xl mx-auto px-1 sm:px-4 md:px-8 h-16 sm:h-20 flex items-center justify-between">
           <div className="flex items-center gap-1 sm:gap-6 shrink-0 z-10 min-w-0 pr-1">
             <Link to="/" className="flex items-center gap-1 sm:gap-2 group truncate">
-              {faviconUrl && (
+              {faviconUrl && !logoError && (
                 <motion.img 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
                   src={faviconUrl} 
                   alt="Logo" 
+                  onError={() => setLogoError(true)}
                   className="w-6 h-6 sm:w-10 sm:h-10 object-contain rounded-lg shrink-0" 
                 />
               )}
@@ -316,7 +318,7 @@ export function Layout() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 text-[#2c3e30]">
           <div className="md:col-span-2 space-y-6">
             <h3 className="font-sans font-black text-foreground text-2xl tracking-tighter uppercase normal-case flex items-center gap-3">
-              {faviconUrl && (
+              {faviconUrl && !logoError && (
                 <motion.img 
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -324,6 +326,7 @@ export function Layout() {
                   transition={{ duration: 0.8, ease: "easeOut" }}
                   src={faviconUrl} 
                   alt="Logo" 
+                  onError={() => setLogoError(true)}
                   className="w-10 h-10 object-contain rounded-lg" 
                 />
               )}

@@ -510,8 +510,8 @@ export function FNLJuice() {
     fetchAndSeedJuices();
   }, [products, storeLoading, seeding, fetchProducts]);
 
-  const handleAddToCart = (product: Product) => {
-    addItem(product);
+  const handleAddToCart = (product: Product, quantity: number = 1) => {
+    addItem(product, quantity);
     toast.success(`${product.name} added to cart!`, {
       style: {
         background: '#151515',

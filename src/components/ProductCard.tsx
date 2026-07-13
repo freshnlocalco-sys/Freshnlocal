@@ -6,10 +6,11 @@ import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
+import { calculateHorecaPrice } from '../lib/horecaUtils';
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product) => void;
+  onAddToCart: (product: Product, quantity?: number) => void;
   displayCategoryOverride?: string;
   key?: React.Key | string | number;
 }
@@ -41,15 +42,27 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
   
   const isHoreca = user?.role === 'horeca';
-  const currentPrice = isHoreca && currentVariant.horecaPrice ? currentVariant.horecaPrice : currentVariant.price;
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [stagedQuantity, setStagedQuantity] = useState<number>(isHoreca ? 1 : 1);
+
+  const currentUnit = isHoreca && currentVariant.horecaPrice ? (currentVariant.horecaUnit || '1KG') : currentVariant.unit;
+  const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
-  const currentUnit = isHoreca && currentVariant.horecaUnit ? currentVariant.horecaUnit : currentVariant.unit;
   
   // Ensure cartProductId is strictly unique per variant
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
 
   const cartItem = items.find((item) => item?.product?.id === cartProductId && item?.product?.unit === currentUnit);
   const quantity = cartItem ? cartItem.quantity : 0;
+  
+  const step = 1;
+  const displayQuantity = quantity > 0 ? quantity : stagedQuantity;
+
+  useEffect(() => {
+    if (quantity > 0) {
+      setIsExpanded(true);
+    }
+  }, [quantity]);
   
   const catImage = getCategoryImage(displayCategory, categoryImages) || undefined;
   const productImgSrc = product.imageUrl || catImage || undefined;
@@ -114,8 +127,9 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
           {allVariants.length > 1 ? (
             <div className="flex flex-wrap gap-1 mt-1 mb-1">
               {allVariants.map((v, idx) => {
-                const vProductId = v.unit ? `${product.id}-${v.unit.trim()}` : product.id;
-                const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === v.unit);
+                const vDisplayUnit = isHoreca && v.horecaPrice ? (v.horecaUnit || '1KG') : v.unit;
+                const vProductId = vDisplayUnit ? `${product.id}-${vDisplayUnit.trim()}` : product.id;
+                const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === vDisplayUnit);
                 const vQty = vCartItem ? vCartItem.quantity : 0;
                 
                 return (
@@ -124,7 +138,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedVariantIdx(idx); }}
                     className={`relative text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded font-medium border ${selectedVariantIdx === idx ? 'bg-primary text-white border-primary' : 'bg-secondary text-secondary-foreground border-border hover:bg-secondary/80'}`}
                   >
-                    {v.unit}
+                    {vDisplayUnit}
                     {vQty > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center border border-white">
                         {vQty}
@@ -156,69 +170,104 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             </div>
           </div>
         </div>
-        
-        {quantity > 0 ? (
-          <div className="w-full flex items-center justify-between mt-1.5 sm:mt-2.5 bg-primary text-white rounded-lg border border-primary overflow-hidden h-7 sm:h-9 shadow-sm">
-            <button 
-              className="w-[30%] h-full flex items-center justify-center hover:bg-black/10 active:bg-black/20 transition-colors" 
-              onClick={(e) => { 
-                e.preventDefault(); 
-                e.stopPropagation(); 
-                if (quantity <= (isHoreca ? 0.5 : 1)) removeItem(cartProductId);
-                 else updateQuantity(cartProductId, quantity - (isHoreca ? 0.5 : 1)); 
-              }}
-            >
-              <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-            {isHoreca ? (
-              <input
-                type="number"
-                min="0.1"
-                step="0.1"
-                value={quantity}
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                onChange={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  updateQuantity(cartProductId, Math.max(0.1, Number(e.target.value)));
-                }}
-                className="font-bold text-[11px] sm:text-xs flex-1 text-center bg-transparent text-white outline-none w-full border-b border-dashed border-white/50 focus:border-white mx-1"
-                title="Enter custom quantity (e.g. 0.5)"
-              />
-            ) : (
-              <span className="font-bold text-[11px] sm:text-xs flex-1 text-center select-none">{quantity}</span>
-            )}
-            <button 
-              className="w-[30%] h-full flex items-center justify-center hover:bg-black/10 active:bg-black/20 transition-colors" 
-              onClick={(e) => { 
-                e.preventDefault(); 
-                e.stopPropagation(); 
-                updateQuantity(cartProductId, quantity + (isHoreca ? 0.5 : 1)); 
-              }}
-            >
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-          </div>
-        ) : (
+        {(!isExpanded && quantity === 0) ? (
           <button 
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               if (product.inStock) {
-                onAddToCart({ ...product, id: cartProductId, price: currentPrice, originalPrice: currentOriginalPrice, unit: currentUnit });
+                setIsExpanded(true);
+                setStagedQuantity(1);
               }
             }}
             disabled={!product.inStock}
             className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1.5 mt-1.5 sm:mt-2.5 transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${product.inStock ? 'bg-primary text-white border border-primary hover:bg-[#09120b] hover:border-[#09120b] active:scale-[0.97] cursor-pointer shadow-sm' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
           >
-            {product.inStock ? (
-               <>
-                  <span>Add</span>
-               </>
-            ) : (
-               <span>Out of Stock</span>
-            )}
+            {product.inStock ? <span>Add</span> : <span>Out of Stock</span>}
           </button>
+        ) : (
+          <div className="flex items-center gap-1.5 w-full mt-1.5 sm:mt-2.5 h-7 sm:h-9">
+            <div className="flex-1 flex items-center justify-between border border-primary bg-primary/5 text-primary rounded-lg overflow-hidden h-full">
+              <button 
+                className="w-7 sm:w-8 h-full flex items-center justify-center hover:bg-primary/10 active:bg-primary/20 transition-colors" 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  e.stopPropagation(); 
+                  if (quantity > 0) {
+                    if (quantity <= step) {
+                      removeItem(cartProductId);
+                      setStagedQuantity(0);
+                    } else {
+                      updateQuantity(cartProductId, quantity - step);
+                    }
+                  } else {
+                    setStagedQuantity(Math.max(0, stagedQuantity - step));
+                  }
+                }}
+              >
+                <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </button>
+              {isHoreca ? (
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={displayQuantity}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const val = Math.max(0, Number(e.target.value));
+                    if (quantity > 0) {
+                      if (val === 0) {
+                        removeItem(cartProductId);
+                        setStagedQuantity(0);
+                      } else {
+                        updateQuantity(cartProductId, val);
+                      }
+                    } else {
+                      setStagedQuantity(val);
+                    }
+                  }}
+                  className="font-bold text-[10px] sm:text-[11px] flex-1 text-center bg-transparent outline-none w-full border-b border-dashed border-primary/30 focus:border-primary mx-1"
+                  title="Enter custom quantity"
+                />
+              ) : (
+                <span className="font-bold text-[10px] sm:text-[11px] flex-1 text-center select-none">{displayQuantity}</span>
+              )}
+              <button 
+                className="w-7 sm:w-8 h-full flex items-center justify-center hover:bg-primary/10 active:bg-primary/20 transition-colors" 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  e.stopPropagation(); 
+                  if (quantity > 0) {
+                    updateQuantity(cartProductId, quantity + step);
+                  } else {
+                    setStagedQuantity(stagedQuantity + step);
+                  }
+                }}
+              >
+                <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </button>
+            </div>
+            <button 
+              onClick={(e) => { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                if (quantity === 0) {
+                  if (product.inStock && stagedQuantity > 0) {
+                    onAddToCart({ ...product, id: cartProductId, price: currentPrice, originalPrice: currentOriginalPrice, unit: currentUnit }, stagedQuantity); 
+                  }
+                } else {
+                  updateQuantity(cartProductId, quantity + step);
+                }
+              }}
+              disabled={!product.inStock || displayQuantity <= 0}
+              className={`h-full px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center ${product.inStock && displayQuantity > 0 ? 'bg-primary text-white shadow-sm active:scale-95 cursor-pointer hover:bg-[#09120b]' : 'bg-muted text-muted-foreground cursor-not-allowed opacity-75'}`}
+            >
+              Add
+            </button>
+          </div>
         )}
       </div>
     </div>

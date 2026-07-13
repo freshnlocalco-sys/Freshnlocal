@@ -19,6 +19,7 @@ export function Cart() {
   const navigate = useNavigate();
   const { deferredPrompt, showInstallPrompt } = usePWA();
   const [showPwaModal, setShowPwaModal] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [addressLines, setAddressLines] = useState(() => {
     let line1 = user?.address || '';
@@ -266,10 +267,11 @@ export function Cart() {
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden border border-border/60 shadow-[0_4px_16px_rgba(0,0,0,0.06)] p-3">
-              {faviconUrl ? (
+              {faviconUrl && !logoError ? (
                 <img 
                   src={faviconUrl} 
                   alt="FreshNLocal.CO" 
+                  onError={() => setLogoError(true)}
                   className="w-full h-full object-contain" 
                   style={{ 
                     imageRendering: '-webkit-optimize-contrast',
@@ -365,7 +367,7 @@ export function Cart() {
           {isHoreca && (
             <div className="bg-primary/10 border border-primary/20 text-primary p-4 rounded-2xl text-xs sm:text-sm font-bold flex items-start gap-3 shadow-sm">
               <Info className="w-5 h-5 shrink-0 mt-0.5" />
-              <p>As a HoReCa partner, you can click the quantity number to type custom decimal values (e.g., 0.5 for 500g).</p>
+              <p>As a HoReCa partner, you can click the quantity number to type custom decimal values (e.g., 0.5 for half the unit size).</p>
             </div>
           )}
           {cartItems.map((item) => (
@@ -414,7 +416,14 @@ export function Cart() {
                   {/* Glass Quantity Controls */}
                   <div className={`flex items-center border border-border rounded-xl overflow-hidden p-1 order-1 sm:order-2 ${item.product.inStock ? 'bg-background' : 'bg-muted opacity-50'}`}>
                     <button 
-                      onClick={() => updateQuantity(item.product.id, Math.max(isHoreca ? 0.1 : 1, item.quantity - (isHoreca ? 0.5 : 1)))} 
+                      onClick={() => {
+                        const newQty = item.quantity - (isHoreca ? 0.5 : 1);
+                        if (newQty <= 0) {
+                          removeItem(item.product.id);
+                        } else {
+                          updateQuantity(item.product.id, newQty);
+                        }
+                      }}
                       disabled={!item.product.inStock}
                       className={`w-8 h-8 flex items-center justify-center rounded-lg text-foreground ${item.product.inStock ? 'hover:bg-[#09120b] hover:text-white transition-colors cursor-pointer' : 'cursor-not-allowed'}`}
                     >
@@ -423,11 +432,18 @@ export function Cart() {
                     {isHoreca ? (
                       <input
                         type="number"
-                        min="0.1"
+                        min="0"
                         step="0.1"
                         value={item.quantity}
                         title="Type custom quantity"
-                        onChange={(e) => updateQuantity(item.product.id, Math.max(0.1, Number(e.target.value)))}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (val <= 0) {
+                            removeItem(item.product.id);
+                          } else {
+                            updateQuantity(item.product.id, val);
+                          }
+                        }}
                         className="w-14 text-center font-bold text-xs text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
                       />
                     ) : (

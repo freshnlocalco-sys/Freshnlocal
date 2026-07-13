@@ -277,8 +277,8 @@ export function Shop() {
     return () => observer.disconnect();
   }, [hasMore, loadingNext, fetchNextProducts, filteredProducts.length]);
 
-  const handleAddToCart = (product: Product) => {
-    addItem(product);
+  const handleAddToCart = (product: Product, quantity: number = 1) => {
+    addItem(product, quantity);
     toast.success(`${product.name} added to cart!`);
   };
 

@@ -26,8 +26,8 @@ const loadLocalStorageProducts = (): { products: Product[]; lastFetched: number 
     return { products: [], lastFetched: 0 };
   }
   try {
-    const products = cacheManager.get<Product[]>('products_v5', true) || [];
-    const lastFetched = cacheManager.get<number>('products_last_fetched_v3', true) || 0;
+    const products = cacheManager.get<Product[]>('products_v6', true) || [];
+    const lastFetched = cacheManager.get<number>('products_last_fetched_v4', true) || 0;
     return { products, lastFetched };
   } catch {
     return { products: [], lastFetched: 0 };
@@ -46,13 +46,13 @@ export const useProducts = create<ProductsState>((set, get) => ({
 
   hydrateFromIDB: async () => {
     try {
-      let dbProducts = await idb.get<Product[]>('products_v5');
-      let dbLastFetched = await idb.get<number>('products_last_fetched_v3');
+      let dbProducts = await idb.get<Product[]>('products_v6');
+      let dbLastFetched = await idb.get<number>('products_last_fetched_v4');
       
       // Fallback to localStorage if IndexedDB is blocked or empty
       if (!dbProducts || dbProducts.length === 0) {
-        dbProducts = cacheManager.get<Product[]>('products_v5', true) || [];
-        dbLastFetched = cacheManager.get<number>('products_last_fetched_v3', true) || 0;
+        dbProducts = cacheManager.get<Product[]>('products_v6', true) || [];
+        dbLastFetched = cacheManager.get<number>('products_last_fetched_v4', true) || 0;
       }
 
       if (dbProducts && dbProducts.length > 0) {
@@ -71,14 +71,14 @@ export const useProducts = create<ProductsState>((set, get) => ({
     const { products, lastFetched, loading } = get();
     if (loading) return; // Prevent concurrent requests
 
-    const needsFetch = force || (Date.now() - lastFetched) >= 24 * 60 * 60 * 1000 || products.length === 0;
-    if (!needsFetch) return;
-
-    if (!force && products.length > 0) {
-      // SILENT background refresh and return immediately
+    const needsFetch = force || (Date.now() - lastFetched) >= 5 * 60 * 1000 || products.length === 0;
+    if (!needsFetch && !force && products.length > 0) {
+      // Do a silent background refresh to keep it fresh without blocking the UI
       get().performActualFetch(true);
       return;
     }
+    
+    if (!needsFetch) return;
 
     // Blocking fetch
     await get().performActualFetch(false);
@@ -112,6 +112,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
           ...data,
           price: pPrice,
           originalPrice: pMrp > pPrice ? pMrp : undefined,
+          horecaPrice: data.horecaPrice ? Number(data.horecaPrice) : undefined,
         } as unknown as Product;
 
         const isJuice = (product.category || '').toLowerCase().includes('juice');
@@ -145,10 +146,10 @@ export const useProducts = create<ProductsState>((set, get) => ({
 
       // Sync fetched list to IndexedDB and LocalStorage fallback
       try {
-        cacheManager.set('products_v5', fetchedList);
-        cacheManager.set('products_last_fetched_v3', Date.now());
-        await idb.set('products_v5', fetchedList, 24 * 60 * 60 * 1000);
-        await idb.set('products_last_fetched_v3', Date.now(), 24 * 60 * 60 * 1000);
+        cacheManager.set('products_v6', fetchedList);
+        cacheManager.set('products_last_fetched_v4', Date.now());
+        await idb.set('products_v6', fetchedList, 24 * 60 * 60 * 1000);
+        await idb.set('products_last_fetched_v4', Date.now(), 24 * 60 * 60 * 1000);
       } catch (cacheErr) {
         console.warn("Cache set failed safely:", cacheErr);
       }
@@ -215,6 +216,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
           ...data,
           price: pPrice,
           originalPrice: pMrp > pPrice ? pMrp : undefined,
+          horecaPrice: data.horecaPrice ? Number(data.horecaPrice) : undefined,
         } as unknown as Product);
       });
 
@@ -224,7 +226,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
       const updatedProducts = [...products, ...nextList];
 
       try {
-        await idb.set('products_v5', updatedProducts, 24 * 60 * 60 * 1000);
+        await idb.set('products_v6', updatedProducts, 24 * 60 * 60 * 1000);
       } catch (cacheErr) {
         console.warn("IndexedDB cache update failed safely:", cacheErr);
       }

@@ -282,9 +282,9 @@ export function Home() {
     setCurrentBannerIndex(idx);
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: Product, quantity: number = 1) => {
     const currentQty = items.find(item => item.product.id === product.id)?.quantity || 0;
-    addItem(product);
+    addItem(product, quantity);
     if (currentQty === 0) {
       toast.success(<span>Added <b>{product.name}</b> to cart</span>);
     }

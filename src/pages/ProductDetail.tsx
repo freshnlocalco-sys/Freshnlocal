@@ -12,6 +12,7 @@ import { useWishlist } from '../store/useWishlist';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { ProductCard } from '../components/ProductCard';
 import { ProductReviews } from '../components/ProductReviews';
+import { calculateHorecaPrice } from '../lib/horecaUtils';
 import toast from 'react-hot-toast';
 
 export function ProductDetail() {
@@ -39,12 +40,12 @@ export function ProductDetail() {
   }, [variants, product]);
 
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
-  const currentVariant = allVariants[selectedVariantIdx] || allVariants[0] || { unit: '', price: 0, originalPrice: 0 };
+  const currentVariant = allVariants[selectedVariantIdx] || allVariants[0] || { unit: '', price: 0, originalPrice: 0, horecaPrice: undefined, horecaUnit: '' };
   
   const isHoreca = user?.role === 'horeca';
-  const currentPrice = isHoreca && currentVariant.horecaPrice ? currentVariant.horecaPrice : currentVariant.price;
+  const currentUnit = isHoreca && currentVariant.horecaPrice ? (currentVariant.horecaUnit || '1KG') : currentVariant.unit;
+  const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
-  const currentUnit = isHoreca && currentVariant.horecaUnit ? currentVariant.horecaUnit : currentVariant.unit;
   const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;
 
   const [quantity, setQuantity] = useState(1);
@@ -250,8 +251,9 @@ export function ProductDetail() {
             {allVariants.length > 1 ? (
               <div className="flex flex-wrap gap-2">
                 {allVariants.map((v, idx) => {
-                  const vProductId = v.unit ? `${product.id}-${v.unit.trim()}` : product.id;
-                  const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === v.unit);
+                  const vDisplayUnit = isHoreca && v.horecaPrice ? (v.horecaUnit || '1KG') : v.unit;
+                  const vProductId = vDisplayUnit ? `${product.id}-${vDisplayUnit.trim()}` : product.id;
+                  const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === vDisplayUnit);
                   const vQty = vCartItem ? vCartItem.quantity : 0;
 
                   return (
@@ -264,7 +266,7 @@ export function ProductDetail() {
                           : 'bg-white text-muted-foreground border-border/80 hover:border-primary/50'
                       }`}
                     >
-                      {isHoreca && v.horecaUnit ? v.horecaUnit : v.unit}
+                      {vDisplayUnit}
                       {vQty > 0 && (
                         <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">
                           {vQty}
@@ -309,7 +311,7 @@ export function ProductDetail() {
               </div>
               <div className="flex items-center border border-border bg-background rounded-2xl overflow-hidden p-1.5">
                 <button 
-                  onClick={() => setQuantity(Math.max(isHoreca ? 0.1 : 1, quantity - (isHoreca ? 0.5 : 1)))}
+                  onClick={() => setQuantity(Math.max(0, quantity - 1))}
                   className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
                 >
                   <Minus className="w-4 h-4" />
@@ -317,18 +319,18 @@ export function ProductDetail() {
                 {isHoreca ? (
                   <input
                     type="number"
-                    min="0.1"
-                    step="0.1"
+                    min="0"
+                    step="any"
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.max(0.1, Number(e.target.value)))}
-                    title="Type custom quantity (e.g. 0.5 for 500g)"
+                    onChange={(e) => setQuantity(Math.max(0, Number(e.target.value)))}
+                    title="Type custom quantity"
                     className="w-16 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
                   />
                 ) : (
                   <div className="w-12 text-center text-xs font-black text-foreground">{quantity}</div>
                 )}
                 <button 
-                  onClick={() => setQuantity(quantity + (isHoreca ? 0.5 : 1))}
+                  onClick={() => setQuantity(quantity + 1)}
                   className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
                 >
                   <Plus className="w-4 h-4" />
@@ -346,7 +348,7 @@ export function ProductDetail() {
             <button 
               onClick={handleAddToCart}
               className="w-full py-4.5 rounded-xl bg-primary text-white font-sans text-[10px] uppercase font-black tracking-widest transition-colors hover:bg-[#09120b] hover:text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-md disabled:shadow-none"
-              disabled={!product.inStock}
+              disabled={!product.inStock || quantity <= 0}
             >
               <ShoppingBag className="w-4.5 h-4.5" />
               {product.inStock ? 'Checkout to Basket' : 'Out of Stock'}
@@ -389,10 +391,10 @@ export function ProductDetail() {
               <ProductCard 
                 key={rp.id} 
                 product={rp} 
-                onAddToCart={(p) => {
+                onAddToCart={(p, qty = 1) => {
                   if (p.inStock) {
-                    addItem(p, 1);
-                    toast.success(`1 ${p.name} added to cart!`);
+                    addItem(p, qty);
+                    toast.success(`${qty} ${p.name} added to cart!`);
                   }
                 }} 
               />

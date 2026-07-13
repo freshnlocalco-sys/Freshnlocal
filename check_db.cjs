@@ -1,14 +1,9 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json');
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+const { Firestore } = require('@google-cloud/firestore');
+const firestore = new Firestore({
+    projectId: 'ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67'
 });
-const db = admin.firestore();
-
-async function check() {
-  const snapshot = await db.collection('products').where('name', '==', 'Rocket Arugula').get();
-  snapshot.forEach(doc => {
-    console.log(doc.id, doc.data());
-  });
+async function main() {
+    const q = await firestore.collection('products').where('name', '==', 'Juicy Red Cherry').get();
+    q.forEach(doc => console.log(JSON.stringify(doc.data(), null, 2)));
 }
-check();
+main();
