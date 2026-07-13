@@ -88,7 +88,7 @@ export const useCart = create<CartState>()(
       updateQuantity: (productId, quantity) => {
         set((state) => ({
           items: (state.items || []).map((item) =>
-            item && item.product && item.product.id === productId ? { ...item, quantity: Math.max(1, quantity) } : item
+            item && item.product && item.product.id === productId ? { ...item, quantity: Math.max(0.01, quantity) } : item
           ),
         }));
       },

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCart } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info } from 'lucide-react';
 import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
@@ -15,6 +15,7 @@ export function Cart() {
   const { items, removeItem, updateQuantity, total, clearCart } = useCart();
   const cartItems = items.filter(item => item && item.product && item.product.id);
   const { user, setUser } = useAuth();
+  const isHoreca = user?.role === 'horeca';
   const navigate = useNavigate();
   const { deferredPrompt, showInstallPrompt } = usePWA();
   const [showPwaModal, setShowPwaModal] = useState(false);
@@ -361,6 +362,12 @@ export function Cart() {
         </div>
 
         <div className="space-y-6">
+          {isHoreca && (
+            <div className="bg-primary/10 border border-primary/20 text-primary p-4 rounded-2xl text-xs sm:text-sm font-bold flex items-start gap-3 shadow-sm">
+              <Info className="w-5 h-5 shrink-0 mt-0.5" />
+              <p>As a HoReCa partner, you can click the quantity number to type custom decimal values (e.g., 0.5 for 500g).</p>
+            </div>
+          )}
           {cartItems.map((item) => (
             <div key={item.product.id} className="slice-card flex flex-col sm:flex-row gap-6 p-6 items-start sm:items-center relative group">
               {/* Product preview card layout */}
@@ -380,7 +387,12 @@ export function Cart() {
                   <h3 className="font-black text-[#09120b] hover:text-primary transition-colors text-sm uppercase tracking-wide">
                     {item.product.name}
                   </h3>
-                  <div className="text-primary font-black text-base">₹{item.product.price}</div>
+                  <div className="flex flex-col">
+                    <div className="text-primary font-black text-base">₹{(item.product.price * item.quantity).toFixed(2)}</div>
+                    {item.quantity !== 1 && (
+                      <div className="text-xs text-muted-foreground font-medium">₹{item.product.price} / {item.product.unit || 'unit'}</div>
+                    )}
+                  </div>
                   {!item.product.inStock && (
                     <div className="mt-1">
                       <span className="text-[9px] font-black uppercase tracking-widest text-orange-500 bg-orange-500/10 px-2 py-1 rounded-md">
@@ -402,15 +414,27 @@ export function Cart() {
                   {/* Glass Quantity Controls */}
                   <div className={`flex items-center border border-border rounded-xl overflow-hidden p-1 order-1 sm:order-2 ${item.product.inStock ? 'bg-background' : 'bg-muted opacity-50'}`}>
                     <button 
-                      onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))} 
+                      onClick={() => updateQuantity(item.product.id, Math.max(isHoreca ? 0.1 : 1, item.quantity - (isHoreca ? 0.5 : 1)))} 
                       disabled={!item.product.inStock}
                       className={`w-8 h-8 flex items-center justify-center rounded-lg text-foreground ${item.product.inStock ? 'hover:bg-[#09120b] hover:text-white transition-colors cursor-pointer' : 'cursor-not-allowed'}`}
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="w-8 text-center font-bold text-xs text-foreground">{item.quantity}</span>
+                    {isHoreca ? (
+                      <input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={item.quantity}
+                        title="Type custom quantity"
+                        onChange={(e) => updateQuantity(item.product.id, Math.max(0.1, Number(e.target.value)))}
+                        className="w-14 text-center font-bold text-xs text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
+                      />
+                    ) : (
+                      <span className="w-8 text-center font-bold text-xs text-foreground">{item.quantity}</span>
+                    )}
                     <button 
-                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)} 
+                      onClick={() => updateQuantity(item.product.id, item.quantity + (isHoreca ? 0.5 : 1))} 
                       disabled={!item.product.inStock}
                       className={`w-8 h-8 flex items-center justify-center rounded-lg text-foreground ${item.product.inStock ? 'hover:bg-[#09120b] hover:text-white transition-colors cursor-pointer' : 'cursor-not-allowed'}`}
                     >

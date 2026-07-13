@@ -160,23 +160,40 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
         {quantity > 0 ? (
           <div className="w-full flex items-center justify-between mt-1.5 sm:mt-2.5 bg-primary text-white rounded-lg border border-primary overflow-hidden h-7 sm:h-9 shadow-sm">
             <button 
-              className="w-[35%] h-full flex items-center justify-center hover:bg-black/10 active:bg-black/20 transition-colors" 
+              className="w-[30%] h-full flex items-center justify-center hover:bg-black/10 active:bg-black/20 transition-colors" 
               onClick={(e) => { 
                 e.preventDefault(); 
                 e.stopPropagation(); 
-                if (quantity === 1) removeItem(cartProductId);
-                 else updateQuantity(cartProductId, quantity - 1); 
+                if (quantity <= (isHoreca ? 0.5 : 1)) removeItem(cartProductId);
+                 else updateQuantity(cartProductId, quantity - (isHoreca ? 0.5 : 1)); 
               }}
             >
               <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
-            <span className="font-bold text-[11px] sm:text-xs flex-1 text-center select-none">{quantity}</span>
+            {isHoreca ? (
+              <input
+                type="number"
+                min="0.1"
+                step="0.1"
+                value={quantity}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onChange={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateQuantity(cartProductId, Math.max(0.1, Number(e.target.value)));
+                }}
+                className="font-bold text-[11px] sm:text-xs flex-1 text-center bg-transparent text-white outline-none w-full border-b border-dashed border-white/50 focus:border-white mx-1"
+                title="Enter custom quantity (e.g. 0.5)"
+              />
+            ) : (
+              <span className="font-bold text-[11px] sm:text-xs flex-1 text-center select-none">{quantity}</span>
+            )}
             <button 
-              className="w-[35%] h-full flex items-center justify-center hover:bg-black/10 active:bg-black/20 transition-colors" 
+              className="w-[30%] h-full flex items-center justify-center hover:bg-black/10 active:bg-black/20 transition-colors" 
               onClick={(e) => { 
                 e.preventDefault(); 
                 e.stopPropagation(); 
-                updateQuantity(cartProductId, quantity + 1); 
+                updateQuantity(cartProductId, quantity + (isHoreca ? 0.5 : 1)); 
               }}
             >
               <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

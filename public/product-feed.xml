@@ -389,7 +389,7 @@
       <g:id>1nCTKP8KvrQU8faxjMxz</g:id>
       <g:title>Fresh N Local Fresh Chives 10gm</g:title>
       <g:description>Fresh Chives </g:description>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
       <g:sale_price>20.00 INR</g:sale_price>
@@ -551,7 +551,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
-      <g:sale_price>100.00 INR</g:sale_price>
+      <g:sale_price>120.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/3r2PRlSuAtCXtxpaQN9H</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F3r2PRlSuAtCXtxpaQN9H%2Foriginal.webp?alt=media&amp;token=b67ad2eb-c963-4edd-b6e1-cdd5bb8cf5ce</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -603,7 +603,7 @@
       <g:id>4cSqeBkIaHT4vxu4KKlH</g:id>
       <g:title>Fresh N Local Zespri Green Kiwi 3pc</g:title>
       <g:description>Origin - New Zealand </g:description>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
       <g:sale_price>120.00 INR</g:sale_price>
@@ -848,7 +848,7 @@ Can Be Used Till 6 Months</g:description>
     </item>
     <item>
       <g:id>9fvtMymFTu5Qix48c4ku</g:id>
-      <g:title>Fresh N Local Tender Coconut 1pc</g:title>
+      <g:title>Fresh N Local Tender Coconut 300ml+</g:title>
       <g:description>300Ml Apx Water
 Tender Coconut 1pc</g:description>
       <g:availability>in stock</g:availability>
@@ -890,8 +890,8 @@ Tender Coconut 1pc</g:description>
     </item>
     <item>
       <g:id>Bo8TZCnU3dTy7LSNns0J</g:id>
-      <g:title>Fresh N Local Banana Leaves 2pc</g:title>
-      <g:description>Banana Leaves </g:description>
+      <g:title>Fresh N Local Banana Leaf 2pc</g:title>
+      <g:description>Banana Leaf</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -1140,6 +1140,19 @@ can be used till 6 months</g:description>
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>H5P7RTEyWYzxcRNs9tpB</g:id>
+      <g:title>Fresh N Local Baby Golden Potato 500gm</g:title>
+      <g:description>Baby Golden Potato</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>600.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/H5P7RTEyWYzxcRNs9tpB</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783917692723_1000207732.jpg?alt=media&amp;token=3f31fd05-86f2-4873-a9d0-219d0e7f1473</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>HfH076jmM7Y0fuBmjxuI</g:id>
       <g:title>Fresh N Local Pineapple Slice 200gm</g:title>
       <g:description>ALL FRUITS AND VEGETABLE ARE CUT AND PEELED IN CONTROLED AND HYGENIC ENVIROMENT AND IT IS PREPARED WITH IN 60 MIN OF DELIVERY TIME</g:description>
@@ -1225,8 +1238,8 @@ can be used till 6 months</g:description>
     </item>
     <item>
       <g:id>J7vFS1J2zzEJEJYSwplN</g:id>
-      <g:title>Fresh N Local Purple Cabbage 1pc</g:title>
-      <g:description>Purple Cabbage </g:description>
+      <g:title>Fresh N Local Red Cabbage 1pc</g:title>
+      <g:description>Red Cabbage </g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
@@ -1425,8 +1438,8 @@ Can Be Used Till 6 Months</g:description>
       <g:description>Origin - Mahillabad</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>100.00 INR</g:price>
-      <g:sale_price>60.00 INR</g:sale_price>
+      <g:price>130.00 INR</g:price>
+      <g:sale_price>120.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/PYFGPpHmlWGOlwfogPrt</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783155040047_1000194164.jpg?alt=media&amp;token=9b482446-ab83-4937-b701-56a072da9080</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1642,6 +1655,19 @@ Can be Used till 6 Months</g:description>
       <g:price>200.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/V7VQqMDqdLfDNQV2Wt6T</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FV7VQqMDqdLfDNQV2Wt6T%2Foriginal.webp?alt=media&amp;token=c62b4503-6778-4699-bbb2-d18199694fd2</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
+      <g:id>Vd9GmcT92COa0txE8Rvg</g:id>
+      <g:title>Fresh N Local Artichoke Globe 1kg</g:title>
+      <g:description>Artichoke Globe</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>2600.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/Vd9GmcT92COa0txE8Rvg</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783864494834_Capsicum_photoshoot_white_backgr%E2%80%A6_202607121924.jpeg?alt=media&amp;token=fe13c0ca-4b65-4862-adac-4829d59c6105</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2108,6 +2134,20 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
       <g:sale_price>400.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/hlK9DI29YBf9UHziBQ1W</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FhlK9DI29YBf9UHziBQ1W%2Foriginal.webp?alt=media&amp;token=be7ed141-a773-4ad2-a84f-c035c92eb4e8</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
+      <g:id>hqo4zG1YA5wx0xF77vYZ</g:id>
+      <g:title>Fresh N Local American Sweet Corn 1kg</g:title>
+      <g:description>American Sweet Corn</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>50.00 INR</g:price>
+      <g:sale_price>40.00 INR</g:sale_price>
+      <g:link>https://www.freshnlocal.co/product/hqo4zG1YA5wx0xF77vYZ</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783864068109_Sweet_corn_photoshoot_white_back%E2%80%A6_202607121911.jpeg?alt=media&amp;token=cacd3b89-63a6-4bbc-8b10-d6e8628e6f5f</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2592,6 +2632,19 @@ can be used till 6 months</g:description>
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>tfdeqJgPPMVNEWymSZKe</g:id>
+      <g:title>Fresh N Local Mango Daseri 1kg</g:title>
+      <g:description>Mango Daseri </g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>120.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/tfdeqJgPPMVNEWymSZKe</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783866926320_Mangoes_in_bunch_photoshoot_202607122004.jpeg?alt=media&amp;token=38242ac3-0c04-49e0-89d3-93986123e6d7</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>u2IbRsBIo8YnvcBfSuHp</g:id>
       <g:title>Fresh N Local Royal Gala Apple 1kg</g:title>
       <g:description>Imported Super Sweet</g:description>
@@ -2620,6 +2673,20 @@ can be used till 6 months</g:description>
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>vLSB0L1htGU4Q4qUYRaB</g:id>
+      <g:title>Fresh N Local Persimmon Tomato 2pc</g:title>
+      <g:description>Persimmon Tomato</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>250.00 INR</g:price>
+      <g:sale_price>200.00 INR</g:sale_price>
+      <g:link>https://www.freshnlocal.co/product/vLSB0L1htGU4Q4qUYRaB</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783865087556_Persimmon_tomato_photoshoot_whit%E2%80%A6_202607121934.jpeg?alt=media&amp;token=55695d8a-0f7b-4cf2-bc44-ff7a9f22fb8b</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>vOMf7RADB7ADITvhN3O6</g:id>
       <g:title>Fresh N Local Parsley 100gm</g:title>
       <g:description>Parsley </g:description>
@@ -2643,6 +2710,20 @@ can be used till 6 months</g:description>
       <g:sale_price>100.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/vprkdFX4LSh4MmAZAeJf</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783157850501_1000204689.jpg?alt=media&amp;token=e33ff77f-92b5-4832-a742-b53b2302bd06</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
+      <g:id>w1tMFkVYiIIJikMWL2Pj</g:id>
+      <g:title>Fresh N Local Green Capsicum 200gm</g:title>
+      <g:description>Green Capsicum</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>100.00 INR</g:price>
+      <g:sale_price>80.00 INR</g:sale_price>
+      <g:link>https://www.freshnlocal.co/product/w1tMFkVYiIIJikMWL2Pj</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783863687244_Capsicum_photoshoot_white_backgr%E2%80%A6_202607121911.jpeg?alt=media&amp;token=ad36a1ba-72f7-49db-b8f8-0e26b490a0f6</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2754,8 +2835,8 @@ can be used till 6 months</g:description>
 Apx 1.5-2Kg Per Pc</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>180.00 INR</g:price>
-      <g:sale_price>160.00 INR</g:sale_price>
+      <g:price>190.00 INR</g:price>
+      <g:sale_price>180.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/yD3AwDmsxl06ZZMh6rlR</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783690429112_1000206992.jpg?alt=media&amp;token=668969d2-8c5f-4a75-b394-f01ccd594122</g:image_link>
       <g:brand>Fresh N Local</g:brand>
