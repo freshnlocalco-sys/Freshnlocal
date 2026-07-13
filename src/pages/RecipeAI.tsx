@@ -386,7 +386,7 @@ export function RecipeAI() {
         <div className="shrink-0 px-4 py-3 border-b border-border bg-card flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative w-10 h-10 rounded-full overflow-hidden border border-primary/20 shrink-0 bg-white shadow-xs">
-              <img src="/freshi-icon.png?v=4" alt="Freshi" className="w-full h-full object-contain" />
+              <img src="/freshi-icon.png?v=5" alt="Freshi" className="w-full h-full object-contain" />
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
             </div>
             <div>
@@ -422,7 +422,7 @@ export function RecipeAI() {
                   {/* Round Avatar for Bot */}
                   {isBot && (
                     <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/20 shrink-0 bg-white shadow-xs mt-1">
-                      <img src="/freshi-icon.png?v=4" alt="Freshi" className="w-full h-full object-contain" />
+                      <img src="/freshi-icon.png?v=5" alt="Freshi" className="w-full h-full object-contain" />
                     </div>
                   )}
 

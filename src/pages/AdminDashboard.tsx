@@ -2406,7 +2406,7 @@ export function AdminDashboard() {
                             type="number"
                             step="any"
                             placeholder="Qty (e.g. 1, 500)" 
-                            className="flex-1 min-w-0 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
+                            className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
                             value={newProduct.quantityValue || ''} 
                             onChange={e => setNewProduct({...newProduct, quantityValue: e.target.value, unit: `${e.target.value} ${newProduct.quantityUnit || 'Kg'}`})} 
                           />
@@ -2429,7 +2429,7 @@ export function AdminDashboard() {
                             type="number"
                             step="any"
                             placeholder="Qty" 
-                            className="flex-1 min-w-0 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
+                            className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
                             value={newProduct.horecaQuantityValue || ''} 
                             onChange={e => setNewProduct({...newProduct, horecaQuantityValue: e.target.value, horecaUnit: e.target.value ? `${e.target.value} ${newProduct.horecaQuantityUnit || 'Kg'}` : ''})} 
                           />
@@ -2539,7 +2539,7 @@ export function AdminDashboard() {
                                         newVariants[vIdx].unit = `${e.target.value} ${newVariants[vIdx].quantityUnit || 'Kg'}`;
                                         setNewProduct({...newProduct, variants: newVariants});
                                       }}
-                                      className="flex-1 min-w-0 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
+                                      className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
                                     />
                                     <select
                                       className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
@@ -2572,7 +2572,7 @@ export function AdminDashboard() {
                                         newVariants[vIdx].horecaUnit = e.target.value ? `${e.target.value} ${newVariants[vIdx].horecaQuantityUnit || 'Kg'}` : '';
                                         setNewProduct({...newProduct, variants: newVariants});
                                       }}
-                                      className="flex-1 min-w-0 w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
+                                      className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
                                     />
                                     <select
                                       className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"

@@ -337,17 +337,17 @@ export function Home() {
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 md:w-80 md:h-80 bg-primary/10 rounded-full blur-[80px] md:blur-[100px] pointer-events-none"></div>
 
         {/* Global Search Bar */}
-        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 relative z-20">
-          <form onSubmit={handleHomeSearch} className="relative w-full shadow-lg shadow-black/5 rounded-full overflow-hidden group border border-border/50 bg-background/80 backdrop-blur-xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300">
-            <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex items-center justify-center bg-white/50 z-10 pointer-events-none">
-              <img src="/freshi-icon.png?v=4" alt="Freshi" className="w-full h-full object-contain" />
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 relative z-20">
+          <form onSubmit={handleHomeSearch} className="relative w-full shadow-xl shadow-black/5 rounded-full overflow-hidden group border border-border/50 bg-background/80 backdrop-blur-xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300">
+            <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-full overflow-hidden flex items-center justify-center bg-white/50 z-10 pointer-events-none">
+              <img src="/freshi-icon.png?v=5" alt="Freshi" className="w-full h-full object-contain" />
             </div>
             
             {/* Custom Placeholder */}
             {!homeSearchQuery && (
-              <div className="absolute left-[4.5rem] sm:left-[5.5rem] top-1/2 -translate-y-1/2 pointer-events-none flex flex-col justify-center">
-                <span className="text-base sm:text-lg font-medium text-muted-foreground/70 leading-tight">Ask Freshi</span>
-                <span className="text-[10px] sm:text-xs text-muted-foreground/50 font-medium">Your Ai Recipe Assistant By FNL</span>
+              <div className="absolute left-[4.75rem] sm:left-[5.75rem] top-1/2 -translate-y-1/2 pointer-events-none flex flex-col justify-center">
+                <span className="text-lg sm:text-xl font-semibold text-muted-foreground/70 leading-tight">Ask Freshi</span>
+                <span className="text-[11px] sm:text-xs text-muted-foreground/50 font-medium">Your Ai Recipe Assistant By FNL</span>
               </div>
             )}
             
@@ -355,11 +355,11 @@ export function Home() {
               type="text"
               value={homeSearchQuery}
               onChange={(e) => setHomeSearchQuery(e.target.value)}
-              className="w-full h-14 sm:h-16 pl-[4.5rem] sm:pl-[5.5rem] pr-24 sm:pr-32 bg-transparent border-none outline-none text-base sm:text-lg font-medium relative z-10"
+              className="w-full h-16 sm:h-20 pl-[4.75rem] sm:pl-[5.75rem] pr-28 sm:pr-36 bg-transparent border-none outline-none text-lg sm:text-xl font-medium relative z-10"
             />
             <button 
               type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground px-4 sm:px-6 py-2 sm:py-3 rounded-full text-sm font-bold tracking-wide hover:bg-primary/90 transition-colors z-20"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground px-5 sm:px-8 py-2.5 sm:py-4 rounded-full text-sm sm:text-base font-bold tracking-wide hover:bg-primary/90 transition-colors z-20"
             >
               Go
             </button>
