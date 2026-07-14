@@ -7,6 +7,7 @@ import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
 import { calculateHorecaPrice } from '../lib/horecaUtils';
+import { QuantityInput } from './QuantityInput';
 
 interface ProductCardProps {
   product: Product;
@@ -210,40 +211,41 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                     if (quantity <= step) {
                       removeItem(cartProductId);
                       setStagedQuantity(0);
+                      setIsExpanded(false);
                     } else {
                       updateQuantity(cartProductId, quantity - step);
                     }
                   } else {
-                    setStagedQuantity(Math.max(0, stagedQuantity - step));
+                    if (stagedQuantity <= step) {
+                      setStagedQuantity(0);
+                      setIsExpanded(false);
+                    } else {
+                      setStagedQuantity(stagedQuantity - step);
+                    }
                   }
                 }}
               >
                 <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </button>
-              <div className="flex items-center w-full">
-                <input
-                  type="number"
-                  min="0"
-                  step={isHoreca ? "any" : "1"}
-                  value={displayQuantity}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                  onChange={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const val = Math.max(0, Number(e.target.value));
+              <div className="flex items-center w-full" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                <QuantityInput
+                  initialQuantity={displayQuantity}
+                  isHoreca={isHoreca}
+                  className="font-bold text-[10px] sm:text-[11px] flex-1 text-center bg-transparent outline-none w-full border-b border-dashed border-primary/30 focus:border-primary mx-1"
+                  onUpdate={(val) => {
                     if (quantity > 0) {
-                      if (val === 0) {
-                        removeItem(cartProductId);
-                        setStagedQuantity(1);
-                      } else {
-                        updateQuantity(cartProductId, val);
-                      }
+                      updateQuantity(cartProductId, val);
                     } else {
                       setStagedQuantity(val);
                     }
                   }}
-                  className="font-bold text-[10px] sm:text-[11px] flex-1 text-center bg-transparent outline-none w-full border-b border-dashed border-primary/30 focus:border-primary mx-1"
-                  title="Enter custom quantity"
+                  onRemove={() => {
+                    if (quantity > 0) {
+                      removeItem(cartProductId);
+                    }
+                    setStagedQuantity(0);
+                    setIsExpanded(false);
+                  }}
                 />
               </div>
               <button 
@@ -273,8 +275,8 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                   updateQuantity(cartProductId, quantity + step);
                 }
               }}
-              disabled={!product.inStock || displayQuantity <= 0}
-              className={`h-full px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center ${product.inStock && displayQuantity > 0 ? 'bg-primary text-white shadow-sm active:scale-95 cursor-pointer hover:bg-[#09120b]' : 'bg-muted text-muted-foreground cursor-not-allowed opacity-75'}`}
+              disabled={!product.inStock || displayQuantity < (isHoreca ? 0.01 : 1)}
+              className={`h-full px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center ${product.inStock && displayQuantity >= (isHoreca ? 0.01 : 1) ? 'bg-primary text-white shadow-sm active:scale-95 cursor-pointer hover:bg-[#09120b]' : 'bg-muted text-muted-foreground cursor-not-allowed opacity-75'}`}
             >
               Add
             </button>

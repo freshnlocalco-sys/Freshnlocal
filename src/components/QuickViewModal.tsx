@@ -9,6 +9,8 @@ import { calculateHorecaPrice, getBaseUnit, parseUnitScale } from '../lib/horeca
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
+import { QuantityInput } from './QuantityInput';
+
 interface QuickViewModalProps {
   product: Product;
   onClose: () => void;
@@ -147,28 +149,27 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
             <div className="flex items-center justify-between border-t border-border pt-6">
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Quantity</span>
-                {isHoreca && <span className="text-[9px] text-primary font-bold mt-1">Total: {quantity * parseUnitScale(currentUnit)} {getBaseUnit(currentUnit)}</span>}
+                <span className="text-[9px] text-primary font-bold mt-1">Total: {quantity * parseUnitScale(currentUnit)} {getBaseUnit(currentUnit)}</span>
               </div>
               <div className="flex items-center border border-border rounded-xl overflow-hidden p-1">
                 <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  onClick={() => setQuantity(Math.max(isHoreca ? 0.01 : 1, quantity - (isHoreca ? 0.5 : 1)))}
                   className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
                 >
                   <Minus className="w-3 h-3" />
                 </button>
                 <div className="flex items-center">
-                  <input
-                    type="number"
-                    min="1"
-                    step={isHoreca ? "any" : "1"}
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
+                  <QuantityInput
+                    initialQuantity={quantity}
+                    isHoreca={isHoreca}
                     className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
+                    onUpdate={(val) => setQuantity(val)}
+                    onRemove={() => setQuantity(isHoreca ? 0.01 : 1)}
                   />
                   <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
                 </div>
                 <button 
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(quantity + (isHoreca ? 0.5 : 1))}
                   className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
                 >
                   <Plus className="w-3 h-3" />

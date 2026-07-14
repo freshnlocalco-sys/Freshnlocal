@@ -15,6 +15,8 @@ import { ProductReviews } from '../components/ProductReviews';
 import { calculateHorecaPrice, getBaseUnit, parseUnitScale } from '../lib/horecaUtils';
 import toast from 'react-hot-toast';
 
+import { QuantityInput } from '../components/QuantityInput';
+
 export function ProductDetail() {
   const { categoryImages } = useSettings();
   const { user } = useAuth();
@@ -311,25 +313,23 @@ export function ProductDetail() {
               </div>
               <div className="flex items-center border border-border bg-background rounded-2xl overflow-hidden p-1.5">
                 <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  onClick={() => setQuantity(Math.max(isHoreca ? 0.01 : 1, quantity - (isHoreca ? 0.5 : 1)))}
                   className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
                 <div className="flex items-center">
-                  <input
-                    type="number"
-                    min="1"
-                    step={isHoreca ? "any" : "1"}
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
-                    title="Type custom quantity"
+                  <QuantityInput
+                    initialQuantity={quantity}
+                    isHoreca={isHoreca}
                     className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
+                    onUpdate={(val) => setQuantity(val)}
+                    onRemove={() => setQuantity(isHoreca ? 0.01 : 1)}
                   />
                   <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
                 </div>
                 <button 
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(quantity + (isHoreca ? 0.5 : 1))}
                   className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
                 >
                   <Plus className="w-4 h-4" />

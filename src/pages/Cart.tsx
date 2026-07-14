@@ -8,6 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { usePWA } from '../store/usePWA';
+import { QuantityInput } from '../components/QuantityInput';
 import toast from 'react-hot-toast';
 
 export function Cart() {
@@ -73,12 +74,17 @@ export function Cart() {
   const finalTotal = total() - discount;
 
   const hasOutOfStockItems = cartItems.some(item => !item.product.inStock);
+  const hasInvalidRetailQuantity = !isHoreca && cartItems.some(item => item.quantity < 1);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (total() < 1000) return;
     if (hasOutOfStockItems) {
       toast.error("Please remove out of stock items from your cart before checking out.");
+      return;
+    }
+    if (hasInvalidRetailQuantity) {
+      toast.error("Retail orders require a minimum quantity of 1 for all items.");
       return;
     }
     if (!user) {
@@ -364,12 +370,10 @@ export function Cart() {
         </div>
 
         <div className="space-y-6">
-          {isHoreca && (
-            <div className="bg-primary/10 border border-primary/20 text-primary p-4 rounded-2xl text-xs sm:text-sm font-bold flex items-start gap-3 shadow-sm">
-              <Info className="w-5 h-5 shrink-0 mt-0.5" />
-              <p>As a HoReCa partner, you can click the quantity number to type custom decimal values (e.g., 0.5 for half the unit size).</p>
-            </div>
-          )}
+          <div className="bg-primary/10 border border-primary/20 text-primary p-4 rounded-2xl text-xs sm:text-sm font-bold flex items-start gap-3 shadow-sm">
+            <Info className="w-5 h-5 shrink-0 mt-0.5" />
+            <p>You can click the quantity number to type custom values directly.</p>
+          </div>
           {cartItems.map((item) => (
             <div key={item.product.id} className="slice-card flex flex-col sm:flex-row gap-6 p-6 items-start sm:items-center relative group">
               {/* Product preview card layout */}
@@ -429,26 +433,13 @@ export function Cart() {
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
-                    {isHoreca ? (
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={item.quantity}
-                        title="Type custom quantity"
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          if (val <= 0) {
-                            removeItem(item.product.id);
-                          } else {
-                            updateQuantity(item.product.id, val);
-                          }
-                        }}
-                        className="w-14 text-center font-bold text-xs text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
-                      />
-                    ) : (
-                      <span className="w-8 text-center font-bold text-xs text-foreground">{item.quantity}</span>
-                    )}
+                    <QuantityInput
+                      initialQuantity={item.quantity}
+                      isHoreca={isHoreca}
+                      className="w-14 text-center font-bold text-xs text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
+                      onUpdate={(val) => updateQuantity(item.product.id, val)}
+                      onRemove={() => removeItem(item.product.id)}
+                    />
                     <button 
                       onClick={() => updateQuantity(item.product.id, item.quantity + (isHoreca ? 0.5 : 1))} 
                       disabled={!item.product.inStock}
@@ -752,11 +743,17 @@ export function Cart() {
               </div>
             )}
             
+            {hasInvalidRetailQuantity && (
+              <div className="bg-orange-500/10 text-orange-500 border border-orange-500/15 p-4 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest">
+                Retail orders require quantity 1+
+              </div>
+            )}
+            
             {user ? (
               <button 
                 type="submit" 
-                disabled={loading || total() < 1000 || hasOutOfStockItems}
-                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${loading || total() < 1000 || hasOutOfStockItems ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
+                disabled={loading || total() < 1000 || hasOutOfStockItems || hasInvalidRetailQuantity}
+                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${loading || total() < 1000 || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
               >
                 {loading ? 'Committing Settlement...' : 'Finalize Settlement Board'}
               </button>
@@ -764,8 +761,8 @@ export function Cart() {
               <button 
                 type="button" 
                 onClick={signIn} 
-                disabled={total() < 1000 || hasOutOfStockItems} 
-                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${total() < 1000 || hasOutOfStockItems ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
+                disabled={total() < 1000 || hasOutOfStockItems || hasInvalidRetailQuantity} 
+                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${total() < 1000 || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
               >
                 Login to Settle Accounts
               </button>
