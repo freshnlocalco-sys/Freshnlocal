@@ -6,6 +6,7 @@ import { useProducts } from '../store/useProducts';
 import { Search, ShoppingBag, Plus, Sparkles, Filter, Leaf, Heart, Wind, Flame, Star, Check, X, History, TrendingUp, Zap } from 'lucide-react';
 import { ProductSkeleton } from '../components/ProductSkeleton';
 import { ProductCard } from '../components/ProductCard';
+import { QuickViewModal } from '../components/QuickViewModal';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -433,6 +434,7 @@ export function FNLJuice() {
   const [seeding, setSeeding] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [maxPrice, setMaxPrice] = useState<number>(500);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   
   const { addItem } = useCart();
 
@@ -920,6 +922,7 @@ export function FNLJuice() {
                       product={product} 
                       onAddToCart={handleAddToCart} 
                       displayCategoryOverride={subCatInfo?.name || "Cold-Pressed"} 
+                      onQuickView={setQuickViewProduct}
                     />
                   );
                 })
@@ -999,6 +1002,14 @@ export function FNLJuice() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <QuickViewModal 
+          product={quickViewProduct} 
+          onClose={() => setQuickViewProduct(null)} 
+        />
       )}
     </div>
   );

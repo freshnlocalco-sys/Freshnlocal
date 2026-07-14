@@ -11,6 +11,7 @@ import { getCategoryImage } from '../lib/constants';
 import { useProducts } from '../store/useProducts';
 import { useCart, Product } from '../store/useCart';
 import { ProductCard } from '../components/ProductCard';
+import { QuickViewModal } from '../components/QuickViewModal';
 import toast from 'react-hot-toast';
 
 export const CATEGORIES = [
@@ -27,7 +28,7 @@ export const CATEGORIES = [
   { id: 'mushroom', name: 'Mushroom', tagline: 'Fresh oyster, button & exotic funghi', discount: 'Earthy Fresh' }
 ];
 
-function CategoryCarousel({ category, products, handleAddToCart }: { key?: React.Key | null | undefined; category: any; products: Product[]; handleAddToCart: (product: Product) => void }) {
+function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: { key?: React.Key | null | undefined; category: any; products: Product[]; handleAddToCart: (product: Product) => void, onQuickView: (product: Product) => void }) {
   const isJuice = category.id === 'fnl juices';
   const linkDest = isJuice ? '/juice' : `/shop?category=${encodeURIComponent(category.id)}`;
   
@@ -88,6 +89,10 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
       
       <div 
         ref={scrollContainerRef}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={() => setIsHovered(true)}
+        onTouchEnd={() => setIsHovered(false)}
         className="w-full pb-6 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-2"
       >
         {displayProducts.map(product => (
@@ -96,6 +101,7 @@ function CategoryCarousel({ category, products, handleAddToCart }: { key?: React
               <ProductCard 
                 product={product}
                 onAddToCart={handleAddToCart}
+                onQuickView={onQuickView}
               />
             </div>
           </div>
@@ -156,6 +162,7 @@ export function Home() {
   const { categoryImages, productCategories, loading: settingsLoading } = useSettings();
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
   const [spotlightsLoading, setSpotlightsLoading] = useState(true);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   const activeCategories: { id: string; name: string; tagline: string; discount: string; originalId?: string }[] = React.useMemo(() => {
     if (!productCategories || productCategories.length === 0) return CATEGORIES;
@@ -558,6 +565,7 @@ export function Home() {
                   category={category}
                   products={categoryProducts.slice(0, 13)}
                   handleAddToCart={handleAddToCart}
+                  onQuickView={setQuickViewProduct}
                 />
               );
             })}
@@ -583,6 +591,7 @@ export function Home() {
                   category={juiceCategory}
                   products={juiceProducts}
                   handleAddToCart={handleAddToCart}
+                  onQuickView={setQuickViewProduct}
                 />
               );
             })()}
@@ -752,6 +761,12 @@ export function Home() {
         </div>
       </section>
 
+      {quickViewProduct && (
+        <QuickViewModal 
+          product={quickViewProduct} 
+          onClose={() => setQuickViewProduct(null)} 
+        />
+      )}
     </div>
   );
 }

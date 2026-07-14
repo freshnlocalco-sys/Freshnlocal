@@ -307,31 +307,27 @@ export function ProductDetail() {
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Order Quantity ({currentUnit ? `Packs of ${currentUnit}` : 'Packs'})</span>
-                {isHoreca && <span className="text-[9px] text-primary font-bold mt-1">Total: {quantity * parseUnitScale(currentUnit)} {getBaseUnit(currentUnit)}</span>}
+                <span className="text-[9px] text-primary font-bold mt-1">Total: {quantity * parseUnitScale(currentUnit)} {getBaseUnit(currentUnit)}</span>
               </div>
               <div className="flex items-center border border-border bg-background rounded-2xl overflow-hidden p-1.5">
                 <button 
-                  onClick={() => setQuantity(Math.max(0, quantity - 1))}
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                {isHoreca ? (
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(0, Number(e.target.value)))}
-                      title="Type custom quantity"
-                      className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
-                    />
-                    <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
-                  </div>
-                ) : (
-                  <div className="w-12 text-center text-xs font-black text-foreground">{quantity}</div>
-                )}
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="1"
+                    step={isHoreca ? "any" : "1"}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
+                    title="Type custom quantity"
+                    className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
+                  />
+                  <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
+                </div>
                 <button 
                   onClick={() => setQuantity(quantity + 1)}
                   className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"

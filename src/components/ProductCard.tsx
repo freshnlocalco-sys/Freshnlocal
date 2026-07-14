@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart, Plus, Minus } from 'lucide-react';
 import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
@@ -12,16 +12,18 @@ interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product, quantity?: number) => void;
   displayCategoryOverride?: string;
+  onQuickView?: (product: Product) => void;
   key?: React.Key | string | number;
 }
 
 const loadedProductImages = new Set<string>();
 
-export const ProductCard = React.memo(function ProductCard({ product, onAddToCart, displayCategoryOverride }: ProductCardProps) {
+export const ProductCard = React.memo(function ProductCard({ product, onAddToCart, displayCategoryOverride, onQuickView }: ProductCardProps) {
   const { categoryImages } = useSettings();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { items, updateQuantity, removeItem, addItem } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const displayCategory = displayCategoryOverride || (product.category || '').replace(/ font-bold/gi, '');
   const inWishlist = isInWishlist(product.id!);
   
@@ -108,7 +110,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
               addToWishlist(product);
             }
           }}
-          className="absolute top-2 right-2 p-1.5 z-10 transition-transform active:scale-90"
+          className="absolute top-2 right-2 p-1.5 z-20 transition-transform active:scale-90"
         >
           <Heart 
             className={`w-5 h-5 sm:w-6 sm:h-6 transition-all ${
@@ -118,9 +120,20 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             }`} 
           />
         </button>
+
       </div>
       
-      <div className="p-2.5 sm:p-3 bg-background flex-1 flex flex-col justify-between">
+      <div 
+        className="p-2.5 sm:p-3 bg-background flex-1 flex flex-col justify-between cursor-pointer"
+        onClick={(e) => {
+          e.preventDefault();
+          if (onQuickView) {
+            onQuickView(product);
+          } else {
+            navigate(`/product/${product.id}`);
+          }
+        }}
+      >
         <div className="flex flex-col gap-1 w-full">
           <h3 className="text-[10px] sm:text-xs font-sans font-bold text-foreground line-clamp-2 leading-tight">{product.name}</h3>
           
@@ -207,11 +220,11 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
               >
                 <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </button>
-              {isHoreca ? (
+              <div className="flex items-center w-full">
                 <input
                   type="number"
                   min="0"
-                  step="0.1"
+                  step={isHoreca ? "any" : "1"}
                   value={displayQuantity}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   onChange={(e) => {
@@ -221,7 +234,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                     if (quantity > 0) {
                       if (val === 0) {
                         removeItem(cartProductId);
-                        setStagedQuantity(0);
+                        setStagedQuantity(1);
                       } else {
                         updateQuantity(cartProductId, val);
                       }
@@ -232,9 +245,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                   className="font-bold text-[10px] sm:text-[11px] flex-1 text-center bg-transparent outline-none w-full border-b border-dashed border-primary/30 focus:border-primary mx-1"
                   title="Enter custom quantity"
                 />
-              ) : (
-                <span className="font-bold text-[10px] sm:text-[11px] flex-1 text-center select-none">{displayQuantity}</span>
-              )}
+              </div>
               <button 
                 className="w-7 sm:w-8 h-full flex items-center justify-center hover:bg-primary/10 active:bg-primary/20 transition-colors" 
                 onClick={(e) => { 

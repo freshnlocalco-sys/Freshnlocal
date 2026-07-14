@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Trash2 } from 'lucide-react';
 import { useWishlist } from '../store/useWishlist';
-import { useCart } from '../store/useCart';
+import { useCart, Product } from '../store/useCart';
 import { ProductCard } from '../components/ProductCard';
+import { QuickViewModal } from '../components/QuickViewModal';
 
 export function Wishlist() {
   const { items, clearWishlist } = useWishlist();
   const { addItem } = useCart();
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   const handleAddToCart = (product: any) => {
     if (product.inStock) {
@@ -67,9 +69,18 @@ export function Wishlist() {
               key={product.id} 
               product={product} 
               onAddToCart={() => handleAddToCart(product)} 
+              onQuickView={setQuickViewProduct}
             />
           ))}
         </div>
+      )}
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <QuickViewModal 
+          product={quickViewProduct} 
+          onClose={() => setQuickViewProduct(null)} 
+        />
       )}
     </div>
   );

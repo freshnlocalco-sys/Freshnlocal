@@ -9,6 +9,7 @@ import { getCategoryImage, CATEGORIES } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { ProductSkeleton } from '../components/ProductSkeleton';
 import { ProductCard } from '../components/ProductCard';
+import { QuickViewModal } from '../components/QuickViewModal';
 import toast from 'react-hot-toast';
 
 import { motion, AnimatePresence } from 'motion/react';
@@ -25,6 +26,7 @@ export function Shop() {
     return ['All Products', ...cleanCategories];
   }, [productCategories]);
   const [loading, setLoading] = useState(true);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '');
   const { addItem } = useCart();
@@ -567,6 +569,7 @@ export function Shop() {
                           product={product} 
                           onAddToCart={handleAddToCart} 
                           displayCategoryOverride={displayCategory} 
+                          onQuickView={setQuickViewProduct}
                         />
                       </motion.div>
                     );
@@ -637,6 +640,14 @@ export function Shop() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <QuickViewModal 
+          product={quickViewProduct} 
+          onClose={() => setQuickViewProduct(null)} 
+        />
       )}
     </div>
   );
