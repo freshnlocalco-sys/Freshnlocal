@@ -153,7 +153,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
               </div>
               <div className="flex items-center border border-border rounded-xl overflow-hidden p-1">
                 <button 
-                  onClick={() => setQuantity(Math.max(isHoreca ? 0.01 : 1, quantity - (isHoreca ? 0.5 : 1)))}
+                  onClick={() => setQuantity(Math.max(0, quantity - (isHoreca ? 0.5 : 1)))}
                   className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
                 >
                   <Minus className="w-3 h-3" />
@@ -164,7 +164,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
                     isHoreca={isHoreca}
                     className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
                     onUpdate={(val) => setQuantity(val)}
-                    onRemove={() => setQuantity(isHoreca ? 0.01 : 1)}
+                    onRemove={() => setQuantity(0)}
                   />
                   <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
                 </div>
@@ -179,7 +179,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
 
             <button 
               onClick={handleAddToCart}
-              disabled={!product.inStock || quantity <= 0}
+              disabled={!product.inStock || quantity < (isHoreca ? 0.01 : 1)}
               className="w-full py-4 rounded-xl bg-primary text-white font-sans text-xs uppercase font-black tracking-widest transition-colors hover:bg-primary/90 flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed shadow-md"
             >
               <ShoppingBag className="w-4 h-4" />

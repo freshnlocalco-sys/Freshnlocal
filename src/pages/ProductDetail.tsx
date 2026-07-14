@@ -313,7 +313,7 @@ export function ProductDetail() {
               </div>
               <div className="flex items-center border border-border bg-background rounded-2xl overflow-hidden p-1.5">
                 <button 
-                  onClick={() => setQuantity(Math.max(isHoreca ? 0.01 : 1, quantity - (isHoreca ? 0.5 : 1)))}
+                  onClick={() => setQuantity(Math.max(0, quantity - (isHoreca ? 0.5 : 1)))}
                   className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
                 >
                   <Minus className="w-4 h-4" />
@@ -324,7 +324,7 @@ export function ProductDetail() {
                     isHoreca={isHoreca}
                     className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
                     onUpdate={(val) => setQuantity(val)}
-                    onRemove={() => setQuantity(isHoreca ? 0.01 : 1)}
+                    onRemove={() => setQuantity(0)}
                   />
                   <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
                 </div>
@@ -347,7 +347,7 @@ export function ProductDetail() {
             <button 
               onClick={handleAddToCart}
               className="w-full py-4.5 rounded-xl bg-primary text-white font-sans text-[10px] uppercase font-black tracking-widest transition-colors hover:bg-[#09120b] hover:text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-md disabled:shadow-none"
-              disabled={!product.inStock || quantity <= 0}
+              disabled={!product.inStock || quantity < (isHoreca ? 0.01 : 1)}
             >
               <ShoppingBag className="w-4.5 h-4.5" />
               {product.inStock ? 'Checkout to Basket' : 'Out of Stock'}
