@@ -12,7 +12,7 @@ import { useWishlist } from '../store/useWishlist';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { ProductCard } from '../components/ProductCard';
 import { ProductReviews } from '../components/ProductReviews';
-import { calculateHorecaPrice } from '../lib/horecaUtils';
+import { calculateHorecaPrice, getBaseUnit, parseUnitScale } from '../lib/horecaUtils';
 import toast from 'react-hot-toast';
 
 export function ProductDetail() {
@@ -306,8 +306,8 @@ export function ProductDetail() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Order Quantity</span>
-                {isHoreca && <span className="text-[9px] text-primary font-bold mt-1">Type custom amount (e.g. 0.5)</span>}
+                <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Order Quantity ({currentUnit ? `Packs of ${currentUnit}` : 'Packs'})</span>
+                {isHoreca && <span className="text-[9px] text-primary font-bold mt-1">Total: {quantity * parseUnitScale(currentUnit)} {getBaseUnit(currentUnit)}</span>}
               </div>
               <div className="flex items-center border border-border bg-background rounded-2xl overflow-hidden p-1.5">
                 <button 
@@ -317,15 +317,18 @@ export function ProductDetail() {
                   <Minus className="w-4 h-4" />
                 </button>
                 {isHoreca ? (
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(0, Number(e.target.value)))}
-                    title="Type custom quantity"
-                    className="w-16 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
-                  />
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(0, Number(e.target.value)))}
+                      title="Type custom quantity"
+                      className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
+                    />
+                    <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
+                  </div>
                 ) : (
                   <div className="w-12 text-center text-xs font-black text-foreground">{quantity}</div>
                 )}

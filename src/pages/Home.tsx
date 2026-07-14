@@ -18,6 +18,7 @@ export const CATEGORIES = [
   { id: 'indian fruits', name: 'Indian Fruits', tagline: 'Devgad Alphonso & Sweetest Mangoes', discount: 'Flat ₹50 Off' },
   { id: 'exotic fruits', name: 'Exotic Fruits', tagline: 'Premium berries & Japanese plums', discount: 'Trending' },
   { id: 'exotic vegetables', name: 'Exotic Vegetables', tagline: 'Pristine fresh broccoli & bell peppers', discount: 'Best Seller' },
+  { id: 'indian vegetables', name: 'Indian Vegetables', tagline: 'Fresh daily harvest locals', discount: 'Daily Fresh' },
   { id: 'herbs & seasoning', name: 'Herbs & Seasoning', tagline: 'Aromatic basil, mint & rosemary', discount: 'Freshly Cut' },
   { id: 'fresh & hygenic cut fruits and vegetables', name: 'Clean Cuts', tagline: 'Pre-washed, chopped & ready to cook', discount: 'Super Safe' },
   { id: 'imported / super exotic vegetables', name: 'Imported Veggies', tagline: 'Direct from premium international farms', discount: 'Exclusive' },

@@ -43,6 +43,7 @@ export const DEFAULT_PRODUCT_CATEGORIES = [
   'Indian Fruits',
   'Exotic Fruits',
   'Exotic Vegetables',
+  'Indian Vegetables',
   'Herbs & Seasoning',
   'Fresh & Hygenic Cut Fruits and Vegetables',
   'Imported / Super Exotic Vegetables',
