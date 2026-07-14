@@ -340,7 +340,7 @@ export function Home() {
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 relative z-20">
           <form onSubmit={handleHomeSearch} className="relative w-full shadow-xl shadow-black/5 rounded-full overflow-hidden group border border-border/50 bg-background/80 backdrop-blur-xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300">
             <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-full overflow-hidden flex items-center justify-center bg-white/50 z-10 pointer-events-none">
-              <img src="/freshi-icon.png?v=5" alt="Freshi" className="w-full h-full object-contain" />
+              <img src="/freshi-icon.jpg?v=1" alt="Freshi" className="w-full h-full object-contain" />
             </div>
             
             {/* Custom Placeholder */}
