@@ -73,7 +73,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
         </button>
 
         {/* Image Section */}
-        <div className="w-full md:w-1/2 aspect-square md:aspect-auto bg-white border-b md:border-b-0 md:border-r border-border relative">
+        <div className="w-full md:w-1/2 h-48 sm:h-64 md:h-auto shrink-0 bg-white border-b md:border-b-0 md:border-r border-border relative">
           <img 
             src={productImgSrc} 
             alt={product.name}
