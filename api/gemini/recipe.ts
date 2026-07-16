@@ -32,22 +32,35 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { products, catalog, preferences, recipeName } = req.body;
+    const { products, catalog, preferences, recipeName, history } = req.body;
     const catalogText = catalog ? catalog.join(" | ") : "";
     
     const preferencesText = preferences && preferences.length > 0 ? ` The user has the following preferences for the recipe: ${preferences.join(", ")}.` : "";
     
+    // Format conversation history for context
+    let historyContext = "";
+    if (history && Array.isArray(history) && history.length > 0) {
+      historyContext = "Below is the history of our conversation so far. Refer to this context to answer follow-up questions or continue the conversation:\n";
+      history.forEach((msg: any) => {
+        const senderName = msg.sender === 'user' ? 'User' : 'Freshi (AI Assistant)';
+        historyContext += `[${senderName}]: ${msg.text}\n`;
+      });
+      historyContext += "\n";
+    }
+
     let prompt = '';
     if (recipeName) {
-      prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO (a premium fresh produce delivery engine in Surat). The user wants to make a specific recipe or asked a question: "${recipeName}".${preferencesText}
+      prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO (a premium fresh produce delivery engine in Surat). 
+
+${historyContext}The user wants to make a specific recipe, has a follow-up request, or asked a question: "${recipeName}".${preferencesText}
       
 CRITICAL GUARD RAILS:
 - You MUST ONLY answer questions or provide recipes that are related to food, cooking, culinary arts, groceries, fresh produce, or the FreshNLocal business.
 - If the user's request is NOT related to these topics, you MUST politely refuse to answer and remind them that you are a culinary assistant for FreshNLocal. In this case, return the refusal message in the \`recipeMarkdown\` field and an empty array for \`suggestedProductNames\`. Do not provide a recipe.
 
 If the request IS related to food or cooking:
-1. Provide the full recipe for "${recipeName}" (or answer their food-related question), including the required ingredients and step-by-step instructions if applicable. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
-2. Recommend ALL complementary products (ingredients) that the user should buy from our store to make this recipe. Identify as many required ingredients from the catalog as possible.
+1. Provide the full recipe (or answer their food-related question/follow-up), including the required ingredients and step-by-step instructions if applicable. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
+2. Recommend ALL complementary products (ingredients) from our catalog that the user should buy from our store to make this recipe or dish. Identify as many required ingredients from the catalog as possible.
 
 CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - You MUST select recommendations ONLY from the following exact store catalog:
@@ -55,7 +68,9 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - Do NOT suggest any juices, beverages, or drinks unless explicitly part of the recipe. Focus on solid foods, spices, or garnishes.
 - Use the EXACT product name as it appears in the catalog.`;
     } else {
-      prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO. The user has selected these ingredients they already have: ${(products || []).join(", ")}.${preferencesText}
+      prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO. 
+
+${historyContext}The user has selected these ingredients they already have: ${(products || []).join(", ")}.${preferencesText}
       
 CRITICAL GUARD RAILS:
 - You MUST ONLY answer questions or provide recipes that are related to food, cooking, culinary arts, groceries, fresh produce, or the FreshNLocal business.
