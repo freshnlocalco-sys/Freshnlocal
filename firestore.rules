@@ -18,6 +18,17 @@ service cloud.firestore {
     }
     
     match /users/{userId} {
+      match /recipeChat/{chatId} {
+        function isValidRecipeChat(data) {
+          return data.size() >= 2 && data.size() <= 3
+            && data.keys().hasAll(['messages', 'updatedAt'])
+            && data.messages is list
+            && data.updatedAt is number;
+        }
+        allow read, list: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+        allow create, update: if isSignedIn() && request.auth.uid == userId && isValidRecipeChat(incoming());
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
       match /savedRecipes/{recipeId} {
         function isValidSavedRecipe(data) {
           return data.size() >= 2 && data.size() <= 4

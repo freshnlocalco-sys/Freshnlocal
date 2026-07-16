@@ -77,6 +77,21 @@
       },
       "description": "User's saved recipes"
     },
+    "/users/{userId}/recipeChat/{chatId}": {
+      "schema": {
+        "title": "RecipeChat",
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": { "type": "object" }
+          },
+          "updatedAt": { "type": "number" }
+        },
+        "required": ["messages", "updatedAt"]
+      },
+      "description": "User's AI Chef chat history sessions"
+    },
     "/products/{productId}": {
       "schema": { "$ref": "#/entities/Product" },
       "description": "Global catalog of products"

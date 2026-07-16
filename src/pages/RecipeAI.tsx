@@ -6,7 +6,7 @@ import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
 
 interface ChatMessage {
@@ -30,15 +30,28 @@ export function RecipeAI() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   
-  // State for Chat Messages
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    {
-      id: 'welcome',
-      sender: 'bot',
-      text: "Hi! I'm **Freshi**, your personal AI chef and culinary assistant for **FreshNLocal.co**! 🥑\n\nI can help you:\n1. 🍳 **Suggest delicious recipes** or answer any food, grocery, and culinary questions.\n2. 🛒 **Recommend matching premium products** from our catalog in Surat that you can add to your cart immediately!\n\nWhat are we cooking today? Ask me any food-related questions!",
-      timestamp: Date.now()
+  // State for Chat Messages loaded initially from localStorage if present
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const stored = localStorage.getItem('fnl_recipe_chat_history');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse chat history from localStorage', e);
     }
-  ]);
+    return [
+      {
+        id: 'welcome',
+        sender: 'bot',
+        text: "Hi! I'm **Freshi**, your personal AI chef and culinary assistant for **FreshNLocal.co**! 🥑\n\nI can help you:\n1. 🍳 **Suggest delicious recipes** or answer any food, grocery, and culinary questions.\n2. 🛒 **Recommend matching premium products** from our catalog in Surat that you can add to your cart immediately!\n\nWhat are we cooking today? Ask me any food-related questions!",
+        timestamp: Date.now()
+      }
+    ];
+  });
   
   const [chatInput, setChatInput] = useState('');
   const [savingMsgId, setSavingMsgId] = useState<string | null>(null);
@@ -47,6 +60,68 @@ export function RecipeAI() {
   const { products } = useProducts();
   const addToCart = useCart(state => state.addItem);
   const { user } = useAuth();
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Sync with Firestore if logged in
+  useEffect(() => {
+    if (user) {
+      setLoadingHistory(true);
+      const loadHistoryFromFirestore = async () => {
+        try {
+          const chatRef = doc(db, 'users', user.uid, 'recipeChat', 'current');
+          const docSnap = await getDoc(chatRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data && Array.isArray(data.messages)) {
+              setMessages(data.messages);
+              localStorage.setItem('fnl_recipe_chat_history', JSON.stringify(data.messages));
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to load chat history from Firestore', err);
+        } finally {
+          setLoadingHistory(false);
+        }
+      };
+      loadHistoryFromFirestore();
+    }
+  }, [user]);
+
+  // Auto-save messages to localStorage and Firestore
+  useEffect(() => {
+    if (loadingHistory) return;
+
+    // Save to localStorage
+    localStorage.setItem('fnl_recipe_chat_history', JSON.stringify(messages));
+
+    // Save to Firestore if user is logged in
+    if (user) {
+      const saveToFirestore = async () => {
+        try {
+          // Remove active loading indicators or errors from the stored history
+          const cleanMessages = messages.map(m => {
+            if (m.isLoading) {
+              const { isLoading, ...rest } = m;
+              return { ...rest, text: 'Request was interrupted.' } as ChatMessage;
+            }
+            return m;
+          });
+
+          await setDoc(doc(db, 'users', user.uid, 'recipeChat', 'current'), {
+            messages: cleanMessages,
+            updatedAt: Date.now()
+          });
+        } catch (err) {
+          console.warn('Failed to save chat history to Firestore', err);
+        }
+      };
+
+      const timer = setTimeout(() => {
+        saveToFirestore();
+      }, 2000); // 2 second debounce to avoid rapid Firestore writes
+      return () => clearTimeout(timer);
+    }
+  }, [messages, user, loadingHistory]);
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
