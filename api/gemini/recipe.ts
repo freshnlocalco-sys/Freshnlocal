@@ -1,13 +1,30 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
+let aiClient: GoogleGenAI | null = null;
+
+function getAIClient() {
+  if (!aiClient) {
+    const rawApiKey = process.env.GEMINI_API_KEY;
+    const apiKey = rawApiKey ? rawApiKey.replace(/^["']|["']$/g, '').trim() : undefined;
+    const keyExists = !!apiKey;
+    const keyLength = apiKey ? apiKey.length : 0;
+    const keyStart = apiKey ? apiKey.substring(0, 4) : 'none';
+    console.log(`[DEBUG] API Key Check: exists=${keyExists}, length=${keyLength}, startsWith=${keyStart}`);
+    
+    if (!apiKey) {
+      console.warn("GEMINI_API_KEY is not set.");
     }
+    aiClient = new GoogleGenAI({
+      apiKey: apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
   }
-});
+  return aiClient;
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -56,6 +73,7 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - Use the EXACT product name as it appears in the catalog.`;
     }
     
+    const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
@@ -83,9 +101,19 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
     const isCreditsDepleted = errMsg.includes('prepayment') || errMsg.includes('credits are depleted') || errMsg.includes('depleted') || errMsg.includes('resource_exhausted');
     const isRateLimit = !isCreditsDepleted && (error?.status === 429 || errMsg.includes('429') || errMsg.includes('quota'));
     const isUnavailable = error?.status === 503 || errMsg.includes('503') || errMsg.includes('unavailable') || errMsg.includes('overloaded');
+    const isInvalidKey = errMsg.includes('api key not valid') || errMsg.includes('api_key_invalid') || error?.status === 401;
+    
+    if (!isInvalidKey) {
+      console.error("Gemini API Request Failed:", error?.message || error);
+    }
     
     let friendlyError = "Failed to generate recipe. Please try again later.";
-    if (isCreditsDepleted) {
+    const rawApiKey = process.env.GEMINI_API_KEY;
+      const apiKey = rawApiKey ? rawApiKey.replace(/^["']|["']$/g, '').trim() : undefined;
+      
+      if (isInvalidKey || !apiKey) {
+      friendlyError = "Invalid or missing Gemini API key. Please configure a valid API key in your environment or settings.";
+    } else if (isCreditsDepleted) {
       friendlyError = "Freshi AI Chef is currently under active development and getting polished with new recipes! 🍳✨ This feature is in its building stage. Please check back soon!";
     } else if (isRateLimit) {
       friendlyError = "Recipe AI is currently experiencing high demand. Please try again in a few moments.";
@@ -93,6 +121,6 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
       friendlyError = "Recipe AI is currently unavailable or overloaded. Please try again later.";
     }
     
-    res.status(isCreditsDepleted || isRateLimit ? 429 : (isUnavailable ? 503 : 500)).json({ error: friendlyError });
+    res.status(isInvalidKey || !apiKey ? 401 : (isCreditsDepleted || isRateLimit ? 429 : (isUnavailable ? 503 : 500))).json({ error: friendlyError });
   }
 }

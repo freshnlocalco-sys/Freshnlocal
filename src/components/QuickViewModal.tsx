@@ -73,7 +73,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
         </button>
 
         {/* Image Section */}
-        <div className="w-full md:w-1/2 h-48 sm:h-64 md:h-auto shrink-0 bg-white border-b md:border-b-0 md:border-r border-border relative">
+        <div className="w-full md:w-1/2 h-40 sm:h-56 md:h-auto shrink-0 bg-white border-b md:border-b-0 md:border-r border-border relative">
           <img 
             src={productImgSrc} 
             alt={product.name}
@@ -81,47 +81,47 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
           />
           <button
             onClick={() => inWishlist ? removeFromWishlist(product.id!) : addToWishlist(product)}
-            className="absolute top-4 left-4 p-2 z-10 bg-background/80 backdrop-blur-sm rounded-full transition-transform active:scale-90"
+            className="absolute top-3 left-3 md:top-4 md:left-4 p-2 z-10 bg-background/80 backdrop-blur-sm rounded-full transition-transform active:scale-90"
           >
-            <Heart className={`w-5 h-5 ${inWishlist ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
+            <Heart className={`w-4 h-4 md:w-5 md:h-5 ${inWishlist ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
           </button>
         </div>
 
         {/* Details Section */}
-        <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col h-full overflow-y-auto">
-          <div className="mb-6">
-            <h2 className="text-2xl font-black tracking-tight text-foreground uppercase mb-2">
+        <div className="w-full md:w-1/2 p-4 md:p-8 flex flex-col h-full overflow-y-auto">
+          <div className="mb-4 md:mb-6">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-foreground uppercase mb-2">
               {product.name}
             </h2>
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground bg-secondary px-2 py-1 rounded">
+            <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-4">
+              <span className="text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground bg-secondary px-2 py-1 rounded">
                 {product.category}
               </span>
               {!product.inStock && (
-                <span className="text-[10px] uppercase tracking-wider font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded">
+                <span className="text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded">
                   Out of Stock
                 </span>
               )}
             </div>
             
-            <div className="flex items-end gap-3 mb-6">
-              <div className="text-3xl font-black text-primary">₹{currentPrice}</div>
+            <div className="flex items-end gap-2 md:gap-3 mb-4 md:mb-6">
+              <div className="text-2xl md:text-3xl font-black text-primary">₹{currentPrice}</div>
               {currentOriginalPrice && currentOriginalPrice > currentPrice && (
-                <div className="text-lg font-bold text-muted-foreground line-through mb-1">
+                <div className="text-base md:text-lg font-bold text-muted-foreground line-through mb-1">
                   ₹{currentOriginalPrice}
                 </div>
               )}
             </div>
 
             {allVariants.length > 1 ? (
-              <div className="flex flex-wrap gap-2 mb-6">
+              <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
                 {allVariants.map((v, idx) => {
                   const vDisplayUnit = isHoreca && v.horecaPrice ? (v.horecaUnit || '1KG') : v.unit;
                   return (
                     <button
                       key={idx}
                       onClick={() => setSelectedVariantIdx(idx)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-wider font-bold transition-colors border ${
+                      className={`px-3 py-1.5 rounded-lg text-[9px] md:text-[10px] uppercase tracking-wider font-bold transition-colors border ${
                         selectedVariantIdx === idx 
                           ? 'bg-primary text-white border-primary' 
                           : 'bg-transparent text-foreground border-border hover:border-primary/50'
@@ -133,27 +133,27 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
                 })}
               </div>
             ) : currentUnit && (
-              <div className="mb-6 text-[10px] uppercase tracking-wider font-bold text-muted-foreground border border-border px-3 py-1.5 rounded-lg inline-block">
+              <div className="mb-4 md:mb-6 text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground border border-border px-3 py-1.5 rounded-lg inline-block">
                 Pack / Unit Size: <span className="text-foreground ml-1">{currentUnit}</span>
               </div>
             )}
 
             {product.description && (
-              <p className="text-xs text-muted-foreground leading-relaxed mb-6">
+              <p className="text-[11px] md:text-xs text-muted-foreground leading-relaxed mb-4 md:mb-6 line-clamp-3 md:line-clamp-none">
                 {product.description}
               </p>
             )}
           </div>
 
-          <div className="mt-auto space-y-6">
-            <div className="flex items-center justify-between border-t border-border pt-6">
+          <div className="mt-auto space-y-4 md:space-y-6">
+            <div className="flex items-center justify-between border-t border-border pt-4 md:pt-6">
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Quantity</span>
                 <span className="text-[9px] text-primary font-bold mt-1">Total: {quantity * parseUnitScale(currentUnit)} {getBaseUnit(currentUnit)}</span>
               </div>
               <div className="flex items-center border border-border rounded-xl overflow-hidden p-1">
                 <button 
-                  onClick={() => setQuantity(Math.max(0, quantity - (isHoreca ? 0.5 : 1)))}
+                  onClick={() => setQuantity(Math.max(isHoreca ? 0.01 : 1, quantity - (isHoreca ? 0.5 : 1)))}
                   className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
                 >
                   <Minus className="w-3 h-3" />
@@ -164,7 +164,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
                     isHoreca={isHoreca}
                     className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
                     onUpdate={(val) => setQuantity(val)}
-                    onRemove={() => setQuantity(0)}
+                    onRemove={() => setQuantity(isHoreca ? 0.01 : 1)}
                   />
                   <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
                 </div>
