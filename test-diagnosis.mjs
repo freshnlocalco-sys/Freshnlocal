@@ -10,10 +10,10 @@ function maskKey(key) {
 }
 
 console.log("1. API Key being used at runtime:", maskKey(apiKey));
-console.log("2. Using model: gemini-2.5-flash");
+console.log("2. Using model: gemini-3.5-flash");
 
 async function runDiagnosis() {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
   console.log("4. Endpoint URL:", endpoint.replace(apiKey, maskKey(apiKey)));
   
   console.log("5. Sending test request to Gemini API...");
