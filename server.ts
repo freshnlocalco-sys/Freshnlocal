@@ -134,6 +134,62 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
     }
   });
 
+  // API route for generating high-fidelity product description & SEO meta description
+  app.post("/api/gemini/generate-description", async (req, res) => {
+    try {
+      const { name, category, unit } = req.body;
+      if (!name || !category) {
+        return res.status(400).json({ error: "Product name and category are required." });
+      }
+
+      const prompt = `You are an expert food content writer for freshnlocal.co, a premium fresh produce D2C e-commerce brand based in Surat, Gujarat, India.
+Your task is to write a unique, highly engaging product description for: "${name}" (Category: ${category}${unit ? `, Unit: ${unit}` : ''}).
+
+STRICT CONTENT & WRITING RULES:
+1. The DESCRIPTION must be exactly between 60 and 90 words.
+2. It must have a completely distinct sentence structure and opening line. Do NOT reuse templates or identical starting phrases from other products.
+3. Include the following elements, woven naturally into smooth, flowing prose (NEVER use bullet points):
+   - What the product is and its variety/origins if applicable.
+   - Key nutrients: protein, fiber, vitamins, and minerals. Cite approximate figures per 100g where commonly known as "approx." (never state clinical values as exact, undisputed facts).
+   - Common traditional culinary uses in Indian households, especially in Western India / Gujarat if relevant (e.g., in curries, subzis, undhiyu, salads, dals, garnishes, etc.).
+   - Exactly one clear, practical tip on how to select or store it to keep it fresh.
+4. CRITICAL: Do NOT make medical, therapeutic, or curing claims. Avoid words like "cures," "treats," "boosts immunity," "prevents disease," "reduces cholesterol," "heals," or similar medicinal language. Use general health, wellness, and vitality-boosting associations instead.
+5. The content must be completely original and creative. Do NOT copy known brand descriptions or Wikipedia copy.
+6. Provide a separate SEO META DESCRIPTION that is under 155 characters. It must be completely different in phrasing from the main description, summarizing the product beautifully to drive clicks.
+
+Format your output exactly as a JSON object with these keys:
+- description: (a string containing the 60-90 words description)
+- metaDescription: (a string containing the SEO meta description under 155 characters)`;
+
+      const ai = getAIClient();
+      if (!ai) {
+        return res.status(500).json({ error: "Gemini API client not initialized." });
+      }
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              description: { type: "STRING" },
+              metaDescription: { type: "STRING" }
+            },
+            required: ["description", "metaDescription"]
+          }
+        }
+      });
+
+      const data = JSON.parse(response.text || "{}");
+      res.json(data);
+    } catch (error: any) {
+      console.error("Gemini description generation failed:", error?.message || error);
+      res.status(500).json({ error: error?.message || "Failed to generate product description." });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

@@ -240,6 +240,20 @@ export function AdminDashboard() {
     errors: 0
   });
 
+  const [aiGenerationStatus, setAiGenerationStatus] = useState<{
+    generating: boolean;
+    total: number;
+    processed: number;
+    generated: number;
+    errors: number;
+  }>({
+    generating: false,
+    total: 0,
+    processed: 0,
+    generated: 0,
+    errors: 0
+  });
+
   
 
   useEffect(() => {
@@ -342,6 +356,140 @@ export function AdminDashboard() {
     } catch (e) {
       console.error('Failed to parse base64 directly:', e);
       throw e;
+    }
+  };
+
+
+
+  const runAIDescriptionGeneration = async () => {
+    if (aiGenerationStatus.generating) return;
+
+    setAiGenerationStatus({
+      generating: true,
+      total: 0,
+      processed: 0,
+      generated: 0,
+      errors: 0
+    });
+
+    try {
+      toast.loading('Scanning catalog for products needing descriptions...', { id: 'ai-desc-generation' });
+      const productsSnap = await getDocs(collection(db, 'products'));
+      const allDocs = productsSnap.docs;
+
+      const targetCategories = [
+        'in season fruuts',
+        'exotic fruits',
+        'indian fruits',
+        'exotic vegetable',
+        'imported vegetable',
+        'mushrooms',
+        'herbs & seasoning',
+        'indian vegetable',
+        'fresh & hygenic cut fruits and vegetables',
+        'leafy greens',
+        'frozen items'
+      ];
+
+      const docsToGenerate = allDocs.filter(d => {
+        const data = d.data();
+        const category = data.category || '';
+        const catLower = category.toLowerCase().trim();
+        const isTarget = targetCategories.some(t => {
+          const tLower = t.toLowerCase().trim();
+          return tLower === catLower || tLower + 's' === catLower || tLower === catLower + 's';
+        });
+        if (!isTarget) return false;
+
+        const desc = (data.description || '').trim();
+        const wordCount = desc.split(/\s+/).length;
+        const needsDesc = !data.description || wordCount < 20 || desc.toLowerCase().startsWith('origin') || !data.metaDescription;
+        return needsDesc;
+      });
+
+      const totalCount = docsToGenerate.length;
+      if (totalCount === 0) {
+        toast.success('All matching fresh produce products already have high-fidelity AI descriptions!', { id: 'ai-desc-generation' });
+        setAiGenerationStatus(prev => ({ ...prev, generating: false }));
+        return;
+      }
+
+      toast.loading(`Found ${totalCount} products to generate descriptions for. Processing in batches...`, { id: 'ai-desc-generation' });
+      setAiGenerationStatus(prev => ({
+        ...prev,
+        total: totalCount,
+        processed: 0,
+        generated: 0,
+        errors: 0
+      }));
+
+      let localProcessed = 0;
+      let localGenerated = 0;
+      let localErrors = 0;
+
+      const BATCH_SIZE = 3;
+      for (let i = 0; i < docsToGenerate.length; i += BATCH_SIZE) {
+        const batch = docsToGenerate.slice(i, i + BATCH_SIZE);
+
+        await Promise.all(batch.map(async (docSnap) => {
+          const data = docSnap.data();
+          try {
+            const res = await fetch("/api/gemini/generate-description", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: data.name,
+                category: data.category,
+                unit: data.unit || ""
+              })
+            });
+
+            if (!res.ok) {
+              throw new Error(`HTTP error ${res.status}`);
+            }
+
+            const result = await res.json();
+            if (!result.description || !result.metaDescription) {
+              throw new Error("Invalid output received from Gemini API.");
+            }
+
+            // Update in Firestore!
+            await updateDoc(doc(db, 'products', docSnap.id), {
+              description: result.description,
+              metaDescription: result.metaDescription,
+              updatedAt: Date.now()
+            });
+
+            localGenerated++;
+          } catch (err: any) {
+            console.error(`Failed generation for ${data.name}:`, err);
+            localErrors++;
+          } finally {
+            localProcessed++;
+            setAiGenerationStatus(prev => ({
+              ...prev,
+              processed: localProcessed,
+              generated: localGenerated,
+              errors: localErrors
+            }));
+          }
+        }));
+
+        // Delay between batches to respect rate limits nicely
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+
+      toast.success(`AI generation complete! Successfully generated descriptions for ${localGenerated} products.`, { id: 'ai-desc-generation' });
+      
+      // Trigger local store update
+      const mProductsStore = await import('../store/useProducts');
+      mProductsStore.useProducts.getState().fetchProducts(true);
+
+    } catch (err: any) {
+      console.error("AI Description generation failed:", err);
+      toast.error(`AI generation failed: ${err.message || 'Server error'}`, { id: 'ai-desc-generation' });
+    } finally {
+      setAiGenerationStatus(prev => ({ ...prev, generating: false }));
     }
   };
 
@@ -2769,6 +2917,47 @@ export function AdminDashboard() {
                       className="w-full py-3 sm:py-4 bg-[#09120b] hover:bg-neutral-800 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Migrate Images to Cloud Storage
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* AI Description & SEO Generator Section */}
+              <div className="pt-6 sm:pt-8 border-t border-border space-y-4 sm:space-y-6">
+                <div className="space-y-1 sm:space-y-2">
+                  <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 animate-pulse" /> AI Description & SEO Generator
+                  </h3>
+                  <p className="text-muted-foreground text-[9px] sm:text-xxs font-semibold leading-relaxed">
+                    Generate unique, high-fidelity SEO descriptions and meta tags for your fresh produce categories using Gemini. Complies with local Surat content guidelines (60–90 words, Indian household culinary uses, vitamin/mineral references, select/store tip, no medical claims).
+                  </p>
+                </div>
+
+                <div className="p-4 sm:p-5 bg-white border border-border rounded-xl sm:rounded-2xl space-y-3 sm:space-y-4 shadow-sm">
+                  {aiGenerationStatus.generating ? (
+                    <div className="space-y-3.5">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                        <span>Generating descriptions...</span>
+                        <span className="text-amber-500 font-mono">{aiGenerationStatus.processed} / {aiGenerationStatus.total}</span>
+                      </div>
+                      <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-amber-500 h-full transition-all duration-300"
+                          style={{ width: `${aiGenerationStatus.total ? (aiGenerationStatus.processed / aiGenerationStatus.total) * 100 : 0}%` }}
+                        ></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-[9px] font-black tracking-widest uppercase text-muted-foreground">
+                        <div>Succeeded: <span className="text-emerald-500">{aiGenerationStatus.generated}</span></div>
+                        <div>Errors: <span className="text-red-500">{aiGenerationStatus.errors}</span></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={runAIDescriptionGeneration}
+                      className="w-full py-3 sm:py-4 bg-[#d97706] hover:bg-amber-700 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-white animate-bounce" /> Generate AI Descriptions
                     </button>
                   )}
                 </div>

@@ -21,6 +21,7 @@ export interface Product {
   imageUrl: string;
   category: string;
   description: string;
+  metaDescription?: string;
   unit?: string;
   quantityValue?: number;
   quantityUnit?: string;
