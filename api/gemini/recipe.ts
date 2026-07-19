@@ -65,7 +65,7 @@ If the request IS related to food or cooking:
 CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - You MUST select recommendations ONLY from the following exact store catalog:
 [ ${catalogText} ]
-- Do NOT suggest any juices, beverages, or drinks unless explicitly part of the recipe. Focus on solid foods, spices, or garnishes.
+- You MUST NEVER suggest, recommend, or add any FNL Juices, juices, cold-pressed juices, beverages, or drinks in either the recipe markdown or the suggested products, even if they are part of the catalog or the user asks for them. We do not sell juices for recipes. Focus strictly on solid foods, fresh produce, groceries, spices, or garnishes.
 - Use the EXACT product name as it appears in the catalog.`;
     } else {
       prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO. 
@@ -84,7 +84,7 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
 - You MUST select recommendations ONLY from the following exact store catalog:
 [ ${catalogText} ]
 - Do NOT suggest any product that is already in the user's selected list.
-- Do NOT suggest any juices, beverages, or drinks. Focus on solid foods, spices, or garnishes.
+- You MUST NEVER suggest, recommend, or add any FNL Juices, juices, cold-pressed juices, beverages, or drinks in either the recipe markdown or the suggested products, even if they are part of the catalog or the user asks for them. We do not sell juices for recipes. Focus strictly on solid foods, fresh produce, groceries, spices, or garnishes.
 - Use the EXACT product name as it appears in the catalog.`;
     }
     

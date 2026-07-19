@@ -508,10 +508,16 @@ export function RecipeAI() {
         const suggestions: Product[] = [];
         if (data.suggestedProductNames && Array.isArray(data.suggestedProductNames)) {
           data.suggestedProductNames.forEach((name: string) => {
-            const match = products.find(p => 
-              p.name.toLowerCase().includes(name.toLowerCase()) || 
-              name.toLowerCase().includes(p.name.toLowerCase())
-            );
+            const match = products.find(p => {
+              const cat = p.category?.toLowerCase() || '';
+              const pName = p.name.toLowerCase();
+              // Prevent matching any juice, beverage, or FNL brand drink
+              if (cat.includes('juice') || cat.includes('fnl') || pName.includes('juice')) {
+                return false;
+              }
+              return p.name.toLowerCase().includes(name.toLowerCase()) || 
+                     name.toLowerCase().includes(p.name.toLowerCase());
+            });
             if (match && !suggestions.find(s => s.id === match.id)) {
               suggestions.push(match);
             }
@@ -726,10 +732,16 @@ export function RecipeAI() {
         const suggestions: Product[] = [];
         if (data.suggestedProductNames && Array.isArray(data.suggestedProductNames)) {
           data.suggestedProductNames.forEach((name: string) => {
-            const match = products.find(p => 
-              p.name.toLowerCase().includes(name.toLowerCase()) || 
-              name.toLowerCase().includes(p.name.toLowerCase())
-            );
+            const match = products.find(p => {
+              const cat = p.category?.toLowerCase() || '';
+              const pName = p.name.toLowerCase();
+              // Prevent matching any juice, beverage, or FNL brand drink
+              if (cat.includes('juice') || cat.includes('fnl') || pName.includes('juice')) {
+                return false;
+              }
+              return p.name.toLowerCase().includes(name.toLowerCase()) || 
+                     name.toLowerCase().includes(p.name.toLowerCase());
+            });
             if (match && !suggestions.find(s => s.id === match.id)) {
               suggestions.push(match);
             }
