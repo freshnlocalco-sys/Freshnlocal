@@ -1056,6 +1056,48 @@ export function AdminDashboard() {
     }
   };
 
+  const handleExportHorecaCSV = () => {
+    try {
+      const headers = ["PRODUCT NAME", "CATEGORY", "HORECA PRICE", "HORECA UNIT", "DESCRIPTION", "IMAGE URL"];
+      const csvRows = [];
+      csvRows.push(headers.join(","));
+      
+      const horecaProducts = filteredProducts.filter(p => p.horecaPrice !== undefined && p.horecaPrice !== null);
+      
+      horecaProducts.forEach(product => {
+        const row = [
+          `"${(product.name || '').replace(/"/g, '""')}"`,
+          `"${(product.category || '').replace(/"/g, '""')}"`,
+          `"${product.horecaPrice !== undefined && product.horecaPrice !== null ? product.horecaPrice : ''}"`,
+          `"${(product.horecaUnit || '').replace(/"/g, '""')}"`,
+          `"${(product.description || '').replace(/"/g, '""')}"`,
+          `"${(product.imageUrl || '').replace(/"/g, '""')}"`
+        ];
+        csvRows.push(row.join(","));
+      });
+      
+      const csvString = csvRows.join("\n");
+      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `horeca_products_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      if (horecaProducts.length === 0) {
+        toast.error("No Horeca products found to export.");
+      } else {
+        toast.success(`Exported ${horecaProducts.length} Horeca products successfully.`);
+      }
+    } catch (err) {
+      console.error("Horeca Export error:", err);
+      toast.error("Failed to export Horeca products.");
+    }
+  };
+
   const handleSeedSignatureJuices = async () => {
     try {
       setSeedingJuices(true);
@@ -2996,12 +3038,20 @@ export function AdminDashboard() {
                     {productSection === 'juices' && "FNL Cold-Pressed Juices Showcase"}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <button
                     onClick={handleExportCSV}
                     className="flex-shrink-0 flex items-center gap-1.5 bg-neutral-900 hover:bg-black text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm"
+                    title="Download All Products"
                   >
                     <Download className="w-3.5 h-3.5" /> CSV
+                  </button>
+                  <button
+                    onClick={handleExportHorecaCSV}
+                    className="flex-shrink-0 flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm"
+                    title="Download Horeca Pricing"
+                  >
+                    <Download className="w-3.5 h-3.5" /> HORECA
                   </button>
                   <input 
                     type="search"

@@ -10,6 +10,7 @@ import { useSettings } from '../store/useSettings';
 import { ProductSkeleton } from '../components/ProductSkeleton';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
+import { SectionDivider } from '../components/SectionDivider';
 import toast from 'react-hot-toast';
 
 import { motion, AnimatePresence } from 'motion/react';
@@ -445,7 +446,7 @@ export function Shop() {
         <main className="flex-1 relative z-10">
           <div className="p-3 sm:p-5 md:p-8 min-h-full flex flex-col bg-white">
             {/* Desktop header with search */}
-            <div className="hidden md:flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center mb-8 border-b border-border pb-6">
+            <div className="hidden md:flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center mb-6 pb-2">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-foreground line-clamp-1">{categoryFilter === 'All Products' ? 'The Harvest' : categoryFilter} <span className="text-primary font-bold hidden xl:inline-block">/ Fresh Selection</span></h1>
                 <p className="text-sm text-muted-foreground mt-2 font-medium">Delivering premium ingredients, responsibly sourced.</p>
@@ -530,12 +531,14 @@ export function Shop() {
               </div>
             </div>
             
-            <div className="md:hidden flex items-center justify-between mb-4 pb-2 border-b border-border w-full">
+            <div className="md:hidden flex items-center justify-between mb-2 pb-2 w-full">
                <h2 className="text-lg font-black tracking-tight">{categoryFilter === 'All Products' ? 'All Items' : formatCategoryName(categoryFilter)}</h2>
                <button onClick={() => setShowFilterModal(true)} className="p-2 rounded-lg bg-secondary text-foreground text-xs font-bold flex items-center gap-1.5 shrink-0 border border-transparent active:bg-black/5">
                   <Filter className="w-3.5 h-3.5"/> Filter
                </button>
             </div>
+
+            <SectionDivider className="py-0 mb-6" />
 
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pb-6">
               <AnimatePresence mode="popLayout">

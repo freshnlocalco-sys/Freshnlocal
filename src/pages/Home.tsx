@@ -12,6 +12,7 @@ import { useProducts } from '../store/useProducts';
 import { useCart, Product } from '../store/useCart';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
+import { SectionDivider } from '../components/SectionDivider';
 import toast from 'react-hot-toast';
 
 export const CATEGORIES = [
@@ -535,6 +536,9 @@ export function Home() {
             </div>
           </div>
 
+          {/* Divider between Categories Grid and Product Showcases */}
+          <SectionDivider className="max-w-[1020px] mx-auto py-2 sm:py-4" />
+
           {/* All Categories Product Showcases */}
           <div className="w-full max-w-[1020px] mx-auto mt-12 md:mt-20 text-left relative z-20 space-y-12 md:space-y-16 overflow-hidden">
             <style dangerouslySetInnerHTML={{__html: `
@@ -599,6 +603,9 @@ export function Home() {
 
         </motion.div>
       </section>
+
+      {/* Divider between Hero/Catalog Showcases and Bento */}
+      <SectionDivider className="max-w-7xl mx-auto py-2 sm:py-4" />
 
       {/* Modern Bento Value Proposition Section */}
       <section className="w-full bg-secondary border-y border-border/40 py-24">
@@ -740,6 +747,9 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {/* Divider between Bento and Bottom CTA Banner */}
+      <SectionDivider className="max-w-7xl mx-auto py-2 sm:py-4" />
 
       {/* Beautiful bottom banner resembling slice dynamic launch screens */}
       <section className="w-full bg-primary text-white py-20 px-4 text-center relative overflow-hidden">
