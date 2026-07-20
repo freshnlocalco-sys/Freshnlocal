@@ -7,6 +7,7 @@ import { Search, ShoppingBag, Plus, Sparkles, Filter, Leaf, Heart, Wind, Flame, 
 import { ProductSkeleton } from '../components/ProductSkeleton';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
+import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -672,6 +673,10 @@ export function FNLJuice() {
 
   return (
     <div className="w-full max-w-full box-border overflow-x-hidden bg-background text-foreground animate-in fade-in duration-300">
+      <SEO 
+        title="Cold-Pressed Juices & Wellness Elixirs" 
+        description="Explore FreshNLocal Co.'s fresh, raw, cold-pressed juices, functional detox elixirs, organic smoothies, and pure Satvik tender coconut water."
+      />
       
       {/* Mobile Search Header */}
       <div className="md:hidden px-3 py-3 bg-background/95 backdrop-blur-md border-b border-border relative z-40">

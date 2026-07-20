@@ -1,8 +1,13 @@
 import React from 'react';
+import { SEO } from '../components/SEO';
 
 export function Returns() {
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-16 md:py-24 w-full">
+      <SEO 
+        title="Returns & Refund Policy" 
+        description="Review the FreshNLocal Co. refund, replacement, and return policies for fresh perishable organic produce, cold-pressed juices, and farm products."
+      />
       <h1 className="text-4xl md:text-5xl font-sans font-black tracking-tight mb-16 text-foreground">
         Returns & Refund Policy
       </h1>

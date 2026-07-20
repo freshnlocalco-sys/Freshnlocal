@@ -10,6 +10,7 @@ import { BrandingSettings } from '../components/BrandingSettings';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
 import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
+import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 
 const STATUS_OPTIONS = [
@@ -2250,6 +2251,10 @@ export function AdminDashboard() {
 
   return (
     <div className="w-full max-w-full box-border overflow-x-hidden flex flex-col md:flex-row min-h-[calc(100vh-80px)] bg-background text-foreground">
+      <SEO 
+        title="Admin Control Center" 
+        description="Access secure administrative logistics tools, product inventories, pricing controls, order logs, and branding configurations."
+      />
       
       {/* Admin Sidebar Navigation */}
       <div className="w-full md:w-64 lg:w-72 border-b md:border-b-0 md:border-r border-border bg-secondary shrink-0 flex flex-col p-4 sm:p-6 sticky top-0 md:top-20 z-10 md:h-[calc(100vh-80px)] overflow-y-auto">

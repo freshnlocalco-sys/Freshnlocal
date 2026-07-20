@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, deleteDoc, doc, getDoc, setDoc, query, orderBy, getDocs } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 
 interface ChatMessage {
   id: string;
@@ -899,6 +900,10 @@ export function RecipeAI() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 md:py-8 w-full flex-1 flex flex-col h-[calc(100vh-140px)] min-h-[600px]">
+      <SEO 
+        title="Freshi AI Chef & Recipe Builder" 
+        description="Need culinary inspiration? Chat with Freshi, our smart AI culinary helper, to generate delightful recipes using FreshNLocal Co.'s fresh vegetables, fruits, and exotics."
+      />
       <div className="text-center space-y-2 mb-4 shrink-0">
         <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
           <ChefHat className="w-6 h-6 text-primary" />

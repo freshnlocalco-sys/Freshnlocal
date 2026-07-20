@@ -4,6 +4,7 @@ import { db, handleFirestoreError, OperationType, useAuth, isQuotaError } from '
 import { trackFirestoreRead } from '../lib/cacheManager';
 import { Order, useCart, Product } from '../store/useCart';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck, RefreshCw, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -207,6 +208,10 @@ export function Orders() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-16 w-full bg-background text-foreground animate-fade-in">
+      <SEO 
+        title="Your Order History" 
+        description="Track the real-time status and delivery progress of your FreshNLocal Co. fresh produce and organic crop orders."
+      />
       <div className="flex items-end justify-between border-b border-border pb-6 mb-12">
         <div className="space-y-1.5ClassName bg-transparent">
           <span className="glass-pill">History Desk</span>

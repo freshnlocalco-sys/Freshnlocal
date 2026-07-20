@@ -5,6 +5,7 @@ import { useWishlist } from '../store/useWishlist';
 import { useCart, Product } from '../store/useCart';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
+import { SEO } from '../components/SEO';
 
 export function Wishlist() {
   const { items, clearWishlist } = useWishlist();
@@ -19,6 +20,10 @@ export function Wishlist() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 w-full min-h-[60vh]">
+      <SEO 
+        title="Your Saved Items" 
+        description="View and manage your saved fresh vegetables, organic local fruits, and specialty juices on your FreshNLocal Co. wishlist."
+      />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sm:mb-12">
         <div className="flex flex-col gap-1.5">
           <h1 className="font-sans font-black text-3xl sm:text-4xl text-foreground tracking-tight flex items-center gap-3">

@@ -13,6 +13,7 @@ import { useCart, Product } from '../store/useCart';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { SectionDivider } from '../components/SectionDivider';
+import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 
 export const CATEGORIES = [
@@ -334,11 +335,10 @@ export function Home() {
 
   return (
     <div className="flex flex-col items-center bg-background text-foreground overflow-x-hidden w-full max-w-full box-border">
-      <Helmet>
-        <title>FreshNLocal.CO | Fresh Produce Delivery</title>
-        <meta name="description" content="Surat's premium fresh delivery engine. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your door." />
-        <link rel="canonical" href="https://www.freshnlocal.co/" />
-      </Helmet>
+      <SEO 
+        title="Fresh Produce Delivery" 
+        description="Surat's premium fresh delivery engine. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your door."
+      />
       
       {/* Hero Section */}
       <section className="w-full mx-auto pt-8 md:pt-24 pb-16 md:pb-20 flex flex-col gap-8 lg:gap-10 items-center relative overflow-hidden">

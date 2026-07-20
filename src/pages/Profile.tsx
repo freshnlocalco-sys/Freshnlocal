@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'fire
 import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { trackFirestoreRead } from '../lib/cacheManager';
+import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 import Markdown from 'react-markdown';
 
@@ -87,6 +88,10 @@ export function Profile() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 pt-6 pb-16 w-full grid lg:grid-cols-12 gap-8 bg-background text-foreground">
+      <SEO 
+        title="Your Profile" 
+        description="Access and manage your FreshNLocal Co. account details, saved addresses, reward points, order history, and favorited AI chef recipes."
+      />
       {/* Left Sidebar Member Profile Card */}
       <div className="lg:col-span-4">
         <div className="slice-card p-8 space-y-8 sticky top-24 bg-secondary border border-border shadow-sm">

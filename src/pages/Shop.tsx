@@ -11,6 +11,7 @@ import { ProductSkeleton } from '../components/ProductSkeleton';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { SectionDivider } from '../components/SectionDivider';
+import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 
 import { motion, AnimatePresence } from 'motion/react';
@@ -294,11 +295,10 @@ export function Shop() {
 
   return (
     <div className="w-full max-w-full box-border overflow-x-hidden bg-background text-foreground">
-      <Helmet>
-        <title>{categoryFilter === 'All Products' ? 'Shop All' : formatCategoryName(categoryFilter)} | FreshNLocal.CO</title>
-        <meta name="description" content={`Browse our complete catalog of ${categoryFilter === 'All Products' ? 'fresh fruits, vegetables, dry fruits, and more' : categoryFilter}.`} />
-        <link rel="canonical" href={`https://www.freshnlocal.co/shop${categoryFilter !== 'All Products' ? `?category=${encodeURIComponent(categoryFilter)}` : ''}`} />
-      </Helmet>
+      <SEO 
+        title={categoryFilter === 'All Products' ? 'Shop All' : formatCategoryName(categoryFilter)} 
+        description={`Browse our premium catalog of ${categoryFilter === 'All Products' ? 'fresh fruits, vegetables, clean cuts, and exotic greens' : formatCategoryName(categoryFilter)} sourced directly for you.`}
+      />
       
       {/* Mobile Search Header */}
       <div className="md:hidden px-3 py-3 bg-background/95 backdrop-blur-md border-b border-border relative z-40">

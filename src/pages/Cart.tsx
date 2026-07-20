@@ -9,6 +9,7 @@ import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { usePWA } from '../store/usePWA';
 import { QuantityInput } from '../components/QuantityInput';
+import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 
 export function Cart() {
@@ -250,6 +251,7 @@ export function Cart() {
   if (cartItems.length === 0 && !showPwaModal) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-36 px-4 text-center max-w-7xl mx-auto w-full bg-background text-foreground">
+        <SEO title="Your Cart" description="Review your fresh organic crops, farm fruits, vegetables, and cold-pressed elixirs before proceeding to secure checkout." />
         <div className="w-20 h-20 bg-secondary border border-border flex items-center justify-center rounded-[24px] mb-8 shadow-inner">
           <ShoppingBag className="w-8 h-8 text-primary" />
         </div>
@@ -269,6 +271,7 @@ export function Cart() {
 
   return (
     <>
+      <SEO title="Your Cart" description="Review your fresh organic crops, farm fruits, vegetables, and cold-pressed elixirs before proceeding to secure checkout." />
       {showPwaModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">

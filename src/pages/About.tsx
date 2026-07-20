@@ -1,10 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Instagram, Facebook } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export function About() {
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-16 md:py-24 w-full">
+      <SEO 
+        title="About Us & Contact" 
+        description="Learn more about FreshNLocal Co., our premium selection of fresh and organic crops, and how to find us in Bhatar, Surat."
+      />
       <h1 className="text-4xl md:text-5xl font-sans font-black tracking-tight mb-16 text-foreground">
         About Us
       </h1>
