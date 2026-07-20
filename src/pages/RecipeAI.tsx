@@ -441,6 +441,13 @@ export function RecipeAI() {
     const trimmedText = text.trim();
     if (!trimmedText) return;
 
+    // Prevent duplicate requests if already loading
+    const isAlreadyLoading = messages.some(m => m.isLoading);
+    if (isAlreadyLoading) {
+      toast.error('Please wait for the current recipe to finish generating.');
+      return;
+    }
+
     // 1. Generate user message
     const userMsgId = 'user-' + Date.now();
     const newUserMsg: ChatMessage = {
@@ -674,6 +681,13 @@ export function RecipeAI() {
 
   // Retry generating a specific message
   const handleRetry = async (botMsgId: string) => {
+    // Prevent duplicate requests if already loading
+    const isAlreadyLoading = messages.some(m => m.isLoading);
+    if (isAlreadyLoading) {
+      toast.error('Please wait for the current recipe to finish generating.');
+      return;
+    }
+
     const botIndex = messages.findIndex(m => m.id === botMsgId);
     if (botIndex <= 0) return;
     const userMsg = messages[botIndex - 1];
@@ -704,7 +718,8 @@ export function RecipeAI() {
         catalog: availableProducts, 
         recipeName: userMsg.text,
         products: [],
-        history: chatHistory
+        history: chatHistory,
+        bypassCache: true
       };
 
       const response = await fetch('/api/gemini/recipe', {

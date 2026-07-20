@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -12,10 +13,6 @@ function getAIClient() {
   if (!aiClient) {
     const rawApiKey = process.env.GEMINI_API_KEY;
     const apiKey = rawApiKey ? rawApiKey.replace(/^["']|["']$/g, '').trim() : undefined;
-    const keyExists = !!apiKey;
-    const keyLength = apiKey ? apiKey.length : 0;
-    const keyStart = apiKey ? apiKey.substring(0, 4) : 'none';
-    console.log(`[DEBUG] API Key Check: exists=${keyExists}, length=${keyLength}, startsWith=${keyStart}`);
     
     if (!apiKey) {
       console.warn("GEMINI_API_KEY is not set.");
@@ -32,23 +29,158 @@ function getAIClient() {
   return aiClient;
 }
 
+// Security & Budgeting: In-memory stores
+const rateLimitStore = new Map<string, { count: number, resetTime: number }>();
+const inFlightRequests = new Set<string>(); // Used to prevent duplicate concurrent requests
+const responseCache = new Map<string, { data: any, timestamp: number }>();
+
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10;
+const CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
+
+// Global Budget Control
+let dailyCostCents = 0;
+let lastCostReset = Date.now();
+const DAILY_BUDGET_CENTS = 100; // Maximum $1.00 API spend per day
+let circuitBreakerTripped = false;
+
+function checkAndResetBudget() {
+  const now = Date.now();
+  if (now - lastCostReset > 24 * 60 * 60 * 1000) {
+    dailyCostCents = 0;
+    lastCostReset = now;
+    circuitBreakerTripped = false;
+  }
+}
+
+// Helper to generate a stable cache key
+function generateCacheKey(body: any): string {
+  const data = JSON.stringify({
+    products: body.products || [],
+    recipeName: body.recipeName || "",
+    preferences: body.preferences || [],
+    history: body.history || [],
+    bypassCache: body.bypassCache || false
+  });
+  return crypto.createHash("sha256").update(data).digest("hex");
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Add trust proxy so req.ip works correctly behind Vercel/Nginx
+  app.set('trust proxy', 1);
 
   app.use(express.json({ limit: '5mb' }));
 
   // API routes FIRST
   app.post("/api/gemini/recipe", async (req, res) => {
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+    
+    // 1. Rate Limiting Check
+    const now = Date.now();
+    let rlData = rateLimitStore.get(clientIp);
+    if (!rlData || now > rlData.resetTime) {
+      rlData = { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
+    }
+    rlData.count++;
+    rateLimitStore.set(clientIp, rlData);
+    
+    if (rlData.count > MAX_REQUESTS_PER_WINDOW) {
+      console.warn(`[REQ ${requestId}] Rate limit exceeded for IP: ${clientIp}`);
+      return res.status(429).json({ error: "Too many requests. Please wait a minute and try again." });
+    }
+
     try {
-      const { products, catalog, preferences, recipeName } = req.body;
-      const catalogText = catalog ? catalog.join(" | ") : "";
+      const { products = [], catalog = [], preferences = [], recipeName = "", history = [], bypassCache = false } = req.body;
+      
+      checkAndResetBudget();
+      if (circuitBreakerTripped || dailyCostCents > DAILY_BUDGET_CENTS) {
+        circuitBreakerTripped = true;
+        console.warn(`[REQ ${requestId}] Daily AI budget exceeded. Current spend: $${(dailyCostCents / 100).toFixed(2)}`);
+        return res.status(429).json({ error: "Daily AI usage limit reached. Please try again tomorrow." });
+      }
+
+      // 2. Cache Check
+      const cacheKey = generateCacheKey(req.body);
+      const cachedResponse = bypassCache ? null : responseCache.get(cacheKey);
+      if (cachedResponse && (now - cachedResponse.timestamp < CACHE_TTL_MS)) {
+        console.log(`[REQ ${requestId}] Returning CACHED response for recipe: "${recipeName}"`);
+        return res.json(cachedResponse.data);
+      }
+
+      // 3. In-flight Request Protection (prevent duplicate parallel clicks)
+      const inFlightKey = `${clientIp}_${cacheKey}`;
+      if (inFlightRequests.has(inFlightKey)) {
+        console.warn(`[REQ ${requestId}] Duplicate request detected for IP: ${clientIp}`);
+        return res.status(429).json({ error: "A request is already processing. Please wait." });
+      }
+      inFlightRequests.add(inFlightKey);
+
+      // We only take the top 80 most relevant catalog items to give Gemini rich recommendation options
+      let optimizedCatalog = catalog;
+      if (catalog.length > 80) {
+        const searchTerms = (recipeName + " " + products.join(" ")).toLowerCase()
+          .split(/[\s,.\-()]+/)
+          .filter((w: string) => w.length > 2);
+        
+        const scored = catalog.map((c: string) => {
+          let score = 0;
+          const cl = c.toLowerCase();
+          for (const term of searchTerms) {
+            if (cl.includes(term)) score += 5;
+          }
+          // Slightly boost popular categories/keywords to encourage variety
+          if (cl.includes("pepper") || cl.includes("herb") || cl.includes("organic") || cl.includes("fresh") || cl.includes("curry") || cl.includes("spice")) {
+            score += 1;
+          }
+          return { item: c, score };
+        });
+        
+        scored.sort((a: any, b: any) => b.score - a.score);
+        
+        const relevantItems = scored.filter((s: any) => s.score > 1).map((s: any) => s.item);
+        const otherItems = scored.filter((s: any) => s.score <= 1).map((s: any) => s.item);
+        
+        const targetSize = 80;
+        let selectedItems = [...relevantItems];
+        if (selectedItems.length < targetSize) {
+          const needed = targetSize - selectedItems.length;
+          const step = Math.max(1, Math.floor(otherItems.length / needed));
+          for (let i = 0; i < otherItems.length && selectedItems.length < targetSize; i += step) {
+            if (!selectedItems.includes(otherItems[i])) {
+              selectedItems.push(otherItems[i]);
+            }
+          }
+          for (let i = 0; i < otherItems.length && selectedItems.length < targetSize; i++) {
+            if (!selectedItems.includes(otherItems[i])) {
+              selectedItems.push(otherItems[i]);
+            }
+          }
+        } else if (selectedItems.length > 100) {
+          selectedItems = selectedItems.slice(0, 100);
+        }
+        
+        optimizedCatalog = selectedItems;
+      }
+      const catalogText = optimizedCatalog.join(", ");
       
       const preferencesText = preferences && preferences.length > 0 ? ` The user has the following preferences for the recipe: ${preferences.join(", ")}.` : "";
       
+      // Include limited chat history if available
+      let historyText = "";
+      if (history && history.length > 0) {
+        // Only take the last 4 messages to save tokens
+        const recentHistory = history.slice(-4).map((h: any) => `${h.sender === 'user' ? 'User' : 'Freshi'}: ${h.text}`).join("\n");
+        historyText = `\n\nRecent Chat History:\n${recentHistory}`;
+      }
+
       let prompt = '';
       if (recipeName) {
-        prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO (a premium fresh produce delivery engine in Surat). The user wants to make a specific recipe or asked a question: "${recipeName}".${preferencesText}
+        prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO (a premium fresh produce delivery engine in Surat). The user wants to make a specific recipe or asked a question: "${recipeName}".${preferencesText}${historyText}
         
 CRITICAL GUARD RAILS:
 - You MUST ONLY answer questions or provide recipes that are related to food, cooking, culinary arts, groceries, fresh produce, or the FreshNLocal business.
@@ -56,15 +188,18 @@ CRITICAL GUARD RAILS:
 
 If the request IS related to food or cooking:
 1. Provide the full recipe for "${recipeName}" (or answer their food-related question), including the required ingredients and step-by-step instructions if applicable. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
-2. Recommend ALL complementary products (ingredients) that the user should buy from our store to make this recipe. Identify as many required ingredients from the catalog as possible.
+2. Recommend ALL complementary products (ingredients, garnishes, sides, or spices) that the user should buy from our store to make this recipe. Identify as many required ingredients from the catalog as possible (aim for at least 3-6 product recommendations from our catalog if they are relevant to the recipe).
 
-CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
+CRITICAL INSTRUCTIONS FOR VARIETY & RECOMMENDATIONS:
+- To keep things exciting and diverse, you MUST NOT generate the exact same recipe every time. Use a wide variety of fresh vegetables, exotic fruits, herbs, and local spices from the catalog.
+- Check the 'Recent Chat History' if provided. If you have already suggested a specific recipe earlier in this chat session, you MUST suggest a completely different, unique recipe or a highly creative variation. DO NOT repeat the same recipe under any circumstances!
 - You MUST select recommendations ONLY from the following exact store catalog:
 [ ${catalogText} ]
-- You MUST NEVER suggest, recommend, or add any FNL Juices, juices, cold-pressed juices, beverages, or drinks in either the recipe markdown or the suggested products, even if they are part of the catalog or the user asks for them. We do not sell juices for recipes. Focus strictly on solid foods, fresh produce, groceries, spices, or garnishes.
+- Try to recommend MORE items from the catalog that fit well into the recipe to make it complete (e.g. key ingredients, seasonings, fresh garnishes).
+- You MUST NEVER suggest, recommend, or add any FNL Juices, juices, cold-pressed juices, beverages, or drinks in either the recipe markdown or the suggested products. Focus strictly on solid foods, fresh produce, groceries, spices, or garnishes.
 - Use the EXACT product name as it appears in the catalog.`;
       } else {
-        prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO. The user has selected these ingredients they already have: ${products.join(", ")}.${preferencesText}
+        prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO. The user has selected these ingredients they already have: ${products.join(", ")}.${preferencesText}${historyText}
         
 CRITICAL GUARD RAILS:
 - You MUST ONLY answer questions or provide recipes that are related to food, cooking, culinary arts, groceries, fresh produce, or the FreshNLocal business.
@@ -72,40 +207,96 @@ CRITICAL GUARD RAILS:
 
 If the request IS related to food or cooking:
 1. Provide a delicious recipe using some or all of these ingredients. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
-2. Recommend ALL OTHER complementary products that the user should buy from our store to make this recipe even better. Identify as many required ingredients from the catalog as possible.
+2. Recommend ALL OTHER complementary products that the user should buy from our store to make this recipe even better. Identify as many required ingredients from the catalog as possible (aim for at least 3-6 product recommendations from our catalog if they are relevant to the recipe).
 
-CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
+CRITICAL INSTRUCTIONS FOR VARIETY & RECOMMENDATIONS:
+- To keep things exciting and diverse, you MUST NOT generate the exact same recipe every time. Be creative and explore different culinary directions (e.g. street food, gourmet, light snack, traditional Indian/Gujarati, or healthy options).
+- Check the 'Recent Chat History' if provided. If you have already suggested a specific recipe earlier in this chat session, you MUST suggest a completely different, unique recipe or a highly creative variation. DO NOT repeat the same recipe under any circumstances!
 - You MUST select recommendations ONLY from the following exact store catalog:
 [ ${catalogText} ]
 - Do NOT suggest any product that is already in the user's selected list.
-- You MUST NEVER suggest, recommend, or add any FNL Juices, juices, cold-pressed juices, beverages, or drinks in either the recipe markdown or the suggested products, even if they are part of the catalog or the user asks for them. We do not sell juices for recipes. Focus strictly on solid foods, fresh produce, groceries, spices, or garnishes.
+- Try to recommend MORE items from the catalog that fit well into the recipe to make it complete (e.g. key ingredients, seasonings, fresh garnishes).
+- You MUST NEVER suggest, recommend, or add any FNL Juices, juices, cold-pressed juices, beverages, or drinks in either the recipe markdown or the suggested products. Focus strictly on solid foods, fresh produce, groceries, spices, or garnishes.
 - Use the EXACT product name as it appears in the catalog.`;
       }
       
       const ai = getAIClient();
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              recipeMarkdown: { type: "STRING" },
-              suggestedProductNames: { 
-                type: "ARRAY", 
-                items: { type: "STRING" },
-                description: "Array of EXACT product names selected from the store catalog."
+      console.log(`[REQ ${requestId}] Sending Gemini request... (Prompt length: ${prompt.length} chars)`);
+      
+      // Use exponential backoff for the request itself
+      let response;
+      let retries = 0;
+      const MAX_RETRIES = 2;
+      
+      while (retries <= MAX_RETRIES) {
+        try {
+          const modelName = "gemini-3.1-flash-lite"; // Fully supported ultra-low-cost model
+          response = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt,
+            config: {
+              temperature: 1.0, // High temperature to encourage diverse and creative recipes
+              maxOutputTokens: 4000, // Safe limit allowing for reasoning and complete JSON output
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "OBJECT",
+                properties: {
+                  recipeMarkdown: { type: "STRING" },
+                  suggestedProductNames: { 
+                    type: "ARRAY", 
+                    items: { type: "STRING" },
+                    description: "Array of EXACT product names selected from the store catalog."
+                  }
+                },
+                required: ["recipeMarkdown", "suggestedProductNames"]
               }
-            },
-            required: ["recipeMarkdown", "suggestedProductNames"]
+            }
+          });
+          
+          // Log detailed token usage and cost metrics
+          const usage = response.usageMetadata;
+          const inputTokens = usage?.promptTokenCount || 0;
+          const outputTokens = usage?.candidatesTokenCount || 0;
+          const totalTokens = usage?.totalTokenCount || 0;
+          // Approximate cost for gemini-3.5-flash: $0.075 / 1M input, $0.30 / 1M output
+          const estCostCents = ((inputTokens / 1000000) * 7.5) + ((outputTokens / 1000000) * 30);
+          dailyCostCents += estCostCents;
+          
+          const execTimeMs = Date.now() - startTime;
+          
+          console.log(`[REQ ${requestId}] SUCCESS! 
+  Model: ${modelName}
+  Execution Time: ${execTimeMs}ms
+  Tokens: Input=${inputTokens} | Output=${outputTokens} | Total=${totalTokens}
+  Estimated Cost: $${(estCostCents / 100).toFixed(6)}
+  Daily Budget Used: $${(dailyCostCents / 100).toFixed(6)}`);
+          
+          break; // success, break retry loop
+        } catch (genErr: any) {
+          if (retries < MAX_RETRIES && genErr?.status === 429) {
+            retries++;
+            console.warn(`[REQ ${requestId}] 429 Rate Limit from Gemini. Retrying ${retries}/${MAX_RETRIES} in ${1000 * retries}ms...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+          } else {
+            throw genErr; // Rethrow if max retries exceeded or not a 429
           }
         }
-      });
+      }
 
-      const data = JSON.parse(response.text || "{}");
+      inFlightRequests.delete(inFlightKey);
+
+      const data = JSON.parse(response?.text || "{}");
+      
+      // Store in cache
+      responseCache.set(cacheKey, { data, timestamp: Date.now() });
+      
       res.json(data);
     } catch (error: any) {
+      // Ensure we clear in-flight requests on error
+      const cacheKey = generateCacheKey(req.body);
+      const inFlightKey = `${clientIp}_${cacheKey}`;
+      inFlightRequests.delete(inFlightKey);
+      
       const errMsg = typeof error?.message === 'string' ? error.message.toLowerCase() : JSON.stringify(error?.message || error).toLowerCase();
       const isCreditsDepleted = errMsg.includes('prepayment') || errMsg.includes('credits are depleted') || errMsg.includes('depleted') || errMsg.includes('resource_exhausted');
       const isRateLimit = !isCreditsDepleted && (error?.status === 429 || errMsg.includes('429') || errMsg.includes('quota'));
@@ -113,7 +304,7 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
       const isInvalidKey = errMsg.includes('api key not valid') || errMsg.includes('api_key_invalid') || error?.status === 401;
       
       if (!isInvalidKey) {
-        console.error("Gemini API Request Failed:", error?.message || error);
+        console.error(`[REQ ${requestId}] Gemini API Request Failed:`, error?.message || error);
       }
       
       let friendlyError = "Failed to generate recipe. Please try again later.";
@@ -130,16 +321,52 @@ CRITICAL INSTRUCTIONS FOR RECOMMENDATIONS:
         friendlyError = "Recipe AI is currently unavailable or overloaded. Please try again later.";
       }
       
-      res.status(isInvalidKey || !apiKey ? 401 : (isCreditsDepleted || isRateLimit ? 429 : (isUnavailable ? 503 : 500))).json({ error: friendlyError });
+      res.status(isInvalidKey || !apiKey ? 401 : (isCreditsDepleted || isRateLimit ? 429 : (isUnavailable ? 503 : 500))).json({ 
+        error: friendlyError, 
+        details: error?.message || String(error) 
+      });
     }
   });
 
   // API route for generating high-fidelity product description & SEO meta description
   app.post("/api/gemini/generate-description", async (req, res) => {
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+    
+    // We allow a higher rate limit here for batch admin actions
+    const now = Date.now();
+    let rlData = rateLimitStore.get(clientIp);
+    if (!rlData || now > rlData.resetTime) {
+      rlData = { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
+    }
+    rlData.count++;
+    rateLimitStore.set(clientIp, rlData);
+    
+    if (rlData.count > MAX_REQUESTS_PER_WINDOW * 5) {
+      console.warn(`[DESC-REQ ${requestId}] Rate limit exceeded for IP: ${clientIp}`);
+      return res.status(429).json({ error: "Too many requests. Please wait a minute and try again." });
+    }
+
     try {
+      checkAndResetBudget();
+      if (circuitBreakerTripped || dailyCostCents > DAILY_BUDGET_CENTS) {
+        circuitBreakerTripped = true;
+        console.warn(`[DESC-REQ ${requestId}] Daily AI budget exceeded.`);
+        return res.status(429).json({ error: "Daily AI usage limit reached." });
+      }
+
       const { name, category, unit } = req.body;
       if (!name || !category) {
         return res.status(400).json({ error: "Product name and category are required." });
+      }
+
+      // Check Cache
+      const cacheKey = crypto.createHash("sha256").update(`desc_${name}_${category}`).digest("hex");
+      const cachedResponse = responseCache.get(cacheKey);
+      if (cachedResponse && (now - cachedResponse.timestamp < CACHE_TTL_MS)) {
+        console.log(`[DESC-REQ ${requestId}] Returning CACHED response for description of: "${name}"`);
+        return res.json(cachedResponse.data);
       }
 
       const prompt = `You are an expert food content writer for freshnlocal.co, a premium fresh produce D2C e-commerce brand based in Surat, Gujarat, India.
@@ -166,26 +393,67 @@ Format your output exactly as a JSON object with these keys:
         return res.status(500).json({ error: "Gemini API client not initialized." });
       }
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              description: { type: "STRING" },
-              metaDescription: { type: "STRING" }
-            },
-            required: ["description", "metaDescription"]
+      let response;
+      let retries = 0;
+      const MAX_RETRIES = 2;
+      const modelName = "gemini-3.1-flash-lite"; // Fully supported ultra-low-cost model
+      
+      while (retries <= MAX_RETRIES) {
+        try {
+          response = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt,
+            config: {
+              maxOutputTokens: 300, // Small output for descriptions
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "OBJECT",
+                properties: {
+                  description: { type: "STRING" },
+                  metaDescription: { type: "STRING" }
+                },
+                required: ["description", "metaDescription"]
+              }
+            }
+          });
+          
+          const usage = response.usageMetadata;
+          const inputTokens = usage?.promptTokenCount || 0;
+          const outputTokens = usage?.candidatesTokenCount || 0;
+          const totalTokens = usage?.totalTokenCount || 0;
+          const estCostCents = ((inputTokens / 1000000) * 7.5) + ((outputTokens / 1000000) * 30);
+          dailyCostCents += estCostCents;
+          
+          const execTimeMs = Date.now() - startTime;
+          
+          console.log(`[DESC-REQ ${requestId}] SUCCESS! 
+  Model: ${modelName}
+  Product: ${name}
+  Execution Time: ${execTimeMs}ms
+  Tokens: Input=${inputTokens} | Output=${outputTokens} | Total=${totalTokens}
+  Estimated Cost: $${(estCostCents / 100).toFixed(6)}
+  Daily Budget Used: $${(dailyCostCents / 100).toFixed(6)}`);
+          
+          break; // success
+        } catch (genErr: any) {
+          if (retries < MAX_RETRIES && genErr?.status === 429) {
+            retries++;
+            console.warn(`[DESC-REQ ${requestId}] 429 Rate Limit from Gemini. Retrying ${retries}/${MAX_RETRIES} in ${1000 * retries}ms...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+          } else {
+            throw genErr; // Rethrow if max retries exceeded or not a 429
           }
         }
-      });
+      }
 
-      const data = JSON.parse(response.text || "{}");
+      const data = JSON.parse(response?.text || "{}");
+      
+      // Store in cache
+      responseCache.set(cacheKey, { data, timestamp: Date.now() });
+      
       res.json(data);
     } catch (error: any) {
-      console.error("Gemini description generation failed:", error?.message || error);
+      console.error(`[DESC-REQ ${requestId}] Gemini description generation failed:`, error?.message || error);
       res.status(500).json({ error: error?.message || "Failed to generate product description." });
     }
   });

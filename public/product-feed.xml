@@ -7,7 +7,7 @@
     <item>
       <g:id>010UpSjAs6rFU1A8iI9K</g:id>
       <g:title>Fresh N Local Fresh Dill 100gm</g:title>
-      <g:description>Fresh Dill 100Gm</g:description>
+      <g:description>Introduce an aromatic burst to your kitchen with our fresh, locally sourced Dill (Suva), handpicked at peak vibrancy. Revered in Gujarati households, this feathery herb brings a distinct, anise-like warmth to comforting suva-moong dal, hearty undhiyu, and crisp muthias. Rich in vitality, 100g of dill provides approx. 3.4g of protein, 2.1g of dietary fiber, and essential vitamins A and C. Keep its delicate fronds fresh and intensely fragrant by wrapping the unwashed bunch in a damp paper towel before refrigerating.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>40.00 INR</g:price>
@@ -123,6 +123,19 @@
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>0PbNp2GKQu22XbQBrOSr</g:id>
+      <g:title>Fresh N Local Lotus Leaf 1 Pc</g:title>
+      <g:description>Embrace ancient culinary traditions with our premium, handpicked Lotus Leaf, a versatile culinary gem that brings a rustic charm to your kitchen. Naturally rich in wellness-promoting antioxidants, it offers approx. 1.5g of protein and 2.8g of dietary fiber per 100g, alongside essential minerals. Perfect for wrapping and steaming spiced paneer or fragrant basmati rice, it infuses a subtle, earthy aroma into traditional Gujarati steamed delicacies. To keep this delicate leaf pliable, store it wrapped in a damp cloth in the refrigerator.</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>30.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/0PbNp2GKQu22XbQBrOSr</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784454107194_2_Piece_Lotus_Leaf_Photoshoot_202607191505.jpeg?alt=media&amp;token=2d8e30bf-b384-4534-9921-46371f34eab4</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>0Z84GNtfX2V0TusU7n8W</g:id>
       <g:title>Fresh N Local Mango Matcha</g:title>
       <g:description>Stunning layer of organic stoneground Japanese matcha whisked over fresh sweet mango nectar.</g:description>
@@ -229,7 +242,7 @@
     <item>
       <g:id>0o8zPco2pUskY1RoGRVr</g:id>
       <g:title>Fresh N Local Jerusalem Artichoke 250gm</g:title>
-      <g:description>Imported </g:description>
+      <g:description>Introducing the knobby, earth-toned Jerusalem Artichoke, a premium imported tuber now ready to elevate your culinary creations in Surat. Packed with wellness, every 100g provides approx. 2g of dietary fiber and 1.6g of protein, alongside vital iron and potassium. Locally known for its sweet, nutty flavor, you can thinly slice it into crunchy salads, stir-fry it into a Gujarati-style subzi, or roast it with mild spices. To maintain their crisp texture, store these unwashed tubers in a paper bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>350.00 INR</g:price>
@@ -269,8 +282,8 @@
     <item>
       <g:id>0qe24Zt8DRDbkBRwPWtb</g:id>
       <g:title>Fresh N Local Raw Jackfruit Chunks 300gm</g:title>
-      <g:description>ALL FRUITS AND VEGETABLE ARE CUT AND PEELED IN CONTROLED AND HYGENIC ENVIROMENT AND IT IS PREPARED WITH IN 60 MIN OF DELIVERY TIME</g:description>
-      <g:availability>in stock</g:availability>
+      <g:description>Skip the messy prep work with our fresh, pre-cut Raw Jackfruit Chunks sourced from regional farms. Excellent as a hearty meat substitute, these chunks provide approx. 2g of protein and 1.5g of dietary fiber per 100g, alongside essential vitamins for daily energy. They are perfect for preparing spiced Kathal subzis, aromatic pulaos, or traditional Gujarati curries. To keep them perfectly tender, store these chunks in a sealed container in your refrigerator.</g:description>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>60.00 INR</g:price>
       <g:sale_price>50.00 INR</g:sale_price>
@@ -283,7 +296,7 @@
     <item>
       <g:id>0yZGAzbVAAhz7LD0TQnv</g:id>
       <g:title>Fresh N Local Premium Goldenberry 1kg</g:title>
-      <g:description>Organic and Super Sweet, Sourced Directly From Ooty</g:description>
+      <g:description>Delight in the vibrant, tangy-sweet pop of our Premium Goldenberries, locally known as Rasbhari, sourced fresh for your Surat home. These amber jewels offer approx. 1.9g of protein, 4.3g of dietary fiber, and essential Vitamin C per 100g, supporting everyday vitality. Enjoy them raw, toss them into festive Gujarati fruit salads, or simmer them into a spicy-sweet local chutney. To maintain their crisp texture, keep these berries inside their protective paper husks in a dry refrigerator drawer.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>550.00 INR</g:price>
@@ -386,9 +399,23 @@
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>1lyc6gLnzgEOnzRgRozI</g:id>
+      <g:title>Fresh N Local Musk Melon Cut 200 G</g:title>
+      <g:description>Beat the scorching Surat heat with our freshly cubed, sweet Musk Melon, sourced directly from local sun-drenched farms. Each 100g serving of this hydrating fruit provides approx. 0.8g of protein, 0.9g of dietary fiber, alongside essential vitamins and minerals for daily vitality. In Gujarati homes, these juicy orange bites are perfect for refreshing kharbuja milkshakes, vibrant fruit salads, or enjoyed chilled with black salt. Keep this pre-cut pack refrigerated and consume within 24 hours to enjoy peak freshness.</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>40.00 INR</g:price>
+      <g:sale_price>30.00 INR</g:sale_price>
+      <g:link>https://www.freshnlocal.co/product/1lyc6gLnzgEOnzRgRozI</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784453907484_YAM_CUT.jpeg_202607191507.jpeg?alt=media&amp;token=5c0fd8c2-e986-4e03-a709-89434ec4f193</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>1nCTKP8KvrQU8faxjMxz</g:id>
       <g:title>Fresh N Local Fresh Chives 10gm</g:title>
-      <g:description>Fresh Chives </g:description>
+      <g:description>Elevate your daily meals with our vibrant, farm-fresh chives, offering a delicate, mild onion-like whisper to your culinary creations. Rich in vital nutrients, they provide approx. 3.2g of protein, 2.5g of fiber, and essential vitamins per 100g to support general vitality. In Gujarati kitchens, these slender greens beautifully garnish fusion dals, modern raitas, and fresh kachumber salads. For lasting crispness, wrap these delicate stems in a damp paper towel and store them in your refrigerator&apos;s vegetable crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -467,7 +494,7 @@
     <item>
       <g:id>2cnkYFgLSvSyZWp4kzxZ</g:id>
       <g:title>Fresh N Local Muskmelon 1pc</g:title>
-      <g:description>600-700Gm Per Pc</g:description>
+      <g:description>Sourced from sun-drenched local farms, our fragrant Muskmelon (Kharbuj) brings a burst of refreshing sweetness to your table. This hydrating summer treasure offers approx. 0.8g of protein, 0.9g of dietary fiber, and is rich in essential Vitamin C and potassium to support daily vitality. In Gujarati homes, it is loved as a chilled afternoon treat, blended into luscious milkshakes, or tossed with black salt in refreshing summer salads. To enjoy its peak flavor, store whole muskmelons at room temperature until fragrant, then refrigerate.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>60.00 INR</g:price>
@@ -491,9 +518,23 @@
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>2xmtecuxAdAw8BIySm4c</g:id>
+      <g:title>Fresh N Local Red Pear 500 G</g:title>
+      <g:description>Crimson-skinned and spectacularly sweet, our seasonal Red Pears bring a burst of juicy elegance directly to your Surat home. Providing approx. 3g of dietary fiber and essential Vitamin C per 100g, these succulent fruits support general daily vitality. Beyond snacking, Gujaratis love slicing them into festive fruit chaats, pairing them with spicy farsan, or tossing them into refreshing seasonal salads. Keep them at room temperature until the neck yields to gentle thumb pressure, then refrigerate to preserve their crisp texture.</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>90.00 INR</g:price>
+      <g:sale_price>80.00 INR</g:sale_price>
+      <g:link>https://www.freshnlocal.co/product/2xmtecuxAdAw8BIySm4c</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784204832179_1000209072.jpg?alt=media&amp;token=4933d247-8405-418c-ac23-b0388b6eaeb1</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>302l6TO6R2lrZDoEOscN</g:id>
       <g:title>Fresh N Local Carrot 500 G</g:title>
-      <g:description>Carrot </g:description>
+      <g:description>Bring the vibrant crunch of farm-fresh, earthy red carrots straight to your Surat kitchen. These locally sourced treasures are loaded with beneficial beta-carotene and dietary fiber, offering approx. 2.8g of fiber per 100g to support overall wellness. Perfect for crafting a rich, nostalgic Gajar ka Halwa, tempering a crunchy Gujarati Sambharo, or adding to a hearty Undhiyu. To keep them crisp and sweet, store these carrots unwashed in a zip-lock bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>30.00 INR</g:price>
@@ -533,7 +574,7 @@
     <item>
       <g:id>3Nnqce6fkRznMZ2KbxdE</g:id>
       <g:title>Fresh N Local Purple Corn Cob 1pc</g:title>
-      <g:description>Purple Corn Cob 1Pc</g:description>
+      <g:description>Bring a splash of dramatic color to your table with our premium imported Purple Corn Cob. Renowned for its deep violet hue and sweet, earthy flavor, this exotic variety delivers approximately 3g of fiber and 3.2g of protein per 100g, promoting general vitality. Perfect for Surat’s food lovers, try it charred as an exotic street-style bhutta, tossed in vibrant local salads, or used in creative fusion chaats. To preserve its sweet moisture, store the cob in its husk inside your refrigerator&apos;s crisper drawer until ready to grill.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>220.00 INR</g:price>
@@ -547,7 +588,7 @@
     <item>
       <g:id>3V8eiq04J3E7nComyh5o</g:id>
       <g:title>Fresh N Local Portobello Mushroom 200gm</g:title>
-      <g:description>Portobello Mushroom </g:description>
+      <g:description>Unleash a hearty, earthy feast in your Surat kitchen with our premium Portobello Mushrooms. These robust, fully matured brown beauties offer a wonderful source of daily vitality, delivering approx. 2.1g of protein, 1.3g of dietary fiber, and essential B-vitamins per 100g. Perfect for crafting smoky tandoori portobello tikka, rich fusion Gujarati subzis, or simply slicing into decadent stir-fries. To maintain their firm, meaty texture, store these mushrooms in a breathable paper bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
@@ -561,7 +602,7 @@
     <item>
       <g:id>3r2PRlSuAtCXtxpaQN9H</g:id>
       <g:title>Fresh N Local Indian Peach 500gm</g:title>
-      <g:description>Origin - Himachal</g:description>
+      <g:description>Sourced from the sun-drenched orchards of Northern India, our velvety Indian Peaches bring a burst of juicy sweetness to Surat homes. Every 100g serving offers approx. 1.5g of dietary fiber, 0.9g of protein, and essential vitamins A and C to support daily vitality. Locally, these blushing stone fruits are perfect for crafting refreshing summer lassis, vibrant fruit salads, or sweet-and-sour Gujarati chutneys. To enjoy peak flavor, store firm peaches at room temperature stem-side down until they soften and release their sweet aroma.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -588,13 +629,13 @@
     <item>
       <g:id>4Ib8sjjwT1EVptOYM9Zh</g:id>
       <g:title>Fresh N Local Fresh Blackberry 125gm</g:title>
-      <g:description>Fresh Blackberry </g:description>
-      <g:availability>in stock</g:availability>
+      <g:description>Indulge in our plump, deep purple Fresh Blackberries, a premium exotic treat handpicked for Surat&apos;s fruit lovers. Per 100g, these juicy berries offer approx. 5g of dietary fiber, 1.4g of protein, and essential vitamins C and K to support daily vitality. Locally, Gujarati homes love tossing them into refreshing summer salads, blending them into luscious fusion shrikhand, or muddled in festive mocktails. To preserve their delicate, glossy texture, store them unwashed in a paper-lined container inside your refrigerator, washing only right before eating.</g:description>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>825.00 INR</g:price>
       <g:sale_price>800.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/4Ib8sjjwT1EVptOYM9Zh</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F4Ib8sjjwT1EVptOYM9Zh%2Foriginal.webp?alt=media&amp;token=4f3546bc-bb35-4d4d-bdbd-39ad721a1afc</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784464038007_Blackberries_in_plastic_punnet_202607191757.jpeg?alt=media&amp;token=9afc57aa-abcd-4bf9-bd6a-e66a6c1b7724</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -602,7 +643,7 @@
     <item>
       <g:id>4OjqPIZsyAsAYWcvIqj1</g:id>
       <g:title>Fresh N Local Mix Fruits Bowl 300gm</g:title>
-      <g:description>MIX ITEM LIKE PINEAPPLE, GUAVA, GRAPES, APPLE, MUSKMELON, ORANGE (WITH CHAT MASALA)</g:description>
+      <g:description>Brighten your day with our Mix Fruits Bowl, a vibrant medley of hand-selected, hygienically pre-cut seasonal fruits perfect for busy Surat households. Providing approx. 0.6g of protein, 2g of dietary fiber, and essential vitamins per 100g, this convenient bowl supports daily vitality. Enjoy it chilled as a quick mid-day snack, toss it into a refreshing Gujarati-style fruit raita, or serve it during festive fasts. To maintain ultimate freshness, store this sealed container in your refrigerator and consume within twenty-four hours.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>90.00 INR</g:price>
@@ -616,7 +657,7 @@
     <item>
       <g:id>4cSqeBkIaHT4vxu4KKlH</g:id>
       <g:title>Fresh N Local Zespri Green Kiwi 3pc</g:title>
-      <g:description>Origin - New Zealand </g:description>
+      <g:description>Brimming with an invigorating, tangy-sweet profile, our premium Zespri Green Kiwi brings a burst of refreshment to your table. Each vibrant fruit is naturally packed with essential dietary fiber (approx. 3g per 100g) and refreshing Vitamin C (approx. 92.7mg per 100g) to support daily vitality. Across Gujarat, these fuzzy gems are beloved in cooling raitas, tangy fruit chaats, and festive mocktails. To enjoy maximum flavor, let them ripen at room temperature until slightly soft before refrigerating.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -630,7 +671,7 @@
     <item>
       <g:id>50bZEreLPg6adCRrkVtj</g:id>
       <g:title>Fresh N Local Brussel Sprouts 250gm</g:title>
-      <g:description>Brussel Sprouts</g:description>
+      <g:description>Bring a touch of European sophistication to your Surat kitchen with our premium imported Brussels Sprouts. These tiny, cabbage-like gems are nutritional powerhouses, delivering approximately 3.4g of protein, 3.8g of dietary fiber, and essential vitamins C and K per 100g to support your daily vitality. Locally, they make a delightful twist when sautéed with mustard seeds and turmeric as a crunchy dry subzi, or tossed into warm fusion salads. Keep them firm and fresh by storing them unwashed in a perforated bag inside your refrigerator&apos;s crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
@@ -656,7 +697,7 @@
     <item>
       <g:id>5FUly3iriFyrLilFsymr</g:id>
       <g:title>Fresh N Local Chinese Bean Sprouts 250gm</g:title>
-      <g:description>Chinese Bean Sprouts</g:description>
+      <g:description>Bring a crisp, refreshing crunch to your Asian-inspired dishes and Gujarati salads with our premium Chinese Bean Sprouts. Packed with vitality, these tender sprouts offer approx. 3g of plant-based protein and 1.9g of dietary fiber per 100g, alongside essential vitamins and minerals. They are perfect for healthy stir-fries, spring rolls, and even adding a modern twist to traditional Gujarati sambharo or wholesome evening chaats. Keep them refrigerated in a sealed container lined with paper towels to maintain their signature crispness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -670,9 +711,7 @@
     <item>
       <g:id>5HEDUKsIOy0fsOL7d61e</g:id>
       <g:title>Fresh N Local Green Peas Frozen Hand Peeled 1kg</g:title>
-      <g:description>1Kg Pack 
-Keep Frozen -18°c 
-Can Be Used Till 6 Months</g:description>
+      <g:description>Skip the tedious shelling process with our farm-fresh, hand-peeled Green Peas, frozen at peak ripeness to lock in their natural sweetness. Packed with approx. 5g of protein and 5g of dietary fiber per 100g, these vibrant gems support everyday vitality with essential vitamins and minerals. They are perfect for stirring into rich Gujarati Undhiyu, classic Matar Paneer, or golden kachoris. To preserve their premium quality, store this one-kilogram pack in your freezer in an airtight bag, thawing only what you need.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -686,7 +725,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>5iChZlL9Klp3x1XZPtAt</g:id>
       <g:title>Fresh N Local Thai Jumbo Taro Root 1pc</g:title>
-      <g:description>600-999Gm Per Pc</g:description>
+      <g:description>Bring a grand culinary experience to your kitchen with our premium Thai Jumbo Taro Root, a magnificent imported tuber prized for its velvety texture and mild, nutty undertone. This wholesome root supports general wellness, offering approx. 5g of dietary fiber and approx. 1.5g of protein per 100g. In Gujarati households, it makes a splendid addition to rich, spiced subzis and crispy fried snacks. To maintain its fresh texture, store this unwashed root in a cool, dark, and well-ventilated pantry.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>650.00 INR</g:price>
@@ -698,9 +737,23 @@ Can Be Used Till 6 Months</g:description>
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>5p6VQmdAGyRGx40q2h0V</g:id>
+      <g:title>Fresh N Local Lemon (Nimbu) 250 G</g:title>
+      <g:description>Bring a burst of zesty brightness to your Surat kitchen with our handpicked, juicy farm-fresh Lemons (Nimbu). These citrus powerhouses offer approx. 53mg of Vitamin C per 100g, along with dietary fiber and essential minerals to support daily vitality. Indispensable in Gujarati households, a squeeze of fresh lemon elevates daily dals, poha, comforting khichdi, and summer nimbu paani. To maximize shelf life, store these lemons in a sealed container inside your refrigerator&apos;s crisper drawer.</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>25.00 INR</g:price>
+      <g:sale_price>20.00 INR</g:sale_price>
+      <g:link>https://www.freshnlocal.co/product/5p6VQmdAGyRGx40q2h0V</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784456099447_ind%20lemoin.jpeg?alt=media&amp;token=ff2a0bc3-8ae8-4059-b310-2a6181594221</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>5zWrq4kUpE8btgq9SgZS</g:id>
       <g:title>Fresh N Local Green Almonds 500gm</g:title>
-      <g:description>Origin Hinachal </g:description>
+      <g:description>Experience the fleeting delight of fresh, tender Green Almonds, a prized seasonal delicacy harvested at the peak of spring. Locally celebrated as Hara Badam, these soft, velvety pods offer a unique nutty tartness. Nutritionally, 100g provides approx. 6g of plant protein, dietary fiber, and essential Vitamin E to support overall vitality. In Gujarati kitchens, they are thinly sliced into refreshing summer salads, tossed into rich gravies, or enjoyed raw with a pinch of salt. To preserve their crisp texture, store them unwashed in a paper bag inside the refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>300.00 INR</g:price>
@@ -714,7 +767,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>6eX4w6XSQDdwLXp6Qjqq</g:id>
       <g:title>Fresh N Local Thai Mangosteen 500gm</g:title>
-      <g:description>Origin - Sri Lanka</g:description>
+      <g:description>Crowned as the &quot;Queen of Fruits,&quot; our premium Thai Mangosteen brings an exotic touch of Southeast Asia directly to your doorstep in Surat. Beneath its thick purple rind lies snowy white, juicy segments offering approx 1.8g of dietary fiber per 100g, along with essential Vitamin C and potassium to support overall vitality. In Gujarati homes, this sweet-tangy delicacy makes a refreshing palate cleanser after a rich, spicy feast or a luxurious addition to festive fruit salads. Keep them fresh by storing in your refrigerator’s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>400.00 INR</g:price>
@@ -727,7 +780,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>6xynsuXefUzkHa7rUrfk</g:id>
       <g:title>Fresh N Local Blood Orange 1kg</g:title>
-      <g:description>Blood Orange </g:description>
+      <g:description>Unveiling a dramatic crimson surprise, our premium Blood Oranges bring an exotic Mediterranean flair straight to your Surat home. Each juicy slice provides approx. 1.2g of dietary fiber, 0.9g of protein, and essential Vitamin C to support your daily vitality. Western Indian households love tossing these ruby gems into festive fruit salads or squeezing them for refreshing, vibrant mocktails. To maintain their peak juiciness, store them in your refrigerator crisper drawer.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -740,7 +793,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>79s9cRRPCJWJR46jaxhW</g:id>
       <g:title>Fresh N Local Hand Peeled Garlic 100 Gm 100gm</g:title>
-      <g:description>ALL FRUITS AND VEGETABLE ARE CUT AND PEELED IN CONTROLED AND HYGENIC ENVIROMENT AND IT IS PREPARED WITH IN 60 MIN OF DELIVERY TIME</g:description>
+      <g:description>Ditch the tedious chore of peeling with our fresh, ready to use Hand Peeled Garlic cloves. Sourced from local farms, this culinary essential offers approx 6g of protein, 2g of dietary fiber, and essential minerals per 100g to support overall wellness. Perfectly suited for Western Indian cooking, these pungent cloves are vital for tempering Gujarati dals, aromatic subzis, and hearty winter undhiyu. Store them in a dry, airtight container inside your refrigerator to keep them wonderfully crisp and flavorful.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -754,7 +807,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>7EYn6Ihg8Xss6Ps6N42K</g:id>
       <g:title>Fresh N Local Ginger Root 200 G</g:title>
-      <g:description>Ginger Root </g:description>
+      <g:description>Infuse your daily cooking with the sharp, zesty warmth of our handpicked Ginger Root, a staple in every Surat kitchen. Nutritionally, 100g of this aromatic rhizome offers approx. 1.8g of protein, 2g of dietary fiber, along with essential potassium and vitamin C to support general vitality. It is indispensable for brewing comforting Gujarati adrak chai, tempering rich dals, or adding a pungent kick to festive undhiyu and everyday subzis. To maintain its juicy texture and fiery punch, store unpeeled ginger in a paper bag inside your refrigerator&apos;s crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>60.00 INR</g:price>
@@ -768,7 +821,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>7REj0zZK7E7AfkbY3u0d</g:id>
       <g:title>Fresh N Local King Oyster Mushroom 200gm</g:title>
-      <g:description>Origin - Thailand </g:description>
+      <g:description>Introduce a gourmet touch to your Surat kitchen with our meaty, thick-stemmed King Oyster Mushrooms. Renowned for their savory umami flavor, they provide approx. 3g of protein and 2.2g of dietary fiber per 100g, alongside essential B-vitamins. These versatile mushrooms absorb spices beautifully, making them an excellent addition to Gujarati tawa subzis, rich kadhai curries, or simple pan-searings. To preserve their signature firm texture, store them unwashed in a breathable paper bag inside your refrigerator drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>280.00 INR</g:price>
@@ -782,7 +835,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>7htH89QUF6Brth3K7ruJ</g:id>
       <g:title>Fresh N Local Baby Shimla Apple 500gm</g:title>
-      <g:description>5-6 Pc</g:description>
+      <g:description>Hailing from the misty, sun-kissed orchards of Himachal Pradesh, our Baby Shimla Apples are a crunchy, pocket-sized delight. Packed with dietary fiber and vitamin C, they offer approx. 0.3g of protein and essential minerals per 100g to support daily vitality. In Gujarati homes, these sweet-tart miniatures are enjoyed fresh, tossed in vibrant fruit chaats, or simmered into comforting spiced halwas. To preserve their signature crunch, store them in your refrigerator&apos;s crisper drawer wrapped in a damp paper towel.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -795,7 +848,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>8xFlPOiBunod5R342usS</g:id>
       <g:title>Fresh N Local Iceberg Luttuce 500gm</g:title>
-      <g:description>Iceberg Luttuce 500Gm</g:description>
+      <g:description>Experience the ultimate crunch with our farm-fresh Iceberg Lettuce, a crisp exotic green that elevates any meal. Packed with hydration, every 100g offers approx. 1.2g of dietary fiber, 0.9g of protein, plus vital vitamins A and K for general vitality. In Gujarati kitchens, it brings a refreshing twist to traditional kachumber salads, wraps, and local fusion chaats. To keep this leafy delight extraordinarily crisp, store the unwashed head in a zip-lock bag with a paper towel inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -809,7 +862,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>9MHhk45ZgyB5hbHGdODZ</g:id>
       <g:title>Fresh N Local Shitake Mushroom 100gm</g:title>
-      <g:description>Shitake Mushroom </g:description>
+      <g:description>Unleash deep, earthy umami in your kitchen with our premium Shiitake Mushrooms, prized for their rich, smoky depth. These exotic mushrooms offer excellent wellness benefits, containing approx. 2.2g of protein and 2.5g of dietary fiber per 100g, along with essential B vitamins and minerals. Perfect for Surat’s modern kitchens, they elevate Gujarati fusion stir-fries, rich subzis, and comforting noodle bowls with their meaty texture. To keep them perfectly firm and fresh, store these beauties in a breathable paper bag inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -836,7 +889,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>9WUfl85kffqwWKJwbTrm</g:id>
       <g:title>Fresh N Local Thai Jumbo Asparagus 250gm</g:title>
-      <g:description>Thai Jumbo Asparagus </g:description>
+      <g:description>Elevate your gourmet kitchen with our premium, thick-speared Thai Jumbo Asparagus, handpicked for its tender crunch and delicate, earthy sweetness. This vibrant green import offers wholesome vitality, providing approx. 2.2g of protein, 2.1g of dietary fiber, alongside essential vitamins A, C, and folate per 100g. Perfect for contemporary Gujarati kitchens, these spears beautifully elevate fusion stir-fry subzis, warm salad bowls, or light, spiced curries. To maintain ultimate crispness, store them upright in a jar with an inch of water in your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -849,7 +902,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>9Zg0lsxTbyPrLBnpnRnY</g:id>
       <g:title>Fresh N Local Mix Colour Cherry Tomato 200gm</g:title>
-      <g:description>Mix Colour Cherry Tomato 200Gm</g:description>
+      <g:description>Bring a burst of vibrant color to your dining table with our premium Mix Colour Cherry Tomatoes, a delightful imported assortment of red, yellow, and orange gems. Rich in essential nutrients, they offer approx. 1.2g of protein and 1.5g of dietary fiber per 100g, along with vital vitamins. Perfect for modern Gujarati kitchens, these juicy tomatoes add a sweet tang to traditional kachumber salads, quick stir-fries, and gourmet pastas. To preserve their peak sweetness and firm texture, store them at room temperature away from direct sunlight.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>110.00 INR</g:price>
@@ -863,7 +916,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>9foe6HzA3sjfxXKjLPb3</g:id>
       <g:title>Fresh N Local Romaine Lettuce 200gm</g:title>
-      <g:description>Romaine Lettuce </g:description>
+      <g:description>Crisp, elongated, and delightfully sturdy, our farm-fresh Romaine Lettuce brings a refreshing crunch to Surat&apos;s modern kitchens. Rich in essential hydration, this leafy green offers approx. 1.3g of fiber and vital Vitamin A per 100g to support daily wellness. While famous for Caesar salads, local food lovers use these crisp leaves as low-carb wraps for spiced paneer bhurji or chopped into a refreshing Gujarati-style kachumber salad. To maintain its signature crunch, store the unwashed head in a damp paper towel inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -877,8 +930,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>9fvtMymFTu5Qix48c4ku</g:id>
       <g:title>Fresh N Local Tender Coconut 300ml+</g:title>
-      <g:description>300Ml Apx Water
-Tender Coconut 1pc</g:description>
+      <g:description>Quench your thirst the coastal way with our handpicked Surat-special Tender Coconut, delivering a splash of pure, refreshing nature right to your doorstep. Yielding over 300ml of sweet water, it contains approx. 250mg of potassium and traces of natural vitamins per 100g to support daily vitality. Sip the chilled nectar directly, or scoop out the tender malai to enrich traditional Gujarati basundi and cooling summer sherbets. To maintain its natural sweetness, store the unopened coconut in a cool, dark place and consume immediately after cracking.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
@@ -892,7 +944,7 @@ Tender Coconut 1pc</g:description>
     <item>
       <g:id>BGWoWEZEQ0yPgrqXR7aK</g:id>
       <g:title>Fresh N Local Brown Coconut 1pc</g:title>
-      <g:description>400Gm Apx Per Pc</g:description>
+      <g:description>Crack open the rich, tropical goodness of our premium Brown Coconut, a staple sourced locally for authentic Surati kitchens. This versatile treasure provides essential hydration and nourishment, packed with approx. 9g of dietary fiber and 3.3g of plant protein per 100g, alongside vital minerals like potassium and iron. Grate it fresh to elevate your daily Gujarati dals, enrich rich undhiyu gravies, or whip up classic coconut chutneys. To check for freshness, choose a heavy coconut that sloshes with water inside, and store it in a cool, dry place.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -906,7 +958,7 @@ Tender Coconut 1pc</g:description>
     <item>
       <g:id>BkMo261EBgxXOZ4ymi1A</g:id>
       <g:title>Fresh N Local Italian Lemon 2pc</g:title>
-      <g:description>Italian Lemon </g:description>
+      <g:description>Brighten your culinary creations with our premium, sun-kissed Italian Lemons, prized for their intense aroma, thick zest, and abundant juice. Rich in essential Vitamin C and containing approx. 2.8g of dietary fiber and 1.1g of protein per 100g, these citrus gems offer pure vitality. In Gujarati kitchens, their vibrant juice elevates comforting dals, zesty summer sherbets, and tangy nimbu achaar to perfection. Keep them fresh by storing them in a sealed container inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -919,7 +971,7 @@ Tender Coconut 1pc</g:description>
     <item>
       <g:id>Bo8TZCnU3dTy7LSNns0J</g:id>
       <g:title>Fresh N Local Banana Leaf 2pc</g:title>
-      <g:description>Banana Leaf</g:description>
+      <g:description>Bring the heritage of traditional Indian cooking to your Surat kitchen with our fresh, vibrant green Banana Leaves. Revered in Western India for preparing the iconic, paper-thin Gujarati Panki, steaming spiced fish, or serving authentic festive feasts. Infusing food with natural polyphenols, they offer trace vitamins and approx. 1.5g of plant fiber per 100g to support general wellness. To maintain their pliable texture, wrap them in a damp cloth and store in the refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -933,7 +985,7 @@ Tender Coconut 1pc</g:description>
     <item>
       <g:id>CCaXtEU9ZxMkOMZOTXBX</g:id>
       <g:title>Fresh N Local Pear Babugosha 500gm</g:title>
-      <g:description>Pear Babugosha </g:description>
+      <g:description>Savor the delicate sweetness of our local Babugosha Pears, a seasonal treasure cherished across Surat homes for its soft, melting texture. Each 100g serving offers approx. 3g of dietary fiber and essential Vitamin C to support your daily vitality. Perfect for slicing into fresh Gujarati fruit salads, blending into refreshing summer coolers, or cooking into sweet chutneys. To enjoy them at their best, store slightly firm pears at room temperature in a paper bag until they yield to gentle pressure.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>130.00 INR</g:price>
@@ -947,7 +999,7 @@ Tender Coconut 1pc</g:description>
     <item>
       <g:id>CEQEfIoNF0cUw0XvsdE9</g:id>
       <g:title>Fresh N Local Iran Kimera Dates 400gm</g:title>
-      <g:description>Imported And Seedless </g:description>
+      <g:description>Experience the luxurious, buttery sweetness of premium Iran Kimera Dates, brought straight to your home in Surat. These soft, dark gems are naturally packed with wellness, offering approx. 2g of protein, 7g of fiber, and essential minerals per 100g. Highly versatile in Gujarati kitchens, they are perfect for sweetening festive ladoos, rich puran polis, or tangy khajur-imli chutneys. For lasting freshness and to retain their moisture, store these dates in an airtight container inside the refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>175.00 INR</g:price>
@@ -959,28 +1011,14 @@ Tender Coconut 1pc</g:description>
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
-      <g:id>CHtd5dN5HIeHlzamh3xV</g:id>
-      <g:title>Fresh N Local Red Bell Pepper 200gm</g:title>
-      <g:description>Red Bell Pepper </g:description>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>100.00 INR</g:price>
-      <g:sale_price>80.00 INR</g:sale_price>
-      <g:link>https://www.freshnlocal.co/product/CHtd5dN5HIeHlzamh3xV</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783160386024_1000204697.jpg?alt=media&amp;token=dbdfdccb-54f5-46f3-8b5c-70151b3d0d16</g:image_link>
-      <g:brand>Fresh N Local</g:brand>
-      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
-      <g:identifier_exists>no</g:identifier_exists>
-    </item>
-    <item>
       <g:id>Cb2n7l4Ik8AtVV3T4O8f</g:id>
       <g:title>Fresh N Local Edible Flower 1 Box</g:title>
-      <g:description>EDIBLE FLOWER </g:description>
+      <g:description>Transform your culinary creations into visual masterpieces with our premium, locally sourced Edible Flowers. These delicate, colorful blooms elevate everyday meals, providing approx. 1g of protein, 2g of dietary fiber, and essential vitamin C per 100g. In modern Gujarati kitchens, they are perfect for garnishing festive shrikhand, refreshing summer coolers, and salads. To maintain their fresh, vibrant petals, store this box in your refrigerator crisper wrapped in a lightly damp paper towel.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/Cb2n7l4Ik8AtVV3T4O8f</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783154707738_1000193361.jpg?alt=media&amp;token=c6352479-5f38-4148-9d0a-767327cc2158</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784459914287_edible%20flowers.jpeg?alt=media&amp;token=21b731ca-6ce9-457b-af90-00e19a446ba4</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -988,12 +1026,11 @@ Tender Coconut 1pc</g:description>
     <item>
       <g:id>CzEN8pzH1scTevob6Ozo</g:id>
       <g:title>Fresh N Local Red Yellow Bellpepper 2pc</g:title>
-      <g:description>RED YELLOW BELLPEPPER 2PC
- APX:250-300Gm</g:description>
+      <g:description>Bring a splash of vibrant sunshine and ruby brilliance to your Surat kitchen with our premium pair of Red and Yellow Bell Peppers. These crisp, exotic gems are packed with nutrients, offering approx. 0.9g of protein, 1.7g of dietary fiber, and abundant Vitamin C per 100g to support daily vitality. In Gujarati homes, they beautifully elevate fusion stir-fries, tawa subzis, and fresh salads with their sweet crunch. To maintain their firm texture, store them unwashed in your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>140.00 INR</g:price>
-      <g:sale_price>120.00 INR</g:sale_price>
+      <g:price>120.00 INR</g:price>
+      <g:sale_price>100.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/CzEN8pzH1scTevob6Ozo</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1782896325740_Yellow_and_red_bellpepper_photos%E2%80%A6_202607011425.jpeg?alt=media&amp;token=4231373e-ec51-46f4-a21a-1fc95861e854</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1003,7 +1040,7 @@ Tender Coconut 1pc</g:description>
     <item>
       <g:id>DBQmNVW1Ia4xH0CRJNlv</g:id>
       <g:title>Fresh N Local Thai Nam Dok Mai Mango 2pc</g:title>
-      <g:description>Origin Thailand </g:description>
+      <g:description>Experience the exotic elegance of our handpicked Thai Nam Dok Mai Mangoes, prized for their slender teardrop shape and silky, fiberless golden pulp. Each 100g serving offers approx. 1.8g of dietary fiber and 36mg of Vitamin C, supporting overall vitality. Perfect for a premium Gujarati summer thali or blended into a rich, velvety aamras, they add global flair to local tables. To enjoy them at their best, store at room temperature until fragrant, then refrigerate.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>650.00 INR</g:price>
@@ -1017,7 +1054,7 @@ Tender Coconut 1pc</g:description>
     <item>
       <g:id>DpRZ3XALNJjDRi6lYFOO</g:id>
       <g:title>Fresh N Local Fresh Oregano 10gm</g:title>
-      <g:description>Fresh Oregano </g:description>
+      <g:description>Elevate your culinary creations with our aromatic, locally sourced Fresh Oregano, a Mediterranean herb that brings an earthy, peppery warmth to your kitchen. Rich in vitality-supporting nutrients, 100g of this fresh herb provides approx. 2.2g of protein, 4.2g of dietary fiber, alongside essential vitamins A, C, and iron. In Gujarati households, it beautifully elevates fusion handvos, herbed parathas, and local street-style pizzas. To maintain its vibrant oils, wrap the sprigs in a damp paper towel and store in your refrigerator&apos;s crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -1031,9 +1068,7 @@ Tender Coconut 1pc</g:description>
     <item>
       <g:id>E3GGffjys5WLVx7hWIVU</g:id>
       <g:title>Fresh N Local Frozen Sweet Corn 1kg</g:title>
-      <g:description>1Kg pack 
-keep frozen -18°c 
-can be used till 6 months</g:description>
+      <g:description>Bring the sunny sweetness of golden kernels to your Surat kitchen anytime with our premium Frozen Sweet Corn. Naturally rich in dietary fiber and essential B-vitamins, 100g of these tender kernels provides approx. 3g of protein to fuel your daily vitality. Sauté them for a quick evening makai chaat, toss them into Gujarati pulavs, or blend them into creamy soups. Keep them frozen at -18°C in an airtight zip lock bag to retain their juicy, farm-fresh crunch.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -1047,8 +1082,8 @@ can be used till 6 months</g:description>
     <item>
       <g:id>E5fi9q2J49tWTefcGw0d</g:id>
       <g:title>Fresh N Local Rockit Apple 4pc</g:title>
-      <g:description>Origin - New Zealand </g:description>
-      <g:availability>in stock</g:availability>
+      <g:description>Discover the miniature marvel of New Zealand origins, the sweet and crisp Rockit Apple, now delivered fresh to Surat homes. This snack-sized treasure offers approx. 2g of dietary fiber and essential vitamins per 100g, promoting everyday vitality. In Gujarati households, these cute apples add a delightful crunch to festive fruit salads, spicy chaats, or sweet shrikhand garnishes. To maintain their signature crispness, store these convenient, pre-washed treats chilled inside their original tube container in the refrigerator.</g:description>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>300.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/E5fi9q2J49tWTefcGw0d</g:link>
@@ -1060,7 +1095,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>EKF6DkQ44gZ2VlRbwVcJ</g:id>
       <g:title>Fresh N Local Onion 1 Kg</g:title>
-      <g:description>Onion </g:description>
+      <g:description>An indispensable cornerstone of the Indian kitchen, our farm-fresh pink onions bring unmatched depth to your daily cooking. Rich in essential nutrients, they offer approx. 1.7g of dietary fiber and vital vitamin C per 100g to support overall wellness. From crafting aromatic gravies for Gujarati subzis and comforting dals to serving as a crunchy, raw salad garnish, these onions are incredibly versatile. To maintain their crisp texture and sharp flavor, store them in a cool, dry, well-ventilated basket away from moisture.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>40.00 INR</g:price>
@@ -1074,7 +1109,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>Ed7uHcgEJR8qhq3uKKuh</g:id>
       <g:title>Fresh N Local Fresh Thyme 10gm</g:title>
-      <g:description>Fresh Thyme </g:description>
+      <g:description>Elevate your culinary creations with our premium, locally-sourced Fresh Thyme, a fragrant herb that brings a touch of Mediterranean magic to Surat&apos;s kitchens. Rich in wellness-promoting elements, 100g of this aromatic herb offers approx. 5.6g of dietary fiber, 1.6g of protein, and essential vitamins A and C. It seamlessly elevates roasted Gujarati potatoes, fusion undhiyu, continental pastas, and artisanal marinades with its earthy, mint-lemon flavor. To preserve their aromatic oils, wrap the sprigs in a damp paper towel and refrigerate inside a reusable container.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -1088,11 +1123,11 @@ can be used till 6 months</g:description>
     <item>
       <g:id>EmQuS6FzKrgFJ146Mjm1</g:id>
       <g:title>Fresh N Local Guava Chunks 500gm</g:title>
-      <g:description>(WITH BLACK SALT)ALL FRUITS AND VEGETABLE ARE CUT AND PEELED IN CONTROLED AND HYGENIC ENVIROMENT AND IT IS PREPARED WITH IN 60 MIN OF DELIVERY TIME</g:description>
+      <g:description>Experience the crisp joy of Gujarat&apos;s favorite winter orchard treasure with our pre-cut, hygienic Guava Chunks. These bite-sized jamfal pieces deliver essential nourishment, offering approx. 5.4g of dietary fiber and over 200mg of Vitamin C per 100g, supporting overall vitality. Perfect for tossing into a tangy Gujarati jamfal nu shaak, blending into refreshing coolers, or enjoying as a spiced street-style fruit chaat. Keep this 500g pack refrigerated and enjoy within 48 hours to maintain their signature crisp bite.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
-      <g:sale_price>40.00 INR</g:sale_price>
+      <g:sale_price>30.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/EmQuS6FzKrgFJ146Mjm1</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783768184625_Chopped_guava_pieces_in_punnet_202607111635.jpeg?alt=media&amp;token=51172ec9-8de9-400b-ad1e-d5f8f6976a37</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1102,8 +1137,8 @@ can be used till 6 months</g:description>
     <item>
       <g:id>EqzEv7Tmoy4ZchrlM9JH</g:id>
       <g:title>Fresh N Local Indian Cherry 250gm</g:title>
-      <g:description>Origin kashmir </g:description>
-      <g:availability>in stock</g:availability>
+      <g:description>Brimming with vibrant ruby hues, these Indian Cherries bring a delightful tang to your seasonal fruit basket. Each serving is a natural treasure, offering approximately 2g of fiber, 1g of protein, and essential Vitamin C per 100g to support daily vitality. Locals in Surat love tossing these sweet-tart gems into festive fruit salads, blending them into cooling summer lassis, or crafting quick, tangy chutneys. For lasting freshness, store them unwashed in a breathable container in your refrigerator&apos;s crisper drawer.</g:description>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/EqzEv7Tmoy4ZchrlM9JH</g:link>
@@ -1115,7 +1150,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>F5RQ6ZS8tTdxryJV4AlF</g:id>
       <g:title>Fresh N Local Funnel Bulb 250gm</g:title>
-      <g:description>Funnel Bulb </g:description>
+      <g:description>Discover the crisp, anise-scented charm of our premium imported Funnel Bulb, a gourmet Mediterranean delight now delivered fresh to Surat. This unique vegetable provides approximately 1.2g of protein and 3.1g of fiber per 100g, alongside essential vitamin C and potassium for general vitality. Locally, Gujarati households love slicing it thin for crunchy fusion salads or tossing it into aromatic subzis. To keep your bulb exceptionally crisp, store it in the refrigerator crisper wrapped gently in a damp paper towel.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -1128,7 +1163,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>F88TmUMUBMdeFLR6sTls</g:id>
       <g:title>Fresh N Local European Sweet Potato 400gm</g:title>
-      <g:description>Imported </g:description>
+      <g:description>Discover a premium twist on a beloved root vegetable with our imported European Sweet Potatoes. These vibrant orange-fleshed tubers are nutritional powerhouses, delivering approximately 1.6g of protein, 3g of dietary fiber, and abundant vitamins A and C per 100g to support daily vitality. Perfect for Gujarati kitchens, they beautifully elevate fasting dishes like faraali pattice, sweet potato chaat, or rich winter undhiyu. Store them in a cool, dark, well-ventilated pantry instead of the refrigerator to preserve their natural sweetness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>500.00 INR</g:price>
@@ -1142,7 +1177,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>GCRB4zJ5ARDMHJA3KwBe</g:id>
       <g:title>Fresh N Local Hass Avocado Semiripe 3pc</g:title>
-      <g:description>500-600Gm Apx (imported)</g:description>
+      <g:description>Bring the buttery luxury of imported Hass avocados straight to your Surat home with this three-piece semiripe pack. Rich in healthy fats, these creamy fruits provide approx. 6.7g of fiber and approx. 2g of protein per 100g to support daily vitality. In modern Gujarati households, they make a delightful twist when blended into fusion coriander chutneys or layered in fresh salads. Store them in a paper bag at room temperature to achieve the perfect ripeness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>400.00 INR</g:price>
@@ -1154,9 +1189,23 @@ can be used till 6 months</g:description>
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>GdyipCzJ8hGJn1XiRYPI</g:id>
+      <g:title>Fresh N Local Pomegranate Peeled 200 G</g:title>
+      <g:description>Skip the tedious peeling and dive straight into the vibrant, ruby-red joy of our freshly extracted Indian Pomegranate Arils. Per 100g, these juicy pearls offer approx. 4g of dietary fiber, 1.7g of plant protein, and essential Vitamin C to support your daily vitality. Perfect for elevating Gujarati classics like dabeli, sev khamani, and cooling curd rice, or simply tossing into fresh morning fruit salads. Keep them refrigerated in their original airtight container to preserve their crisp texture and sweet freshness.</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>90.00 INR</g:price>
+      <g:sale_price>80.00 INR</g:sale_price>
+      <g:link>https://www.freshnlocal.co/product/GdyipCzJ8hGJn1XiRYPI</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784454030541_POMOGRANDATE%20PELLED.jpeg?alt=media&amp;token=0220874d-7ee1-4234-b16f-8f94abbdd5a8</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>Gmv4CdwaHe0tKFOKDcqj</g:id>
       <g:title>Fresh N Local Pomelo 1pc</g:title>
-      <g:description>Original Thailand</g:description>
+      <g:description>Meet the grand patriarch of the citrus family, our luscious local Pomelo, locally known as Chakotra. This magnificent seasonal giant delivers approx. 0.7g of protein, 1g of dietary fiber, and about 61mg of Vitamin C per 100g to support daily vitality. In Gujarati households, its sweet-tart pink segments are widely loved in zesty afternoon chaats, sprinkled with kala namak and chili, or pressed into refreshing juices. To preserve its juiciness, store your pomelo at room temperature away from direct sunlight.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>1000.00 INR</g:price>
@@ -1170,7 +1219,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>H1G8KiWJwz6dydkrjnBj</g:id>
       <g:title>Fresh N Local Fresh Roosemary 10gm</g:title>
-      <g:description>Fresh Roosemary </g:description>
+      <g:description>Elevate your culinary creations with our aromatic, locally sourced Fresh Rosemary sprigs, delivering a pine-like fragrance directly to your Surat kitchen. These culinary herbs offer wholesome vitality, carrying approx. 14g of dietary fiber, 317mg of calcium, and essential vitamins per 100g. Perfect for infusing into fusion Gujarati kadhas, elevate roasted root vegetables, or add a woody depth to modern paneer marinades. To maintain its robust flavor, wrap the sprigs in a damp paper towel and refrigerate in a sealed bag.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -1184,7 +1233,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>H5P7RTEyWYzxcRNs9tpB</g:id>
       <g:title>Fresh N Local Baby Golden Potato 500gm</g:title>
-      <g:description>Baby Golden Potato</g:description>
+      <g:description>Tiny, golden skinned, and naturally sweet, our premium Baby Golden Potatoes bring a luxurious texture to your everyday Gujarati cooking. These petite tubers pack wellness benefits, offering approx 2g of protein, 1.6g of dietary fiber, and essential vitamin C per 100g to support vitality. Perfect for crafting rich Surti Dum Aloo, crispy pan fried subzis, or rustic roasted sides, they absorb spices beautifully. Store them in a cool, dark, well ventilated basket away from direct sunlight to maintain their firm texture.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>600.00 INR</g:price>
@@ -1197,7 +1246,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>HfH076jmM7Y0fuBmjxuI</g:id>
       <g:title>Fresh N Local Pineapple Slice 200gm</g:title>
-      <g:description>ALL FRUITS AND VEGETABLE ARE CUT AND PEELED IN CONTROLED AND HYGENIC ENVIROMENT AND IT IS PREPARED WITH IN 60 MIN OF DELIVERY TIME</g:description>
+      <g:description>Savor the tropical sweetness of our freshly sliced, ripe pineapples, sourced from premium coastal orchards. Perfect for busy mornings in Surat, each 100g serving delivers essential vitamin C and approx. 1.4g of dietary fiber to support overall vitality. These juicy slices are perfect for Gujarati style pineapple raita, spicy fruit chaats, or grilled desserts. To maintain their refreshing juiciness, store these pre-cut slices in an airtight glass container in the coldest part of your refrigerator and consume within two days.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
@@ -1211,7 +1260,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>I1iclDWz3L2NoID3AMeS</g:id>
       <g:title>Fresh N Local Raspberry Fresh 80gm</g:title>
-      <g:description>Indian Grown </g:description>
+      <g:description>Indulge in the tart, ruby-red elegance of fresh raspberries, now delivered straight to Surat homes. These delicate berries offer general vitality, providing approx. 6.5g of dietary fiber and essential vitamin C per 100g. In local kitchens, they beautifully reinvent Gujarati favorites—try layering them into a contemporary berry shrikhand, blending into festive mocktails, or garnishing creamy basundi. To maintain their exquisite texture, store these unwashed berries in the refrigerator, washing gently only right before consumption.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>350.00 INR</g:price>
@@ -1225,7 +1274,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>I3gW66sgTghU037e2Kjf</g:id>
       <g:title>Fresh N Local Oyster Mushroom 200gm 1pack</g:title>
-      <g:description>Oyster Mushroom 200gm</g:description>
+      <g:description>Elegant, velvety, and deeply savory, these freshly harvested Oyster Mushrooms bring a gourmet touch directly to your Surat kitchen. Boasting a delicate, fan-like shape, they are naturally packed with essential nutrients, offering approx. 3g of protein per 100g, dietary fiber, and vital B-vitamins for daily vitality. In Gujarati homes, they beautifully elevate classic masala subzis, tawa stir-fries, and warming soups. To preserve their premium, earthy texture, store them unwashed in a breathable paper bag inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -1239,7 +1288,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>I6AypTIPKFXtwIUEnoOP</g:id>
       <g:title>Fresh N Local Korean Pear 1pc</g:title>
-      <g:description>Korean Pear </g:description>
+      <g:description>Bite into the exceptionally crisp, sweet, and water-rich world of the Korean Pear, an exotic jewel now delivered fresh to Surat. Offering approx. 1.6g of dietary fiber and approx. 4.5mg of Vitamin C per 100g, this refreshing fruit supports overall vitality. Gujarati homes love using its crunchy texture in festive fruit chaats or as a juicy, cooling palate cleanser alongside a traditional Gujarati thali. To preserve their signature crispness, store this pear wrapped in paper in your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>900.00 INR</g:price>
@@ -1253,8 +1302,8 @@ can be used till 6 months</g:description>
     <item>
       <g:id>Im95TkR5NYNnU23r2uya</g:id>
       <g:title>Fresh N Local Indian Apricots 250gm</g:title>
-      <g:description>Origin Ladakh</g:description>
-      <g:availability>in stock</g:availability>
+      <g:description>Sourced from pristine Himalayan orchards, these golden Indian Apricots bring sun-kissed sweetness to your table. Packed with wholesome vitality, 100g of this delicate stone fruit offers approx. 2g of dietary fiber, potassium, and essential Vitamin A to support overall well-being. Gujarati households love using these velvety apricots in festive sheera, tangy chutneys, or as a vibrant salad garnish. To keep their tender skin and juicy texture perfectly intact, store them unwashed in a paper bag inside your refrigerator crisper drawer.</g:description>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>125.00 INR</g:price>
       <g:sale_price>75.00 INR</g:sale_price>
@@ -1267,13 +1316,13 @@ can be used till 6 months</g:description>
     <item>
       <g:id>J2cFGvWMAZMvhontpfk9</g:id>
       <g:title>Fresh N Local Red Dragon Fruit 1pc</g:title>
-      <g:description>Red  Dragon Fruit</g:description>
+      <g:description>Ignite your senses with the striking magenta hue of our premium Red Dragon Fruit, sourced fresh for Surat&apos;s fruit lovers. Per 100g, this exotic beauty offers approx. 1.2g of protein, 3g of dietary fiber, and essential Vitamin C to support your daily vitality. In Gujarati homes, its vibrant pulp elevates festive fruit salads, refreshing summer mocktails, and chilled yogurt-based raitas. To maintain its crisp sweetness, store it in the refrigerator crisper drawer and consume within five days.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>70.00 INR</g:price>
       <g:sale_price>50.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/J2cFGvWMAZMvhontpfk9</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FJ2cFGvWMAZMvhontpfk9%2Foriginal.webp?alt=media&amp;token=d10c17fc-8245-4c3b-8a14-ee45c7793a65</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784463525348_Two_red_dragon_fruits_202607191748.jpeg?alt=media&amp;token=6f1196cc-9a66-4621-a12f-b7ac68f0b70a</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1281,12 +1330,12 @@ can be used till 6 months</g:description>
     <item>
       <g:id>J7vFS1J2zzEJEJYSwplN</g:id>
       <g:title>Fresh N Local Red Cabbage 1pc</g:title>
-      <g:description>Red Cabbage </g:description>
+      <g:description>Add a brilliant splash of royal purple to your daily meals with our crisp, locally sourced Red Cabbage. This exotic brassica packs vital nutrition, offering approx. 1.4g of protein, 2.5g of dietary fiber, and a wealth of Vitamin C and minerals per 100g. Perfect for adding a colorful crunch to Gujarati Koshimbir, stir-fried Sambharo, or fresh monsoon salads. To maintain its crunchy texture, store the whole head unwashed in a sealed bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/J7vFS1J2zzEJEJYSwplN</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FJ7vFS1J2zzEJEJYSwplN%2Foriginal.webp?alt=media&amp;token=157b708f-7af8-442e-81ad-2632d36dd091</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784464555813_Two_cabbages_on_white_202607191748.jpeg?alt=media&amp;token=6db0998b-e3f8-4dd9-8e01-376eefae0437</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1294,7 +1343,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>J9cmtZndUE0Q4kEjX9Cb</g:id>
       <g:title>Fresh N Local Zespri Sungold Kiwi 3pc</g:title>
-      <g:description>Zespri Sungold Kiwi </g:description>
+      <g:description>Bask in the tropical sweetness of premium Zespri Sungold Kiwis, a golden-fleshed delight delivered fresh to Surat homes. Sweeter than green varieties, every 100g provides approx. 1.2g of protein, 1.4g of dietary fiber, and abundant Vitamin C and potassium for daily vitality. In Gujarati households, these luscious fruits beautifully elevate festive fruit salads, fusion shrikhand, and refreshing summer mocktails. To keep them fresh, store at room temperature until slightly soft to the touch, then refrigerate.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
@@ -1308,7 +1357,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>JUZAS1S5MLVqsIOq2Q05</g:id>
       <g:title>Fresh N Local Edamame Beans Whole Frozen 500gm</g:title>
-      <g:description>Edamame beans Whole Frozen </g:description>
+      <g:description>Sourced at peak ripeness, our vibrant green frozen whole edamame pods offer a nutritious twist to your daily meals. Rich in wellness benefits, they provide approx. 11g of protein and 5g of dietary fiber per 100g, alongside essential vitamins and minerals. Perfect for tossing into a warm Gujarati-style sprouted salad, a spicy chaat, or quick stir-fries. To preserve their signature sweet crunch, store this 500g pack immediately in your freezer and seal the bag tightly after each opening.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>300.00 INR</g:price>
@@ -1322,7 +1371,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>JWG0jtnar9AQCookAMKr</g:id>
       <g:title>Fresh N Local Kashmir Plum 500gm</g:title>
-      <g:description>Kashmir Plum</g:description>
+      <g:description>Direct from the pristine valleys of Kashmir, these deep crimson plums bring a refreshing sweet-tart joy to Surat homes. Packed with wholesome goodness, 100g delivers approx 1.4g of fiber and approx 9.5mg of Vitamin C for natural vitality. Gujaratis love slicing them into festive fruit chaats or simmering them into spiced chutneys for rotis. For lasting freshness, ripen them on your counter before storing in the fridge.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
@@ -1336,7 +1385,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>K5OwLGM5ua4E2dx30hIc</g:id>
       <g:title>Fresh N Local Celery 250gm</g:title>
-      <g:description>Celery </g:description>
+      <g:description>Bring an exhilarating crunch to your Surat kitchen with our fresh premium Celery stalks. Naturally hydrating, every 100g offers approx 1.6g of dietary fiber, 0.7g of protein, and essential vitamins A, K, and C for general daily vitality. Surtis love using this aromatic herb to add a refreshing bite to modern salads, fusion dals, clear soups, and local stir-fries. Keep it perfectly crisp by wrapping the stalks tightly in foil before refrigerating them.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
@@ -1350,11 +1399,10 @@ can be used till 6 months</g:description>
     <item>
       <g:id>KtnAUE639C8iX9UtAP4h</g:id>
       <g:title>Fresh N Local Pineapple 1pc</g:title>
-      <g:description>Queen Pineapple 
-1Kg Apx</g:description>
+      <g:description>Escape to a tropical paradise with our sun-ripened, handpicked whole Pineapple, bringing a burst of juicy sweetness straight to your Surat home. Delivering approximately 50 calories and 1.4g of dietary fiber per 100g, this gold-hued treasure is loaded with Vitamin C, manganese, and essential minerals that champion daily vitality. It shines wonderfully in Gujarati fruit raitas, spicy pineapple sheera, sweet-and-sour chutneys, or simply sprinkled with black salt. Store uncut pineapples at room temperature, but once sliced, refrigerate them in an airtight container to retain their luscious juices.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>100.00 INR</g:price>
+      <g:price>75.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/KtnAUE639C8iX9UtAP4h</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783155103147_1000192149.jpg?alt=media&amp;token=3867b9be-d80c-403a-b4bf-2fa7c35255c1</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1364,7 +1412,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>Lb7lIct6fhTIVZiU8FkW</g:id>
       <g:title>Fresh N Local Rocket Arugula 100gm</g:title>
-      <g:description>Rocket Arugula </g:description>
+      <g:description>Introduce a peppery spark to your Surat kitchen with our premium, fresh Rocket Arugula. Known for its distinct, mustard-like zest, this leafy green delivers approx. 2.6g of protein, 1.6g of fiber, and rich amounts of Vitamin K per 100g for overall well-being. It beautifully elevates Western Indian salads, fusion parathas, and spiced dals with its bold flavor. To preserve its crunch, store the unwashed leaves wrapped in a damp paper towel inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>70.00 INR</g:price>
@@ -1378,7 +1426,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>LlQMqkklNm3XqE05qhXS</g:id>
       <g:title>Fresh N Local Butternut Squash 500gm</g:title>
-      <g:description>Butternut Squash </g:description>
+      <g:description>Discover the sweet, nutty allure of our premium imported Butternut Squash, a versatile gourmet delight now gracing kitchens across Surat. This pear-shaped treasure offers wholesome vitality, providing approx. 1g of protein, 2g of dietary fiber, and rich Vitamin A per 100g. Gujarati households are embracing its creamy texture to elevate traditional sweet-and-sour subzis, hearty dals, or even a modern twist on undhiyu. Keep it in a cool, dark, well-ventilated pantry to retain its rich flavor for weeks.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
@@ -1392,9 +1440,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>LwIxWI2ptM7l12jfAU4i</g:id>
       <g:title>Fresh N Local Edamame Beans (Peeled And Boiled) 500gm</g:title>
-      <g:description>500Gm Per Pack 
-Keep In Frozen -18°c
-Can Be Used Till 6 Months</g:description>
+      <g:description>Ready-to-eat convenience meets premium nutrition with our vibrant Edamame Beans, pre-peeled and gently boiled to lock in their natural tenderness. These premium young soybeans offer approx. 11g of plant-based protein and 5g of dietary fiber per 100g, supporting daily vitality. Surtis can toss them into healthy evening chaats, fusion stir-fries, or refreshing summer salads. Store this frozen pack in an airtight zip-lock bag to maintain their delightful bite and freshness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>300.00 INR</g:price>
@@ -1407,13 +1453,13 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>MBctPxELcGhYviDs3iTa</g:id>
       <g:title>Fresh N Local Zucchini Green 500gm</g:title>
-      <g:description>Zucchini Green </g:description>
+      <g:description>Add a touch of continental elegance to your everyday cooking with our crisp, freshly harvested Green Zucchini. This versatile exotic squash contains approx 1.2g of protein, 1g of dietary fiber, and essential Vitamin C per 100g, supporting daily vitality. Surtis love grating it into wholesome parathas, tossing it in light, spiced stir-fries, or adding a healthy twist to fusion pasta salads. To maintain its firm texture and refreshing crunch, store this zucchini unwashed in a perforated paper bag inside your refrigerator crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
       <g:sale_price>75.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/MBctPxELcGhYviDs3iTa</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FMBctPxELcGhYviDs3iTa%2Foriginal.webp?alt=media&amp;token=76119dec-356c-4cea-8e4c-cefb78234b4b</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784463722007_Fresh_green_zucchini_on_white_202607191750.jpeg?alt=media&amp;token=e6ff5c2b-35cc-4e6f-8046-2e43e7650987</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1421,7 +1467,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>MgSMpICp59feqfgjzp0g</g:id>
       <g:title>Fresh N Local Spanish Grapefruit 1pc</g:title>
-      <g:description>300-400gm each (imported)</g:description>
+      <g:description>Experience the sun-drenched vibrancy of our premium Spanish Grapefruit, a seasonal citrus treasure delivered straight to Surat. Packed with refreshing hydration, 100g of this ruby-hued delight offers approx. 1.6g of dietary fiber and 31mg of Vitamin C to support your daily vitality. In Gujarati homes, its tangy juice makes a stellar afternoon cooler, or you can toss slices into fresh kachumber salads finished with black salt. To enjoy maximum juiciness, select fruits that feel heavy for their size and store them in the refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -1435,13 +1481,13 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>MmmtVRVd5TwwcWfWRMOW</g:id>
       <g:title>Fresh N Local Cherry Tomatoes 200gm</g:title>
-      <g:description>Cherry Tomatoes </g:description>
+      <g:description>Bursting with a sweet, tangy juice, these ruby-red gems are the ultimate upgrade to your daily meals. Our premium cherry tomatoes pack essential nutrition in every bite, delivering approx. 1.2g of dietary fiber and 18mg of Vitamin C per 100g to support overall vitality. Sourced fresh for Surat&apos;s food lovers, they are perfect for elevating a traditional Gujarati kachumber salad, tossing into quick stir-fries, or garnishing artisanal pastas. To maintain their plump texture and sweet flavor, store them at room temperature away from direct sunlight.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>70.00 INR</g:price>
       <g:sale_price>50.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/MmmtVRVd5TwwcWfWRMOW</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FMmmtVRVd5TwwcWfWRMOW%2Foriginal.webp?alt=media&amp;token=eb8cf3d0-5dbe-405a-a87d-e9456289d6a9</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784464338177_Fresh_cherry_tomatoes_on_vine_202607191801.jpeg?alt=media&amp;token=839afbe6-fd11-4fbe-b60d-0fd1296a9aa7</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1449,7 +1495,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>NXEoVuinxCUXYI6Xlukg</g:id>
       <g:title>Fresh N Local Beans 250 G</g:title>
-      <g:description>Beans</g:description>
+      <g:description>Bring home the crisp, vibrant snap of farm-fresh green beans, hand-picked to elevate your daily meals. Packed with natural goodness, these tender pods offer approx. 1.8g of protein and 3.4g of dietary fiber per 100g, alongside essential vitamins for daily vitality. They are perfect for a classic Gujarati Fansi nu Shaak, aromatic pulaos, or nourishing vegetable curries. To keep them snap-fresh, store them unwashed in a breathable bag inside your refrigerator&apos;s crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -1463,7 +1509,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>O9zQlt6eFhClFKQfREPA</g:id>
       <g:title>Fresh N Local Fresh Yellow Dates 500gm</g:title>
-      <g:description>Fresh Yellow Dates</g:description>
+      <g:description>Savour the fleeting sweetness of the season with our premium Fresh Yellow Dates, locally cherished in Gujarat as crisp Kharek. These golden gems deliver instant vitality, containing approx. 1.8g of protein, 6.7g of dietary fiber, and essential potassium per 100g. Perfect for crunching raw, they also add a natural sweetness to traditional Gujarati sprouted salads and festive chutneys. To preserve their delightful, apple-like crunch, store these fresh dates in a paper bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -1477,7 +1523,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>OR3J0OQN1qjUCA6iurnB</g:id>
       <g:title>Fresh N Local English Cucumber 500gn</g:title>
-      <g:description>English Cucumber </g:description>
+      <g:description>Crisp, seedless, and intensely hydrating, our premium English Cucumber brings a refreshing crunch to your daily meals. This seedless European variety offers approx. 0.6g of protein, 0.5g of fiber, and essential Vitamin K per 100g to support natural vitality. In Gujarati homes, it is the ultimate choice for cooling yoghurty raitas, crunchy kachumber salads, or alongside spicy snacks. To preserve its crunch, wrap the cucumber tightly in cling film before storing it in your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -1489,9 +1535,23 @@ Can Be Used Till 6 Months</g:description>
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>Or08w9qdEDeZKwqUD76K</g:id>
+      <g:title>Fresh N Local Papaya Cut 200 G</g:title>
+      <g:description>Savor the sun-kissed sweetness of our freshly diced Papaya Cut, sourced locally to bring the finest tropical goodness straight to your Surat home. This convenient pack offers approx. 0.5g of protein, 1.7g of dietary fiber, and is rich in Vitamin A and C per 100g to support daily vitality. Perfect for quick Gujarati breakfast bowls, refreshing afternoon fruit salads, or blended into a cooling summer lassi. Keep this sealed container refrigerated and consume within twenty-four hours for the ultimate juicy crunch.</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>40.00 INR</g:price>
+      <g:sale_price>30.00 INR</g:sale_price>
+      <g:link>https://www.freshnlocal.co/product/Or08w9qdEDeZKwqUD76K</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784454067138_YAM_CUT.jpeg_202607191505.jpeg?alt=media&amp;token=ba6bc1fe-aa8b-4eb4-b2f8-6a960c98728a</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>PYFGPpHmlWGOlwfogPrt</g:id>
       <g:title>Fresh N Local Langda Mango 1kg</g:title>
-      <g:description>Origin - Mahillabad</g:description>
+      <g:description>Unveiling the legendary Langda mango, a royal summer treat known for its characteristic greenish skin, fiberless lemon-yellow flesh, and intensely sweet aroma. Rich in general vitality, every 100g offers approx. 1.6g of dietary fiber alongside essential Vitamin A and Vitamin C. In Gujarati homes, this seasonal treasure is perfect for velvety aamras or sliced alongside warm puris. To keep them fresh, store firm mangoes at room temperature until fragrant, then refrigerate.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>130.00 INR</g:price>
@@ -1505,7 +1565,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>PYT9d7mcN9tPk9t1Qt3l</g:id>
       <g:title>Fresh N Local Washinton Apple 2pc</g:title>
-      <g:description>WASHINTON APPLE </g:description>
+      <g:description>Brimming with crisp sweetness, our premium Washington Apples bring the finest orchards of the Pacific Northwest straight to your Surat home. Every 100g of this iconic red fruit offers approx. 2.4g of dietary fiber along with essential Vitamin C and potassium to support daily vitality. Perfect for slicing into festive Gujarati fruit salads, layering in creamy rabri, or tossing into a refreshing morning chaat. To maintain their signature crunch, store these apples in your refrigerator&apos;s crisper drawer away from strong-smelling vegetables.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -1519,10 +1579,7 @@ Can Be Used Till 6 Months</g:description>
     <item>
       <g:id>PufQtZxDNDAuIhWcf3MC</g:id>
       <g:title>Fresh N Local Cherry Halves Frozen 500gm</g:title>
-      <g:description>250gm box
-ideal for shake, smocthie or compote 
-keep frozen -18°c 
-can be used till 6 months</g:description>
+      <g:description>Experience the deep, sweet indulgence of our premium frozen Cherry Halves, carefully pitted and preserved at peak ripeness. Per 100g, they provide approx. 1g of protein, 2g of fiber, alongside essential Vitamin C and potassium for general vitality. In Gujarati households, these vibrant halves are perfect for enriching festive cherry basundi, fusion shrikhand, and Western-style baked desserts. To preserve their lush texture, store them constantly in your freezer&apos;s coldest section and thaw only the required portion before use.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>650.00 INR</g:price>
@@ -1536,7 +1593,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>Q1GOf9kpUaWTRrFrBUCR</g:id>
       <g:title>Fresh N Local Mango Raw Cut 125gm</g:title>
-      <g:description>Mango Raw Cut </g:description>
+      <g:description>Bring the tangy zest of Gujarat’s favorite summer staple straight to your kitchen with our pre-cut Raw Mango. Packed with dietary fiber and essential vitamin C (approx. 46 mg per 100g), this tart delight supports daily vitality. It is ideal for whipping up a quick Gujarati keri no sambharo, tempering comforting dals, or blending into refreshing chutneys. Keep these crisp cubes in an airtight container in your refrigerator&apos;s vegetable crisper to maintain their ultimate freshness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>40.00 INR</g:price>
@@ -1550,7 +1607,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>Q4S2TTGv50jB7rc18ua7</g:id>
       <g:title>Fresh N Local Baby Carrots 250gm</g:title>
-      <g:description>Baby Carrots</g:description>
+      <g:description>Introduce a splash of vibrant sweetness to your dining table with our premium, tender Baby Carrots. These bite-sized root delights offer a satisfying crunch and are packed with wellness benefits, delivering approx. 2.9g of dietary fiber, 0.8g of protein, and rich amounts of Vitamin A per 100g. Locally loved in Surat, they beautifully elevate fresh Gujarati salads, stir-fries, and gourmet undhiyu. To maintain their signature crunch, store them submerged in a bowl of fresh water in the refrigerator, changing the water every couple of days.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -1563,7 +1620,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>RTYitI6N4U5bk53nrfWm</g:id>
       <g:title>Fresh N Local Lotus Stem 250gm</g:title>
-      <g:description>Lotus Stem </g:description>
+      <g:description>Discover the crisp, aquatic charm of our premium Kamal Kakdi, sourced fresh for your kitchen. This exotic lotus stem is packed with natural goodness, offering approx. 4.9g of dietary fiber and approx. 44mg of Vitamin C per 100g to support general vitality. Extremely versatile in Indian cooking, it elevates traditional Kashmiri Nadru Yakhni, crunchy fritters, and spicy Gujarati subzis. To preserve its crunch, wrap the unwashed stem in a damp paper towel and refrigerate in the crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>275.00 INR</g:price>
@@ -1577,7 +1634,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>RoOTNJIaity3eKvp7HTI</g:id>
       <g:title>Fresh N Local Fresh Red Dates 500gm</g:title>
-      <g:description>Fresh Red Dates</g:description>
+      <g:description>Bite into the delightful crunch of our premium, seasonal Fresh Red Dates, locally known as Lal Kharek in Gujarat. These glossy, crimson gems offer natural sweetness, providing approx. 1.2g of protein and 3g of fiber per 100g, plus vital minerals to support overall vitality. Perfect for crisp snacking, they are traditionally used in Gujarati kitchens to make tangy chutneys or sliced into festive sweet dishes. Keep them refrigerated in a breathable paper bag to maintain their signature crispness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -1591,13 +1648,13 @@ can be used till 6 months</g:description>
     <item>
       <g:id>Rr1tkINz0KwKy6e2X7Oc</g:id>
       <g:title>Fresh N Local Pakchoi 250gm</g:title>
-      <g:description>PakChoi </g:description>
+      <g:description>Introduce a splash of vibrant Asian greens to your Surat kitchen with our crisp, farm-fresh PakChoi. Every 100g portion delivers approx 1g of dietary fiber and 1.5g of plant protein, alongside essential vitamins A, C, and K to support your daily vitality. Perfect for modern Gujarati fusion salads, quick ginger-garlic stir-fries, or nourishing noodle soups, its juicy white stalks and tender green leaves bring a delightful crunch to any plate. To maintain maximum crispness, store this leafy treasure unwashed in a damp paper towel inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
-      <g:sale_price>50.00 INR</g:sale_price>
+      <g:sale_price>75.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/Rr1tkINz0KwKy6e2X7Oc</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FRr1tkINz0KwKy6e2X7Oc%2Foriginal.webp?alt=media&amp;token=e267e019-e88e-407a-9d71-0d2f5ef7d634</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784464180616_Fresh_Pakchoi_on_white_background_202607191759.jpeg?alt=media&amp;token=136cd17f-8a78-45ed-a547-f89824758150</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1605,8 +1662,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>RuLkTjSYis0YMnBWW3Lo</g:id>
       <g:title>Fresh N Local Durian 1pc</g:title>
-      <g:description>Origin China 
-600/700Gm Per Piece </g:description>
+      <g:description>Embark on an exotic culinary adventure with our premium whole Durian, the legendary &apos;King of Fruits&apos; sourced fresh for Surat&apos;s adventurous food lovers. This custard-like delicacy provides approx. 1.5g of protein and 3.8g of fiber per 100g, alongside essential B-vitamins and potassium for natural vitality. While traditionally Southeast Asian, contemporary Gujarati homes love blending its rich pulp into unique basundis or creamy milkshakes. For peak flavor, store this aromatic fruit at room temperature and consume immediately once opened.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>750.00 INR</g:price>
@@ -1619,9 +1675,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>S7BCYYlqvS9lRtPSUZzM</g:id>
       <g:title>Fresh N Local Edamame Beans (Whole And Boiled ) 500gm</g:title>
-      <g:description>500Gm Per Pack 
-Keep Frozen -18°c 
-Can be Used till 6 Months</g:description>
+      <g:description>Bring the vibrant taste of premium East Asian green soybeans straight to your Surat home with our perfectly pre-boiled Edamame pods. These vibrant green gems offer a wholesome vitality lift, packed with approx. 11g of plant-based protein and 5g of dietary fiber per 100g, along with essential vitamins. Surtis love tossing these tender beans into healthy fusion koshimbir salads, light evening chaats, or lightly spiced stir-frys. Keep them frozen at -18°C and thaw only the required portion just before serving to maintain their perfect crunch.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>300.00 INR</g:price>
@@ -1635,7 +1689,7 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>TIBarncxHQqj4GXdBlAr</g:id>
       <g:title>Fresh N Local Himachal Plum 500gm</g:title>
-      <g:description>Himachal Plum</g:description>
+      <g:description>Handpicked from the serene orchards of Himachal Pradesh, these fresh plums offer a delightful sweet-tart burst. Rich in natural goodness, 100g of this seasonal fruit offers approx. 1.4g of dietary fiber alongside essential Vitamin C to support your daily vitality. In Gujarati kitchens, these juicy gems are perfect for crafting tangy chutneys, vibrant summer salads, or artisanal compotes. To enjoy their peak flavor, ripen them at room temperature before transferring them to the refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
@@ -1649,7 +1703,7 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>TOo8yZVp7gZsJDwLBZxZ</g:id>
       <g:title>Fresh N Local Green Peas Fresh Hand Peeled 200gm</g:title>
-      <g:description>ALL FRUITS AND VEGETABLE ARE CUT AND PEELED IN CONTROLED AND HYGENIC ENVIROMENT AND IT IS PREPARED WITH IN 60 MIN OF DELIVERY TIME</g:description>
+      <g:description>Bring the vibrant sweetness of winter harvest straight to your Surat kitchen without the tedious shelling chores. Our premium, hand peeled green peas deliver approx. 5g of plant protein and 5g of dietary fiber per 100g, promoting natural vitality. Essential vitamins and minerals make these tender pearls a wholesome addition to classic Gujarati undhiyu, aromatic pulaos, and savory samosa fillings. To preserve their delightful sweetness and crisp texture, store these hygienically packed peas in an airtight container inside your freezer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>75.00 INR</g:price>
@@ -1663,7 +1717,7 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>TS9xiWYwUcLbQ2Nqs9G8</g:id>
       <g:title>Fresh N Local Radicchio Lettuce 250gm</g:title>
-      <g:description>Radicchio Lettuce </g:description>
+      <g:description>Bring a splash of vibrant Italian elegance to your Surat kitchen with our crisp Radicchio Lettuce, famous for its deep burgundy leaves and pleasantly bitter profile. This premium leafy green offers around 1.5g of fiber, 1.4g of protein, and essential Vitamin K (approx. per 100g) to support daily vitality. Locally, it elevates modern Gujarati fusion salads and acts as stunning edible cups for innovative starters. To maintain its signature crunch, store the unwashed head in a perforated bag inside your refrigerator crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -1677,7 +1731,7 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>Thr2ce7uK3clUyMR0BjI</g:id>
       <g:title>Fresh N Local Mandarin Orange 500gm</g:title>
-      <g:description>Super Sweet</g:description>
+      <g:description>Bask in the sun-kissed sweetness of our premium Mandarin Oranges, sourced meticulously to bring vibrant, citrusy joy directly to your Surat home. Each 100g serving of these easy-peeling segments offers approx. 0.8g of protein, 1.8g of dietary fiber, and is a wonderful source of vital Vitamin C and potassium to support daily vitality. Perfect for refreshing afternoon snacks, they elevate Gujarati fruit salads, festive shrikhand garnishes, and tangy summer sherbets. To maintain their juicy plumpness, store these mandarins in a cool, well-ventilated basket away from direct sunlight.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -1691,11 +1745,11 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>UJPwSFmV3u8Ezj5FLopx</g:id>
       <g:title>Fresh N Local Broccoli 500gm</g:title>
-      <g:description>Broccoli </g:description>
+      <g:description>Bring a vibrant splash of emerald green to your Surat kitchen with our premium, farm-fresh Broccoli. This highly nutritious exotic cruciferous vegetable provides approx. 2.8g of protein and 2.6g of fiber per 100g, alongside essential vitamins for general vitality. Locally loved, it beautifully elevates modern Gujarati stir-fries, warmth-filled fusion subzis, healthy salads, and parathas. To preserve its crunch and fresh taste, store the unwashed broccoli head in a loose, breathable bag inside your refrigerator crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>220.00 INR</g:price>
-      <g:sale_price>200.00 INR</g:sale_price>
+      <g:price>190.00 INR</g:price>
+      <g:sale_price>120.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/UJPwSFmV3u8Ezj5FLopx</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783161106509_1000204702.jpg?alt=media&amp;token=ac5938cc-31da-47f2-ac86-ac013247362b</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1705,8 +1759,8 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>V7VQqMDqdLfDNQV2Wt6T</g:id>
       <g:title>Fresh N Local Indian Nectarine 500gm</g:title>
-      <g:description>Indian Nectarine </g:description>
-      <g:availability>in stock</g:availability>
+      <g:description>Experience the exquisite, smooth-skinned delight of locally sourced Indian Nectarines, bringing a burst of summer sweetness straight to your Surat home. Naturally packed with dietary fiber (approx. 1.7g per 100g), vitamin C, and essential minerals, they support overall vitality. Western Indian households love tossing these sweet-tart gems into refreshing seasonal salads, blending them into cooling lassis, or pairing them with traditional desserts. To maintain their luscious texture, ripen them on your counter and then refrigerate.</g:description>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/V7VQqMDqdLfDNQV2Wt6T</g:link>
@@ -1718,7 +1772,7 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>Vd9GmcT92COa0txE8Rvg</g:id>
       <g:title>Fresh N Local Artichoke Globe 1kg</g:title>
-      <g:description>Artichoke Globe</g:description>
+      <g:description>Introduce a touch of Mediterranean sophistication to your Surat kitchen with our premium imported Globe Artichokes. Per 100g, they offer approx. 3.2g of protein and 5.4g of dietary fiber, along with essential Vitamin C and potassium to support daily vitality. Gujarati households are beautifully pairing these tender hearts in fusion subzis, rich Mughlai curries, or charred in warm salads. To maintain freshness, store them unwashed wrapped in a damp paper towel inside the refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>2600.00 INR</g:price>
@@ -1731,13 +1785,13 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>Vh5czL2MpqgGGPe1XFqN</g:id>
       <g:title>Fresh N Local Purple Passion Fruit 250gm</g:title>
-      <g:description>Super Sweet</g:description>
+      <g:description>Dive into a sensory explosion with our exotic, handpicked Purple Passion Fruit, a tropical treasure now delivered fresh to Surat. Rich in vital nutrients, 100g of this pulpy delight offers approx. 10.4g of dietary fiber, 2.2g of protein, and essential Vitamin C and iron to support daily vitality. Squeeze its tangy-sweet nectar into refreshing summer coolers, drape it over fruit salads, or use it to give a contemporary twist to your traditional Gujarati shrikhand. Store them at room temperature until the skin wrinkles slightly, indicating peak sweetness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
       <g:sale_price>150.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/Vh5czL2MpqgGGPe1XFqN</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FVh5czL2MpqgGGPe1XFqN%2Foriginal.webp?alt=media&amp;token=e1b2c561-b4eb-4a72-ab77-8fd34fe95e4c</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784457255291_1000195870.jpg?alt=media&amp;token=392944ef-2ae5-404c-8edd-477874a94526</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1745,7 +1799,7 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>VyXSTd5JAcN6L98QYcWi</g:id>
       <g:title>Fresh N Local Red Globe Grapes 250gm</g:title>
-      <g:description>Red Globe Grapes </g:description>
+      <g:description>Indulge in the majestic sweetness of Red Globe Grapes, a premium Chilean variety beloved for its large size and seeded, juicy crunch. These crimson gems deliver vital nutrients, providing approx. 18g of natural sugars, 0.9g of fiber, and essential Vitamin C per 100g to support daily vitality. In Gujarati homes, they add a sweet pop to festive fruit raitas, vibrant summer salads, or decorative dessert platters. To maintain their crispness, store them unwashed in a perforated bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -1759,7 +1813,7 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>WuM2UmxarpiN2oDeu7eN</g:id>
       <g:title>Fresh N Local Spanish Nectarine Peach 2pc</g:title>
-      <g:description>Spanish Nectarine Peach</g:description>
+      <g:description>Sun-drenched Spanish Nectarines bring a luscious, fuzz-free sweetness straight to Surat. Each 100g serving offers approx. 1.1g of fiber, 1g of protein, and essential vitamins A and C to support daily vitality. These juicy stone fruits are perfect for refreshing Gujarati summer salads, unique fruit raitas, or sliced over shrikhand. To maintain their crisp texture and sweet aroma, store these nectarines in the refrigerator crisper drawer and consume within three days.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>400.00 INR</g:price>
@@ -1772,7 +1826,7 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>Xh0r4gg6JnNjfhUXstMq</g:id>
       <g:title>Fresh N Local Pomegranate 500gm</g:title>
-      <g:description>Pomegranate </g:description>
+      <g:description>Unveil a treasure trove of ruby-red pearls with our premium, locally sourced pomegranates. Each juicy aril delivers vital nourishment, providing approx. 4g of dietary fiber and 1.7g of protein per 100g, along with essential Vitamin C for daily vitality. In Gujarati kitchens, these glistening seeds are indispensable for crowning savory dabelis, tossing into fresh yogurt raitas, or adding a sweet crunch to festive chaats. To maximize their shelf life, store whole pomegranates in the refrigerator&apos;s crisper drawer for up to three weeks.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -1786,10 +1840,7 @@ Can be Used till 6 Months</g:description>
     <item>
       <g:id>XwYnhT3ek3M2XYZ1DCZu</g:id>
       <g:title>Fresh N Local Frozen Hass Avocado Paste 500gm</g:title>
-      <g:description>only paste, no additive 
-500gm pack 
-keep frozen -18°c 
-can be used till 6 months</g:description>
+      <g:description>Experience the velvety rich goodness of premium Mexican Hass avocados, prepped and frozen at peak ripeness for ultimate convenience. Delivering approx. 2g of protein, 6.7g of dietary fiber, and essential vitamins per 100g, this luscious paste promotes daily vitality. It seamlessly elevates Surat&apos;s fusion food scene, perfect as a creamy spread for multigrain parathas or whipped into modern Gujarati snack dips and salads. Keep this pouch frozen at -18°C, thawing only the required portion before use to maintain freshness.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>240.00 INR</g:price>
@@ -1802,7 +1853,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>Y5gEEQDB6BGnJaCsMmMi</g:id>
       <g:title>Fresh N Local Button Mushrooms 1 Pack 1pack</g:title>
-      <g:description>200gm per pack</g:description>
+      <g:description>Elevate your daily cooking with our plump, pearly-white button mushrooms, harvested at their peak of freshness. These versatile fungi are a light, nutritious addition to your meals, offering approx. 3g of protein, dietary fiber, and essential B-vitamins per 100g to support overall vitality. In Gujarati kitchens, they beautifully absorb rich spices in comforting tawa subzis, creamy curries, or quick stir-fries. To preserve their firm texture, store them unwashed in a paper bag inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -1816,8 +1867,8 @@ can be used till 6 months</g:description>
     <item>
       <g:id>YRBzV4rcZ9o0zUl0nbJP</g:id>
       <g:title>Fresh N Local Jamun 500gm</g:title>
-      <g:description>Origin Maharashtra </g:description>
-      <g:availability>in stock</g:availability>
+      <g:description>Relish the nostalgic, sweet-tart burst of our handpicked Jamun, a monsoon jewel adored across Gujarat. Rich in dietary fiber, vitamin C, and iron, these glossy purple plums offer approx. 1.4g of fiber and essential minerals per 100g to support daily vitality. In Western Indian homes, they are enjoyed fresh with black salt, blended into cooling seasonal sherbets, or churned into tangy raitas. To maintain their juicy plumpness, store them unwashed in a breathable paper bag in your refrigerator.</g:description>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>160.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/YRBzV4rcZ9o0zUl0nbJP</g:link>
@@ -1829,7 +1880,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>YaVOtyVod68VtocaXNT2</g:id>
       <g:title>Fresh N Local Oak Leaf Lettuce 200gm</g:title>
-      <g:description>Oak Leaf Lettuce </g:description>
+      <g:description>Elevate your daily meals with the delicate, rosette-like ruffles of our Surat-grown Oak Leaf Lettuce. Offering approx. 1.2g of dietary fiber and 1.4g of protein per 100g, these tender leaves are naturally rich in vitamins A and C for vitality. They add a beautiful texture to modern Gujarati kachumbars, fresh salads, and sandwiches. Wrap unwashed leaves in a damp paper towel before refrigerating to keep them perfectly crisp.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -1843,7 +1894,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>YgM7D94SLjBfCxEVM8ln</g:id>
       <g:title>Fresh N Local Asian Persimmon 2pc</g:title>
-      <g:description>Asian Persimmon</g:description>
+      <g:description>Unveil the honey-like sweetness of our premium Asian Persimmon, an exotic autumn treasure now delivered fresh to Surat. Each serving provides vital nutrition, including approx. 3.6g of fiber, 0.6g of protein, and essential Vitamin A per 100g to support overall vitality. In Western Indian kitchens, this vibrant fruit makes a wonderful addition to modern fruit chaats, fusion desserts, or chilled summer salads. For the best flavor, store firm persimmons at room temperature until they soften slightly before refrigerating.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -1857,7 +1908,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>Z911egrlwDnPQtpK5PI5</g:id>
       <g:title>Fresh N Local Coriander Leaves 100 G</g:title>
-      <g:description>Coriander leaves </g:description>
+      <g:description>Bring vibrant, zesty freshness to your Gujarati kitchen with our aromatic, farm-fresh coriander leaves. Offering approx. 2g of fiber and 2g of protein per 100g, these greens are rich in vitamins A and K for daily wellness. From lending an earthy depth to festive undhiyu and comforting dals to blending into sharp dhokla chutneys, their citrusy punch is irreplaceable. Wrap them in a dry paper towel inside an airtight container to keep them crisp and fragrant for days.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>30.00 INR</g:price>
@@ -1871,7 +1922,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>ZBRd07O8sDl3wr003tJ6</g:id>
       <g:title>Fresh N Local Imported Blueberry Fresh 125gm</g:title>
-      <g:description>Indian Grown </g:description>
+      <g:description>Treat your palate to the exquisite pop of these premium, plump imported blueberries, handpicked from global orchards for Surat&apos;s discerning fruit lovers. Rich in general vitality, every 100g serving delivers approx 2.4g of dietary fiber, vitamin C, and essential minerals like manganese. In Western Indian kitchens, these sweet-tart gems beautifully elevate contemporary shrikhand, fusion fruit chaats, and refreshing summer coolers. To maintain their perfect plumpness, store them unwashed in their original breathable clamshell container inside the refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>225.00 INR</g:price>
@@ -1884,7 +1935,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>ZGeRvUlEYMDGpAkd9Xx1</g:id>
       <g:title>Fresh N Local Napa Cabbage 500gm</g:title>
-      <g:description>Napa Cabbage </g:description>
+      <g:description>Elevate your daily meals with our crisp, sweet-flavored Napa cabbage, a premium exotic leafy green sourced fresh for Surat&apos;s gourmet kitchens. This versatile brassica offers gentle nourishment, containing approx. 1.2g of fiber, 1.1g of protein, and essential vitamins per 100g for overall vitality. Gujarati homes love shredding its tender, crinkled leaves into crunchy salads, light stir-fries, or innovative fusion subzis. To maintain its signature crunch, store it unwashed in a perforated paper bag in the crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>125.00 INR</g:price>
@@ -1897,7 +1948,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>ZT0mIuyHDKTwXNosU8t3</g:id>
       <g:title>Fresh N Local South Africa Green Pear 500gm</g:title>
-      <g:description>300Gm</g:description>
+      <g:description>Bring home the crisp, sweet crunch of premium South African Green Pears, harvested at peak perfection for Surat&apos;s fruit lovers. Each 100g serving delivers approx 3.1g of dietary fiber, 0.3g of protein, and essential Vitamin C for daily vitality. In Gujarati homes, these versatile pears elevate afternoon fruit chaats, add crunch to festive salads, or poach beautifully with cardamom. For lasting freshness, ripen them at room temperature, then refrigerate once the neck yields to gentle pressure.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -1911,13 +1962,13 @@ can be used till 6 months</g:description>
     <item>
       <g:id>ZevJErAbwc0otoHfdR0Y</g:id>
       <g:title>Fresh N Local Baby Red Radish 500gm</g:title>
-      <g:description>Baby Red Radish</g:description>
+      <g:description>Bring a burst of ruby-red brilliance to your table with crisp Baby Red Radish. Packed with wellness, 100g offers approx. 1.6g of fiber, approx. 15mg of Vitamin C, plus essential minerals and trace protein. In Gujarati households, these peppery gems elevate traditional koshimbir, zest up dals, or serve as a crunchy salad garnish. Keep them exceptionally crisp by wrapping them in a damp paper towel before storing in your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>160.00 INR</g:price>
-      <g:sale_price>125.00 INR</g:sale_price>
+      <g:price>149.00 INR</g:price>
+      <g:sale_price>100.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/ZevJErAbwc0otoHfdR0Y</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FZevJErAbwc0otoHfdR0Y%2Foriginal.webp?alt=media&amp;token=7d37e378-748a-4d48-9747-b082a0c4d54b</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784455291282_WhatsApp_Image_2026-07-19_at_3.17.42_202607191530.jpeg?alt=media&amp;token=c1053344-3a38-436e-8b6e-ae55fc53e830</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1925,7 +1976,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>ZsEqpZTfbc3vObm8xcmX</g:id>
       <g:title>Fresh N Local Biryani /Pulav Mix 250gm</g:title>
-      <g:description>Biryani /Pulav MIx</g:description>
+      <g:description>Skip the chopping hassle with our premium Biryani and Pulav Mix, featuring handpicked, hygienically pre-cut carrots, French beans, green peas, and cauliflower. Perfect for whipping up fragrant Gujarati-style vegetable pulav or rich biryanis, this colorful medley delivers essential nutrients, offering approx. 2g of protein, 3g of dietary fiber, and vital vitamins per 100g. To maintain its crisp texture and vibrant flavor, store this pack in your refrigerator’s crisper drawer and use within two days.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>60.00 INR</g:price>
@@ -1939,9 +1990,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>aOGagnShF2O1MgIc8t8E</g:id>
       <g:title>Fresh N Local Thai Sweet Tamarind 250gm</g:title>
-      <g:description>250Gm Per Box 
-Natural Sweet 
-</g:description>
+      <g:description>Indulge your palate with the premium, sugary and tangy delight of imported Thai Sweet Tamarind. Bringing a unique twist to Western Indian kitchens, these pods offer approximately 5g of dietary fiber, vital B-vitamins, and essential minerals per 100g. It is ideal for elevating Gujarati dal, festive chaats, and sweet-sour chutneys with natural rich sweetness. To maintain their luscious, sticky texture and fresh flavor, store these whole pods in a cool, dry, airtight glass container.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -1955,10 +2004,7 @@ Natural Sweet
     <item>
       <g:id>alGqKwxttJYcK0uBKRnD</g:id>
       <g:title>Fresh N Local Mix Berry Frozen 500gm</g:title>
-      <g:description>250gm box
-ideal for shake, smocthie or compote 
-keep frozen -18°c 
-can be used till 6 months</g:description>
+      <g:description>Bring the vibrant burst of global orchards straight to your Surat home with our premium, handpicked Mix Berry Frozen blend. Offering approx. 1g of protein, 5g of dietary fiber, and essential Vitamin C per 100g, this colorful mix supports overall vitality. Perfect for upgrading traditional Gujarati shrikhand, blending into refreshing summer lassis, or folding into warm sheeras and modern breakfast bowls. Store this 500g pack strictly in your freezer at -18°C, portioning out only what you need to retain maximum freshness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>500.00 INR</g:price>
@@ -1972,10 +2018,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>apyRaY63xQstLSg4RfST</g:id>
       <g:title>Fresh N Local Thai Mix 1pack</g:title>
-      <g:description>Authentic Thai Flavors: Experience the authentic taste of Thailand with our expertly crafted blend of Thai herbs and spices.
-Versatile Use: Use this Thai Mix to add depth and complexity to a variety of dishes, from soups to stir-fries.
-Convenient Blend: Our Thai Mix is a convenient way to incorporate the vibrant flavours of Thai cuisine into your cooking.
-Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully and hygienically packed to ensure the best quality reaches you.</g:description>
+      <g:description>Bring the vibrant zest of Southeast Asia straight to your Surat kitchen with our curated Thai Mix. This aromatic assortment offers approx. 1.5g of plant protein, 3g of dietary fiber, alongside essential Vitamin C and trace minerals that support general vitality. Gujarati fusion cooks love blending these herbs into spicy coconut-based curries, zesty fusion dals, or refreshing herbal teas for an exotic twist. Keep the pack refrigerated in an airtight container lined with a paper towel to preserve its citrusy oils and freshness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -1988,12 +2031,11 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     </item>
     <item>
       <g:id>bGB9vSpDbiqEndgmMS22</g:id>
-      <g:title>Fresh N Local Watermelon 1.5-2.0kg</g:title>
-      <g:description>2Kg Apx Per Pc</g:description>
+      <g:title>Fresh N Local Watermelon 1 Pc</g:title>
+      <g:description>Beat the Surat heat with our fresh Watermelon, a luscious treasure of pure hydration. Offering approx. 0.6g of protein, 0.4g of fiber, and 8mg of Vitamin C per 100g, this juicy fruit supports daily wellness. Across Gujarat, families love blending it into chilled tarbooj sherbet, tossing it into spicy fruit chaats, or cooking the rind into a delicious subji. For maximum freshness, store the uncut watermelon at room temperature, keeping it away from direct sunlight until you slice.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>70.00 INR</g:price>
-      <g:sale_price>40.00 INR</g:sale_price>
+      <g:price>75.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/bGB9vSpDbiqEndgmMS22</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783155141668_1000192147.jpg?alt=media&amp;token=661c4627-af01-48c5-b8f5-bbe696061d81</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2003,7 +2045,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>bZ37ndirsQhbuKRYQ33D</g:id>
       <g:title>Fresh N Local Mango Raw Slice 200gm</g:title>
-      <g:description>Mango Raw Slice</g:description>
+      <g:description>Bring home the tangy, crisp essence of summer with our freshly sliced raw green mangoes, sourced directly from local orchards. Each 100g serving of these vibrant slices provides approximately 1.4g of dietary fiber and 0.8g of protein, along with key vitamins like Vitamin C and A to support overall vitality. Perfect for whipping up instant Gujarati baflo, adding a sour kick to your dals, or tossing into spicy chutneys. To maintain their ultimate crunch, store these airtight slices in your refrigerator and consume within two days.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -2017,7 +2059,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>bpCoLNRon5PPYi5CaUbC</g:id>
       <g:title>Fresh N Local Coconut Chunks 200gm</g:title>
-      <g:description>ALL FRUITS AND VEGETABLE ARE CUT AND PEELED IN CONTROLED AND HYGENIC ENVIROMENT AND IT IS PREPARED WITH IN 60 MIN OF DELIVERY TIME</g:description>
+      <g:description>Savor the tropical sweetness of our freshly pre-cut Coconut Chunks, sourced from the finest coastal palms. Perfect for busy kitchens, these bite-sized pieces offer approx. 9g of dietary fiber and essential minerals per 100g to support daily vitality. In Gujarati homes, they are indispensable for grinding into rich chutneys, garnishing comforting dals, or adding texture to traditional Undhiyu. To maintain their pristine milky flavor and crisp texture, store these chunks refrigerated in an airtight container.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>60.00 INR</g:price>
@@ -2029,23 +2071,9 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
-      <g:id>c3lFiOartHeK5DjxJ8qx</g:id>
-      <g:title>Fresh N Local Yellow Bell Pepper 200gm</g:title>
-      <g:description>Yellow Bell Pepper </g:description>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>100.00 INR</g:price>
-      <g:sale_price>80.00 INR</g:sale_price>
-      <g:link>https://www.freshnlocal.co/product/c3lFiOartHeK5DjxJ8qx</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783160442598_1000204698.jpg?alt=media&amp;token=521a5fb2-cf6b-41f8-8185-a049a5ebb3f0</g:image_link>
-      <g:brand>Fresh N Local</g:brand>
-      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
-      <g:identifier_exists>no</g:identifier_exists>
-    </item>
-    <item>
       <g:id>cLVILnty7rGAPIOdHyBK</g:id>
       <g:title>Fresh N Local Matki Sprouts 200gm</g:title>
-      <g:description>Made With Ro Water With Hygienic </g:description>
+      <g:description>Introduce a wave of crisp, wholesome energy to your daily meals with our hygienically prepared Matki Sprouts, sourced directly for Surat&apos;s health-conscious kitchens. These moth bean sprouts are a powerhouse of vitality, offering approx. 6g of protein and 4g of dietary fiber per 100g, alongside essential B-vitamins and iron. Perfect for crafting a spicy Maharashtrian Misal, a comforting Gujarati matki ni usal, or simply tossed into refreshing salads with lime and chaat masala. Keep them refrigerated in their original breathable container and consume within three days for maximum crunch.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>25.00 INR</g:price>
@@ -2059,7 +2087,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>cmLfSCDeiMthNXrsLG0J</g:id>
       <g:title>Fresh N Local Golden Pear 500gm</g:title>
-      <g:description>Golden Pear</g:description>
+      <g:description>Unveil the crisp, honeyed sweetness of our seasonal Golden Pears, handpicked to bring refreshing elegance to your table in Surat. These exquisite fruits offer wellness in every bite, providing approx. 3.1g of dietary fiber per 100g alongside natural vitamin C and potassium for daily vitality. In Gujarati homes, they are delightful when sliced into festive fruit chaats, simmered into spiced chutneys, or tossed with fresh greens. To maximize their shelf life, store these pears at room temperature until ripe, then refrigerate.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -2073,7 +2101,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>d7FHyzO2Jyr7xzH9dw0e</g:id>
       <g:title>Fresh N Local Wild Arugula 100gm</g:title>
-      <g:description>Wild Arugula </g:description>
+      <g:description>Elevate your gourmet salads with our fresh Wild Arugula, a peppery leafy green that brings an intense, nutty kick to your plate. Grown locally for Surat’s modern kitchens, this vibrant green contains approx. 2.6g of protein and 1.6g of dietary fiber per 100g, alongside essential vitamins A and C. It makes a fantastic, zesty addition to fusion Gujarati handvos, cold pastas, or as a sharp garnish on warm flatbreads. To retain its crispness, store unwashed arugula in a breathable container lined with a damp paper towel in your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -2087,7 +2115,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>dOWxOP8VRtKeETne1DD5</g:id>
       <g:title>Fresh N Local Chana Sprouts 200gm</g:title>
-      <g:description>Chana Sprouts </g:description>
+      <g:description>Bring home the energetic crunch of our freshly germinated Chana Sprouts, meticulously cleaned and packed for your daily vitality. A staple in Gujarati kitchens, these sprouted brown chickpeas are perfect for preparing wholesome morning chaats, comforting usal, or nutritious stir-fries. Each 100g serving offers approx. 9g of plant-based protein alongside dietary fiber, iron, and essential vitamins to nourish your active lifestyle. To preserve their crisp texture and nutrient profile, always store these sprouts in an airtight container in the coldest part of your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>25.00 INR</g:price>
@@ -2100,8 +2128,8 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     </item>
     <item>
       <g:id>dm5fX1LM3V0cA7tmoeGE</g:id>
-      <g:title>Fresh N Local Thai Kafir Lime Leaves 100gm</g:title>
-      <g:description>Thai Kafir Lime Leaves </g:description>
+      <g:title>Fresh N Local Thai Kafir Lime Leaves 20 G</g:title>
+      <g:description>Unleash a burst of exotic citrus fragrance in your kitchen with our premium Thai Kafir Lime Leaves, sourced to elevate your culinary creations. These aromatic leaves offer dietary fiber (approx. 3g per 100g) along with essential vitamins and minerals for daily vitality. While famous in Southeast Asian cuisine, creative Gujarati cooks love infusing them into fusion dals, herbal teas, and spicy curries. To preserve their intense zesty aroma, store them in an airtight container inside your freezer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>30.00 INR</g:price>
@@ -2115,7 +2143,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>dxdVP6G1I4C06ufJHPrx</g:id>
       <g:title>Fresh N Local Mixed Salad Greens 100gm</g:title>
-      <g:description>1box of 150gm conteining mix leaves of Romaine, lolorossa, summercrisp, Kale, Baby Spinach, Arugula etc.</g:description>
+      <g:description>Elevate your daily meals with our vibrant Mixed Salad Greens, a handpicked medley of tender, crisp leaves grown locally for ultimate freshness. This nutrient-dense mix provides approx. 1.5g of protein and 1.3g of dietary fiber per 100g, along with essential vitamins A and K to support overall vitality. Perfect for crafting refreshing Gujarati-style fusion kachumbars or topping contemporary sprouted mung chaats, they bring an instant crunch to your table. To maintain their crispness, store these greens in a paper-towel-lined airtight container in your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -2129,13 +2157,13 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>e1UfCbv9syHZrvE62YUU</g:id>
       <g:title>Fresh N Local Fresh Mulberry 100gm</g:title>
-      <g:description>Organic And Sweet (IMPORTED)</g:description>
+      <g:description>Sourced from local orchards, our dark Fresh Mulberries bring a burst of nostalgic sweetness. Each 100g serving of these delicate berries offers approx. 1.4g of protein, 1.7g of dietary fiber, alongside Vitamin C and iron for general wellness. In Gujarati homes, these juicy gems are perfect for direct snacking, blending into refreshing coolers, or simmering into sweet chutneys. To maintain their plumpness, store them unwashed in a dry container inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
       <g:sale_price>60.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/e1UfCbv9syHZrvE62YUU</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1782816565612_1000191886.jpg?alt=media&amp;token=b796276a-917d-4f99-8bb5-043a1aa4b175</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784464017236_Fresh_mulberries_in_plastic_punnet_202607191751.jpeg?alt=media&amp;token=0d5bb2da-cebd-41e0-b6b2-ff45ece6a4de</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2143,7 +2171,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>eHdgGyi3JH5IcBjMkdsz</g:id>
       <g:title>Fresh N Local Capsicum Green 250 G</g:title>
-      <g:description>Capsicum Green</g:description>
+      <g:description>Add a vibrant crunch to your daily meals with our farm-fresh Green Capsicum, sourced locally for households in Surat. Rich in dietary fiber (approx. 1.7g per 100g) and loaded with essential Vitamin C, this versatile bell pepper provides vital antioxidants and mild protein (approx. 0.9g per 100g) to support overall wellness. It is a staple in Gujarati kitchens, elevating everything from street-style Pav Bhaji and spicy subzis to crunchy salads. To maintain its signature crispness, store this pepper unwashed in a reusable cotton bag inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>30.00 INR</g:price>
@@ -2157,7 +2185,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>ghEBnRmtYbV1a3FnX8Ix</g:id>
       <g:title>Fresh N Local Sweet Corn Hand Peeled 200gm</g:title>
-      <g:description>ALL FRUITS AND VEGETABLE ARE CUT AND PEELED IN CONTROLED AND HYGENIC ENVIROMENT AND IT IS PREPARED WITH IN 60 MIN OF DELIVERY TIME</g:description>
+      <g:description>Relish the sunshine yellow sweetness of our premium Sweet Corn, meticulously hand-peeled for your ultimate convenience. Packed with dietary fiber (approx. 2.7g per 100g), protein (approx. 3.2g per 100g), and essential B-vitamins, these juicy kernels provide wholesome everyday energy. They are perfect for tossing into vibrant Gujarati makai khichdi, comforting soups, spicy street-style chaats, or creamy subzis. To maintain their crisp, sweet snap, store these pre-peeled kernels in an airtight container in your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -2171,7 +2199,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>hIWvDjzSRUJI6QxbJxX9</g:id>
       <g:title>Fresh N Local Green Apple 500gm</g:title>
-      <g:description>Green Apple </g:description>
+      <g:description>Awaken your palate with the crisp, electric tang of premium Green Apples, handpicked to deliver unmatched freshness directly to your Surat home. Per 100g, they offer approx. 2.4g of dietary fiber, approx. 0.3g of protein, and essential Vitamin C to support your daily vitality. Their distinct tart flavor beautifully elevates Gujarati kachumber salads, spicy mint chutneys, and festive fruit chaats. To maintain maximum crunch, store these apples refrigerated in a ventilated bag away from other produce.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -2184,7 +2212,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>hefnD9ChnTGiMOxYuXe7</g:id>
       <g:title>Fresh N Local Mix Sprouts 200gm</g:title>
-      <g:description>Made With Ro Water With Hygienic </g:description>
+      <g:description>Kickstart your day with a vibrant medley of carefully germinated legumes featuring our premium Mix Sprouts. Packed with natural vitality, a 100g serving offers approx. 7g of plant-based protein alongside dietary fiber, essential B-vitamins, and minerals. They are perfect for crafting wholesome Gujarati Usal, crunchy chaat, or comforting spiced curries in your kitchen. To maintain their crunch and freshness, store these sprouts in an airtight container lined with a paper towel inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>25.00 INR</g:price>
@@ -2198,7 +2226,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>hlK9DI29YBf9UHziBQ1W</g:id>
       <g:title>Fresh N Local Thai Jumbo Lotus Root 400gm</g:title>
-      <g:description>IMPORTED </g:description>
+      <g:description>Elevate your culinary creations with our premium Thai Jumbo Lotus Root, a crisp and versatile delicacy imported directly to Surat. Locally treasured as Kamal Kakdi, its distinct wheel-like texture is perfect for traditional Gujarati subzis, slow-cooked curries, and crispy snacks. Packed with general wellness benefits, every 100g delivers approx. 2.6g of dietary fiber, 2.6g of protein, and essential Vitamin C. To maintain its signature crunch, wrap the unused root in a damp paper towel and store it in your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>500.00 INR</g:price>
@@ -2212,7 +2240,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>hqo4zG1YA5wx0xF77vYZ</g:id>
       <g:title>Fresh N Local American Sweet Corn 1kg</g:title>
-      <g:description>American Sweet Corn</g:description>
+      <g:description>Bring the vibrant joy of golden sunshine to your dining table with our premium, handpicked American Sweet Corn. Delivering vital energy, 100g offers approx. 3.2g of protein and 2.7g of dietary fiber, alongside B-vitamins and minerals for daily vitality. These juicy kernels are perfect for crafting Gujarati street-style spicy corn chaat, adding sweet pops to comforting subzis, or tossing into fresh salads. To maintain their exceptional sweetness, store the cobs unhusked inside your refrigerator&apos;s crisper drawer until ready to use.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -2226,7 +2254,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>i1b6vGhyRR0Kqzm5Uc9T</g:id>
       <g:title>Fresh N Local Mint Leaves 100 G</g:title>
-      <g:description>Mint Leaves </g:description>
+      <g:description>Awaken your senses with the invigorating aroma of our handpicked Mint Leaves, a kitchen staple across Surat. These aromatic greens deliver approx. 3.8g of protein, 8g of dietary fiber, and essential vitamins and minerals per 100g, supporting daily vitality. In Gujarati households, they lend a cooling contrast to spicy undhiyu, elevate refreshing summer chaas, and form the heart of tangy pani puri chutneys. To keep them vibrant, store the unwashed sprigs wrapped in a damp paper towel inside a refrigerator container.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>20.00 INR</g:price>
@@ -2240,7 +2268,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>iIGBHUecs52Z8kgEVwVV</g:id>
       <g:title>Fresh N Local Donut Peach 3pc</g:title>
-      <g:description>Original Turkey </g:description>
+      <g:description>Unveiling a whimsical summer treat, our unique Donut Peaches bring a delightfully sweet, saucer-shaped novelty to Surat&apos;s dessert tables. These flat-shaped stone fruits offer general wellness benefits, providing approx. 1.5g of dietary fiber and around 6.6mg of Vitamin C per 100g to support vitality. Gujarati homes love slicing them fresh into summer fruit salads, blending them into creamy, chilled shrikhand, or simmering them into spiced sweet chutneys. To enjoy their juicy best, store them stem-side down at room temperature until fragrant, then refrigerate.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>600.00 INR</g:price>
@@ -2254,7 +2282,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>jBXCyXytXrbW3n9fMiwg</g:id>
       <g:title>Fresh N Local Thai Lemongrass Stick 100gm</g:title>
-      <g:description>Thai Lemongrass Stick </g:description>
+      <g:description>Introduce a burst of citrusy magic to your kitchen with our fresh Thai Lemongrass Sticks. Beloved in Gujarati households for brewing comforting &apos;leeli cha&apos; and aromatic dals, this fragrant herb elevates both traditional teas and Asian fusion curries. Professionally harvested, 100g of lemongrass offers approx. 1.2g of protein, 4.6g of dietary fiber, and essential minerals like potassium. To keep these stalks remarkably vibrant, wrap them in a damp paper towel before placing them in your refrigerator crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>30.00 INR</g:price>
@@ -2268,10 +2296,10 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>jREbVFxMhUWdhEshzvEz</g:id>
       <g:title>Fresh N Local Juicy Red Cherry 200gm</g:title>
-      <g:description>Origin - Washington, USA</g:description>
+      <g:description>Experience the bursting sweetness of our handpicked Juicy Red Cherries, sourced from the finest orchards to bring global quality straight to Surat. Delivering approx. 1.1g of protein, 2.1g of dietary fiber, alongside essential Vitamin C and potassium per 100g, they offer natural vitality. Perfect as a vibrant garnish for festive Gujarati Shrikhand, folded into creamy kheer, or tossed in seasonal fruit chaats. To maintain their plump texture and glossy sheen, store them unwashed in a breathable container inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>400.00 INR</g:price>
+      <g:price>300.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/jREbVFxMhUWdhEshzvEz</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783233178474_1000205079.jpg?alt=media&amp;token=da4895cb-c5fe-4c28-882f-d7a0c286e34d</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2281,7 +2309,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>jcvkuJaOx3QdkzeCHC5j</g:id>
       <g:title>Fresh N Local Nashpati 500gm</g:title>
-      <g:description>Nashpati </g:description>
+      <g:description>Savour the crisp, refreshing crunch of our handpicked seasonal Nashpati, sourced at their peak sweetness. Each 100g serving of these juicy Indian pears provides approx. 3.1g of dietary fiber and vitalizing Vitamin C, making them a nutritious choice for everyday wellness. In Gujarati households, they are widely enjoyed sliced fresh, tossed in vibrant fruit salads, or spiced into tangy chutneys. To keep them perfectly crisp, store them at room temperature until ripe, then transfer them to your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>70.00 INR</g:price>
@@ -2295,13 +2323,13 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>kDwDxiE99Pjj87to5xTx</g:id>
       <g:title>Fresh N Local White Dragon Fruits 1pc</g:title>
-      <g:description>White Dragon Fruits</g:description>
+      <g:description>Meet the captivating White Dragon Fruit, a tropical marvel with speckled ivory flesh and vibrant pink skin. This exotic treat offers approx. 1.2g of protein and 3g of dietary fiber per 100g, alongside essential vitamins for daily vitality. In Surat, it has become a modern favorite, beautifully elevating festive fruit platters, cool summer raitas, and refreshing mocktails. To maintain its crisp, sweet flavor, store the whole fruit in your refrigerator&apos;s crisper drawer for up to five days.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>70.00 INR</g:price>
       <g:sale_price>60.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/kDwDxiE99Pjj87to5xTx</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FkDwDxiE99Pjj87to5xTx%2Foriginal.webp?alt=media&amp;token=1d3a82a8-682b-4633-bd38-dc46f6bb4127</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784463958407_Two_red_dragon_fruits_202607191755.jpeg?alt=media&amp;token=b7c77dc2-de24-4747-8e51-c53fc42c5617</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2309,7 +2337,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>kYPiy40Y66wpl1wSqqPc</g:id>
       <g:title>Fresh N Local Hass Avocado Ripe 3pc</g:title>
-      <g:description>For Same Day Use Only 500Gm Apx (Imported)</g:description>
+      <g:description>Bring the buttery luxury of global kitchens straight to your Surat home with our perfectly ripe Hass Avocados. Offering approx. 2g of protein and 6.7g of dietary fiber per 100g, along with essential vitamins, they support everyday vitality. Gujarati food lovers can mash them into a vibrant fusion guacamole to pair with crispy khakhra, spread them over parathas, or toss them into refreshing summer salads. To maintain their rich, creamy texture, store uncut avocados in the refrigerator once they yield slightly to gentle pressure.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>400.00 INR</g:price>
@@ -2323,7 +2351,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>kfrA8LTgiUhc537eP3m0</g:id>
       <g:title>Fresh N Local Curly Kale 100gm</g:title>
-      <g:description>Curly Kale </g:description>
+      <g:description>Introduce your kitchen to our exceptionally crisp Curly Kale, a premium leafy green loved for its ruffled texture and robust, earthy flavor. Highly nutritious, a 100g portion offers approx 2.9g of protein, approx 4.1g of dietary fiber, and vitamins A and C to support daily vitality. It beautifully elevates Gujarati dals, fusion salads, or spiced muthias. To maintain its freshness, store the unwashed leaves in a perforated zip-lock bag in your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -2337,7 +2365,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>knW0rUp6Zo4n9d2AOv9Q</g:id>
       <g:title>Fresh N Local Moong Sprouts 200gm</g:title>
-      <g:description>Made With Ro Water With Hygienic </g:description>
+      <g:description>Elevate your daily wellness with our hygienically germinated Moong Sprouts, a crisp and vibrant staple delivered fresh to Surat homes. Packed with natural vitality, these tender green gems offer approx. 3g of plant-based protein and approx. 1.8g of dietary fiber per 100g, alongside essential vitamins. Perfect for crafting wholesome Gujarati Usal, zesty morning salads, or crunchy chaats. To maintain their peak crunch, store these sprouts in an airtight container in the coldest part of your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>25.00 INR</g:price>
@@ -2351,7 +2379,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>kwRGXIv7Kwew4LC7nv1L</g:id>
       <g:title>Fresh N Local Enoki Mushroom 100gm</g:title>
-      <g:description>Enoki Mushroom </g:description>
+      <g:description>These slender, delicate Enoki mushrooms bring an exquisite, crunchy texture and mild, fruity flavor to your culinary creations. Originally from East Asia, a 100g portion provides approx. 2.6g of protein, 2.7g of fiber, and essential vitamins for general wellness. In Gujarati homes, they are perfect for enhancing stir-fries, light dals, and clear noodle soups with an earthy twist. Keep them fresh by storing them unwashed in a paper bag inside the refrigerator crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -2365,7 +2393,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>lENgraQDLEQnuUbCFiPN</g:id>
       <g:title>Fresh N Local Potato Carisma 1 Kg</g:title>
-      <g:description>Potato Carisma</g:description>
+      <g:description>Introducing a guilt-free twist to your daily meals, our premium Potato Carisma is a unique low-glycemic variety perfect for health-conscious households in Surat. Per 100g, it offers approx. 1.6g of protein, 1.8g of dietary fiber, along with essential Vitamin C and potassium to support overall vitality. This versatile spud blends beautifully into traditional Gujarati Batata Nu Shaak, comforting dry subzis, or festive Undhiyu. Keep these potatoes exceptionally fresh by storing them in a cool, dark, well-ventilated basket away from moisture.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>40.00 INR</g:price>
@@ -2379,7 +2407,7 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
     <item>
       <g:id>lEonGepYmXUd3eoDNALG</g:id>
       <g:title>Fresh N Local Spanish Sweet Plum 250gm</g:title>
-      <g:description>Imported </g:description>
+      <g:description>Brimming with Mediterranean sunshine, our imported Spanish Sweet Plums offer an exquisite balance of rich sweetness and gentle tartness. These luscious gems deliver approx. 1.4g of dietary fiber and essential Vitamin C (approx. 9.5mg per 100g) to support daily vitality. In Gujarati kitchens, they beautifully elevate summer fruit chaats, tangy chutneys, and refreshing raitas. To maintain their juicy texture, store these plums in your refrigerator&apos;s crisper drawer and wash only right before eating.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -2391,12 +2419,23 @@ Disclaimer: Our fruits and veggies are freshly sourced daily, chosen carefully a
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>lrrDmILHeXEE2U9RgwVV</g:id>
+      <g:title>Fresh N Local Spring Onion 250 G</g:title>
+      <g:description>Bring a crisp, zesty crunch to your kitchen with our fresh local Spring Onions, featuring vibrant green stalks and tender white bulbs. Per 100g, they offer approx. 1.8g of fiber, 1.8g of protein, and essential Vitamin C to support overall daily vitality. Highly favored in Western Indian cooking, they add a sweet, sharp bite to Gujarati undhiyu, savory muthias, comforting dals, and salads. To maintain their crunch, wrap them in a damp paper towel and store in your refrigerator&apos;s crisper drawer.</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>35.00 INR</g:price>
+      <g:sale_price>30.00 INR</g:sale_price>
+      <g:link>https://www.freshnlocal.co/product/lrrDmILHeXEE2U9RgwVV</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784455404805_Spring_onion_in_bunch_202607191505.jpeg?alt=media&amp;token=697eac0b-803b-417a-9777-e303e347f7b3</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>lznhTNrBJ7kR2urD0Eqy</g:id>
       <g:title>Fresh N Local Blueberry Frozen 500gm</g:title>
-      <g:description>250gm box
-ideal for shake, smocthie or compote 
-keep frozen -18°c 
-can be used till 6 months</g:description>
+      <g:description>Experience a burst of cool, nutrient-dense berries captured at peak ripeness with our premium frozen blueberries. Each 100g serving offers approx. 0.7g of protein, 2.4g of dietary fiber, and essential Vitamin C to support daily vitality. In modern Gujarati households, these versatile berries are perfect for blending into refreshing yogurt lassis, layering over creamy shrikhand, or baking into fusion desserts. For optimal texture, store this 500g pack constantly frozen in an airtight container, thawing only the portion you plan to enjoy immediately.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>400.00 INR</g:price>
@@ -2410,7 +2449,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>mCY68LUwz7CnoTDTim5H</g:id>
       <g:title>Fresh N Local Fresh Sage 10gm</g:title>
-      <g:description>Fresh Sage </g:description>
+      <g:description>Bring an aromatic, earthy depth to your culinary creations with our premium, locally sourced Fresh Sage. It offers vital nutrition, containing approx. 2.7g of protein, 40g of dietary fiber, and essential minerals like calcium and iron per 100g. In Indian kitchens, these fragrant, velvety leaves are perfect for infusing into experimental fusion dals, herbal teas, or tempering in spiced ghee for artisanal parathas. Wrap the unwashed sprigs in a damp paper towel and store them inside a reusable bag in your refrigerator to preserve their intense aroma.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -2424,11 +2463,11 @@ can be used till 6 months</g:description>
     <item>
       <g:id>mMYO3PcP3hGqPBvlL7Nc</g:id>
       <g:title>Fresh N Local Watermelon Slices 250gm</g:title>
-      <g:description>Watermelon Slices</g:description>
+      <g:description>Beat the sultry Surat heat instantly with our pre-cut, juicy Watermelon Slices, freshly packed for your convenience. These hydrating ruby-red bites are a great source of natural hydration, providing approx. 0.4g of dietary fiber and approx. 8.1mg of Vitamin C per 100g. Perfect for vibrant Gujarati-style fruit chaats with a sprinkle of kala namak, or blended into refreshing summer coolers. Keep them tightly sealed in your refrigerator and consume within 24 hours for the ultimate crisp sweetness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>40.00 INR</g:price>
-      <g:sale_price>35.00 INR</g:sale_price>
+      <g:sale_price>30.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/mMYO3PcP3hGqPBvlL7Nc</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783769165487_WATERMELON_SLICE.jpeg_202607111457.jpeg?alt=media&amp;token=532405f5-9779-4c62-955c-40ac37051a47</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2438,10 +2477,10 @@ can be used till 6 months</g:description>
     <item>
       <g:id>mPWifKJGPbG1MaJn9feT</g:id>
       <g:title>Fresh N Local Mosambi 1kg</g:title>
-      <g:description>6-7 Pc</g:description>
+      <g:description>Quench your thirst with our handpicked, sun-ripened Mosambi, sourced from India&apos;s finest citrus orchards. Each 100g serving of this juicy sweet lime provides approx. 0.8g of fiber, trace minerals, and approx. 30mg of Vitamin C to support everyday vitality. Widely loved in Gujarati homes, its freshly pressed juice is a refreshing afternoon staple, while the zesty pulp elevates local fruit salads and chaats. To maintain maximum juiciness, store these golden-green fruits in your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>100.00 INR</g:price>
+      <g:price>80.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/mPWifKJGPbG1MaJn9feT</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FmPWifKJGPbG1MaJn9feT%2Foriginal.webp?alt=media&amp;token=2a891bcf-b682-442b-adf7-745a67e9f83f</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2451,7 +2490,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>mSmbNisb8d7cYFSbDKEm</g:id>
       <g:title>Fresh N Local Beef Steak Tomato 2pc</g:title>
-      <g:description>Beef Steak Tomato </g:description>
+      <g:description>Meet the king of slicing tomatoes. Our imported, extra-large Beef Steak Tomatoes bring a meaty texture and rich, sweet tang directly to your Surat kitchen. Providing wellness in every bite, 100g offers approx. 1.2g of dietary fiber and 0.9g of protein, alongside vital Vitamin C. Perfectly suited for thick, luscious gravy bases in premium subzis, chunky kachumber salads, or a hearty fusion pav bhaji. Keep them stem-side down at room temperature away from direct sunlight to preserve their juicy plumpness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
@@ -2465,10 +2504,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>mjQWIEyMWOXuK8fapdqm</g:id>
       <g:title>Fresh N Local Strawberry Frozen 1kg</g:title>
-      <g:description>250gm box
-ideal for shake, smocthie or compote 
-keep frozen -18°c 
-can be used till 6 months</g:description>
+      <g:description>Unlock the luscious taste of handpicked Mahabaleshwar strawberries any time of year with our premium frozen pack. Naturally sweet, 100g offers approx. 2g of dietary fiber and 58mg of Vitamin C to support your daily vitality. In Gujarati homes, these are perfect for whipping up refreshing strawberry lassis, festive basundi, creamy shrikhand, or delicious thick shakes. To preserve their bright color, store constantly in your freezer and thaw only the portion you need.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>350.00 INR</g:price>
@@ -2482,7 +2518,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>mmP6DF1VWyymEn8BDezx</g:id>
       <g:title>Fresh N Local Totapuri Mango 1kg</g:title>
-      <g:description>Totapuri Mango</g:description>
+      <g:description>Instantly recognizable by its distinct parrot-beak shape, our premium Totapuri Mangoes bring a unique, tangy-sweet zest straight to your Surat home. This seasonal favorite is rich in dietary fiber (approx. 1.6g per 100g) and loaded with Vitamin A and C, promoting overall vitality. Famously used across Gujarat for making tangy raw mango pickles, refreshing salads, and thick chutneys, it adds a wonderful zing to traditional dals. Store them at room temperature until they emit a sweet aroma, then refrigerate to extend freshness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -2496,7 +2532,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>nMGLsQSOU4B4vVkl8Sdo</g:id>
       <g:title>Fresh N Local Premium Imported Strawberry 250gm</g:title>
-      <g:description>Premium  Imported Strawberry </g:description>
+      <g:description>Indulge in the luxurious sweetness of our handpicked Premium Imported Strawberries, sourced from the finest global orchards to bring vibrant color and intense berry flavor to Surat homes. Naturally low in calories, every 100g offers approx. 2g of dietary fiber and 0.7g of protein, alongside a generous dose of wellness-supporting Vitamin C. These ruby gems are perfect for whipping up refreshing strawberry shrikhand, chilled lassis, or decadent milkshakes. To maintain their pristine freshness, store them unwashed in a single layer on paper towels inside your refrigerator.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>650.00 INR</g:price>
@@ -2510,7 +2546,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>nQ9Vi8CGa9NFUnhohNLo</g:id>
       <g:title>Fresh N Local Pear Nakh 500gm</g:title>
-      <g:description>Pear Nakh</g:description>
+      <g:description>Experience the delightful, watery crunch of Freshnlocal’s seasonal Pear Nakh, handpicked for Surat&apos;s fruit lovers. This premium, crisp variety delivers vital nutrition, offering approx. 3.1g of dietary fiber and vitamin C per 100g to support your daily vitality. Perfect for slicing into refreshing Gujarati midday fruit chaats or simmering into sweet, spiced chutneys, it brings a nostalgic sweetness to your table. To maintain their signature crispness, store these pears in your refrigerator crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -2524,7 +2560,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>o4IfYwoHGBORj2H3Qn5W</g:id>
       <g:title>Fresh N Local Baby Corn 250gm</g:title>
-      <g:description>Baby corn </g:description>
+      <g:description>Crispy, sweet, and delightfully tender, our fresh baby corn brings a gourmet touch directly to your Surat kitchen. Supporting daily vitality, every 100g offers approx. 2.6g of dietary fiber and 2g of protein, alongside essential B vitamins. This versatile exotic vegetable shines beautifully in Gujarati fusion cooking, adding crunch to spicy stir fries, rich paneer jalfrezi, and comforting pulaos. To maintain its signature snap, store these golden spears in a paper bag inside your refrigerator crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>60.00 INR</g:price>
@@ -2538,13 +2574,13 @@ can be used till 6 months</g:description>
     <item>
       <g:id>o4nG8ayvxKTzCQGsJXPK</g:id>
       <g:title>Fresh N Local Yellow Zucchini 500gm</g:title>
-      <g:description>Yellow Zucchini </g:description>
+      <g:description>Brighten your dining table with our premium, sun-kissed Yellow Zucchini, a vibrant exotic squash loved for its delicate flavor and tender skin. Each 100g serving offers approx. 1.2g of protein, 1g of dietary fiber, and essential Vitamin C to support daily wellness. In Surat homes, this versatile veggie is beautifully adapted into fusion stir-fries, crisp salads, and light Gujarati subzis. Keep it fresh by storing unwashed in a paper bag inside your refrigerator crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
       <g:sale_price>75.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/o4nG8ayvxKTzCQGsJXPK</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2Fo4nG8ayvxKTzCQGsJXPK%2Foriginal.webp?alt=media&amp;token=91a861e0-931c-498f-87ce-af8cf793dd04</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784463789568_Fresh_yellow_zucchini_on_white_202607191750.jpeg?alt=media&amp;token=465425bb-c86a-40e9-8c1c-ae48a3cb9e04</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2552,13 +2588,13 @@ can be used till 6 months</g:description>
     <item>
       <g:id>oIxfC5UMj5KwoT6J9vyO</g:id>
       <g:title>Fresh N Local JalapeñO Pepper 200gm</g:title>
-      <g:description>Jalapeño Pepper</g:description>
+      <g:description>Ignite your culinary adventures with our fiery, vibrant Jalapeño Peppers, perfect for adding a zesty kick to your daily meals. Rich in essential vitamins A and C, these peppers offer approx. 2.8g of dietary fiber and 0.9g of protein per 100g to support general vitality. They are ideal for spiced Gujarati style pickles, fusion dhoklas, or stuffed cheese chilies that elevate evening snack times. To maintain their crisp texture, store them unwashed in a paper bag inside your refrigerator&apos;s crisper.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>160.00 INR</g:price>
-      <g:sale_price>100.00 INR</g:sale_price>
+      <g:price>150.00 INR</g:price>
+      <g:sale_price>75.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/oIxfC5UMj5KwoT6J9vyO</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FoIxfC5UMj5KwoT6J9vyO%2Foriginal.webp?alt=media&amp;token=6ac566cc-08f7-46e4-ac77-00629b8884d3</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784463606045_Fresh_green_Jalape%C3%B1o_peppers_202607191749.jpeg?alt=media&amp;token=8cba4b10-0b3f-4bd0-8d84-d5971cf03448</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2566,7 +2602,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>oXnk7b4azkAc2ie1dmcV</g:id>
       <g:title>Fresh N Local Hybrid Tomato 500 G</g:title>
-      <g:description>Hybrid Tomato </g:description>
+      <g:description>Bring a burst of juicy brightness to your kitchen with our plump, farm-fresh Hybrid Tomatoes. Perfectly firm and mildly sweet, every 100g serving offers approx. 0.9g of protein, 1.2g of fiber, alongside essential Vitamin C and potassium to support daily vitality. They form the luscious base for Gujarati sev tameta nu shaak, aromatic dals, and fresh kachumber salads. To maintain their rich flavor, store these tomatoes stem-side down at room temperature, away from direct sunlight.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>40.00 INR</g:price>
@@ -2580,7 +2616,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>pf7zlZlquPlCV6Mvy3cD</g:id>
       <g:title>Fresh N Local Italian Basil 100gm</g:title>
-      <g:description>Italian Basil </g:description>
+      <g:description>Elevate your culinary creations with our premium Italian Basil, cherished for its intensely sweet, peppery aroma and glossy green leaves. This aromatic herb contains approx. 3g of protein, 1.6g of dietary fiber, and is rich in essential vitamins like Vitamin K per 100g to support general vitality. It is perfect for crafting fresh pestos, elevating Gujarati fusion dishes like herb-infused dhoklas, or tossing into salads. To maintain its vibrant flavor, store the unwashed sprigs wrapped in a damp paper towel in your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -2594,7 +2630,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>pquCbI610m9lTTLqoHQ3</g:id>
       <g:title>Fresh N Local Kinnaur Apple 1kg</g:title>
-      <g:description>6-7 Pc</g:description>
+      <g:description>Straight from the sun-drenched, high-altitude orchards of Himachal Pradesh, our premium Kinnaur Apples bring a crisp, sweet mountain breeze to your doorstep in Surat. Every 100g of these juicy red treasures offers approx. 2.4g of dietary fiber and essential Vitamin C to support your daily wellness. Locally loved in Gujarat, they are perfect for festive apple kheer, fresh salads, or simply sliced with chaat masala. Keep them refrigerated in a perforated bag away from strong-smelling foods to maintain their signature crunch.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
@@ -2608,7 +2644,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>qQG4Q0f6kJk3xOqV4ZsD</g:id>
       <g:title>Fresh N Local Mix Micro Greens 80gm</g:title>
-      <g:description>80Gm Box</g:description>
+      <g:description>Elevate your daily Surti meals with our vibrant Mix Micro Greens, a curated medley of young, nutrient-dense seedlings. Offering a concentrated burst of vitality, these tiny greens provide approx. 2.2g of protein and 1.8g of dietary fiber per 100g, alongside essential vitamins and minerals. Perfect for modern Indian kitchens, scatter them over local favorites like dhokla, sev khamani, or fresh salads for an elegant, peppery crunch. To retain their delicate texture and crispness, store them in their original container in the refrigerator crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -2622,7 +2658,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>qoZ2FWjpI8WVS2E4I6GV</g:id>
       <g:title>Fresh N Local Japan Melon 1pc</g:title>
-      <g:description>Product of Japan 1.5-2Kg Per Pc</g:description>
+      <g:description>Experience the ultimate luxury of our handpicked Japan Melon, a premium musk melon variety prized for its exquisite sweetness and distinct netted skin. Every 100g serving delivers approx. 0.8g of protein, 0.9g of dietary fiber, alongside vital vitamins A and C for daily wellness. In Surati households, this juicy treasure is loved in chilled summer fruit salads, refreshing coolers, or decadent dessert mocktails. For lasting freshness, keep this melon whole at room temperature until fully fragrant, then slice and refrigerate.</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>1025.00 INR</g:price>
@@ -2636,7 +2672,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>qy8w2yM7Uf90f7aoSgNh</g:id>
       <g:title>Fresh N Local Baby Spinach 100gm</g:title>
-      <g:description>Baby Spinach </g:description>
+      <g:description>Delight in the tender sweetness of our freshly harvested Baby Spinach, featuring delicate young leaves plucked at peak freshness. Each 100g serving offers wellness support, providing approx. 2.9g of protein, 2.2g of fiber, and essential vitamins A, C, and iron. Perfect for Gujarati homes, these mild greens blend beautifully into warm dals, wholesome subzis, or crisp local salads. To maintain their crisp texture, store them unwashed in a breathable container lined with a dry paper towel in your fridge.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>90.00 INR</g:price>
@@ -2650,7 +2686,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>rF2p3C8fbnsrVRdTLqMd</g:id>
       <g:title>Fresh N Local White Shimeji Mushroom 125gm</g:title>
-      <g:description>White Shimeji Mushroom </g:description>
+      <g:description>Delicately clustered and beautifully pearlescent, our White Shimeji Mushrooms bring a refined, nutty crunch to your culinary creations. Naturally rich in dietary fiber and essential minerals, 100g of these beech mushrooms provides approx. 3g of protein alongside vital B-vitamins for daily vitality. Perfect for Surat’s modern kitchens, they beautifully elevate fusion Gujarati stir-fries, rich cashew-based curries, and warm winter soups. To preserve their firm texture, store them unwashed in a breathable paper bag within your refrigerator’s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>1200.00 INR</g:price>
@@ -2664,7 +2700,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>rO2xzfqeQ7x37UfwdDYt</g:id>
       <g:title>Fresh N Local Thai Snow Pea 200gm</g:title>
-      <g:description>Thai Snow Pea </g:description>
+      <g:description>Bring an exotic, crunchy twist to your Surat kitchen with our premium, imported Thai Snow Peas. Entirely edible and delightfully sweet, these vibrant pods provide approx. 2.8g of protein, 2.6g of dietary fiber, and essential Vitamin C per 100g for overall wellness. Local home cooks love tossing them into Gujarati-style fusion stir-fries, colorful salads, and crispy shaaks. To preserve their signature snap, store these unwashed snow peas in a perforated bag inside your refrigerator&apos;s vegetable crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -2677,7 +2713,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>smRtcODfA02ZRKqri99X</g:id>
       <g:title>Fresh N Local Imp. Bamboo Leaf 100pc</g:title>
-      <g:description>Not edible just for Planting </g:description>
+      <g:description>Elevate your culinary presentation and traditional wrapping techniques with our premium Imported Bamboo Leaves, direct to your Surat kitchen. Though primarily used for wrapping, these aromatic leaves contain beneficial silica, along with approx. 3g of fiber and 1.5g of protein per 100g when infused. In Gujarati households, they are increasingly popular for steaming fusion patras, wrapping exotic rice dishes, or crafting wellness-focused herbal teas. Keep these vibrant leaves fresh by wrapping them in a damp paper towel inside a sealed container in the refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>1000.00 INR</g:price>
@@ -2691,7 +2727,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>t48y3w1X21vdyZ7mLqAo</g:id>
       <g:title>Fresh N Local Thai Bird Chilli 50gm</g:title>
-      <g:description>Thai Bird Chilli </g:description>
+      <g:description>Ignite your culinary creations with our vibrant Thai Bird Chilli, a small but exceptionally fiery pepper renowned for its intense, sharp heat. Nutritionally, 100g provides approx. 2g of protein, 1.5g of dietary fiber, and essential Vitamin C to support overall vitality. Perfect for lending a bold, spicy kick to traditional Gujarati dals, hot chutneys, and fiery local curries. To maintain their potent crunch and heat, store these unwashed chillies in a breathable paper bag inside your refrigerator crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
@@ -2705,7 +2741,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>t906mcABJjyMQKV9ED2R</g:id>
       <g:title>Fresh N Local Yam Portion (Suran) 250gm</g:title>
-      <g:description>Yam Portion (Suran)</g:description>
+      <g:description>Bring the rustic, earthy goodness of locally sourced Elephant Foot Yam, popularly known as Suran, straight to your Surat kitchen with our pre-cut 250g portions. Offering approx. 1.5g of protein and 5.7g of dietary fiber per 100g, this nutrient-dense tuber is packed with essential minerals and vitamins to support daily vitality. It shines beautifully in traditional Gujarati preparations, from spiced Suran ni Subzi and festive Undhiyu to crispy pan-fried fritters. To maintain its firm texture, store this cut portion wrapped loosely in a paper bag inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -2719,7 +2755,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>tO01kbNZKd3ZfZ8powjs</g:id>
       <g:title>Fresh N Local Thai Pandan Leaves 20gm</g:title>
-      <g:description>Thai Pandan Leaves </g:description>
+      <g:description>Bring the sweet, vanilla-like aroma of Southeast Asian kitchens right into your Surat home with our fresh Thai Pandan Leaves. These fragrant blades offer gentle wellness benefits, containing approx. 2.2g of fiber and 1.2g of protein per 100g, along with essential vitamins. In Gujarati households, they are perfect for infusing aromatic Basmati rice, elevating festive kesar kheer, or adding a unique herbal twist to daily chai. To maintain their vibrant green color and intense fragrance, wrap unused leaves in a damp paper towel before refrigerating.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -2733,11 +2769,11 @@ can be used till 6 months</g:description>
     <item>
       <g:id>tQNgLRsDx4QxUo17US3G</g:id>
       <g:title>Fresh N Local Malta South Africa Orange 1kg</g:title>
-      <g:description>6Pc Apx</g:description>
+      <g:description>Shake up your daily citrus routine with our imported Malta South Africa Oranges, loved for their bright, sweet and tangy profile. Each 100g serving offers approx. 0.9g of protein, 2.4g of fiber, and 53mg of Vitamin C, alongside vital minerals for everyday wellness. These are perfect for fresh breakfast juice in Surat homes, adding a zesty twist to fruit salads, or flavoring festive shrikhand. Store them in a cool, well-ventilated basket away from direct sunlight to keep them plump and juicy.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
-      <g:sale_price>150.00 INR</g:sale_price>
+      <g:sale_price>120.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/tQNgLRsDx4QxUo17US3G</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FtQNgLRsDx4QxUo17US3G%2Foriginal.webp?alt=media&amp;token=0c668a92-42e3-4e0b-bf6c-64d9da48721c</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2747,7 +2783,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>tfdeqJgPPMVNEWymSZKe</g:id>
       <g:title>Fresh N Local Mango Daseri 1kg</g:title>
-      <g:description>Mango Daseri </g:description>
+      <g:description>Treasured for its rich heritage, the Daseri mango arrives directly from sun-drenched orchards to sweeten your summer days. Packed with wellness, every 100g offers approx. 1.6g of dietary fiber and 0.8g of protein, alongside vital vitamins. In Gujarati households, its luscious, fiberless golden pulp is famously squeezed into velvety Aamras for festive thalis or blended into cooling summer lassis. To maximize their exquisite flavor, store these mangoes at room temperature until fragrant, then refrigerate to keep them perfectly juicy.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
@@ -2760,7 +2796,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>u2IbRsBIo8YnvcBfSuHp</g:id>
       <g:title>Fresh N Local Royal Gala Apple 1kg</g:title>
-      <g:description>Imported Super Sweet</g:description>
+      <g:description>Bite into the blushing, sweet-tart perfection of our premium Royal Gala Apples, imported to bring crisp orchard freshness straight to Surat. Delivering approx. 2.4g of dietary fiber and essential Vitamin C per 100g, this crunchy delight supports daily vitality. In Gujarati homes, these apples beautifully elevate festive fruit chaats, creamy kheer, and refreshing salads. To preserve their signature crunch, store them in the refrigerator&apos;s crisper drawer away from vegetables.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>300.00 INR</g:price>
@@ -2774,7 +2810,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>vGv251FGNrCI7KKXpQaC</g:id>
       <g:title>Fresh N Local American White Leaks 250gm</g:title>
-      <g:description>American White Leaks</g:description>
+      <g:description>Introduce a delicate, mild onion-sweet flavor to your kitchen with our premium American White Leeks. This gourmet herb, resembling giant green onions, provides approx. 1.5g of dietary fiber and essential Vitamin K per 100g, supporting overall vitality. Surat&apos;s home chefs love substituting them for green onions in fusion Gujarati stir-fries, hearty dals, and continental soups. To maintain their crisp texture and fresh taste, store unwashed leeks in a damp paper towel inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
@@ -2788,7 +2824,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>vLSB0L1htGU4Q4qUYRaB</g:id>
       <g:title>Fresh N Local Persimmon Tomato 2pc</g:title>
-      <g:description>Persimmon Tomato</g:description>
+      <g:description>Brighten up your culinary palette with our premium Persimmon Tomatoes, a gorgeous heirloom-style imported variety known for its deep golden-orange hue and low-acid sweetness. These meaty beauties offer vital nutrition, providing approx. 1.2g of dietary fiber, 0.9g of protein, and rich Vitamin C and potassium per 100g to support daily vitality. In Gujarati kitchens, their rich, fruity flavor elevates gourmet salads, tangy kachumbers, and specialty fusion curries. Keep them stem-side down at room temperature to preserve their exquisite texture.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
@@ -2802,7 +2838,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>vOMf7RADB7ADITvhN3O6</g:id>
       <g:title>Fresh N Local Parsley 100gm</g:title>
-      <g:description>Parsley </g:description>
+      <g:description>Elevate your daily cooking with our vibrant, farm-fresh curly parsley, the ultimate finishing herb for modern Indian kitchens. This aromatic green provides approx. 3g of protein and 3.3g of dietary fiber, alongside essential vitamins A and C per 100g to support everyday vitality. Local home cooks in Surat love tossing its bright, peppery leaves into fusion salads, garnishing comforting dals, or blending it into experimental green chutneys. To preserve its crisp texture, store the stems upright in a jar of water inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>75.00 INR</g:price>
@@ -2816,7 +2852,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>vprkdFX4LSh4MmAZAeJf</g:id>
       <g:title>Fresh N Local Sundried Tomatoes 100gm</g:title>
-      <g:description>100Gm Per Pack (IMPORTED)</g:description>
+      <g:description>Bring the intense, concentrated warmth of the Mediterranean sun directly to your Surat kitchen with our premium imported Sundried Tomatoes. These chewy, ruby red gems offer rich nutrition, delivering approx. 12g of dietary fiber and 5g of protein per 100g, alongside potassium for overall vitality. Local chefs love incorporating their umami depth into fusion Gujarati curries, gourmet chutneys, and fresh salads. To maintain their rich texture, store them in an airtight container placed in a cool, dark pantry.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -2830,8 +2866,8 @@ can be used till 6 months</g:description>
     <item>
       <g:id>w2cDCsPgvhx537rDrnWy</g:id>
       <g:title>Fresh N Local Indian Fresh Blueberry 125gm</g:title>
-      <g:description>Indian Fresh Blueberry </g:description>
-      <g:availability>in stock</g:availability>
+      <g:description>Brimming with crisp mountain goodness, our locally grown Indian blueberries bring a burst of sweet-tart vibrancy straight to your Surat home. Each 100g serving delivers approx. 2.4g of dietary fiber and essential Vitamin C to support your daily wellness. Perfect for elevating festive Gujarati shrikhand, blending into refreshing summer lassis, or tossing into vibrant morning fruit salads. To maintain their plump texture, store these unwashed berries in their original breathable container in the refrigerator.</g:description>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/w2cDCsPgvhx537rDrnWy</g:link>
@@ -2843,7 +2879,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>wDFlxJWDZytNk1WX4qGy</g:id>
       <g:title>Fresh N Local Leafy Lettuce 200gm</g:title>
-      <g:description>Leafy Lettuce</g:description>
+      <g:description>Elevate your daily meals with the crunch of our locally harvested, vibrant Leafy Lettuce, grown to perfection for Surat&apos;s health-conscious kitchens. This refreshing green delivers approx. 1.3g of protein, 1.2g of fiber, plus essential vitamins A and K per 100g to support overall vitality. Perfect for crisp Gujarati-style summer salads, modern kathi roll wraps, or as a fresh garnish for fusion chaats. Keep it crisp by wrapping the unwashed leaves in a damp paper towel inside a reusable container before refrigerating.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
@@ -2857,7 +2893,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>wc4ZWkvG1sLmCOQa81RU</g:id>
       <g:title>Fresh N Local Thai Rambutan Litchi 250gm</g:title>
-      <g:description>Origin - kerala</g:description>
+      <g:description>Unveil a tropical treasure with our premium Thai Rambutan Litchi, featuring a striking spiky exterior and sweet, translucent flesh. Rich in natural goodness, every 100g offers approx. 0.9g protein, 0.9g fiber, and essential minerals like iron. In Gujarati kitchens, these juicy gems beautifully elevate festive fruit salads, cold desserts, and spicy-sweet summer chutneys. For maximum freshness, store them unpeeled in a zip-lock bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>600.00 INR</g:price>
@@ -2871,7 +2907,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>wi76VV4yJFzNEsrTjwNy</g:id>
       <g:title>Fresh N Local Guava 1kg</g:title>
-      <g:description>Guava </g:description>
+      <g:description>Indulge in the aromatic sweetness of our handpicked local Guavas, sourced fresh for Surat homes. Revered for their crisp texture, these tropical delights offer vital nourishment, containing approx. 5.4g of dietary fiber and approx. 228mg of Vitamin C per 100g to support daily wellness. In Gujarati households, they are treasured for making spicy amrud ki subzi, tangy fruit chaats, or simply enjoyed sliced with a pinch of salt. Store them at room temperature until fragrant, then refrigerate to maintain their perfect crunch.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>110.00 INR</g:price>
@@ -2885,10 +2921,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>wxfX8lsv2DZJ5sZPrjQw</g:id>
       <g:title>Fresh N Local Mulberry Frozen 100gm</g:title>
-      <g:description>250gm box
-ideal for shake, smocthie or compote 
-keep frozen -18°c 
-can be used till 6 months</g:description>
+      <g:description>Elevate your dessert creations with our premium frozen Mulberries, capturing the sweet, tart essence of handpicked Indian Shahtoot at peak ripeness. These dark, juicy berries offer general wellness benefits, delivering approx. 1.4g of protein and 1.7g of dietary fiber per 100g, alongside essential vitamin C and iron. In Gujarati homes, they beautifully enrich seasonal shrikhand, thick basundi, or homemade jams. Keep this pack tightly sealed in your freezer at -18°C, thawing only the required portion just before serving to maintain texture.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150.00 INR</g:price>
@@ -2902,7 +2935,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>wzJHg2Xun3eQWiOU6y7D</g:id>
       <g:title>Fresh N Local Thai Gallangal 100gm</g:title>
-      <g:description>Thai Gallangal </g:description>
+      <g:description>Elevate your culinary creations with our premium Thai Galangal, a prized aromatic rhizome native to Southeast Asia. Each 100g portion brings subtle nutrition, offering approx 2g of dietary fiber and essential minerals like iron to support overall vitality. Perfect for crafting authentic Thai green curries, infusing fusion Gujarati dals, or brewing aromatic herbal teas, its sharp, citrusy-pine flavor profile is unmatched in Surat kitchens. To maintain its crisp texture and woody aroma, wrap the unpeeled root in a damp paper towel and refrigerate.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>40.00 INR</g:price>
@@ -2916,7 +2949,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>x3qQzXbJJwP0ai97Ah43</g:id>
       <g:title>Fresh N Local Fresh Tarrangon 10gm</g:title>
-      <g:description>Fresh Tarrangon </g:description>
+      <g:description>Elevate your culinary creations with our premium Fresh Tarragon, an aromatic herb delivering a distinct anise flavor to your kitchen. Rich in wellness-promoting nutrients, 100g contains approx. 9.9mg of iron, dietary fiber, and essential vitamins. In modern Gujarati households, it beautifully elevates fusion paneer dishes, refreshing summer coolers, and gourmet salads. To maintain its exquisite fragrance, store the sprigs wrapped in a damp paper towel inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -2930,8 +2963,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>yD3AwDmsxl06ZZMh6rlR</g:id>
       <g:title>Fresh N Local King Pineapple 1pc</g:title>
-      <g:description>KING PINEAPPLE
-Apx 1.5-2Kg Per Pc</g:description>
+      <g:description>Sourced for its majestic crown and unmatched sweetness, the King Pineapple brings a tropical burst straight to Surat homes. Each juicy bite of this exotic giant delivers dietary fiber (approx 1.4g) and vitalizing Vitamin C (approx 47.8mg) to support your daily wellness. In Gujarati kitchens, it perfectly elevates creamy yogurts for raita, spicy street-style chaats, and decadent sheera. Keep your uncut pineapple at room temperature, away from direct sunlight, to preserve its peak freshness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>190.00 INR</g:price>
@@ -2945,13 +2977,13 @@ Apx 1.5-2Kg Per Pc</g:description>
     <item>
       <g:id>yKJBCQXDqtMkoLjEGlP8</g:id>
       <g:title>Fresh N Local Beetroot 500 G</g:title>
-      <g:description>Beetroot </g:description>
+      <g:description>Bring a splash of vibrant crimson to your dining table with our farm-fresh, earthy beetroots, sourced locally for Surat&apos;s health-conscious kitchens. Rich in natural vitality, 100g of this root veggie offers approx. 1.6g of protein, 2.8g of dietary fiber, and essential folate and potassium. In Gujarati homes, these sweet, ruby-colored roots are grated into refreshing raitas, tossed in crunchy salads, or slow-cooked into a luscious halwa. To maintain their crispness, store unwashed beetroots in a breathable bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>25.00 INR</g:price>
       <g:sale_price>20.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/yKJBCQXDqtMkoLjEGlP8</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784052362285_1000208372.jpg?alt=media&amp;token=3b6b5880-47ec-47da-a0e4-ed92d488d81a</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784455795212_beetroot.jpeg?alt=media&amp;token=58698db7-59b1-4ba8-977a-4ef640c17b3b</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2959,10 +2991,7 @@ Apx 1.5-2Kg Per Pc</g:description>
     <item>
       <g:id>zOYvKdw30L7JqCV3CNoU</g:id>
       <g:title>Fresh N Local Frozen Cranberry 500gm</g:title>
-      <g:description>250gm box
-ideal for shake, smocthie or compote 
-keep frozen -18°c 
-can be used till 6 months</g:description>
+      <g:description>Bring a burst of ruby-red brightness to your kitchen with our premium Frozen Cranberries, flash-frozen at peak ripeness. These tart gems offer approx. 4.6g of fiber and essential Vitamin C per 100g to support overall vitality. Locally, they lend a fabulous tangy twist to Gujarati sweet-and-sour dals, festive chutneys, and refreshing mocktails. To preserve their firm texture and bright color, keep them sealed in their airtight pouch in your freezer, retrieving only the portion you need.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>450.00 INR</g:price>
@@ -2975,7 +3004,7 @@ can be used till 6 months</g:description>
     <item>
       <g:id>zQP8vUEfxmCnNlppqnZv</g:id>
       <g:title>Fresh N Local Lolorossa Lettuce 200gm</g:title>
-      <g:description>Lolorossa Lettuce </g:description>
+      <g:description>Bring a splash of dramatic ruby-red elegance to your table with our fresh Lolorossa Lettuce. Characterized by its beautiful, deeply ruffled edges, this Italian-heritage green delivers approx. 1.2g of fiber and vital Vitamin A per 100g to support daily vitality. Surat&apos;s contemporary kitchens love using these nutty leaves to elevate local fusion chaats, healthy paneer wraps, or crisp summer salads. To maintain its delicate crunch, store unwashed in a breathable bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
