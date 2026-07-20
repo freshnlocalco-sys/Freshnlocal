@@ -1019,7 +1019,7 @@ export function AdminDashboard() {
 
   const handleExportCSV = () => {
     try {
-      const headers = ["PRODUCT NAME", "CATEGORY", "UNIT", "MRP", "RATE PRICE", "DESCRIPTION"];
+      const headers = ["PRODUCT NAME", "CATEGORY", "UNIT", "MRP", "RATE PRICE", "HORECA PRICE", "HORECA UNIT", "DESCRIPTION", "IMAGE URL"];
       const csvRows = [];
       csvRows.push(headers.join(","));
       
@@ -1030,7 +1030,10 @@ export function AdminDashboard() {
           `"${(product.unit || '').replace(/"/g, '""')}"`,
           `"${product.originalPrice || product.price || ''}"`,
           `"${product.price || ''}"`,
-          `"${(product.description || '').replace(/"/g, '""')}"`
+          `"${product.horecaPrice !== undefined && product.horecaPrice !== null ? product.horecaPrice : ''}"`,
+          `"${(product.horecaUnit || '').replace(/"/g, '""')}"`,
+          `"${(product.description || '').replace(/"/g, '""')}"`,
+          `"${(product.imageUrl || '').replace(/"/g, '""')}"`
         ];
         csvRows.push(row.join(","));
       });
@@ -2061,15 +2064,33 @@ export function AdminDashboard() {
           }
         }
 
+        let rowHorecaPrice = row.horecaprice || row.horeca_price || row.horecarate || row.horeca_rate || row.horecaamt || row.horeca_amount;
+        let rowHorecaUnit = row.horecaunit || row.horeca_unit || row.horecaqty || row.horeca_qty || row.horecapack || row.horeca_pack || row.horecapackage || row.horeca_package;
+
+        if (rowHorecaPrice === undefined || rowHorecaUnit === undefined) {
+          for (const key of Object.keys(row)) {
+            const lowerKey = key.toLowerCase();
+            if (rowHorecaPrice === undefined && (lowerKey.includes('horecaprice') || lowerKey.includes('horeca_price') || lowerKey.includes('horecarate') || lowerKey.includes('horeca_rate'))) {
+              rowHorecaPrice = row[key];
+            }
+            if (rowHorecaUnit === undefined && (lowerKey.includes('horecaunit') || lowerKey.includes('horeca_unit') || lowerKey.includes('horecaqty') || lowerKey.includes('horeca_qty'))) {
+              rowHorecaUnit = row[key];
+            }
+          }
+        }
+
         if (!rowName || rowPrice === undefined) continue;
         
         let parsedPrice = Number(String(rowPrice).replace(/[^0-9.]/g, '') || 0);
         let parsedMrp = rowMrp ? Number(String(rowMrp).replace(/[^0-9.]/g, '')) : undefined;
+        let parsedHorecaPrice = rowHorecaPrice !== undefined && rowHorecaPrice !== null && String(rowHorecaPrice).trim() !== '' ? Number(String(rowHorecaPrice).replace(/[^0-9.]/g, '')) : undefined;
 
         validRows.push({
           name: String(rowName).trim(),
           price: parsedPrice,
           originalPrice: parsedMrp && parsedMrp > parsedPrice ? parsedMrp : null,
+          horecaPrice: parsedHorecaPrice || null,
+          horecaUnit: rowHorecaUnit ? String(rowHorecaUnit).trim() : '',
           category: (row.category || row.type || 'indian fruits').toLowerCase().trim(),
           description: row.description || row.desc || row.details || '',
           imageUrl: row.imageurl || row.image || row.img || row.photo || '',
@@ -2118,10 +2139,10 @@ export function AdminDashboard() {
   };
 
   const downloadCsvTemplate = () => {
-    const headers = ['Name', 'Price', 'MRP', 'Category', 'Description', 'ImageUrl', 'Stock'];
+    const headers = ['Name', 'Price', 'MRP', 'Category', 'HorecaPrice', 'HorecaUnit', 'Description', 'ImageUrl', 'Stock'];
     const sampleData = [
-      ['Gourmet Red Apples', '180', '250', 'Exotic Fruits', 'Sweet and crisp red apples imported from premium orchards.', 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=800', '100'],
-      ['Fresh Broccoli Crown', '95', '', 'Exotic Vegetables', 'Grown fresh Broccoli clusters rich in vitamin C.', 'https://images.pexels.com/photos/1359421/pexels-photo-1359421.jpeg?auto=compress&cs=tinysrgb&w=800', '80']
+      ['Gourmet Red Apples', '180', '250', 'Exotic Fruits', '150', '5 Kg', 'Sweet and crisp red apples imported from premium orchards.', 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=800', '100'],
+      ['Fresh Broccoli Crown', '95', '', 'Exotic Vegetables', '80', '10 Kg', 'Grown fresh Broccoli clusters rich in vitamin C.', 'https://images.pexels.com/photos/1359421/pexels-photo-1359421.jpeg?auto=compress&cs=tinysrgb&w=800', '80']
     ];
 
     const csvRows = [
