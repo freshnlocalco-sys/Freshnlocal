@@ -406,6 +406,179 @@ function renderShippingUpdateHtml(order: any, id: string): string {
 }
 
 /**
+ * Renders the HTML template for Admin Order Notifications.
+ */
+function renderAdminOrderNotificationHtml(order: any, id: string): string {
+  const itemsHtml = (order.items || []).map((item: any) => {
+    const p = item.product || {};
+    const imgUrl = p.imageUrl || "https://images.unsplash.com/photo-1610348725531-843dff103e2c?w=100&h=100&fit=crop";
+    return `
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 16px 12px; vertical-align: middle;">
+          <table style="border-collapse: collapse; border: 0;">
+            <tr>
+              <td style="padding: 0 12px 0 0; vertical-align: middle;">
+                <img src="${imgUrl}" alt="${p.name}" class="product-img" style="width: 48px; height: 48px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0; display: block;" referrerPolicy="no-referrer" />
+              </td>
+              <td style="padding: 0; vertical-align: middle;">
+                <span class="product-name" style="font-weight: 600; color: #1e293b; font-size: 14px; display: block; line-height: 1.4; max-width: 250px;">${p.name}</span>
+                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 2px;">${p.category || 'Local Produce'}</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td style="padding: 16px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; color: #475569; font-weight: 500; font-size: 14px;">
+          ${item.quantity} <span style="font-size: 12px; color: #94a3b8; font-weight: normal;">x ${p.unit || 'Unit'}</span>
+        </td>
+        <td style="padding: 16px 12px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">
+          ₹${(p.price || 0).toFixed(2)}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const discountRow = order.discount > 0 ? `
+    <tr style="border-bottom: 1px solid #f1f5f9;">
+      <td colspan="2" style="padding: 12px; text-align: right; color: #64748b; font-size: 14px; font-weight: 500;">Discount (Points Redeemed):</td>
+      <td style="padding: 12px; text-align: right; font-weight: 600; color: #dc2626; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">-₹${order.discount.toFixed(2)}</td>
+    </tr>
+  ` : '';
+
+  const deliveryRow = `
+    <tr style="border-bottom: 1px solid #f1f5f9;">
+      <td colspan="2" style="padding: 12px; text-align: right; color: #64748b; font-size: 14px; font-weight: 500;">Delivery Service:</td>
+      <td style="padding: 12px; text-align: right; font-weight: 600; color: #16a34a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">FREE</td>
+    </tr>
+  `;
+
+  return `
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>FreshNLocal Co. - Admin Alert</title>
+      <style type="text/css">
+        @media only screen and (max-width: 600px) {
+          .container { padding: 12px 8px !important; }
+          .card { border-radius: 16px !important; }
+          .header-title { font-size: 22px !important; }
+          .product-img { width: 38px !important; height: 38px !important; }
+          .product-name { max-width: 150px !important; font-size: 13px !important; }
+          .meta-td { display: block !important; width: 100% !important; text-align: left !important; box-sizing: border-box; }
+          .meta-td-right { display: block !important; width: 100% !important; text-align: left !important; margin-top: 4px; font-weight: bold; }
+          .meta-row { display: block !important; border-bottom: 1px solid #f1f5f9; padding: 8px 0; }
+          .meta-row-last { display: block !important; padding: 8px 0; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-text-size-adjust: none; -ms-text-size-adjust: none;">
+      <!-- Wrapper -->
+      <div class="container" style="background-color: #f8fafc; padding: 40px 16px; min-height: 100%;">
+        <div class="card" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.05);">
+          
+          <!-- Top Accent Bar -->
+          <div style="background-color: #ea580c; height: 6px;"></div>
+
+          <!-- Header Section -->
+          <div style="background-color: #fffaf0; border-bottom: 1px solid #f1f5f9; padding: 32px 24px; text-align: center;">
+            <div style="display: inline-block; margin-bottom: 12px; background-color: #ffedd5; padding: 12px; border-radius: 50%;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto;">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#ea580c"/>
+              </svg>
+            </div>
+            <h1 class="header-title" style="margin: 0; font-size: 26px; font-weight: 800; color: #7c2d12; letter-spacing: -0.5px;">FreshNLocal Co.</h1>
+            <p style="margin: 6px 0 0; font-size: 14px; font-weight: 500; color: #ea580c; text-transform: uppercase; letter-spacing: 1px;">🔔 NEW ORDER RECEIVED</p>
+          </div>
+
+          <!-- Body Section -->
+          <div style="padding: 32px 24px;">
+            <p style="margin: 0 0 16px; font-size: 16px; color: #1e293b; line-height: 1.6;">
+              Hello <strong style="color: #0f172a;">FreshNLocal Admin</strong>,
+            </p>
+            <p style="margin: 0 0 28px; font-size: 15px; color: #475569; line-height: 1.6;">
+              A new customer has placed an order! Please review the order details below and coordinate harvesting/packaging with the farmers.
+            </p>
+
+            <!-- Order Summary Card -->
+            <div style="background-color: #fffaf0; padding: 24px; border-radius: 16px; margin-bottom: 32px; border: 1px solid #ffedd5;">
+              <h4 style="margin: 0 0 16px; font-size: 13px; font-weight: 700; color: #ea580c; text-transform: uppercase; letter-spacing: 1px;">Order & Shipping Metadata</h4>
+              <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <tr class="meta-row" style="border-bottom: 1px solid #ffedd5;">
+                  <td class="meta-td" style="padding: 10px 0; color: #7c2d12; font-weight: 500;">Order ID:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; font-family: monospace; font-weight: 700; color: #ea580c;">#${order.orderNumber || id}</td>
+                </tr>
+                <tr class="meta-row" style="border-bottom: 1px solid #ffedd5;">
+                  <td class="meta-td" style="padding: 10px 0; color: #7c2d12; font-weight: 500;">Customer Name:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-weight: 600;">${order.shippingDetails?.name || 'N/A'}</td>
+                </tr>
+                <tr class="meta-row" style="border-bottom: 1px solid #ffedd5;">
+                  <td class="meta-td" style="padding: 10px 0; color: #7c2d12; font-weight: 500;">Customer Email:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155;">${order.shippingDetails?.email || 'N/A'}</td>
+                </tr>
+                <tr class="meta-row" style="border-bottom: 1px solid #ffedd5;">
+                  <td class="meta-td" style="padding: 10px 0; color: #7c2d12; font-weight: 500;">Customer Phone:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-family: monospace; font-weight: 600;">${order.shippingDetails?.phone || 'N/A'}</td>
+                </tr>
+                <tr class="meta-row" style="border-bottom: 1px solid #ffedd5;">
+                  <td class="meta-td" style="padding: 10px 0; color: #7c2d12; font-weight: 500;">Order Date:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155;">${new Date(order.createdAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' })}</td>
+                </tr>
+                <tr class="meta-row" style="border-bottom: 1px solid #ffedd5;">
+                  <td class="meta-td" style="padding: 10px 0; color: #7c2d12; font-weight: 500;">Payment Gateway:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-weight: 600;">Cash on Delivery (COD)</td>
+                </tr>
+                <tr class="meta-row-last">
+                  <td class="meta-td" style="padding: 10px 0 0; color: #7c2d12; font-weight: 500; vertical-align: top;">Delivery Destination:</td>
+                  <td class="meta-td-right" style="padding: 10px 0 0; text-align: right; color: #334155; font-size: 13px; line-height: 1.5; max-width: 250px;">${order.shippingDetails?.address || 'N/A'}</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Items Table -->
+            <h3 style="margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Items Requested</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+              <thead>
+                <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Product</th>
+                  <th style="padding: 12px; text-align: center; font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Quantity</th>
+                  <th style="padding: 12px; text-align: right; font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+              <tfoot>
+                ${discountRow}
+                ${deliveryRow}
+                <tr>
+                  <td colspan="2" style="padding: 20px 12px 12px; text-align: right; font-weight: 700; color: #0f172a; font-size: 15px;">Total Collectable (COD):</td>
+                  <td style="padding: 20px 12px 12px; text-align: right; font-weight: 800; color: #ea580c; font-size: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">₹${(order.totalAmount || 0).toFixed(2)}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <!-- Quick Action Notice -->
+            <p style="margin: 0; font-size: 13.5px; color: #64748b; text-align: center; line-height: 1.6; border-top: 1px solid #f1f5f9; padding-top: 24px;">
+              Please coordinate packaging with regional farmers in Surat, Gujarat. This notification is sent automatically.
+            </p>
+          </div>
+
+          <!-- Footer Section -->
+          <div style="background-color: #f8fafc; padding: 32px 24px; text-align: center; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b;">
+            <p style="margin: 0 0 8px; font-weight: 700; color: #334155; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">FreshNLocal Admin Portal</p>
+            <p style="margin: 0 0 12px; line-height: 1.6;">Providing 100% Raw, Fresh, and Natural Local Harvests directly to your kitchen.</p>
+            <p style="margin: 0; color: #94a3b8;">Surat, Gujarat, India &bull; Organic Agri partners</p>
+          </div>
+          
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
  * Starts the live background Firestore trigger listener.
  * This runs continuously in our server container, watching for changes.
  */
@@ -495,6 +668,15 @@ export function setupOrderEmailTriggers() {
             html: renderOrderConfirmationHtml(order, id)
           };
 
+          // Admin notification setup
+          const adminMailOptions = {
+            from: senderFrom,
+            to: "freshnlocalco@gmail.com",
+            subject: `🔔 New Order Received! #${orderNum} - ${order.shippingDetails?.name || 'Customer'}`,
+            html: renderAdminOrderNotificationHtml(order, id)
+          };
+
+          // Send Customer Email
           try {
             const info = await mailTransporter.sendMail(mailOptions);
             console.log(`[EMAIL TRIGGERS] Order Confirmation email sent to ${email}. MessageID: ${info.messageId}`);
@@ -503,16 +685,38 @@ export function setupOrderEmailTriggers() {
             const previewUrl = nodemailer.getTestMessageUrl(info);
             if (previewUrl) {
               console.log(`\n=============================================================`);
-              console.log(`[ETHEREAL MAIL PREVIEW] View the rendered HTML email online:`);
+              console.log(`[ETHEREAL MAIL PREVIEW] View Customer HTML email online:`);
               console.log(`${previewUrl}`);
               console.log(`=============================================================\n`);
             }
-
-            // Transactionally mark confirmationEmailSent: true so we don't duplicate
-            const orderDocRef = doc(db, 'orders', id);
-            await updateDoc(orderDocRef, { confirmationEmailSent: true });
           } catch (sendErr) {
             console.error(`[EMAIL TRIGGERS] Error sending Order Confirmation to ${email}:`, sendErr);
+          }
+
+          // Send Admin Notification Email
+          try {
+            console.log(`[EMAIL TRIGGERS] Preparing Admin Order Notification email to freshnlocalco@gmail.com`);
+            const adminInfo = await mailTransporter.sendMail(adminMailOptions);
+            console.log(`[EMAIL TRIGGERS] Admin Order Notification email sent to freshnlocalco@gmail.com. MessageID: ${adminInfo.messageId}`);
+            
+            // Get test message link if sent via Ethereal Mail
+            const adminPreviewUrl = nodemailer.getTestMessageUrl(adminInfo);
+            if (adminPreviewUrl) {
+              console.log(`\n=============================================================`);
+              console.log(`[ETHEREAL MAIL PREVIEW] View Admin Notification HTML email online:`);
+              console.log(`${adminPreviewUrl}`);
+              console.log(`=============================================================\n`);
+            }
+          } catch (adminSendErr) {
+            console.error(`[EMAIL TRIGGERS] Error sending Admin Notification to freshnlocalco@gmail.com:`, adminSendErr);
+          }
+
+          // Transactionally mark confirmationEmailSent: true so we don't duplicate
+          try {
+            const orderDocRef = doc(db, 'orders', id);
+            await updateDoc(orderDocRef, { confirmationEmailSent: true });
+          } catch (dbErr) {
+            console.error(`[EMAIL TRIGGERS] Error updating confirmationEmailSent flag in Firestore for order ${id}:`, dbErr);
           }
         }
 
