@@ -71,15 +71,24 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
     const p = item.product || {};
     const imgUrl = p.imageUrl || "https://images.unsplash.com/photo-1610348725531-843dff103e2c?w=100&h=100&fit=crop";
     return `
-      <tr>
-        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle;">
-          <img src="${imgUrl}" alt="${p.name}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; margin-right: 12px; display: inline-block; vertical-align: middle;" referrerPolicy="no-referrer" />
-          <span style="font-weight: 600; color: #1e293b; display: inline-block; vertical-align: middle; max-width: 250px;">${p.name}</span>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 16px 12px; vertical-align: middle;">
+          <table style="border-collapse: collapse; border: 0;">
+            <tr>
+              <td style="padding: 0 12px 0 0; vertical-align: middle;">
+                <img src="${imgUrl}" alt="${p.name}" class="product-img" style="width: 48px; height: 48px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0; display: block;" referrerPolicy="no-referrer" />
+              </td>
+              <td style="padding: 0; vertical-align: middle;">
+                <span class="product-name" style="font-weight: 600; color: #1e293b; font-size: 14px; display: block; line-height: 1.4; max-width: 250px;">${p.name}</span>
+                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 2px;">${p.category || 'Local Produce'}</span>
+              </td>
+            </tr>
+          </table>
         </td>
-        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #475569; font-family: monospace;">
-          ${item.quantity} x ${p.unit || 'Unit'}
+        <td style="padding: 16px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; color: #475569; font-weight: 500; font-size: 14px;">
+          ${item.quantity} <span style="font-size: 12px; color: #94a3b8; font-weight: normal;">x ${p.unit || 'Unit'}</span>
         </td>
-        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600; color: #1e293b; font-family: monospace;">
+        <td style="padding: 16px 12px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">
           ₹${(p.price || 0).toFixed(2)}
         </td>
       </tr>
@@ -87,96 +96,142 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
   }).join('');
 
   const discountRow = order.discount > 0 ? `
-    <tr>
-      <td colspan="2" style="padding: 8px 12px; text-align: right; color: #475569;">Discount (Points Redeemed):</td>
-      <td style="padding: 8px 12px; text-align: right; font-weight: 600; color: #ef4444; font-family: monospace;">-₹${order.discount.toFixed(2)}</td>
+    <tr style="border-bottom: 1px solid #f1f5f9;">
+      <td colspan="2" style="padding: 12px; text-align: right; color: #64748b; font-size: 14px; font-weight: 500;">Discount (Points Redeemed):</td>
+      <td style="padding: 12px; text-align: right; font-weight: 600; color: #dc2626; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">-₹${order.discount.toFixed(2)}</td>
     </tr>
   ` : '';
 
+  const deliveryRow = `
+    <tr style="border-bottom: 1px solid #f1f5f9;">
+      <td colspan="2" style="padding: 12px; text-align: right; color: #64748b; font-size: 14px; font-weight: 500;">Delivery Service:</td>
+      <td style="padding: 12px; text-align: right; font-weight: 600; color: #16a34a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">FREE</td>
+    </tr>
+  `;
+
   return `
-    <div style="background-color: #f8fafc; padding: 40px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; min-height: 100%;">
-      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-        
-        <!-- Header -->
-        <div style="background-color: #00b853; padding: 32px 24px; text-align: center; color: #ffffff;">
-          <h1 style="margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase;">FreshNLocal Co.</h1>
-          <p style="margin: 8px 0 0; font-size: 15px; font-weight: 500; opacity: 0.9;">Your Farm-Fresh Harvest is Confirmed!</p>
-        </div>
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>FreshNLocal Co.</title>
+      <style type="text/css">
+        @media only screen and (max-width: 600px) {
+          .container { padding: 12px 8px !important; }
+          .card { border-radius: 16px !important; }
+          .header-title { font-size: 22px !important; }
+          .product-img { width: 38px !important; height: 38px !important; }
+          .product-name { max-width: 150px !important; font-size: 13px !important; }
+          .meta-td { display: block !important; width: 100% !important; text-align: left !important; box-sizing: border-box; }
+          .meta-td-right { display: block !important; width: 100% !important; text-align: left !important; margin-top: 4px; font-weight: bold; }
+          .meta-row { display: block !important; border-bottom: 1px solid #f1f5f9; padding: 8px 0; }
+          .meta-row-last { display: block !important; padding: 8px 0; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-text-size-adjust: none; -ms-text-size-adjust: none;">
+      <!-- Wrapper -->
+      <div class="container" style="background-color: #f8fafc; padding: 40px 16px; min-height: 100%;">
+        <div class="card" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.05);">
+          
+          <!-- Top Accent Bar -->
+          <div style="background-color: #15803d; height: 6px;"></div>
 
-        <!-- Body -->
-        <div style="padding: 32px 24px;">
-          <p style="margin: 0 0 20px; font-size: 16px; color: #334155; line-height: 1.6;">
-            Hello <strong>${order.shippingDetails?.name || 'Customer'}</strong>,
-          </p>
-          <p style="margin: 0 0 24px; font-size: 15px; color: #475569; line-height: 1.6;">
-            Thank you for shopping local! Your order has been registered successfully. Our partner farmers in Surat are busy harvesting and preparing your fresh organic crops.
-          </p>
-
-          <!-- Order Summary Card -->
-          <div style="background-color: #f1f5f9; padding: 20px; border-radius: 16px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
-            <table style="width: 100%; font-size: 14px; color: #475569;">
-              <tr>
-                <td style="padding: 4px 0; font-weight: 600; color: #1e293b;">Order ID:</td>
-                <td style="padding: 4px 0; text-align: right; font-family: monospace; font-weight: bold; color: #00b853;">${order.orderNumber || id}</td>
-              </tr>
-              <tr>
-                <td style="padding: 4px 0; font-weight: 600; color: #1e293b;">Date:</td>
-                <td style="padding: 4px 0; text-align: right;">${new Date(order.createdAt).toLocaleDateString('en-IN', { dateStyle: 'long' })}</td>
-              </tr>
-              <tr>
-                <td style="padding: 4px 0; font-weight: 600; color: #1e293b;">Payment Method:</td>
-                <td style="padding: 4px 0; text-align: right;">Cash on Delivery (COD)</td>
-              </tr>
-              <tr>
-                <td style="padding: 4px 0; font-weight: 600; color: #1e293b;">Address:</td>
-                <td style="padding: 4px 0; text-align: right; font-size: 13px; line-height: 1.4; max-width: 250px;">${order.shippingDetails?.address || 'N/A'}</td>
-              </tr>
-            </table>
+          <!-- Header Section -->
+          <div style="background-color: #fcfdfa; border-bottom: 1px solid #f1f5f9; padding: 32px 24px; text-align: center;">
+            <div style="display: inline-block; margin-bottom: 12px; background-color: #dcfce7; padding: 12px; border-radius: 50%;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto;">
+                <path d="M12 3c-1.2 0-2.4.3-3.5.9c.3.5.7.9 1.2 1.3c.7-.4 1.5-.6 2.3-.6c3.3 0 6 2.7 6 6c0 .8-.2 1.6-.6 2.3c.4.5.8.9 1.3 1.2c.6-1.1.9-2.3.9-3.5c0-4.4-3.6-8-8-8zm-5.1 4.5C4.6 9.3 4 11.6 4 14c0 4.4 3.6 8 8 8c2.4 0 4.7-.6 6.5-1.7c-.5-.3-.9-.7-1.3-1.2c-.7.4-1.5.6-2.3.6c-3.3 0-6-2.7-6-6c0-.8.2-1.6.6-2.3c-.4-.5-.8-.9-1.3-1.2z" fill="#15803d"/>
+                <path d="M12 6c-3.3 0-6 2.7-6 6c0 1.2.4 2.4 1 3.4L15.4 7c-1-.6-2.2-1-3.4-1zm3.4 1.6L7 16c1 .6 2.2 1 3.4 1c3.3 0 6-2.7 6-6c0-1.2-.4-2.4-1-3.4z" fill="#166534"/>
+              </svg>
+            </div>
+            <h1 class="header-title" style="margin: 0; font-size: 26px; font-weight: 800; color: #14532d; letter-spacing: -0.5px;">FreshNLocal Co.</h1>
+            <p style="margin: 6px 0 0; font-size: 14px; font-weight: 500; color: #15803d; text-transform: uppercase; letter-spacing: 1px;">Harvest Confirmed</p>
           </div>
 
-          <!-- Items Table -->
-          <h3 style="margin: 0 0 12px; font-size: 16px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">Harvested Items</h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 24px;">
-            <thead>
-              <tr style="background-color: #f8fafc;">
-                <th style="padding: 10px 12px; text-align: left; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0;">Product</th>
-                <th style="padding: 10px 12px; text-align: center; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0;">Qty</th>
-                <th style="padding: 10px 12px; text-align: right; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0;">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-            <tfoot>
-              ${discountRow}
-              <tr>
-                <td colspan="2" style="padding: 12px; text-align: right; font-weight: bold; color: #1e293b; font-size: 16px;">Total Paid (COD):</td>
-                <td style="padding: 12px; text-align: right; font-weight: bold; color: #00b853; font-size: 18px; font-family: monospace;">₹${(order.totalAmount || 0).toFixed(2)}</td>
-              </tr>
-            </tfoot>
-          </table>
+          <!-- Body Section -->
+          <div style="padding: 32px 24px;">
+            <p style="margin: 0 0 16px; font-size: 16px; color: #1e293b; line-height: 1.6;">
+              Hello <strong style="color: #0f172a;">${order.shippingDetails?.name || 'Customer'}</strong>,
+            </p>
+            <p style="margin: 0 0 28px; font-size: 15px; color: #475569; line-height: 1.6;">
+              Thank you for supporting 100% natural, regional farming! Our partner farmers in Surat, Gujarat have reserved your selections and are preparing to deliver them fresh.
+            </p>
 
-          <!-- Support & Culinary Prompt -->
-          <div style="background-color: #f0fdf4; border: 1px dashed #bbf7d0; padding: 18px; border-radius: 16px; text-align: center; margin-bottom: 24px;">
-            <p style="margin: 0 0 8px; font-size: 14px; color: #166534; font-weight: bold;">🍳 Need Culinary Inspiration?</p>
-            <p style="margin: 0; font-size: 13px; color: #14532d; line-height: 1.5;">
-              Use <strong>Freshi AI Chef</strong> inside our app to generate mouth-watering recipes using your newly ordered fresh vegetables, exotic fruits, and local herbs!
+            <!-- Order Summary Card -->
+            <div style="background-color: #fcfdfa; padding: 24px; border-radius: 16px; margin-bottom: 32px; border: 1px solid #e6f4ea;">
+              <h4 style="margin: 0 0 16px; font-size: 13px; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 1px;">Order Metadata</h4>
+              <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+                  <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Order ID:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; font-family: monospace; font-weight: 700; color: #15803d;">#${order.orderNumber || id}</td>
+                </tr>
+                <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+                  <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Harvest Date:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155;">${new Date(order.createdAt).toLocaleDateString('en-IN', { dateStyle: 'long' })}</td>
+                </tr>
+                <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+                  <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Payment Gateway:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-weight: 600;">Cash on Delivery (COD)</td>
+                </tr>
+                <tr class="meta-row-last">
+                  <td class="meta-td" style="padding: 10px 0 0; color: #64748b; font-weight: 500; vertical-align: top;">Delivery Destination:</td>
+                  <td class="meta-td-right" style="padding: 10px 0 0; text-align: right; color: #334155; font-size: 13px; line-height: 1.5; max-width: 250px;">${order.shippingDetails?.address || 'N/A'}</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Items Table -->
+            <h3 style="margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Harvest Summary</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+              <thead>
+                <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Product</th>
+                  <th style="padding: 12px; text-align: center; font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Quantity</th>
+                  <th style="padding: 12px; text-align: right; font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+              <tfoot>
+                ${discountRow}
+                ${deliveryRow}
+                <tr>
+                  <td colspan="2" style="padding: 20px 12px 12px; text-align: right; font-weight: 700; color: #0f172a; font-size: 15px;">Total Payable Amount:</td>
+                  <td style="padding: 20px 12px 12px; text-align: right; font-weight: 800; color: #15803d; font-size: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">₹${(order.totalAmount || 0).toFixed(2)}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <!-- Support & Culinary Prompt -->
+            <div style="background-color: #f4faf6; border: 1px dashed #a7f3d0; padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 32px;">
+              <p style="margin: 0 0 10px; font-size: 15px; color: #14532d; font-weight: 700;">
+                🍳 Creative Recipes Await You
+              </p>
+              <p style="margin: 0; font-size: 13.5px; color: #166534; line-height: 1.6;">
+                Once your fresh organic harvest arrives, use the built-in <strong>Freshi AI Chef</strong> assistant inside our application to instantly design gourmet farm-to-table culinary recipes tailored specifically to these exact ingredients!
+              </p>
+            </div>
+
+            <!-- Customer Care Notice -->
+            <p style="margin: 0; font-size: 13.5px; color: #64748b; text-align: center; line-height: 1.6; border-top: 1px solid #f1f5f9; padding-top: 24px;">
+              Need assistance or wish to customize your order delivery slot? Simply reply to this email, or email us directly at <a href="mailto:freshnlocalco@gmail.com" style="color: #15803d; font-weight: 600; text-decoration: none;">freshnlocalco@gmail.com</a>.
             </p>
           </div>
 
-          <p style="margin: 0; font-size: 14px; color: #64748b; text-align: center; line-height: 1.6;">
-            If you have any questions or require support, reply to this email or call support.
-          </p>
+          <!-- Footer Section -->
+          <div style="background-color: #f8fafc; padding: 32px 24px; text-align: center; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b;">
+            <p style="margin: 0 0 8px; font-weight: 700; color: #334155; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">FreshNLocal Co.</p>
+            <p style="margin: 0 0 12px; line-height: 1.6;">Providing 100% Raw, Fresh, and Natural Local Harvests directly to your kitchen.</p>
+            <p style="margin: 0; color: #94a3b8;">Surat, Gujarat, India &bull; Organic Agri partners</p>
+          </div>
+          
         </div>
-
-        <!-- Footer -->
-        <div style="background-color: #f1f5f9; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-          <p style="margin: 0 0 6px; font-weight: bold; color: #475569;">FreshNLocal Co. — Surat, Gujarat</p>
-          <p style="margin: 0;">Providing 100% Raw, Fresh, and Natural Local Harvests directly to your kitchen.</p>
-        </div>
-        
       </div>
-    </div>
+    </body>
+    </html>
   `;
 }
 
@@ -188,101 +243,165 @@ function renderShippingUpdateHtml(order: any, id: string): string {
   const isCancelled = order.status === 'cancelled';
   
   let statusText = "Shipped";
-  let statusColor = "#3b82f6"; // Blue
+  let statusColor = "#1d4ed8"; // Premium blue
+  let statusBgColor = "#eff6ff"; // Soft blue
   let statusMessage = "Your fresh crops are harvested, packaged with love, and are currently in transit to your kitchen!";
+  let statusIconColor = "#3b82f6";
   
   if (isDelivered) {
     statusText = "Delivered";
-    statusColor = "#00b853"; // Green
+    statusColor = "#15803d"; // Premium green
+    statusBgColor = "#f0fdf4"; // Soft green
     statusMessage = "Your farm-fresh produce has been safely delivered! We hope you love the taste of raw, local harvests.";
+    statusIconColor = "#10b981";
   } else if (isCancelled) {
     statusText = "Cancelled";
-    statusColor = "#ef4444"; // Red
+    statusColor = "#b91c1c"; // Premium red
+    statusBgColor = "#fef2f2"; // Soft red
     statusMessage = "Your order has been cancelled. If this was an error, please reach out to our team or place a new order.";
+    statusIconColor = "#f43f5e";
   }
 
   return `
-    <div style="background-color: #f8fafc; padding: 40px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; min-height: 100%;">
-      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-        
-        <!-- Header -->
-        <div style="background-color: ${statusColor}; padding: 32px 24px; text-align: center; color: #ffffff;">
-          <h1 style="margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase;">FreshNLocal Co.</h1>
-          <p style="margin: 8px 0 0; font-size: 15px; font-weight: 500; opacity: 0.9;">Order Update: ${statusText}</p>
-        </div>
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>FreshNLocal Co.</title>
+      <style type="text/css">
+        @media only screen and (max-width: 600px) {
+          .container { padding: 12px 8px !important; }
+          .card { border-radius: 16px !important; }
+          .header-title { font-size: 22px !important; }
+          .meta-td { display: block !important; width: 100% !important; text-align: left !important; box-sizing: border-box; }
+          .meta-td-right { display: block !important; width: 100% !important; text-align: left !important; margin-top: 4px; font-weight: bold; }
+          .meta-row { display: block !important; border-bottom: 1px solid #f1f5f9; padding: 8px 0; }
+          .meta-row-last { display: block !important; padding: 8px 0; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-text-size-adjust: none; -ms-text-size-adjust: none;">
+      <!-- Wrapper -->
+      <div class="container" style="background-color: #f8fafc; padding: 40px 16px; min-height: 100%;">
+        <div class="card" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.05);">
+          
+          <!-- Top Accent Bar -->
+          <div style="background-color: ${statusColor}; height: 6px;"></div>
 
-        <!-- Body -->
-        <div style="padding: 32px 24px;">
-          <p style="margin: 0 0 20px; font-size: 16px; color: #334155; line-height: 1.6;">
-            Hello <strong>${order.shippingDetails?.name || 'Customer'}</strong>,
-          </p>
-          <p style="margin: 0 0 24px; font-size: 15px; color: #475569; line-height: 1.6;">
-            ${statusMessage}
-          </p>
-
-          <!-- Tracking Tracker Visual -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin: 32px 0; max-width: 450px; margin-left: auto; margin-right: auto; text-align: center;">
-            <div style="flex: 1;">
-              <div style="width: 24px; height: 24px; border-radius: 50%; background-color: #00b853; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">✓</div>
-              <p style="margin: 6px 0 0; font-size: 11px; font-weight: 600; color: #475569;">Confirmed</p>
+          <!-- Header Section -->
+          <div style="background-color: #fcfdfa; border-bottom: 1px solid #f1f5f9; padding: 32px 24px; text-align: center;">
+            <div style="display: inline-block; margin-bottom: 12px; background-color: ${statusBgColor}; padding: 12px; border-radius: 50%;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto;">
+                <path d="M12 3c-1.2 0-2.4.3-3.5.9c.3.5.7.9 1.2 1.3c.7-.4 1.5-.6 2.3-.6c3.3 0 6 2.7 6 6c0 .8-.2 1.6-.6 2.3c.4.5.8.9 1.3 1.2c.6-1.1.9-2.3.9-3.5c0-4.4-3.6-8-8-8zm-5.1 4.5C4.6 9.3 4 11.6 4 14c0 4.4 3.6 8 8 8c2.4 0 4.7-.6 6.5-1.7c-.5-.3-.9-.7-1.3-1.2c-.7.4-1.5.6-2.3.6c-3.3 0-6-2.7-6-6c0-.8.2-1.6.6-2.3c-.4-.5-.8-.9-1.3-1.2z" fill="${statusColor}"/>
+                <path d="M12 6c-3.3 0-6 2.7-6 6c0 1.2.4 2.4 1 3.4L15.4 7c-1-.6-2.2-1-3.4-1zm3.4 1.6L7 16c1 .6 2.2 1 3.4 1c3.3 0 6-2.7 6-6c0-1.2-.4-2.4-1-3.4z" fill="${statusColor}"/>
+              </svg>
             </div>
-            <div style="flex: 1; height: 2px; background-color: ${order.status !== 'pending' ? '#00b853' : '#cbd5e1'}; margin-bottom: 16px;"></div>
-            <div style="flex: 1;">
-              <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${['shipped', 'delivered'].includes(order.status) ? '#00b853' : '#cbd5e1'}; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">${['shipped', 'delivered'].includes(order.status) ? '✓' : '2'}</div>
-              <p style="margin: 6px 0 0; font-size: 11px; font-weight: 600; color: #475569;">In Transit</p>
-            </div>
-            <div style="flex: 1; height: 2px; background-color: ${order.status === 'delivered' ? '#00b853' : '#cbd5e1'}; margin-bottom: 16px;"></div>
-            <div style="flex: 1;">
-              <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${order.status === 'delivered' ? '#00b853' : '#cbd5e1'}; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">${order.status === 'delivered' ? '✓' : '3'}</div>
-              <p style="margin: 6px 0 0; font-size: 11px; font-weight: 600; color: #475569;">Delivered</p>
-            </div>
+            <h1 class="header-title" style="margin: 0; font-size: 26px; font-weight: 800; color: #14532d; letter-spacing: -0.5px;">FreshNLocal Co.</h1>
+            <p style="margin: 6px 0 0; font-size: 14px; font-weight: 500; color: ${statusColor}; text-transform: uppercase; letter-spacing: 1px;">Order Status: ${statusText}</p>
           </div>
 
-          <!-- Order Summary Card -->
-          <div style="background-color: #f1f5f9; padding: 20px; border-radius: 16px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
-            <table style="width: 100%; font-size: 14px; color: #475569;">
+          <!-- Body Section -->
+          <div style="padding: 32px 24px;">
+            <p style="margin: 0 0 16px; font-size: 16px; color: #1e293b; line-height: 1.6;">
+              Hello <strong style="color: #0f172a;">${order.shippingDetails?.name || 'Customer'}</strong>,
+            </p>
+            <p style="margin: 0 0 28px; font-size: 15px; color: #475569; line-height: 1.6;">
+              ${statusMessage}
+            </p>
+
+            <!-- Tracking Tracker Visual -->
+            <table class="tracker-table" style="width: 100%; border-collapse: collapse; margin: 32px 0 32px; font-size: 13px;">
               <tr>
-                <td style="padding: 4px 0; font-weight: 600; color: #1e293b;">Order ID:</td>
-                <td style="padding: 4px 0; text-align: right; font-family: monospace; font-weight: bold; color: ${statusColor};">${order.orderNumber || id}</td>
-              </tr>
-              <tr>
-                <td style="padding: 4px 0; font-weight: 600; color: #1e293b;">Current Status:</td>
-                <td style="padding: 4px 0; text-align: right; font-weight: bold; color: ${statusColor}; text-transform: uppercase;">${statusText}</td>
-              </tr>
-              <tr>
-                <td style="padding: 4px 0; font-weight: 600; color: #1e293b;">Delivery Address:</td>
-                <td style="padding: 4px 0; text-align: right; font-size: 13px; line-height: 1.4; max-width: 250px;">${order.shippingDetails?.address || 'N/A'}</td>
-              </tr>
-              <tr>
-                <td style="padding: 4px 0; font-weight: 600; color: #1e293b;">Contact Phone:</td>
-                <td style="padding: 4px 0; text-align: right; font-family: monospace;">${order.shippingDetails?.phone || 'N/A'}</td>
+                <!-- Step 1: Confirmed -->
+                <td class="tracker-cell" style="width: 30%; text-align: center; vertical-align: top;">
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #15803d; color: #ffffff; line-height: 28px; font-size: 12px; font-weight: bold; margin: 0 auto; display: inline-block; text-align: center; box-shadow: 0 4px 6px -1px rgba(21,128,61,0.2);">✓</div>
+                  <div style="font-weight: 700; color: #1e293b; margin-top: 8px;">Confirmed</div>
+                  <div style="font-size: 11px; color: #64748b; margin-top: 2px; word-break: keep-all;">Farmer Reserved</div>
+                </td>
+                
+                <!-- Connector 1 -->
+                <td class="tracker-connector" style="width: 5%; vertical-align: middle; padding-bottom: 30px;">
+                  <div style="height: 3px; background-color: ${order.status !== 'pending' ? '#15803d' : '#cbd5e1'}; width: 100%;"></div>
+                </td>
+                
+                <!-- Step 2: In Transit -->
+                <td class="tracker-cell" style="width: 30%; text-align: center; vertical-align: top;">
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background-color: ${['shipped', 'delivered'].includes(order.status) ? '#15803d' : '#cbd5e1'}; color: ${['shipped', 'delivered'].includes(order.status) ? '#ffffff' : '#64748b'}; line-height: 28px; font-size: 12px; font-weight: bold; margin: 0 auto; display: inline-block; text-align: center; border: ${['shipped', 'delivered'].includes(order.status) ? 'none' : '2px solid #cbd5e1'}; box-sizing: border-box;">
+                    ${['shipped', 'delivered'].includes(order.status) ? '✓' : '2'}
+                  </div>
+                  <div style="font-weight: ${order.status === 'shipped' ? '700' : '600'}; color: ${['shipped', 'delivered'].includes(order.status) ? '#1e293b' : '#94a3b8'}; margin-top: 8px;">In Transit</div>
+                  <div style="font-size: 11px; color: #64748b; margin-top: 2px; word-break: keep-all;">Crops Dispatched</div>
+                </td>
+                
+                <!-- Connector 2 -->
+                <td class="tracker-connector" style="width: 5%; vertical-align: middle; padding-bottom: 30px;">
+                  <div style="height: 3px; background-color: ${order.status === 'delivered' ? '#15803d' : '#cbd5e1'}; width: 100%;"></div>
+                </td>
+                
+                <!-- Step 3: Delivered -->
+                <td class="tracker-cell" style="width: 30%; text-align: center; vertical-align: top;">
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background-color: ${order.status === 'delivered' ? '#15803d' : '#cbd5e1'}; color: ${order.status === 'delivered' ? '#ffffff' : '#64748b'}; line-height: 28px; font-size: 12px; font-weight: bold; margin: 0 auto; display: inline-block; text-align: center; border: ${order.status === 'delivered' ? 'none' : '2px solid #cbd5e1'}; box-sizing: border-box;">
+                    ${order.status === 'delivered' ? '✓' : '3'}
+                  </div>
+                  <div style="font-weight: ${order.status === 'delivered' ? '700' : '600'}; color: ${order.status === 'delivered' ? '#1e293b' : '#94a3b8'}; margin-top: 8px;">Delivered</div>
+                  <div style="font-size: 11px; color: #64748b; margin-top: 2px; word-break: keep-all;">At Your Doorstep</div>
+                </td>
               </tr>
             </table>
-          </div>
 
-          ${isDelivered ? `
-          <!-- Delivered Culinary Promotion -->
-          <div style="background-color: #eff6ff; border: 1px dashed #bfdbfe; padding: 18px; border-radius: 16px; text-align: center; margin-bottom: 24px;">
-            <p style="margin: 0 0 8px; font-size: 14px; color: #1e40af; font-weight: bold;">🌱 Ready to Create Culinary Magic?</p>
-            <p style="margin: 0; font-size: 13px; color: #1e3a8a; line-height: 1.5;">
-              Now that your fresh harvest is delivered, launch our app and ask <strong>Freshi AI Chef</strong> to prepare customized gourmet recipes based on your exact delivered products!
+            <!-- Order Summary Card -->
+            <div style="background-color: #fcfdfa; padding: 24px; border-radius: 16px; margin-bottom: 32px; border: 1px solid #e6f4ea;">
+              <h4 style="margin: 0 0 16px; font-size: 13px; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 1px;">Dispatch Metadata</h4>
+              <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+                  <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Order ID:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; font-family: monospace; font-weight: 700; color: ${statusColor};">#${order.orderNumber || id}</td>
+                </tr>
+                <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+                  <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Current Status:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; font-weight: 700; color: ${statusColor}; text-transform: uppercase; font-size: 13px;">${statusText}</td>
+                </tr>
+                <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+                  <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Delivery Address:</td>
+                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-size: 13px; line-height: 1.5; max-width: 250px;">${order.shippingDetails?.address || 'N/A'}</td>
+                </tr>
+                <tr class="meta-row-last">
+                  <td class="meta-td" style="padding: 10px 0 0; color: #64748b; font-weight: 500;">Contact Phone:</td>
+                  <td class="meta-td-right" style="padding: 10px 0 0; text-align: right; color: #334155; font-family: monospace;">${order.shippingDetails?.phone || 'N/A'}</td>
+                </tr>
+              </table>
+            </div>
+
+            ${isDelivered ? `
+            <!-- Delivered Culinary Promotion -->
+            <div style="background-color: #f4faf6; border: 1px dashed #a7f3d0; padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 32px;">
+              <p style="margin: 0 0 10px; font-size: 15px; color: #14532d; font-weight: 700;">
+                🌱 Ready to Create Culinary Magic?
+              </p>
+              <p style="margin: 0; font-size: 13.5px; color: #166534; line-height: 1.6;">
+                Now that your fresh organic harvest has been successfully delivered, launch our application and ask <strong>Freshi AI Chef</strong> to prepare customized gourmet recipes based on your exact delivered products!
+              </p>
+            </div>
+            ` : ''}
+
+            <!-- Customer Care Notice -->
+            <p style="margin: 0; font-size: 13.5px; color: #64748b; text-align: center; line-height: 1.6; border-top: 1px solid #f1f5f9; padding-top: 24px;">
+              Have questions regarding this status update? Simply reply to this email, or email us directly at <a href="mailto:freshnlocalco@gmail.com" style="color: #15803d; font-weight: 600; text-decoration: none;">freshnlocalco@gmail.com</a>.
             </p>
           </div>
-          ` : ''}
 
-          <p style="margin: 0; font-size: 14px; color: #64748b; text-align: center; line-height: 1.6;">
-            Thank you for being a valued FreshNLocal partner. We appreciate your commitment to supporting organic regional farmers!
-          </p>
+          <!-- Footer Section -->
+          <div style="background-color: #f8fafc; padding: 32px 24px; text-align: center; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b;">
+            <p style="margin: 0 0 8px; font-weight: 700; color: #334155; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">FreshNLocal Co.</p>
+            <p style="margin: 0 0 12px; line-height: 1.6;">Providing 100% Raw, Fresh, and Natural Local Harvests directly to your kitchen.</p>
+            <p style="margin: 0; color: #94a3b8;">Surat, Gujarat, India &bull; Organic Agri partners</p>
+          </div>
+          
         </div>
-
-        <!-- Footer -->
-        <div style="background-color: #f1f5f9; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-          <p style="margin: 0 0 6px; font-weight: bold; color: #475569;">FreshNLocal Co. — Surat, Gujarat</p>
-          <p style="margin: 0;">Providing 100% Raw, Fresh, and Natural Local Harvests directly to your kitchen.</p>
-        </div>
-        
       </div>
-    </div>
+    </body>
+    </html>
   `;
 }
 
