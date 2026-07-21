@@ -185,6 +185,7 @@ export function Cart() {
         paymentMethod: 'COD',
         shippingDetails: {
           name: typeof user.displayName === 'string' ? user.displayName.substring(0, 50) : (user.displayName || 'Customer'),
+          email: user.email,
           address: typeof formattedAddress === 'string' ? formattedAddress.substring(0, 500) : formattedAddress,
           phone: typeof orderPhone === 'string' ? orderPhone.substring(0, 20) : orderPhone
         },

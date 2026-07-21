@@ -4,6 +4,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import crypto from "crypto";
+import { setupOrderEmailTriggers } from "./emailTriggers";
 
 dotenv.config();
 
@@ -475,6 +476,12 @@ Format your output exactly as a JSON object with these keys:
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
+    // Start the background automated order email triggers
+    try {
+      setupOrderEmailTriggers();
+    } catch (triggerErr) {
+      console.error("Failed to initialize background order email triggers:", triggerErr);
+    }
   });
 }
 
