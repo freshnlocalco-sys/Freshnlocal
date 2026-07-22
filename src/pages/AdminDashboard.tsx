@@ -254,6 +254,7 @@ export function AdminDashboard() {
     generated: 0,
     errors: 0
   });
+  const [isGeneratingSingleDesc, setIsGeneratingSingleDesc] = useState(false);
 
   
 
@@ -495,6 +496,50 @@ export function AdminDashboard() {
   };
 
 
+
+  const generateSingleAIDescription = async () => {
+    if (!newProduct.name || !newProduct.category) {
+      toast.error('Please enter a product name and category first.');
+      return;
+    }
+    
+    setIsGeneratingSingleDesc(true);
+    toast.loading('Generating AI description...', { id: 'single-ai-desc' });
+    
+    try {
+      const res = await fetch("/api/gemini/generate-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newProduct.name,
+          category: newProduct.category,
+          unit: `${newProduct.quantityValue} ${newProduct.quantityUnit}`.trim()
+        })
+      });
+      
+      const responseData = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(responseData.error || 'Failed to generate');
+      }
+      
+      if (!responseData.description) {
+        throw new Error('Received empty description from AI');
+      }
+      
+      setNewProduct(prev => ({
+        ...prev,
+        description: responseData.description
+      }));
+      
+      toast.success('Description generated successfully!', { id: 'single-ai-desc' });
+    } catch (err: any) {
+      console.error("Single AI Description generation failed:", err);
+      toast.error(`Generation failed: ${err.message || 'Server error'}`, { id: 'single-ai-desc' });
+    } finally {
+      setIsGeneratingSingleDesc(false);
+    }
+  };
 
   const runImageMigration = async () => {
     if (migrationStatus.migrating) return;
@@ -1374,10 +1419,24 @@ export function AdminDashboard() {
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder(null);
       }
+      
+      const orderToCancel = orders.find(o => o.id === orderId);
+      if (orderToCancel && orderToCancel.shippingDetails?.email) {
+        try {
+          await fetch('/api/emails/cancel-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: orderToCancel, id: orderId }),
+          });
+        } catch (emailErr) {
+          console.error("Failed to send cancellation email on delete:", emailErr);
+        }
+      }
+
       await deleteDoc(doc(db, 'orders', orderId));
       setOrders(orders.filter(o => o.id !== orderId));
       setOrderToDelete(null);
-      toast.success('Order deleted successfully.');
+      toast.success('Order deleted and cancellation email sent successfully.');
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, `orders/${orderId}`);
       toast.error('Failed to delete order.');
@@ -2868,7 +2927,18 @@ export function AdminDashboard() {
                   </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
-                    <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Order Description</label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Order Description</label>
+                      <button
+                        type="button"
+                        onClick={generateSingleAIDescription}
+                        disabled={isGeneratingSingleDesc}
+                        className="text-[9px] font-black uppercase tracking-wider text-amber-500 hover:text-amber-600 flex items-center gap-1 transition-colors disabled:opacity-50"
+                      >
+                        <Sparkles className={`w-3 h-3 ${isGeneratingSingleDesc ? 'animate-ping' : 'animate-pulse'}`} />
+                        {isGeneratingSingleDesc ? 'Generating...' : 'Auto-Generate'}
+                      </button>
+                    </div>
                     <textarea 
                       placeholder="Details about seed origin, crisp index, weight parameters..." 
                       rows={3} 

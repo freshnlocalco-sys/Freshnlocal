@@ -4,7 +4,10 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import crypto from "crypto";
-import { setupOrderEmailTriggers } from "./emailTriggers";
+import { setupOrderEmailTriggers, sendCancellationEmailDirect } from "./emailTriggers";
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import firebaseConfig from './firebase-applet-config.json';
 
 dotenv.config();
 
@@ -456,6 +459,23 @@ Format your output exactly as a JSON object with these keys:
     } catch (error: any) {
       console.error(`[DESC-REQ ${requestId}] Gemini description generation failed:`, error?.message || error);
       res.status(500).json({ error: error?.message || "Failed to generate product description." });
+    }
+  });
+
+  // API route for explicit cancellation email sending (when an order is deleted)
+  app.post("/api/emails/cancel-order", async (req, res) => {
+    try {
+      const { order, id } = req.body;
+      if (!order || !id) {
+        return res.status(400).json({ error: "Missing order or id" });
+      }
+      
+      // Attempt to send the email directly
+      await sendCancellationEmailDirect(order, id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error(`[EMAIL-API] Failed to send cancellation email:`, error);
+      res.status(500).json({ error: error?.message || "Failed to send cancellation email" });
     }
   });
 

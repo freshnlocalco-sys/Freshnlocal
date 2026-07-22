@@ -764,3 +764,47 @@ export function setupOrderEmailTriggers() {
   pollOrders().catch(err => console.error("[EMAIL TRIGGERS] Initial poll error:", err));
   setInterval(pollOrders, 15000);
 }
+
+/**
+ * Directly sends a cancellation email without relying on the polling mechanism.
+ * Useful when an order is being permanently deleted from the database.
+ */
+export async function sendCancellationEmailDirect(order: any, id: string) {
+  const mailTransporter = await getTransporter();
+  const senderFrom = process.env.SMTP_FROM || `"FreshNLocal Co." <freshnlocalco@gmail.com>`;
+  const email = order.shippingDetails?.email;
+
+  if (!email) {
+    console.log(`[EMAIL TRIGGERS] No email address found for order ${id}, skipping cancellation email.`);
+    return;
+  }
+
+  const orderNum = order.orderNumber || id;
+  // Ensure the status is set to 'cancelled' so the HTML template renders the cancellation variant
+  const cancelledOrder = { ...order, status: 'cancelled' };
+
+  console.log(`[EMAIL TRIGGERS] Preparing direct Cancellation email to ${email} for order #${orderNum}`);
+
+  const mailOptions = {
+    from: senderFrom,
+    to: email,
+    subject: `🚚 FreshNLocal Co. — Order Update: CANCELLED (#${orderNum})`,
+    html: renderShippingUpdateHtml(cancelledOrder, id)
+  };
+
+  try {
+    const info = await mailTransporter.sendMail(mailOptions);
+    console.log(`[EMAIL TRIGGERS] Cancellation email sent to ${email}. MessageID: ${info.messageId}`);
+    
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log(`\n=============================================================`);
+      console.log(`[ETHEREAL MAIL PREVIEW] View Cancellation email online:`);
+      console.log(`${previewUrl}`);
+      console.log(`=============================================================\n`);
+    }
+  } catch (err) {
+    console.error(`[EMAIL TRIGGERS] Error sending Cancellation email to ${email}:`, err);
+    throw err;
+  }
+}
