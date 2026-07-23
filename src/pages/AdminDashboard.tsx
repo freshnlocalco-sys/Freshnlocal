@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { useSettings } from '../store/useSettings';
 import { BrandingSettings } from '../components/BrandingSettings';
@@ -222,6 +222,7 @@ export function AdminDashboard() {
   // Filters for orders
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
   // Filter for products
   const [productSearch, setProductSearch] = useState('');
@@ -721,6 +722,15 @@ export function AdminDashboard() {
 
   // Filtered orders logic
   const filteredOrders = orders.filter((order) => {
+    // filter by search query (order number)
+    if (orderSearchQuery.trim()) {
+      const query = orderSearchQuery.toLowerCase().trim();
+      if (order.orderNumber?.toLowerCase().includes(query)) {
+        return true; // Ignore other filters if search matches
+      }
+      return false; // If searching and it doesn't match, hide it
+    }
+
     // filter by status
     if (filterStatus !== 'all' && order.status !== filterStatus) return false;
     
@@ -2419,13 +2429,26 @@ export function AdminDashboard() {
             )}
 
             {/* Filter Section */}
-            <div className="flex flex-col sm:flex-row gap-4 items-end justify-between bg-secondary p-4 sm:p-5 rounded-2xl border border-border/70 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-                  <label className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1.5"><Filter className="w-3 h-3" /> Filter Status</label>
-                  <select 
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
+            <div className="flex flex-col gap-4 bg-secondary p-4 sm:p-5 rounded-2xl border border-border/70 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+              <div className="flex flex-col sm:flex-row gap-4 items-end justify-between">
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1.5"><Search className="w-3 h-3" /> Search Order</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., FNL-123456"
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 items-end justify-between">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                    <label className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1.5"><Filter className="w-3 h-3" /> Filter Status</label>
+                    <select 
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
                     className="appearance-none border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full sm:w-[160px] uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_12px_center] bg-no-repeat"
                   >
                     <option value="all">ANY STATUS</option>
@@ -2453,7 +2476,7 @@ export function AdminDashboard() {
                     className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full font-mono font-bold tracking-wider text-foreground shadow-sm uppercase min-h-[40px]"
                   />
                 </div>
-
+              </div>
               </div>
             </div>
             
@@ -4022,6 +4045,9 @@ export function AdminDashboard() {
                 <div className="text-xs space-y-1">
                   <p className="font-extrabold uppercase text-foreground text-sm">{selectedOrder.shippingDetails?.name || 'Valued Customer'}</p>
                   <p className="font-bold text-primary font-mono text-xs">{selectedOrder.shippingDetails?.phone || 'No Phone provided'}</p>
+                  {selectedOrder.shippingDetails?.email && (
+                    <p className="font-bold text-foreground text-xs break-all">{selectedOrder.shippingDetails?.email}</p>
+                  )}
                   <p className="text-muted-foreground leading-relaxed mt-1 text-[11px] whitespace-normal bg-secondary p-2.5 rounded-xl border border-border/40">
                     {selectedOrder.shippingDetails?.address?.includes('Store Pickup') ? 'STORE PICKUP' : (selectedOrder.shippingDetails?.address || 'No shipping address provided')}
                   </p>
