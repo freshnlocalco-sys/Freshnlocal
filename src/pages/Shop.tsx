@@ -171,7 +171,7 @@ export function Shop() {
         .filter(p => {
           const nameLower = (p.name || '').toLowerCase();
           const q = (searchQuery || '').toLowerCase();
-          return nameLower.startsWith(q) || nameLower.includes(` ${q}`) || nameLower.includes(`-${q}`);
+          return nameLower.includes(q);
         })
         .map(p => p.name)))
         .slice(0, 5)
@@ -216,9 +216,8 @@ export function Shop() {
       : true;
     
     const matchesSearch = searchLower ? (
-      (p.name && (p.name.toLowerCase().startsWith(searchLower) || p.name.toLowerCase().includes(` ${searchLower}`) || p.name.toLowerCase().includes(`-${searchLower}`))) ||
-      (p.category && (p.category.toLowerCase().startsWith(searchLower) || p.category.toLowerCase().includes(` ${searchLower}`) || p.category.toLowerCase().includes(`-${searchLower}`))) ||
-      (p.description && (p.description.toLowerCase().startsWith(searchLower) || p.description.toLowerCase().includes(` ${searchLower}`) || p.description.toLowerCase().includes(`-${searchLower}`)))
+      (p.name && p.name.toLowerCase().includes(searchLower)) ||
+      (p.category && p.category.toLowerCase().includes(searchLower))
     ) : true;
     
     const matchesPrice = typeof p.price === 'number' ? p.price <= maxPrice : true;

@@ -8,6 +8,7 @@ import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
 import { calculateHorecaPrice } from '../lib/horecaUtils';
 import { QuantityInput } from './QuantityInput';
+import { motion } from 'motion/react';
 
 interface ProductCardProps {
   product: Product;
@@ -79,7 +80,12 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   }, [productImgSrc]);
 
   return (
-    <div className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border"
+    >
       
       <div className="w-full aspect-[4/3] overflow-hidden relative bg-white dark:bg-white border-b border-border shrink-0" style={{ borderRadius: 'inherit', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
         {!imageLoaded && (
@@ -283,6 +289,6 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 });
