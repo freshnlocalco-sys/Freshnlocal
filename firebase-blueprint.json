@@ -45,6 +45,7 @@
         "totalAmount": { "type": "number" },
         "status": { "type": "string", "enum": ["pending", "confirmed", "shipped", "delivered", "cancelled"] },
         "paymentMethod": { "type": "string", "enum": ["COD"] },
+        "deliveryMethod": { "type": "string" },
         "shippingDetails": { "type": "object" },
         "createdAt": { "type": "number" },
         "updatedAt": { "type": "number" }

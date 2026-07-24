@@ -66,7 +66,12 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
 /**
  * Renders the HTML template for Order Confirmation.
  */
+/**
+ * Renders the HTML template for Order Confirmation.
+ */
 function renderOrderConfirmationHtml(order: any, id: string): string {
+  const isPickup = order.deliveryMethod === 'pickup' || (order.shippingDetails?.address || '').toLowerCase().includes('pickup');
+
   const itemsHtml = (order.items || []).map((item: any) => {
     const p = item.product || {};
     const imgUrl = p.imageUrl || "https://images.unsplash.com/photo-1610348725531-843dff103e2c?w=100&h=100&fit=crop";
@@ -102,12 +107,46 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
     </tr>
   ` : '';
 
-  const deliveryRow = `
+  const deliveryRow = isPickup ? `
+    <tr style="border-bottom: 1px solid #f1f5f9;">
+      <td colspan="2" style="padding: 12px; text-align: right; color: #64748b; font-size: 14px; font-weight: 500;">Fulfillment Method:</td>
+      <td style="padding: 12px; text-align: right; font-weight: 600; color: #15803d; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">Store Pickup (FREE)</td>
+    </tr>
+  ` : `
     <tr style="border-bottom: 1px solid #f1f5f9;">
       <td colspan="2" style="padding: 12px; text-align: right; color: #64748b; font-size: 14px; font-weight: 500;">Delivery Service:</td>
       <td style="padding: 12px; text-align: right; font-weight: 600; color: #16a34a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">FREE</td>
     </tr>
   `;
+
+  const headerTitle = isPickup ? "Pickup Confirmed" : "Harvest Confirmed";
+  
+  const introMessage = isPickup 
+    ? "Thank you for your order! Your organic selections are being reserved and freshly prepared. Our partner farmers in Surat, Gujarat are harvesting them fresh, and we will have your custom bundle ready for pickup at our Bhatar store soon!"
+    : "Thank you for supporting 100% natural, regional farming! Our partner farmers in Surat, Gujarat have reserved your selections and are preparing to deliver them fresh.";
+
+  const destinationRow = isPickup ? `
+    <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+      <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500; vertical-align: top;">Store Pickup Address:</td>
+      <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-size: 13px; line-height: 1.5; max-width: 250px; font-weight: 600;">
+        FreshNLocal.CO Store<br/>
+        Gr Floor Hall, Reva Dham Apartment, Uma Bhawan Crossroad, Opp. Ashirwad Palace, Bhatar, Surat, Gujarat
+      </td>
+    </tr>
+    <tr class="meta-row-last">
+      <td class="meta-td" style="padding: 10px 0 0; color: #64748b; font-weight: 500;">Store pickup Hours:</td>
+      <td class="meta-td-right" style="padding: 10px 0 0; text-align: right; color: #15803d; font-weight: 700;">9:00 AM - 9:00 PM (Daily)</td>
+    </tr>
+  ` : `
+    <tr class="meta-row-last">
+      <td class="meta-td" style="padding: 10px 0 0; color: #64748b; font-weight: 500; vertical-align: top;">Delivery Destination:</td>
+      <td class="meta-td-right" style="padding: 10px 0 0; text-align: right; color: #334155; font-size: 13px; line-height: 1.5; max-width: 250px;">${order.shippingDetails?.address || 'N/A'}</td>
+    </tr>
+  `;
+
+  const recipeNotice = isPickup
+    ? "Once you collect your fresh organic harvest from our store, use the built-in <strong>Freshi AI Chef</strong> assistant inside our application to instantly design gourmet farm-to-table culinary recipes tailored specifically to these exact ingredients!"
+    : "Once your fresh organic harvest arrives, use the built-in <strong>Freshi AI Chef</strong> assistant inside our application to instantly design gourmet farm-to-table culinary recipes tailored specifically to these exact ingredients!";
 
   return `
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -147,7 +186,7 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
               </svg>
             </div>
             <h1 class="header-title" style="margin: 0; font-size: 26px; font-weight: 800; color: #14532d; letter-spacing: -0.5px;">FreshNLocal Co.</h1>
-            <p style="margin: 6px 0 0; font-size: 14px; font-weight: 500; color: #15803d; text-transform: uppercase; letter-spacing: 1px;">Harvest Confirmed</p>
+            <p style="margin: 6px 0 0; font-size: 14px; font-weight: 500; color: #15803d; text-transform: uppercase; letter-spacing: 1px;">${headerTitle}</p>
           </div>
 
           <!-- Body Section -->
@@ -156,7 +195,7 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
               Hello <strong style="color: #0f172a;">${order.shippingDetails?.name || 'Customer'}</strong>,
             </p>
             <p style="margin: 0 0 28px; font-size: 15px; color: #475569; line-height: 1.6;">
-              Thank you for supporting 100% natural, regional farming! Our partner farmers in Surat, Gujarat have reserved your selections and are preparing to deliver them fresh.
+              ${introMessage}
             </p>
 
             <!-- Order Summary Card -->
@@ -168,17 +207,14 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
                   <td class="meta-td-right" style="padding: 10px 0; text-align: right; font-family: monospace; font-weight: 700; color: #15803d;">#${order.orderNumber || id}</td>
                 </tr>
                 <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
-                  <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Harvest Date:</td>
+                  <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Order Date:</td>
                   <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155;">${new Date(order.createdAt).toLocaleDateString('en-IN', { dateStyle: 'long' })}</td>
                 </tr>
                 <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
                   <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Payment Gateway:</td>
                   <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-weight: 600;">Cash on Delivery (COD)</td>
                 </tr>
-                <tr class="meta-row-last">
-                  <td class="meta-td" style="padding: 10px 0 0; color: #64748b; font-weight: 500; vertical-align: top;">Delivery Destination:</td>
-                  <td class="meta-td-right" style="padding: 10px 0 0; text-align: right; color: #334155; font-size: 13px; line-height: 1.5; max-width: 250px;">${order.shippingDetails?.address || 'N/A'}</td>
-                </tr>
+                ${destinationRow}
               </table>
             </div>
 
@@ -211,13 +247,13 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
                 🍳 Creative Recipes Await You
               </p>
               <p style="margin: 0; font-size: 13.5px; color: #166534; line-height: 1.6;">
-                Once your fresh organic harvest arrives, use the built-in <strong>Freshi AI Chef</strong> assistant inside our application to instantly design gourmet farm-to-table culinary recipes tailored specifically to these exact ingredients!
+                ${recipeNotice}
               </p>
             </div>
 
             <!-- Customer Care Notice -->
             <p style="margin: 0; font-size: 13.5px; color: #64748b; text-align: center; line-height: 1.6; border-top: 1px solid #f1f5f9; padding-top: 24px;">
-              Need assistance or wish to customize your order delivery slot? Simply reply to this email, or email us directly at <a href="mailto:freshnlocalco@gmail.com" style="color: #15803d; font-weight: 600; text-decoration: none;">freshnlocalco@gmail.com</a>.
+              Need assistance or wish to customize your order pickup slot? Simply reply to this email, or email us directly at <a href="mailto:freshnlocalco@gmail.com" style="color: #15803d; font-weight: 600; text-decoration: none;">freshnlocalco@gmail.com</a>.
             </p>
           </div>
 
@@ -238,9 +274,14 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
 /**
  * Renders the HTML template for Shipping Updates.
  */
+/**
+ * Renders the HTML template for Shipping Updates.
+ */
 function renderShippingUpdateHtml(order: any, id: string): string {
+  const isPickup = order.deliveryMethod === 'pickup' || (order.shippingDetails?.address || '').toLowerCase().includes('pickup');
   const isDelivered = order.status === 'delivered';
   const isCancelled = order.status === 'cancelled';
+  const isShipped = order.status === 'shipped';
   
   let statusText = "Shipped";
   let statusColor = "#1d4ed8"; // Premium blue
@@ -248,19 +289,95 @@ function renderShippingUpdateHtml(order: any, id: string): string {
   let statusMessage = "Your fresh crops are harvested, packaged with love, and are currently in transit to your kitchen!";
   let statusIconColor = "#3b82f6";
   
-  if (isDelivered) {
-    statusText = "Delivered";
-    statusColor = "#15803d"; // Premium green
-    statusBgColor = "#f0fdf4"; // Soft green
-    statusMessage = "Your farm-fresh produce has been safely delivered! We hope you love the taste of raw, local harvests.";
-    statusIconColor = "#10b981";
-  } else if (isCancelled) {
-    statusText = "Cancelled";
-    statusColor = "#b91c1c"; // Premium red
-    statusBgColor = "#fef2f2"; // Soft red
-    statusMessage = "Your order has been cancelled. If this was an error, please reach out to our team or place a new order.";
-    statusIconColor = "#f43f5e";
+  if (isPickup) {
+    if (isDelivered) {
+      statusText = "Picked Up";
+      statusColor = "#15803d"; // Premium green
+      statusBgColor = "#f0fdf4"; // Soft green
+      statusMessage = "Your order has been successfully picked up! Thank you for choosing FreshNLocal. We hope you love your farm-fresh local produce.";
+      statusIconColor = "#10b981";
+    } else if (isShipped) {
+      statusText = "Ready for Pickup";
+      statusColor = "#16a34a"; // Vibrant green
+      statusBgColor = "#f0fdf4"; // Soft green
+      statusMessage = "Good news! Your fresh farm selections have been harvested, sorted, and have arrived at our Bhatar store. Your package is ready for collection at your convenience during store hours (9 AM - 9 PM).";
+      statusIconColor = "#22c55e";
+    } else if (isCancelled) {
+      statusText = "Cancelled";
+      statusColor = "#b91c1c"; // Premium red
+      statusBgColor = "#fef2f2"; // Soft red
+      statusMessage = "Your store pickup order has been cancelled. If this was an error, please reach out to our team or place a new order.";
+      statusIconColor = "#f43f5e";
+    } else {
+      statusText = "Confirmed";
+      statusColor = "#d97706"; // Warm amber
+      statusBgColor = "#fffbeb"; // Soft amber
+      statusMessage = "Your order is confirmed! Our regional partner farmers are harvesting your items, and we are preparing everything for your store pickup.";
+      statusIconColor = "#f59e0b";
+    }
+  } else {
+    if (isDelivered) {
+      statusText = "Delivered";
+      statusColor = "#15803d"; // Premium green
+      statusBgColor = "#f0fdf4"; // Soft green
+      statusMessage = "Your farm-fresh produce has been safely delivered! We hope you love the taste of raw, local harvests.";
+      statusIconColor = "#10b981";
+    } else if (isCancelled) {
+      statusText = "Cancelled";
+      statusColor = "#b91c1c"; // Premium red
+      statusBgColor = "#fef2f2"; // Soft red
+      statusMessage = "Your order has been cancelled. If this was an error, please reach out to our team or place a new order.";
+      statusIconColor = "#f43f5e";
+    }
   }
+
+  const trackerConnector1Color = order.status !== 'pending' ? '#15803d' : '#cbd5e1';
+  const trackerConnector2Color = order.status === 'delivered' ? '#15803d' : '#cbd5e1';
+
+  const step2Active = ['shipped', 'delivered'].includes(order.status);
+  const step2Bg = step2Active ? '#15803d' : '#cbd5e1';
+  const step2Color = step2Active ? '#ffffff' : '#64748b';
+  const step2Border = step2Active ? 'none' : '2px solid #cbd5e1';
+  const step2FontWeight = order.status === 'shipped' ? '700' : '600';
+  const step2LabelColor = step2Active ? '#1e293b' : '#94a3b8';
+
+  const step3Active = order.status === 'delivered';
+  const step3Bg = step3Active ? '#15803d' : '#cbd5e1';
+  const step3Color = step3Active ? '#ffffff' : '#64748b';
+  const step3Border = step3Active ? 'none' : '2px solid #cbd5e1';
+  const step3FontWeight = step3Active ? '700' : '600';
+  const step3LabelColor = step3Active ? '#1e293b' : '#94a3b8';
+
+  const destinationRow = isPickup ? `
+    <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+      <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500; vertical-align: top;">Store Pickup Address:</td>
+      <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-size: 13px; line-height: 1.5; max-width: 250px; font-weight: 600;">
+        FreshNLocal.CO Store<br/>
+        Gr Floor Hall, Reva Dham Apartment, Uma Bhawan Crossroad, Opp. Ashirwad Palace, Bhatar, Surat, Gujarat
+      </td>
+    </tr>
+    <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+      <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Store Hours:</td>
+      <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #15803d; font-weight: 700;">9:00 AM - 9:00 PM (Daily)</td>
+    </tr>
+  ` : `
+    <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
+      <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Delivery Address:</td>
+      <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-size: 13px; line-height: 1.5; max-width: 250px;">${order.shippingDetails?.address || 'N/A'}</td>
+    </tr>
+  `;
+
+  const dynamicNotice = isDelivered ? `
+    <!-- Delivered Culinary Promotion -->
+    <div style="background-color: #f4faf6; border: 1px dashed #a7f3d0; padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 32px;">
+      <p style="margin: 0 0 10px; font-size: 15px; color: #14532d; font-weight: 700;">
+        🌱 Ready to Create Culinary Magic?
+      </p>
+      <p style="margin: 0; font-size: 13.5px; color: #166534; line-height: 1.6;">
+        Now that your fresh organic harvest has been successfully ${isPickup ? 'picked up' : 'delivered'}, launch our application and ask <strong>Freshi AI Chef</strong> to prepare customized gourmet recipes based on your exact ${isPickup ? 'picked up' : 'delivered'} products!
+      </p>
+    </div>
+  ` : '';
 
   return `
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -317,42 +434,42 @@ function renderShippingUpdateHtml(order: any, id: string): string {
                 <td class="tracker-cell" style="width: 30%; text-align: center; vertical-align: top;">
                   <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #15803d; color: #ffffff; line-height: 28px; font-size: 12px; font-weight: bold; margin: 0 auto; display: inline-block; text-align: center; box-shadow: 0 4px 6px -1px rgba(21,128,61,0.2);">✓</div>
                   <div style="font-weight: 700; color: #1e293b; margin-top: 8px;">Confirmed</div>
-                  <div style="font-size: 11px; color: #64748b; margin-top: 2px; word-break: keep-all;">Farmer Reserved</div>
+                  <div style="font-size: 11px; color: #64748b; margin-top: 2px; word-break: keep-all;">${isPickup ? 'Preparing Pickup' : 'Farmer Reserved'}</div>
                 </td>
                 
                 <!-- Connector 1 -->
                 <td class="tracker-connector" style="width: 5%; vertical-align: middle; padding-bottom: 30px;">
-                  <div style="height: 3px; background-color: ${order.status !== 'pending' ? '#15803d' : '#cbd5e1'}; width: 100%;"></div>
+                  <div style="height: 3px; background-color: ${trackerConnector1Color}; width: 100%;"></div>
                 </td>
                 
-                <!-- Step 2: In Transit -->
+                <!-- Step 2: In Transit / Ready for Pickup -->
                 <td class="tracker-cell" style="width: 30%; text-align: center; vertical-align: top;">
-                  <div style="width: 28px; height: 28px; border-radius: 50%; background-color: ${['shipped', 'delivered'].includes(order.status) ? '#15803d' : '#cbd5e1'}; color: ${['shipped', 'delivered'].includes(order.status) ? '#ffffff' : '#64748b'}; line-height: 28px; font-size: 12px; font-weight: bold; margin: 0 auto; display: inline-block; text-align: center; border: ${['shipped', 'delivered'].includes(order.status) ? 'none' : '2px solid #cbd5e1'}; box-sizing: border-box;">
-                    ${['shipped', 'delivered'].includes(order.status) ? '✓' : '2'}
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background-color: ${step2Bg}; color: ${step2Color}; line-height: 28px; font-size: 12px; font-weight: bold; margin: 0 auto; display: inline-block; text-align: center; border: ${step2Border}; box-sizing: border-box;">
+                    ${step2Active ? '✓' : '2'}
                   </div>
-                  <div style="font-weight: ${order.status === 'shipped' ? '700' : '600'}; color: ${['shipped', 'delivered'].includes(order.status) ? '#1e293b' : '#94a3b8'}; margin-top: 8px;">In Transit</div>
-                  <div style="font-size: 11px; color: #64748b; margin-top: 2px; word-break: keep-all;">Crops Dispatched</div>
+                  <div style="font-weight: ${step2FontWeight}; color: ${step2LabelColor}; margin-top: 8px;">${isPickup ? 'Ready for Pickup' : 'In Transit'}</div>
+                  <div style="font-size: 11px; color: #64748b; margin-top: 2px; word-break: keep-all;">${isPickup ? 'At Bhatar Store' : 'Crops Dispatched'}</div>
                 </td>
                 
                 <!-- Connector 2 -->
                 <td class="tracker-connector" style="width: 5%; vertical-align: middle; padding-bottom: 30px;">
-                  <div style="height: 3px; background-color: ${order.status === 'delivered' ? '#15803d' : '#cbd5e1'}; width: 100%;"></div>
+                  <div style="height: 3px; background-color: ${trackerConnector2Color}; width: 100%;"></div>
                 </td>
                 
-                <!-- Step 3: Delivered -->
+                <!-- Step 3: Delivered / Picked Up -->
                 <td class="tracker-cell" style="width: 30%; text-align: center; vertical-align: top;">
-                  <div style="width: 28px; height: 28px; border-radius: 50%; background-color: ${order.status === 'delivered' ? '#15803d' : '#cbd5e1'}; color: ${order.status === 'delivered' ? '#ffffff' : '#64748b'}; line-height: 28px; font-size: 12px; font-weight: bold; margin: 0 auto; display: inline-block; text-align: center; border: ${order.status === 'delivered' ? 'none' : '2px solid #cbd5e1'}; box-sizing: border-box;">
-                    ${order.status === 'delivered' ? '✓' : '3'}
+                  <div style="width: 28px; height: 28px; border-radius: 50%; background-color: ${step3Bg}; color: ${step3Color}; line-height: 28px; font-size: 12px; font-weight: bold; margin: 0 auto; display: inline-block; text-align: center; border: ${step3Border}; box-sizing: border-box;">
+                    ${step3Active ? '✓' : '3'}
                   </div>
-                  <div style="font-weight: ${order.status === 'delivered' ? '700' : '600'}; color: ${order.status === 'delivered' ? '#1e293b' : '#94a3b8'}; margin-top: 8px;">Delivered</div>
-                  <div style="font-size: 11px; color: #64748b; margin-top: 2px; word-break: keep-all;">At Your Doorstep</div>
+                  <div style="font-weight: ${step3FontWeight}; color: ${step3LabelColor}; margin-top: 8px;">${isPickup ? 'Picked Up' : 'Delivered'}</div>
+                  <div style="font-size: 11px; color: #64748b; margin-top: 2px; word-break: keep-all;">${isPickup ? 'Completed' : 'At Your Doorstep'}</div>
                 </td>
               </tr>
             </table>
 
             <!-- Order Summary Card -->
             <div style="background-color: #fcfdfa; padding: 24px; border-radius: 16px; margin-bottom: 32px; border: 1px solid #e6f4ea;">
-              <h4 style="margin: 0 0 16px; font-size: 13px; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 1px;">Dispatch Metadata</h4>
+              <h4 style="margin: 0 0 16px; font-size: 13px; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 1px;">${isPickup ? 'Pickup Metadata' : 'Dispatch Metadata'}</h4>
               <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                 <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
                   <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Order ID:</td>
@@ -362,10 +479,7 @@ function renderShippingUpdateHtml(order: any, id: string): string {
                   <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Current Status:</td>
                   <td class="meta-td-right" style="padding: 10px 0; text-align: right; font-weight: 700; color: ${statusColor}; text-transform: uppercase; font-size: 13px;">${statusText}</td>
                 </tr>
-                <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
-                  <td class="meta-td" style="padding: 10px 0; color: #64748b; font-weight: 500;">Delivery Address:</td>
-                  <td class="meta-td-right" style="padding: 10px 0; text-align: right; color: #334155; font-size: 13px; line-height: 1.5; max-width: 250px;">${order.shippingDetails?.address || 'N/A'}</td>
-                </tr>
+                ${destinationRow}
                 <tr class="meta-row-last">
                   <td class="meta-td" style="padding: 10px 0 0; color: #64748b; font-weight: 500;">Contact Phone:</td>
                   <td class="meta-td-right" style="padding: 10px 0 0; text-align: right; color: #334155; font-family: monospace;">${order.shippingDetails?.phone || 'N/A'}</td>
@@ -373,17 +487,7 @@ function renderShippingUpdateHtml(order: any, id: string): string {
               </table>
             </div>
 
-            ${isDelivered ? `
-            <!-- Delivered Culinary Promotion -->
-            <div style="background-color: #f4faf6; border: 1px dashed #a7f3d0; padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 32px;">
-              <p style="margin: 0 0 10px; font-size: 15px; color: #14532d; font-weight: 700;">
-                🌱 Ready to Create Culinary Magic?
-              </p>
-              <p style="margin: 0; font-size: 13.5px; color: #166534; line-height: 1.6;">
-                Now that your fresh organic harvest has been successfully delivered, launch our application and ask <strong>Freshi AI Chef</strong> to prepare customized gourmet recipes based on your exact delivered products!
-              </p>
-            </div>
-            ` : ''}
+            ${dynamicNotice}
 
             <!-- Customer Care Notice -->
             <p style="margin: 0; font-size: 13.5px; color: #64748b; text-align: center; line-height: 1.6; border-top: 1px solid #f1f5f9; padding-top: 24px;">

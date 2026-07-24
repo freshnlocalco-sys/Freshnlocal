@@ -183,6 +183,7 @@ export function Cart() {
         pointsRedeemed: discount > 0 ? 100 : 0,
         status: 'pending',
         paymentMethod: 'COD',
+        deliveryMethod,
         shippingDetails: {
           name: typeof user.displayName === 'string' ? user.displayName.substring(0, 50) : (user.displayName || 'Customer'),
           email: user.email,
