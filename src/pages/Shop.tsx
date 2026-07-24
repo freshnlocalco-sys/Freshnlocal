@@ -166,16 +166,22 @@ export function Shop() {
     }
   };
 
-  const searchSuggestions = searchQuery
-    ? Array.from(new Set(products
-        .filter(p => {
-          const nameLower = (p.name || '').toLowerCase();
-          const q = (searchQuery || '').toLowerCase();
-          return nameLower.includes(q);
-        })
-        .map(p => p.name)))
-        .slice(0, 5)
-    : [];
+  const searchSuggestions = React.useMemo(() => {
+    if (!searchQuery) return [];
+    const q = searchQuery.toLowerCase();
+    
+    const startsWithMatches = products.filter(p => {
+      const name = (p.name || '').toLowerCase();
+      return name.startsWith(q) || name.includes(` ${q}`) || name.includes(`-${q}`);
+    });
+    
+    const containsMatches = products.filter(p => {
+      const name = (p.name || '').toLowerCase();
+      return name.includes(q) && !(name.startsWith(q) || name.includes(` ${q}`) || name.includes(`-${q}`));
+    });
+    
+    return Array.from(new Set([...startsWithMatches, ...containsMatches].map(p => p.name))).slice(0, 5);
+  }, [searchQuery, products]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -217,7 +223,11 @@ export function Shop() {
     
     const matchesSearch = searchLower ? (
       (p.name && p.name.toLowerCase().includes(searchLower)) ||
-      (p.category && p.category.toLowerCase().includes(searchLower))
+      (p.category && (
+        p.category.toLowerCase().startsWith(searchLower) ||
+        p.category.toLowerCase().includes(` ${searchLower}`) ||
+        (searchLower.length >= 3 && p.category.toLowerCase().includes(searchLower))
+      ))
     ) : true;
     
     const matchesPrice = typeof p.price === 'number' ? p.price <= maxPrice : true;
@@ -231,7 +241,20 @@ export function Shop() {
       productCategories.forEach((c, i) => { if (c) catOrder.set(c.toLowerCase().trim(), i) });
     } catch(e) {}
 
+    const searchLower = (searchQuery || '').toLowerCase();
+
     list.sort((a, b) => {
+      // Prioritize active search matches (startsWith / word boundaries)
+      if (searchLower) {
+        const aName = (a.name || '').toLowerCase();
+        const bName = (b.name || '').toLowerCase();
+        const aStarts = aName.startsWith(searchLower) || aName.includes(` ${searchLower}`) || aName.includes(`-${searchLower}`);
+        const bStarts = bName.startsWith(searchLower) || bName.includes(` ${searchLower}`) || bName.includes(`-${searchLower}`);
+        
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+      }
+
       const isOutA = a.inStock === false;
       const isOutB = b.inStock === false;
 
