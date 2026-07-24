@@ -85,20 +85,6 @@ export function Layout() {
           </div>
 
           <div className="flex items-center gap-1 sm:gap-4 md:gap-6 shrink-0">
-            {/* Global Search */}
-            <div className="hidden lg:block relative group">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              </div>
-              <input 
-                type="text"
-                placeholder="Search products..."
-                value={localSearch}
-                onChange={handleSearchChange}
-                className="h-9 sm:h-11 pl-9 pr-4 rounded-full border border-border bg-background hover:bg-muted/50 focus:bg-background text-[10px] sm:text-xs font-bold focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 w-48 xl:w-64 transition-all placeholder:font-medium placeholder:text-muted-foreground/70"
-              />
-            </div>
-
             {/* Wishlist Button */}
             <Link to="/wishlist" className="relative flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all duration-300 group">
               <Heart className="w-4 h-4 sm:w-4 sm:h-4 text-foreground group-hover:text-red-500 transition-colors" />
@@ -214,25 +200,6 @@ export function Layout() {
                   >
                     <X className="w-4 h-4" />
                   </button>
-                </div>
-
-                {/* Mobile Search */}
-                <div className="relative group mb-8">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                  </div>
-                  <input 
-                    type="text"
-                    placeholder="Search products..."
-                    value={localSearch}
-                    onChange={(e) => {
-                      handleSearchChange(e);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') setIsMobileNavOpen(false);
-                    }}
-                    className="h-12 w-full pl-11 pr-4 rounded-full border border-border bg-muted/20 focus:bg-background text-xs font-bold focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:font-medium placeholder:text-muted-foreground/70"
-                  />
                 </div>
 
                 <nav className="flex flex-col gap-6 text-[13px] uppercase tracking-[0.2em] font-black text-foreground">

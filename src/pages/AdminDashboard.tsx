@@ -135,10 +135,22 @@ export function AdminDashboard() {
   const fetchCustomers = async () => {
     setLoadingCustomers(true);
     try {
-      const q = query(collection(db, 'users'), orderBy('displayName'));
+      const q = query(collection(db, 'users'));
       const snapshot = await getDocs(q);
       import('../lib/cacheManager').then(m => m.trackFirestoreRead('users', snapshot.docs.length)).catch(() => {});
-      const usersData = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AppUser));
+      let usersData = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AppUser));
+      
+      const roleOrder = { admin: 0, horeca: 1, customer: 2 };
+      usersData.sort((a, b) => {
+        const roleA = roleOrder[a.role as keyof typeof roleOrder] ?? 2;
+        const roleB = roleOrder[b.role as keyof typeof roleOrder] ?? 2;
+        if (roleA !== roleB) return roleA - roleB;
+        
+        const timeA = a.createdAt || 0;
+        const timeB = b.createdAt || 0;
+        return timeB - timeA; // newest first
+      });
+      
       setCustomers(usersData);
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -3453,11 +3465,13 @@ export function AdminDashboard() {
                       ).map(customer => (
                         <tr key={customer.uid} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
                           <td className="px-4 sm:px-6 py-4">
-                            <div className="text-xs sm:text-sm font-bold text-foreground">{customer.displayName || 'Unknown'}</div>
+                            <div className="text-xs sm:text-sm font-bold text-foreground">{customer.email || customer.displayName || 'Unknown'}</div>
+                            {customer.displayName && customer.displayName !== customer.email && (
+                              <div className="text-[10px] sm:text-xs text-muted-foreground">{customer.displayName}</div>
+                            )}
                           </td>
                           <td className="px-4 sm:px-6 py-4">
-                            <div className="text-[10px] sm:text-xs text-muted-foreground">{customer.email}</div>
-                            {customer.phone && <div className="text-[10px] sm:text-xs text-muted-foreground">{customer.phone}</div>}
+                            <div className="text-[10px] sm:text-xs text-muted-foreground">{customer.phone || 'No phone'}</div>
                           </td>
                           <td className="px-4 sm:px-6 py-4">
                             <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${customer.role === 'admin' ? 'bg-red-500/10 text-red-600' : customer.role === 'horeca' ? 'bg-orange-500/10 text-orange-600' : 'bg-blue-500/10 text-blue-600'}`}>
