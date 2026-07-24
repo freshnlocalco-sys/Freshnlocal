@@ -127,10 +127,36 @@ export function AdminDashboard() {
   
   const [diagError, setDiagError] = useState<any | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
-
   const [customers, setCustomers] = useState<AppUser[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    import('../store/useProducts').then(m => {
+      // Immediate sync if available
+      if (m.useProducts.getState().products.length > 0 && products.length === 0) {
+        setProducts(m.useProducts.getState().products);
+      }
+      
+      // Subscribe to future updates from the store
+      unsubscribe = m.useProducts.subscribe((state) => {
+        if (state.products.length > 0 && products.length === 0) {
+          setProducts(state.products);
+        }
+      });
+
+      // Trigger fetch if empty (will no-op if already loading)
+      if (m.useProducts.getState().products.length === 0) {
+        m.useProducts.getState().fetchProducts(false);
+      }
+    });
+    
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [products.length]);
 
   const fetchCustomers = async () => {
     setLoadingCustomers(true);
@@ -182,7 +208,6 @@ export function AdminDashboard() {
     }
   };
 
-  const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -230,6 +255,7 @@ export function AdminDashboard() {
   const [editingProdCat, setEditingProdCat] = useState<{ oldName: string; newName: string } | null>(null);
   const [juiceCatToDelete, setJuiceCatToDelete] = useState<{ id: string; name: string } | null>(null);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+  const [orderProductSearch, setOrderProductSearch] = useState('');
 
   // Filters for orders
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -810,6 +836,12 @@ export function AdminDashboard() {
           const mCache = await import('../lib/cacheManager');
           mCache.trackFirestoreRead('orders', ordersSnap.size);
           setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          
+          if (products.length === 0) {
+            const m = await import('../store/useProducts');
+            await m.useProducts.getState().fetchProducts(false);
+            setProducts(m.useProducts.getState().products);
+          }
         } else if (activeTab === 'products') {
           const m = await import('../store/useProducts');
           await m.useProducts.getState().fetchProducts(true);
@@ -1422,6 +1454,59 @@ export function AdminDashboard() {
     } catch (e: any) {
       handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
       toast.error(e?.message || 'Failed to update item quantity');
+    }
+  };
+
+  const handleAddProductToOrder = async (orderId: string, productToAdd: Product) => {
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order || !order.items) return;
+      
+      const newItems = [...order.items];
+      const existingItemIndex = newItems.findIndex(i => (i.product?.id || i.id) === productToAdd.id);
+      
+      if (existingItemIndex >= 0) {
+        newItems[existingItemIndex] = { ...newItems[existingItemIndex], quantity: (newItems[existingItemIndex].quantity || 1) + 1 };
+      } else {
+        const p: any = {
+          id: productToAdd.id,
+          name: productToAdd.name,
+          price: productToAdd.price,
+        };
+        if (productToAdd.unit !== undefined) p.unit = productToAdd.unit;
+        if (productToAdd.imageUrl !== undefined) p.imageUrl = productToAdd.imageUrl;
+        if (productToAdd.category !== undefined) p.category = productToAdd.category;
+        
+        newItems.push({
+          product: p,
+          quantity: 1
+        });
+      }
+      
+      const newTotal = newItems.reduce((sum, item) => {
+        const p = item.product || item;
+        return sum + (p.price || 0) * (item.quantity || 1);
+      }, 0);
+      
+      // JSON clone to strictly strip undefined nested fields
+      const cleanItems = JSON.parse(JSON.stringify(newItems));
+
+      await updateDoc(doc(db, 'orders', orderId), { 
+        items: cleanItems, 
+        totalAmount: newTotal,
+        updatedAt: Date.now() 
+      });
+      
+      const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
+      setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(updatedOrder);
+      }
+      setOrderProductSearch('');
+      toast.success('Product added to order');
+    } catch (e: any) {
+      handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
+      toast.error(e?.message || 'Failed to add product');
     }
   };
 
@@ -4165,6 +4250,46 @@ export function AdminDashboard() {
                   </div>
                 )}
               </div>
+              
+              {/* Add Product to Order */}
+              {selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'delivered' && (
+                <div className="mt-4 p-4 border border-border rounded-2xl bg-white shadow-sm space-y-3">
+                  <h5 className="text-[10px] font-black uppercase tracking-widest text-foreground">Add Item to Order</h5>
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="text"
+                      placeholder="Search for a product..."
+                      value={orderProductSearch}
+                      onChange={(e) => setOrderProductSearch(e.target.value)}
+                      className="w-full text-xs p-2.5 rounded-lg border border-border bg-muted/20 outline-none focus:border-primary transition-colors"
+                    />
+                    {orderProductSearch.length > 1 && (
+                      <div className="bg-white border border-border rounded-xl shadow-inner max-h-48 overflow-y-auto divide-y divide-border">
+                        {products
+                          .filter(p => p.name.toLowerCase().includes(orderProductSearch.toLowerCase()))
+                          .slice(0, 10)
+                          .map(p => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddProductToOrder(selectedOrder.id, p);
+                              }}
+                              className="w-full text-left p-3 hover:bg-muted/30 transition-colors flex items-center justify-between gap-3"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-black uppercase truncate">{p.name}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase tracking-widest truncate">{p.category} • ₹{p.price}/{p.unit}</p>
+                              </div>
+                              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded">ADD</span>
+                            </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Bottom summary and totals */}

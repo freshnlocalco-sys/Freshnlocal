@@ -79,7 +79,7 @@ export function Cart() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (total() < 1000) return;
+    if (deliveryMethod === 'delivery' && total() < 1000) return;
     if (hasOutOfStockItems) {
       toast.error("Please remove out of stock items from your cart before checking out.");
       return;
@@ -741,9 +741,9 @@ export function Cart() {
                 Remove Out of Stock items to proceed
               </div>
             )}
-            {total() < 1000 && !hasOutOfStockItems && (
+            {deliveryMethod === 'delivery' && total() < 1000 && !hasOutOfStockItems && (
               <div className="bg-red-500/10 text-red-500 border border-red-500/15 p-4 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest">
-                Minimum order checkout is ₹1000
+                Minimum order for delivery is ₹1000
               </div>
             )}
             
@@ -756,8 +756,8 @@ export function Cart() {
             {user ? (
               <button 
                 type="submit" 
-                disabled={loading || total() < 1000 || hasOutOfStockItems || hasInvalidRetailQuantity}
-                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${loading || total() < 1000 || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
+                disabled={loading || (deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity}
+                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${loading || (deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
               >
                 {loading ? 'Committing Settlement...' : 'Finalize Settlement Board'}
               </button>
@@ -765,8 +765,8 @@ export function Cart() {
               <button 
                 type="button" 
                 onClick={signIn} 
-                disabled={total() < 1000 || hasOutOfStockItems || hasInvalidRetailQuantity} 
-                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${total() < 1000 || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
+                disabled={(deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity} 
+                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${(deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
               >
                 Login to Settle Accounts
               </button>
