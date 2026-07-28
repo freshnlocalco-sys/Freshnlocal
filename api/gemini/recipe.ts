@@ -94,9 +94,14 @@ export default async function handler(req: any, res: any) {
       return res.status(429).json({ error: "Daily AI usage limit reached. Please try again tomorrow." });
     }
 
-    // 2. Cache Check
+    // 2. Cache Check - Only cache actual recipe requests or longer queries to keep greetings/casual chats interactive!
+    const cleanRecipeName = recipeName.trim().toLowerCase();
+    const isGreeting = cleanRecipeName.length < 10 || 
+                      /^(hi|hello|hey|hola|greetings|yo|good morning|good afternoon|good evening|who are you|help|start|welcome)/.test(cleanRecipeName);
+    
+    const shouldBypassCache = bypassCache || isGreeting;
     const cacheKey = generateCacheKey(req.body);
-    const cachedResponse = bypassCache ? null : responseCache.get(cacheKey);
+    const cachedResponse = shouldBypassCache ? null : responseCache.get(cacheKey);
     if (cachedResponse && (now - cachedResponse.timestamp < CACHE_TTL_MS)) {
       console.log(`[REQ ${requestId}] Returning CACHED response for recipe: "${recipeName}"`);
       return res.status(200).json(cachedResponse.data);
@@ -173,42 +178,45 @@ export default async function handler(req: any, res: any) {
 
     let prompt = '';
     if (recipeName) {
-      prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO (a premium fresh produce delivery engine in Surat). ${historyContext}The user wants to make a specific recipe, has a follow-up request, or asked a question: "${recipeName}".${preferencesText}
-      
-CRITICAL GUARD RAILS:
-- You MUST ONLY answer questions or provide recipes that are related to food, cooking, culinary arts, groceries, fresh produce, or the FreshNLocal business.
-- If the user's request is NOT related to these topics, you MUST politely refuse to answer and remind them that you are a culinary assistant for FreshNLocal. In this case, return the refusal message in the \`recipeMarkdown\` field and an empty array for \`suggestedProductNames\`. Do not provide a recipe.
+      prompt = `You are "Freshi", a friendly, warm, and highly conversational culinary and grocery AI assistant for FreshNLocal.CO (a premium fresh produce delivery engine in Surat). ${historyContext}The user sent the following message: "${recipeName}".${preferencesText}
 
-If the request IS related to food or cooking:
-1. Provide the full recipe (or answer their food-related question/follow-up), including the required ingredients and step-by-step instructions if applicable. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
-2. Recommend ALL complementary products (ingredients, garnishes, sides, or spices) from our catalog that the user should buy from our store to make this recipe or dish. Identify as many required ingredients from the catalog as possible (aim for at least 3-6 product recommendations from our catalog if they are relevant to the recipe).
+CRITICAL GUARD RAILS & CONVERSATIONAL DIRECTIONS:
+- You MUST detect the intent of the user's message:
 
-CRITICAL INSTRUCTIONS FOR VARIETY & RECOMMENDATIONS:
-- To keep things exciting and diverse, you MUST NOT generate the exact same recipe every time. Use a wide variety of fresh vegetables, exotic fruits, herbs, and local spices from the catalog.
-- Check the 'Recent Chat History' if provided. If you have already suggested a specific recipe earlier in this chat session, you MUST suggest a completely different, unique recipe or a highly creative variation. DO NOT repeat the same recipe under any circumstances!
+1. GREETING / CASUAL TALK (e.g., "hello", "hi", "hey", "how are you", "who are you", "good evening", etc.):
+   - DO NOT provide or spit out a full recipe.
+   - Reply conversationally with a warm, welcoming, and interactive greeting.
+   - Introduce yourself as Freshi, their personal AI Chef for FreshNLocal.co in Surat.
+   - Enthusiastically ask what they would like to cook today or what fresh ingredients they are looking for.
+   - Offer some suggestions of categories they can ask about (e.g., Surat street food favorites, healthy breakfast ideas, comforting Indian curries, light salads, or high-protein meals).
+   - Keep the reply concise, friendly, and engaging. Encourage them to ask questions or tell you what ingredients they have!
+   - For suggestedProductNames, recommend 2-3 popular fresh, high-quality products from the catalog (like "Avocado", "Cherry Tomato", or "Baby Spinach") to showcase and inspire them, labeling them as "Featured Fresh Produce Today".
+
+2. FOOD-RELATED QUESTIONS / DISCUSSIONS (e.g., cooking tips, how to store veggies, nutrition questions, recipe follow-ups, or questions like "what can I make with tomatoes"):
+   - Answer their question thoroughly, conversationally, and helpfully in the recipeMarkdown field.
+   - Do NOT provide a full structured recipe (with full steps/ingredients list) unless they specifically asked you to "give me a recipe for X" or "how to make X". Instead, have a natural conversation, offering expert culinary advice and asking clarifying questions to guide them!
+   - Recommend any relevant products from the catalog that can help them (e.g., if they ask about seasoning, suggest relevant spices/herbs from the catalog).
+
+3. SPECIFIC RECIPE REQUESTS (e.g., "how to make Aloo Puri", "give me a Surti Ghugra recipe", "recipe for avocado toast"):
+   - Provide a complete, delicious, structured recipe formatted in beautiful Markdown (using proper headings, lists, and spacing).
+   - Check the recent conversation history to ensure you DO NOT repeat a recipe already discussed in this chat session. Be creative and suggest unique, exciting variations!
+   - Recommend all complementary ingredients, spices, garnishes, and fresh items from our catalog that are required or go beautifully with the dish, aiming for 3-6 product recommendations.
+
 - You MUST select recommendations ONLY from the following exact store catalog:
 [ ${catalogText} ]
-- Try to recommend MORE items from the catalog that fit well into the recipe to make it complete (e.g. key ingredients, seasonings, fresh garnishes).
 - You MUST NEVER suggest, recommend, or add any FNL Juices, juices, cold-pressed juices, beverages, or drinks in either the recipe markdown or the suggested products. Focus strictly on solid foods, fresh produce, groceries, spices, or garnishes.
-- Use the EXACT product name as it appears in the catalog.`;
+- Use the EXACT product name as it appears in the catalog.
+- If the user's request is entirely unrelated to food, culinary arts, groceries, cooking, or FreshNLocal, politely remind them that you are the FreshNLocal culinary assistant and ask them how you can help them with their next meal.`;
     } else {
-      prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO. ${historyContext}The user has selected these ingredients they already have: ${(products || []).join(", ")}.${preferencesText}
-      
-CRITICAL GUARD RAILS:
-- You MUST ONLY answer questions or provide recipes that are related to food, cooking, culinary arts, groceries, fresh produce, or the FreshNLocal business.
-- If the user's request is somehow NOT related to these topics (even with ingredients provided), politely refuse in the \`recipeMarkdown\` field.
+      prompt = `You are "Freshi", a culinary and grocery AI assistant for FreshNLocal.CO. ${historyContext}The user has selected these ingredients they already have on hand: ${(products || []).join(", ")}.${preferencesText}
 
-If the request IS related to food or cooking:
-1. Provide a delicious recipe using some or all of these ingredients. Format it in Markdown. Use proper spacing and newline characters (e.g. \\n\\n) to ensure headings and paragraphs are correctly formatted.
-2. Recommend ALL OTHER complementary products that the user should buy from our store to make this recipe even better. Identify as many required ingredients from the catalog as possible (aim for at least 3-6 product recommendations from our catalog if they are relevant to the recipe).
-
-CRITICAL INSTRUCTIONS FOR VARIETY & RECOMMENDATIONS:
-- To keep things exciting and diverse, you MUST NOT generate the exact same recipe every time. Be creative and explore different culinary directions (e.g. street food, gourmet, light snack, traditional Indian/Gujarati, or healthy options).
-- Check the 'Recent Chat History' if provided. If you have already suggested a specific recipe earlier in this chat session, you MUST suggest a completely different, unique recipe or a highly creative variation. DO NOT repeat the same recipe under any circumstances!
-- You MUST select recommendations ONLY from the following exact store catalog:
+CRITICAL DIRECTIONS FOR INGREDIENTS COOKING:
+1. Provide a delicious, creative recipe that utilizes some or all of their selected ingredients. Format it in beautiful, well-spaced Markdown.
+2. Recommend other complementary products (e.g., seasonings, key vegetables, garnishes, grains) from our catalog that they should purchase to make this recipe perfect. Aim for 3-6 product recommendations.
+3. Be creative and explore different culinary directions (e.g., street food, gourmet, light snack, traditional Indian/Gujarati, or healthy options). Do not generate the exact same recipe every time.
+4. You MUST select recommendations ONLY from the following exact store catalog:
 [ ${catalogText} ]
 - Do NOT suggest any product that is already in the user's selected list.
-- Try to recommend MORE items from the catalog that fit well into the recipe to make it complete (e.g. key ingredients, seasonings, fresh garnishes).
 - You MUST NEVER suggest, recommend, or add any FNL Juices, juices, cold-pressed juices, beverages, or drinks in either the recipe markdown or the suggested products. Focus strictly on solid foods, fresh produce, groceries, spices, or garnishes.
 - Use the EXACT product name as it appears in the catalog.`;
     }
@@ -222,18 +230,21 @@ CRITICAL INSTRUCTIONS FOR VARIETY & RECOMMENDATIONS:
     
     while (retries <= MAX_RETRIES) {
       try {
-        const modelName = "gemini-3.1-flash-lite"; // Fully supported ultra-low-cost model
+        const modelName = "gemini-3.6-flash"; // Smarter default model that follows complex prompt instructions perfectly
         response = await ai.models.generateContent({
           model: modelName,
           contents: prompt,
           config: {
-            temperature: 1.0, // High temperature to encourage diverse and creative recipes
+            temperature: 0.7, // Slightly lower temperature for better instruction following on greetings vs recipes
             maxOutputTokens: 4000, // Safe limit allowing for reasoning and complete JSON output
             responseMimeType: "application/json",
             responseSchema: {
               type: "OBJECT",
               properties: {
-                recipeMarkdown: { type: "STRING" },
+                recipeMarkdown: { 
+                  type: "STRING",
+                  description: "The main text response. This MUST be a warm, interactive conversational message/greeting for simple chat or casual inputs, and ONLY a full formatted recipe when a recipe is explicitly requested."
+                },
                 suggestedProductNames: { 
                   type: "ARRAY", 
                   items: { type: "STRING" },
@@ -279,8 +290,10 @@ Daily Budget Used: $${(dailyCostCents / 100).toFixed(6)}`);
 
     const data = JSON.parse(response?.text || "{}");
     
-    // Store in cache
-    responseCache.set(cacheKey, { data, timestamp: Date.now() });
+    // Store in cache if not a greeting or casual chat
+    if (!shouldBypassCache) {
+      responseCache.set(cacheKey, { data, timestamp: Date.now() });
+    }
     
     res.status(200).json(data);
   } catch (error: any) {

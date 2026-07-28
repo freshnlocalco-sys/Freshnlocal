@@ -670,6 +670,7 @@ export function Cart() {
                   <p className="text-muted-foreground text-xs leading-relaxed">Gr Floor Hall, Reva Dham Apartment, Uma Bhawan Crossroad, Opp. Ashirwad Palace, Bhatar, Surat, Gujarat</p>
                   <p className="text-muted-foreground text-xs mt-2">Pick up your order today during store hours (9 AM - 9 PM).</p>
                 </div>
+
                 <div className="space-y-2">
                   <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-[#506053]">Direct Contact Phone</label>
                   <input 
