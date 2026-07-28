@@ -556,11 +556,21 @@ export function AdminDashboard() {
         })
       });
       
-      const responseData = await res.json();
-      
       if (!res.ok) {
-        throw new Error(responseData.error || 'Failed to generate');
+        let errorMsg = 'Failed to generate';
+        try {
+          const errData = await res.json();
+          errorMsg = errData.error || errorMsg;
+        } catch (_) {
+          try {
+            const errText = await res.text();
+            if (errText) errorMsg = errText.slice(0, 150);
+          } catch (_) {}
+        }
+        throw new Error(errorMsg);
       }
+      
+      const responseData = await res.json();
       
       if (!responseData.description) {
         throw new Error('Received empty description from AI');
