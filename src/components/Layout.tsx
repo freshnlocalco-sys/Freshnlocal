@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navigation, MapPin, Phone, Mail, Heart, ChefHat, Search } from 'lucide-react';
+import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navigation, MapPin, Phone, Mail, Heart, ChefHat, Search, Building2 } from 'lucide-react';
 import { useAuth, signOut } from '../lib/firebase';
 import { useCart } from '../store/useCart';
 import { useSettings } from '../store/useSettings';
@@ -111,9 +111,9 @@ export function Layout() {
                     )}
                     <div className="relative group flex items-center gap-1 sm:gap-4">
                       {user.role === 'horeca' && (
-                        <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full cursor-help" title="HoReCa Partner">
-                          <ChefHat className="w-3 h-3 text-orange-600" />
-                          <span className="text-[9px] uppercase font-bold tracking-widest text-orange-600">Partner</span>
+                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full cursor-help shadow-2xs" title="Verified HoReCa B2B Wholesale Partner">
+                          <Building2 className="w-3.5 h-3.5 text-primary" />
+                          <span className="text-[9px] uppercase font-black tracking-widest text-primary">B2B Partner</span>
                         </div>
                       )}
                       {user.points !== undefined && (

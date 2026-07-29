@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Heart, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { X, Heart, Plus, Minus, ShoppingBag, Building2 } from 'lucide-react';
 import { Product, useCart } from '../store/useCart';
 import { useWishlist } from '../store/useWishlist';
 import { useAuth } from '../lib/firebase';
@@ -106,9 +106,17 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
             
             {isHoreca ? (
               <div className="flex items-center gap-2 mb-4 md:mb-6">
-                <span className="text-xs font-bold uppercase tracking-wider text-orange-600 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-lg">
-                  Custom B2B Price
-                </span>
+                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-secondary border border-primary/30 text-foreground shadow-2xs">
+                  <Building2 className="w-4 h-4 text-primary shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-wider text-primary">
+                      Custom B2B Price
+                    </span>
+                    <span className="text-[8px] md:text-[9px] text-muted-foreground font-medium">
+                      Wholesale Invoice Tier ({currentUnit || '1KG'})
+                    </span>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="flex items-end gap-2 md:gap-3 mb-4 md:mb-6">

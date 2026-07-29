@@ -2623,8 +2623,8 @@ export function AdminDashboard() {
                         </td>
                         <td className="p-3 sm:p-4 md:p-5 leading-relaxed max-w-[200px] sm:max-w-xs whitespace-normal">
                           <span className="font-extrabold text-foreground uppercase block text-[10px] sm:text-xs">{order.shippingDetails?.name || 'Customer'}</span>
-                          <span className={`inline-flex px-1.5 py-0.5 mt-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${order.customerType === 'horeca' ? 'bg-orange-500/10 text-orange-600' : 'bg-blue-500/10 text-blue-600'}`}>
-                            {order.customerType || 'retail'}
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 mt-0.5 rounded text-[8px] font-black uppercase tracking-wider ${order.customerType === 'horeca' ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-blue-500/10 text-blue-600'}`}>
+                            {order.customerType === 'horeca' ? '🏢 HoReCa B2B' : (order.customerType || 'retail')}
                           </span>
                           <span className="text-muted-foreground font-mono text-[10px] sm:text-xs tracking-wider block mt-0.5 font-bold">{order.shippingDetails?.phone || 'No phone'}</span>
                           <span className="text-muted-foreground text-[8px] sm:text-[9px] block mt-1 leading-snug">{order.shippingDetails?.address?.includes('Store Pickup') ? 'STORE PICKUP' : (order.shippingDetails?.address || 'No address provided')}</span>
@@ -3577,8 +3577,8 @@ export function AdminDashboard() {
                             <div className="text-[10px] sm:text-xs text-muted-foreground">{customer.phone || 'No phone'}</div>
                           </td>
                           <td className="px-4 sm:px-6 py-4">
-                            <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${customer.role === 'admin' ? 'bg-red-500/10 text-red-600' : customer.role === 'horeca' ? 'bg-orange-500/10 text-orange-600' : 'bg-blue-500/10 text-blue-600'}`}>
-                              {customer.role || 'customer'}
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${customer.role === 'admin' ? 'bg-red-500/10 text-red-600 border border-red-500/20' : customer.role === 'horeca' ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-blue-500/10 text-blue-600 border border-blue-500/20'}`}>
+                              {customer.role === 'horeca' ? '🏢 HoReCa B2B' : (customer.role || 'customer')}
                             </span>
                           </td>
                           <td className="px-4 sm:px-6 py-4 text-right">

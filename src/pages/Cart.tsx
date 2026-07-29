@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCart } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2 } from 'lucide-react';
 import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
@@ -401,7 +401,8 @@ export function Cart() {
                   <div className="flex flex-col">
                     {isHoreca ? (
                       <>
-                        <div className="text-orange-600 font-bold text-xs uppercase tracking-wider bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 rounded-md w-fit">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary border border-primary/25 text-[10px] font-black uppercase tracking-wider w-fit shadow-2xs">
+                          <Building2 className="w-3 h-3 text-primary shrink-0" />
                           Custom B2B Price
                         </div>
                         <div className="text-xs text-muted-foreground font-semibold mt-1">
@@ -479,8 +480,10 @@ export function Cart() {
           {isHoreca ? (
             <>
               <h2 className="text-lg lg:text-xl font-sans font-black uppercase text-foreground tracking-wide border-b border-border pb-4 flex items-center justify-between">
-                <span>Order Summary</span>
-                <span className="text-[10px] font-bold text-orange-600 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded">HORECA B2B</span>
+                <span>Requirement Summary</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-black text-primary bg-primary/10 border border-primary/25 px-2.5 py-1 rounded-md shadow-2xs">
+                  <Building2 className="w-3 h-3 text-primary" /> HORECA B2B
+                </span>
               </h2>
 
               <div className="space-y-4 text-xs font-semibold">
@@ -490,7 +493,7 @@ export function Cart() {
                 </div>
                 <div className="flex justify-between items-center text-muted-foreground">
                   <span>Pricing Model</span>
-                  <span className="font-bold text-orange-600">Custom Negotiated Rates</span>
+                  <span className="font-extrabold text-primary">Custom B2B Wholesale Pricing</span>
                 </div>
                 <div className="flex justify-between items-center text-muted-foreground">
                   <span>Hyperlocal Logistics</span>
@@ -499,8 +502,8 @@ export function Cart() {
                   </span>
                 </div>
                 <div className="pt-5 border-t border-border flex justify-between items-end">
-                  <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Total Order Amount</span>
-                  <span className="font-sans font-bold text-sm text-primary">Invoice on Delivery</span>
+                  <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Total Order Settlement</span>
+                  <span className="font-sans font-bold text-sm text-primary">Tax Invoice Settlement</span>
                 </div>
               </div>
             </>

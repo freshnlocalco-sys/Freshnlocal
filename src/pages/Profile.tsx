@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError } from '../lib/firebase';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat } from 'lucide-react';
+import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2 } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { trackFirestoreRead } from '../lib/cacheManager';
 import { SEO } from '../components/SEO';
@@ -105,9 +105,9 @@ export function Profile() {
               <h2 className="text-xl font-black uppercase text-foreground tracking-tight mt-2 flex items-center justify-center gap-2">
                 {user?.displayName || 'Customer'}
                 {user?.role === 'horeca' && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded-md" title="HoReCa Partner">
-                    <ChefHat className="w-4 h-4 text-orange-600" />
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-orange-600">Partner</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full text-primary shadow-2xs" title="Verified HoReCa B2B Partner">
+                    <Building2 className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-[10px] uppercase font-black tracking-widest text-primary">HoReCa B2B Partner</span>
                   </span>
                 )}
               </h2>

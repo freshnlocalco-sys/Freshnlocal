@@ -5,7 +5,7 @@ import { trackFirestoreRead } from '../lib/cacheManager';
 import { Order, useCart, Product } from '../store/useCart';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { SEO } from '../components/SEO';
-import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck, RefreshCw, ShoppingBag } from 'lucide-react';
+import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck, RefreshCw, ShoppingBag, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const TIMELINE_STEPS = [
@@ -264,7 +264,11 @@ export function Orders() {
                       {order.customerType === 'horeca' ? 'ORDER TYPE' : 'SETTLEMENT AMOUNT'}
                     </span>
                     <span className="text-primary text-xs font-black block">
-                      {order.customerType === 'horeca' ? 'HoReCa B2B Order (Price on Invoice)' : `₹${order.totalAmount.toFixed(2)}`}
+                      {order.customerType === 'horeca' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/25 text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                          <Building2 className="w-3.5 h-3.5 text-primary" /> HoReCa B2B Wholesale Order
+                        </span>
+                      ) : `₹${order.totalAmount.toFixed(2)}`}
                     </span>
                   </div>
                 </div>
@@ -309,8 +313,8 @@ export function Orders() {
                       </div>
                       <div className="font-sans font-black text-sm text-foreground">
                         {order.customerType === 'horeca' ? (
-                          <span className="text-orange-600 bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 rounded text-[10px] font-bold uppercase">
-                            Price on Invoice
+                          <span className="inline-flex items-center gap-1 text-primary bg-primary/10 border border-primary/25 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider shadow-2xs">
+                            <Building2 className="w-3 h-3 text-primary shrink-0" /> Tax Invoice Settlement
                           </span>
                         ) : (
                           `₹${(product.price * item.quantity).toFixed(2)}`

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Heart, Plus, Minus } from 'lucide-react';
+import { ShoppingBag, Heart, Plus, Minus, Building2 } from 'lucide-react';
 import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
@@ -176,9 +176,19 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
 
           <div className="flex items-end justify-between w-full mt-1">
             {isHoreca ? (
-              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-orange-600 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md">
-                Custom B2B Price
-              </span>
+              <div className="flex flex-col gap-1 w-full">
+                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-secondary border border-primary/30 text-foreground shadow-2xs">
+                  <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-[8.5px] sm:text-[9.5px] font-black tracking-wider uppercase text-primary leading-none">
+                      CUSTOM B2B PRICE
+                    </span>
+                    <span className="text-[7.5px] font-semibold text-muted-foreground leading-tight">
+                      Wholesale Invoice Tier ({currentUnit || '1KG'})
+                    </span>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="flex flex-col gap-0.5">
                 {currentOriginalPrice && currentOriginalPrice > currentPrice && (

@@ -5,7 +5,7 @@ import { SEO } from '../components/SEO';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, isQuotaError, useAuth } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
-import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, ShieldCheck, Truck, RotateCcw, Zap, Heart } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, ShieldCheck, Truck, RotateCcw, Zap, Heart, Building2 } from 'lucide-react';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useProducts } from '../store/useProducts';
@@ -287,9 +287,26 @@ export function ProductDetail() {
             )}
             
             {isHoreca ? (
-              <div className="flex items-center gap-3">
-                <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-orange-600 bg-orange-500/10 border border-orange-500/20 px-3.5 py-2 rounded-xl">
-                  HoReCa B2B Order — Custom Pricing on Invoice
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-secondary border border-primary/30 text-foreground shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                      <Building2 className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-primary font-sans">
+                          HoReCa B2B Wholesale Order
+                        </span>
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-primary text-white">
+                          Custom Pricing
+                        </span>
+                      </div>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
+                        Custom Wholesale Pricing applied directly to Tax Invoice
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
