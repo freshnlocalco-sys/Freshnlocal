@@ -136,18 +136,25 @@ export const useAuth = create<AuthState>((set) => ({
 // Setup listener
 onAuthStateChanged(auth, async (firebaseUser) => {
   if (firebaseUser) {
+    const userEmail = firebaseUser.email?.toLowerCase().trim() || '';
+    const isAdmin = userEmail === 'freshnlocalco@gmail.com' || userEmail === 'mohitswami855@gmail.com' || userEmail === 'freshnlocal2@gmail.com' || userEmail.startsWith('admin@');
+    
     try {
       const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
       import('./cacheManager').then(m => m.trackFirestoreRead('users', 1)).catch(() => {});
-      const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com' || firebaseUser.email?.toLowerCase() === 'mohitswami855@gmail.com';
+      
       if (userSnap.exists()) {
         const userData = userSnap.data() as Omit<AppUser, 'uid'>;
+        const finalRole = isAdmin ? 'admin' : (userData.role || 'customer');
         if (isAdmin && userData.role !== 'admin') {
-          await setDoc(userRef, { role: 'admin' }, { merge: true });
-          userData.role = 'admin';
+          try {
+            await setDoc(userRef, { role: 'admin' }, { merge: true });
+          } catch (err) {
+            console.warn("Could not sync admin role to Firestore:", err);
+          }
         }
-        useAuth.getState().setUser({ uid: firebaseUser.uid, ...userData } as AppUser);
+        useAuth.getState().setUser({ uid: firebaseUser.uid, ...userData, role: finalRole } as AppUser);
       } else {
         // Create new user record
         const newUser: Omit<AppUser, 'uid'> = {
@@ -157,13 +164,15 @@ onAuthStateChanged(auth, async (firebaseUser) => {
           points: 0,
           createdAt: Date.now(),
         };
-        await setDoc(userRef, newUser);
+        try {
+          await setDoc(userRef, newUser);
+        } catch (err) {
+          console.warn("Could not save new user document to Firestore:", err);
+        }
         useAuth.getState().setUser({ uid: firebaseUser.uid, ...newUser } as AppUser);
       }
     } catch (e: any) {
-      console.warn("Using fallback user due to Firestore quota error or setup error");
-      // Fallback if Firestore quota is exceeded so user is still authenticated locally
-      const isAdmin = firebaseUser.email === 'freshnlocalco@gmail.com' || firebaseUser.email?.toLowerCase() === 'mohitswami855@gmail.com';
+      console.warn("Using fallback user due to Firestore error:", e);
       const fallbackUser: Omit<AppUser, 'uid'> = {
         email: firebaseUser.email || '',
         displayName: firebaseUser.displayName || '',
@@ -171,7 +180,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         points: 0,
         createdAt: Date.now(),
       };
-      console.warn("Using fallback user due to Firestore quota error");
       useAuth.getState().setUser({ uid: firebaseUser.uid, ...fallbackUser } as AppUser);
     }
   } else {
@@ -207,7 +215,7 @@ export const signUpWithEmail = async (email: string, pass: string, name: string)
        await setDoc(userRef, {
           email: email,
           displayName: name,
-          role: (email === 'freshnlocalco@gmail.com' || email?.toLowerCase() === 'mohitswami855@gmail.com' || email?.startsWith('admin@')) ? 'admin' : 'customer',
+          role: (email === 'freshnlocalco@gmail.com' || email?.toLowerCase() === 'mohitswami855@gmail.com' || email?.toLowerCase() === 'freshnlocal2@gmail.com' || email?.startsWith('admin@')) ? 'admin' : 'customer',
           createdAt: Date.now()
        });
     }

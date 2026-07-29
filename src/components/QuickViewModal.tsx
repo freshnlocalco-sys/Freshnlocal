@@ -39,7 +39,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
 
   const isHoreca = user?.role === 'horeca';
-  const currentUnit = isHoreca && currentVariant.horecaPrice ? (currentVariant.horecaUnit || '1KG') : currentVariant.unit;
+  const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
@@ -51,7 +51,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const handleAddToCart = () => {
     if (product) {
       if (quantity <= 0) return;
-      addItem({ ...product, id: cartProductId, price: currentPrice, originalPrice: currentOriginalPrice, unit: currentUnit }, quantity);
+      addItem({ ...product, id: cartProductId, price: isHoreca ? 0 : currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, quantity);
       toast.success(`${quantity} ${product.name} added to cart!`);
       onClose();
     }
@@ -104,19 +104,27 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
               )}
             </div>
             
-            <div className="flex items-end gap-2 md:gap-3 mb-4 md:mb-6">
-              <div className="text-2xl md:text-3xl font-black text-primary">₹{currentPrice}</div>
-              {currentOriginalPrice && currentOriginalPrice > currentPrice && (
-                <div className="text-base md:text-lg font-bold text-muted-foreground line-through mb-1">
-                  ₹{currentOriginalPrice}
-                </div>
-              )}
-            </div>
+            {isHoreca ? (
+              <div className="flex items-center gap-2 mb-4 md:mb-6">
+                <span className="text-xs font-bold uppercase tracking-wider text-orange-600 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-lg">
+                  Custom B2B Price
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-end gap-2 md:gap-3 mb-4 md:mb-6">
+                <div className="text-2xl md:text-3xl font-black text-primary">₹{currentPrice}</div>
+                {currentOriginalPrice && currentOriginalPrice > currentPrice && (
+                  <div className="text-base md:text-lg font-bold text-muted-foreground line-through mb-1">
+                    ₹{currentOriginalPrice}
+                  </div>
+                )}
+              </div>
+            )}
 
             {allVariants.length > 1 ? (
               <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
                 {allVariants.map((v, idx) => {
-                  const vDisplayUnit = isHoreca && v.horecaPrice ? (v.horecaUnit || '1KG') : v.unit;
+                  const vDisplayUnit = isHoreca ? (v.horecaUnit || v.unit || '1KG') : v.unit;
                   return (
                     <button
                       key={idx}

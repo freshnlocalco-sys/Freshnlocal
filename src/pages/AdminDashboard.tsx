@@ -164,7 +164,20 @@ export function AdminDashboard() {
       const q = query(collection(db, 'users'));
       const snapshot = await getDocs(q);
       import('../lib/cacheManager').then(m => m.trackFirestoreRead('users', snapshot.docs.length)).catch(() => {});
-      let usersData = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AppUser));
+      const adminEmails = ['freshnlocalco@gmail.com', 'mohitswami855@gmail.com', 'freshnlocal2@gmail.com'];
+      
+      let usersData = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        const email = (data.email || '').toLowerCase().trim();
+        const isSuperAdmin = adminEmails.includes(email) || email.startsWith('admin@');
+        const role = isSuperAdmin ? 'admin' : (data.role || 'customer');
+        
+        if (isSuperAdmin && data.role !== 'admin') {
+          updateDoc(doc(db, 'users', docSnap.id), { role: 'admin' }).catch(() => {});
+        }
+        
+        return { uid: docSnap.id, ...data, role } as AppUser;
+      });
       
       const roleOrder = { admin: 0, horeca: 1, customer: 2 };
       usersData.sort((a, b) => {
@@ -192,16 +205,11 @@ export function AdminDashboard() {
     }
   }, [activeTab]);
 
-  const handleToggleHoreca = async (customerUser: AppUser) => {
-    if (customerUser.role === 'admin') {
-      toast.error('Cannot change admin role');
-      return;
-    }
-    const newRole = customerUser.role === 'horeca' ? 'customer' : 'horeca';
+  const handleSetRole = async (customerUser: AppUser, newRole: 'customer' | 'horeca' | 'admin') => {
     try {
       await updateDoc(doc(db, 'users', customerUser.uid), { role: newRole });
       setCustomers(customers.map(c => c.uid === customerUser.uid ? { ...c, role: newRole } : c));
-      toast.success(`User role updated to ${newRole}`);
+      toast.success(`User role updated to ${newRole.toUpperCase()}`);
     } catch (error) {
       console.error('Error updating role:', error);
       toast.error('Failed to update role');
@@ -3574,14 +3582,22 @@ export function AdminDashboard() {
                             </span>
                           </td>
                           <td className="px-4 sm:px-6 py-4 text-right">
-                            {customer.role !== 'admin' && (
+                            <div className="flex items-center justify-end gap-2">
+                              {customer.role !== 'admin' && (
+                                <button 
+                                  onClick={() => handleSetRole(customer, 'admin')}
+                                  className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors"
+                                >
+                                  Make Admin
+                                </button>
+                              )}
                               <button 
-                                onClick={() => handleToggleHoreca(customer)}
-                                className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-colors ${customer.role === 'horeca' ? 'bg-muted text-foreground hover:bg-muted/80' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
+                                onClick={() => handleSetRole(customer, customer.role === 'horeca' ? 'customer' : 'horeca')}
+                                className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition-colors ${customer.role === 'horeca' ? 'bg-muted text-foreground hover:bg-muted/80' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
                               >
                                 {customer.role === 'horeca' ? 'Revoke HoReCa' : 'Make HoReCa'}
                               </button>
-                            )}
+                            </div>
                           </td>
                         </tr>
                       ))

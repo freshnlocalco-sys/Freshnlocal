@@ -11,17 +11,20 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isAdmin() { 
       return isSignedIn() && (
-        ('email' in request.auth.token && request.auth.token.email == 'freshnlocalco@gmail.com') || 
-        ('email' in request.auth.token && request.auth.token.email.lower() == 'mohitswami855@gmail.com') || 
-        ('email' in request.auth.token && request.auth.token.email.lower() == 'system-email-trigger@freshnlocal.com') || 
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+        ('email' in request.auth.token && request.auth.token.email != null && (
+          request.auth.token.email.lower() == 'freshnlocalco@gmail.com' || 
+          request.auth.token.email.lower() == 'mohitswami855@gmail.com' || 
+          request.auth.token.email.lower() == 'freshnlocal2@gmail.com' || 
+          request.auth.token.email.lower() == 'system-email-trigger@freshnlocal.com'
+        )) || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'customer') == 'admin')
       ); 
     }
     
     match /users/{userId} {
       match /recipeChat/{chatId} {
         function isValidRecipeChat(data) {
-          return data.size() >= 2 && data.size() <= 3
+          return data.size() >= 2 && data.size() <= 10
             && data.keys().hasAll(['messages', 'updatedAt'])
             && data.messages is list
             && data.updatedAt is number;
@@ -32,7 +35,7 @@ service cloud.firestore {
       }
       match /savedRecipes/{recipeId} {
         function isValidSavedRecipe(data) {
-          return data.size() >= 2 && data.size() <= 4
+          return data.size() >= 2 && data.size() <= 10
             && data.keys().hasAll(['recipeMarkdown', 'createdAt'])
             && data.recipeMarkdown is string && data.recipeMarkdown.size() <= 50000
             && data.createdAt is number;
@@ -43,18 +46,11 @@ service cloud.firestore {
         allow delete: if isSignedIn() && request.auth.uid == userId;
       }
       function isValidUser(data) {
-        return data.size() >= 3 && data.size() <= 10
+        return data.size() >= 3 && data.size() <= 30
           && data.keys().hasAll(['email', 'role', 'createdAt'])
-          && data.email is string && data.email.size() <= 100
+          && data.email is string && data.email.size() <= 150
           && data.role is string && (data.role == 'customer' || data.role == 'admin' || data.role == 'horeca')
-          && data.createdAt is number
-          && data.get('displayName', '') is string
-          && data.get('phone', '') is string
-          && data.get('address', '') is string
-          && data.get('displayName', '').size() <= 100
-          && data.get('phone', '').size() <= 20
-          && data.get('address', '').size() <= 500
-          && (data.get('addresses', []) is list);
+          && data.createdAt is number;
       }
       
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
@@ -63,43 +59,27 @@ service cloud.firestore {
       allow create: if isSignedIn() 
         && request.auth.uid == userId 
         && isValidUser(incoming())
-        && (incoming().role == 'customer' || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com')) || isAdmin()); // Can self-assign admin only if owner email
+        && (incoming().role == 'customer' || incoming().role == 'horeca' || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email.lower() == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com' || request.auth.token.email.lower() == 'freshnlocal2@gmail.com')) || isAdmin());
         
       allow update: if isSignedIn() 
         && (request.auth.uid == userId || isAdmin())
         && isValidUser(incoming())
-        && incoming().createdAt == existing().createdAt
-        && (incoming().role == existing().role || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com')) || isAdmin()); // Users cannot escalate own privileges unless owner
+        && (incoming().role == existing().role || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email.lower() == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com' || request.auth.token.email.lower() == 'freshnlocal2@gmail.com')) || isAdmin());
     }
     
     match /products/{productId} {
       function isValidProduct(data) {
         return data.keys().hasAll(['name', 'price', 'createdAt', 'updatedAt'])
         && data.size() >= 4 && data.size() <= 30
-        && data.name is string && data.name.size() <= 150 && data.name.size() > 0
+        && data.name is string && data.name.size() <= 200 && data.name.size() > 0
         && data.price is number && data.price >= 0
         && data.createdAt is number
-        && data.updatedAt is number
-        && data.get('description', '') is string && data.get('description', '').size() <= 5000
-        && data.get('imageUrl', '') is string
-        && data.get('category', '') is string && data.get('category', '').size() <= 50
-        && (data.get('originalPrice', 0) == null || data.get('originalPrice', 0) is number)
-        && (data.get('horecaPrice', 0) == null || data.get('horecaPrice', 0) is number)
-        && (data.get('stock', 0) == null || data.get('stock', 0) is number)
-        && (data.get('orderIndex', 0) == null || data.get('orderIndex', 0) is number)
-        && (data.get('inStock', true) == null || data.get('inStock', true) is bool)
-        && (data.get('unit', '') == null || data.get('unit', '') is string)
-        && (data.get('subCategory', '') == null || data.get('subCategory', '') is string)
-        && (data.get('ingredients', []) == null || data.get('ingredients', []) is list)
-        && (data.get('variants', []) == null || data.get('variants', []) is list);
+        && data.updatedAt is number;
       }
       
       allow read, list: if true;
-      allow create: if isAdmin() 
-        && isValidProduct(incoming());
-      allow update: if isAdmin()
-        && isValidProduct(incoming())
-        && incoming().createdAt == existing().createdAt;
+      allow create: if isAdmin() && isValidProduct(incoming());
+      allow update: if isAdmin() && isValidProduct(incoming()) && incoming().createdAt == existing().createdAt;
       allow delete: if isAdmin();
     }
     
@@ -109,13 +89,13 @@ service cloud.firestore {
         && data.userId is string && data.userId.size() <= 128
         && data.items is list && data.items.size() <= 100 && data.items.size() > 0
         && data.totalAmount is number && data.totalAmount >= 0
-        && data.status is string && (data.status == 'pending' || data.status == 'confirmed' || data.status == 'shipped' || data.status == 'delivered' || data.status == 'cancelled' || data.status == 'ready' || data.status == 'takeaway')
-        && data.paymentMethod == 'COD'
+        && data.status is string
+        && data.paymentMethod is string && data.paymentMethod.size() <= 50
         && data.createdAt is number
         && data.updatedAt is number;
       }
       
-      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read, list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       
       allow create: if isSignedIn()
         && isValidOrder(incoming())
@@ -127,12 +107,13 @@ service cloud.firestore {
         && incoming().userId == existing().userId
         && incoming().createdAt == existing().createdAt
         && (
-          (request.auth.uid == existing().userId && (existing().status == 'pending') && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') || // User can only cancel pending 
-          isAdmin() // Admin can do anything 
+          (request.auth.uid == existing().userId && (existing().status == 'pending') && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') || 
+          isAdmin()
         );
         
       allow delete: if isAdmin();
     }
+    
     match /settings/{settingId} {
       allow read, list: if true;
       allow create, update, delete: if isAdmin();
@@ -140,19 +121,19 @@ service cloud.firestore {
     
     match /reviews/{reviewId} {
       function isValidReview(data) {
-        return data.size() >= 6 && data.size() <= 8
+        return data.size() >= 5 && data.size() <= 12
           && data.keys().hasAll(['productId', 'userId', 'userName', 'rating', 'comment', 'createdAt'])
           && data.productId is string && data.productId.size() <= 128
           && data.userId is string && data.userId.size() <= 128
           && data.userName is string && data.userName.size() <= 100
           && data.rating is number && data.rating >= 1 && data.rating <= 5
-          && data.comment is string && data.comment.size() <= 1000
+          && data.comment is string && data.comment.size() <= 2000
           && data.createdAt is number;
       }
       
-      allow read: if true;
+      allow read, list: if true;
       allow create: if isSignedIn() && incoming().userId == request.auth.uid && isValidReview(incoming());
-      allow update: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin()) && isValidReview(incoming()) && incoming().productId == resource.data.productId && incoming().userId == resource.data.userId && incoming().createdAt == resource.data.createdAt;
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin()) && isValidReview(incoming());
       allow delete: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
     }
   }

@@ -260,8 +260,12 @@ export function Orders() {
                     <span className="text-foreground text-xs block">{new Date(order.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="space-y-1 col-span-2 md:col-span-1">
-                    <span className="text-muted-foreground text-[8px] tracking-[0.15em] block font-black">SETTLEMENT AMOUNT</span>
-                    <span className="text-primary text-xs font-black block">₹{order.totalAmount.toFixed(2)}</span>
+                    <span className="text-muted-foreground text-[8px] tracking-[0.15em] block font-black">
+                      {order.customerType === 'horeca' ? 'ORDER TYPE' : 'SETTLEMENT AMOUNT'}
+                    </span>
+                    <span className="text-primary text-xs font-black block">
+                      {order.customerType === 'horeca' ? 'HoReCa B2B Order (Price on Invoice)' : `₹${order.totalAmount.toFixed(2)}`}
+                    </span>
                   </div>
                 </div>
 
@@ -299,12 +303,18 @@ export function Orders() {
                         <div>
                           <p className="font-extrabold text-xs uppercase text-foreground tracking-wide">{product.name}</p>
                           <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">
-                            QUANTITY: {item.quantity} × ₹{product.price}
+                            {order.customerType === 'horeca' ? `REQUIREMENT: ${item.quantity} ${product.unit || 'units'}` : `QUANTITY: ${item.quantity} × ₹${product.price}`}
                           </p>
                         </div>
                       </div>
                       <div className="font-sans font-black text-sm text-foreground">
-                        ₹{(product.price * item.quantity).toFixed(2)}
+                        {order.customerType === 'horeca' ? (
+                          <span className="text-orange-600 bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 rounded text-[10px] font-bold uppercase">
+                            Price on Invoice
+                          </span>
+                        ) : (
+                          `₹${(product.price * item.quantity).toFixed(2)}`
+                        )}
                       </div>
                     </div>
                   );

@@ -49,7 +49,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const [isExpanded, setIsExpanded] = useState(false);
   const [stagedQuantity, setStagedQuantity] = useState<number>(isHoreca ? 1 : 1);
 
-  const currentUnit = isHoreca && currentVariant.horecaPrice ? (currentVariant.horecaUnit || '1KG') : currentVariant.unit;
+  const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   
@@ -147,7 +147,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
           {allVariants.length > 1 ? (
             <div className="flex flex-wrap gap-1 mt-1 mb-1">
               {allVariants.map((v, idx) => {
-                const vDisplayUnit = isHoreca && v.horecaPrice ? (v.horecaUnit || '1KG') : v.unit;
+                const vDisplayUnit = isHoreca ? (v.horecaUnit || v.unit || '1KG') : v.unit;
                 const vProductId = vDisplayUnit ? `${product.id}-${vDisplayUnit.trim()}` : product.id;
                 const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === vDisplayUnit);
                 const vQty = vCartItem ? vCartItem.quantity : 0;
@@ -175,19 +175,25 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
           )}
 
           <div className="flex items-end justify-between w-full mt-1">
-            <div className="flex flex-col gap-0.5">
-              {currentOriginalPrice && currentOriginalPrice > currentPrice && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground line-through font-medium">₹{currentOriginalPrice}</span>
-                  <span className="text-[8px] font-bold text-red-500 bg-red-50 px-1 py-0.5 rounded leading-none">
-                    {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
-                  </span>
+            {isHoreca ? (
+              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-orange-600 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md">
+                Custom B2B Price
+              </span>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                {currentOriginalPrice && currentOriginalPrice > currentPrice && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] sm:text-[10px] text-muted-foreground line-through font-medium">₹{currentOriginalPrice}</span>
+                    <span className="text-[8px] font-bold text-red-500 bg-red-50 px-1 py-0.5 rounded leading-none">
+                      {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
+                    </span>
+                  </div>
+                )}
+                <div className="text-xs sm:text-sm font-bold text-foreground leading-none flex items-center gap-0.5">
+                  <span className="text-[9px] sm:text-[10px] text-muted-foreground">₹</span>{currentPrice}
                 </div>
-              )}
-              <div className="text-xs sm:text-sm font-bold text-foreground leading-none flex items-center gap-0.5">
-                <span className="text-[9px] sm:text-[10px] text-muted-foreground">₹</span>{currentPrice}
               </div>
-            </div>
+            )}
           </div>
         </div>
         {(!isExpanded && quantity === 0) ? (
@@ -275,7 +281,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                 e.stopPropagation();
                 if (quantity === 0) {
                   if (product.inStock && stagedQuantity > 0) {
-                    onAddToCart({ ...product, id: cartProductId, price: currentPrice, originalPrice: currentOriginalPrice, unit: currentUnit }, stagedQuantity); 
+                    onAddToCart({ ...product, id: cartProductId, price: isHoreca ? 0 : currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, stagedQuantity); 
                   }
                 } else {
                   updateQuantity(cartProductId, quantity + step);

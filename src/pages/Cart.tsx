@@ -79,7 +79,7 @@ export function Cart() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (deliveryMethod === 'delivery' && total() < 1000) return;
+    if (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) return;
     if (hasOutOfStockItems) {
       toast.error("Please remove out of stock items from your cart before checking out.");
       return;
@@ -167,7 +167,7 @@ export function Cart() {
           const p: any = {
             id: i.product.id,
             name: typeof i.product.name === 'string' ? i.product.name.substring(0, 100) : i.product.name,
-            price: i.product.price,
+            price: isHoreca ? 0 : i.product.price,
             unit: i.product.unit,
           };
           if (i.product.imageUrl && typeof i.product.imageUrl === 'string' && i.product.imageUrl.length < 500 && i.product.imageUrl.startsWith('http')) {
@@ -177,12 +177,12 @@ export function Cart() {
           Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
           return { product: p, quantity: i.quantity };
         }),
-        totalAmount: finalTotal,
-        discount: discount,
-        pointsEarned: Math.floor(finalTotal / 100) * 2,
-        pointsRedeemed: discount > 0 ? 100 : 0,
+        totalAmount: isHoreca ? 0 : finalTotal,
+        discount: isHoreca ? 0 : discount,
+        pointsEarned: isHoreca ? 0 : Math.floor(finalTotal / 100) * 2,
+        pointsRedeemed: isHoreca ? 0 : (discount > 0 ? 100 : 0),
         status: 'pending',
-        paymentMethod: 'COD',
+        paymentMethod: isHoreca ? 'B2B Invoice' : 'COD',
         deliveryMethod,
         shippingDetails: {
           name: typeof user.displayName === 'string' ? user.displayName.substring(0, 50) : (user.displayName || 'Customer'),
@@ -399,9 +399,22 @@ export function Cart() {
                     {item.product.name}
                   </h3>
                   <div className="flex flex-col">
-                    <div className="text-primary font-black text-base">₹{(item.product.price * item.quantity).toFixed(2)}</div>
-                    {item.quantity !== 1 && (
-                      <div className="text-xs text-muted-foreground font-medium">₹{item.product.price} / {item.product.unit || 'unit'}</div>
+                    {isHoreca ? (
+                      <>
+                        <div className="text-orange-600 font-bold text-xs uppercase tracking-wider bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 rounded-md w-fit">
+                          Custom B2B Price
+                        </div>
+                        <div className="text-xs text-muted-foreground font-semibold mt-1">
+                          Unit Requirement: {item.quantity} × {item.product.unit || '1 Unit'}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-primary font-black text-base">₹{(item.product.price * item.quantity).toFixed(2)}</div>
+                        {item.quantity !== 1 && (
+                          <div className="text-xs text-muted-foreground font-medium">₹{item.product.price} / {item.product.unit || 'unit'}</div>
+                        )}
+                      </>
                     )}
                   </div>
                   {!item.product.inStock && (
@@ -463,32 +476,64 @@ export function Cart() {
       {/* Settlement checkout form */}
       <div className="lg:col-span-5">
         <div className="bg-secondary border border-border rounded-[32px] p-6 lg:p-8 sticky top-28 space-y-8 shadow-sm">
-          <h2 className="text-lg lg:text-xl font-sans font-black uppercase text-foreground tracking-wide border-b border-border pb-4">
-            Settlement Summary
-          </h2>
+          {isHoreca ? (
+            <>
+              <h2 className="text-lg lg:text-xl font-sans font-black uppercase text-foreground tracking-wide border-b border-border pb-4 flex items-center justify-between">
+                <span>Order Summary</span>
+                <span className="text-[10px] font-bold text-orange-600 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded">HORECA B2B</span>
+              </h2>
 
-          <div className="space-y-4 text-xs font-semibold">
-            <div className="flex justify-between items-center text-muted-foreground">
-              <span>Order Subtotal</span>
-              <span className="font-mono text-foreground">₹{total().toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center text-muted-foreground">
-              <span>Hyperlocal Logistics</span>
-              <span className="text-primary font-black uppercase tracking-wider text-[9px] bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
-                0 FEES
-              </span>
-            </div>
-            {discount > 0 && (
-              <div className="flex justify-between items-center text-primary">
-                <span>FNL Points Discount</span>
-                <span className="font-mono font-bold">-₹{discount.toFixed(2)}</span>
+              <div className="space-y-4 text-xs font-semibold">
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>Order Type</span>
+                  <span className="font-bold text-foreground">B2B Requirement List</span>
+                </div>
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>Pricing Model</span>
+                  <span className="font-bold text-orange-600">Custom Negotiated Rates</span>
+                </div>
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>Hyperlocal Logistics</span>
+                  <span className="text-primary font-black uppercase tracking-wider text-[9px] bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
+                    0 FEES
+                  </span>
+                </div>
+                <div className="pt-5 border-t border-border flex justify-between items-end">
+                  <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Total Order Amount</span>
+                  <span className="font-sans font-bold text-sm text-primary">Invoice on Delivery</span>
+                </div>
               </div>
-            )}
-            <div className="pt-5 border-t border-border flex justify-between items-end">
-              <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Total Indebtedness</span>
-              <span className="font-sans font-black text-3xl text-foreground">₹{finalTotal.toFixed(2)}</span>
-            </div>
-          </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-lg lg:text-xl font-sans font-black uppercase text-foreground tracking-wide border-b border-border pb-4">
+                Settlement Summary
+              </h2>
+
+              <div className="space-y-4 text-xs font-semibold">
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>Order Subtotal</span>
+                  <span className="font-mono text-foreground">₹{total().toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>Hyperlocal Logistics</span>
+                  <span className="text-primary font-black uppercase tracking-wider text-[9px] bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
+                    0 FEES
+                  </span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between items-center text-primary">
+                    <span>FNL Points Discount</span>
+                    <span className="font-mono font-bold">-₹{discount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="pt-5 border-t border-border flex justify-between items-end">
+                  <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Total Indebtedness</span>
+                  <span className="font-sans font-black text-3xl text-foreground">₹{finalTotal.toFixed(2)}</span>
+                </div>
+              </div>
+            </>
+          )}
           
           <form onSubmit={handleCheckout} className="space-y-8">
             <div className="space-y-5">
@@ -700,7 +745,7 @@ export function Cart() {
               </label>
             </div>
             
-            {user && (
+            {!isHoreca && user && (
               <div className="space-y-3">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-1.5">
                   <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span> FNL Points
@@ -743,7 +788,7 @@ export function Cart() {
                 Remove Out of Stock items to proceed
               </div>
             )}
-            {deliveryMethod === 'delivery' && total() < 1000 && !hasOutOfStockItems && (
+            {!isHoreca && deliveryMethod === 'delivery' && total() < 1000 && !hasOutOfStockItems && (
               <div className="bg-red-500/10 text-red-500 border border-red-500/15 p-4 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest">
                 Minimum order for delivery is ₹1000
               </div>
@@ -758,17 +803,17 @@ export function Cart() {
             {user ? (
               <button 
                 type="submit" 
-                disabled={loading || (deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity}
-                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${loading || (deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
+                disabled={loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity}
+                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
               >
-                {loading ? 'Committing Settlement...' : 'Finalize Settlement Board'}
+                {loading ? 'Submitting Order...' : (isHoreca ? 'Submit HoReCa Order Requirement' : 'Finalize Settlement Board')}
               </button>
             ) : (
               <button 
                 type="button" 
                 onClick={signIn} 
-                disabled={(deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity} 
-                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${(deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
+                disabled={(!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity} 
+                className={`w-full py-4.5 text-[10px] uppercase font-black tracking-widest rounded-xl transition-all ${(!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-[#09120b]'}`}
               >
                 Login to Settle Accounts
               </button>

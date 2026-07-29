@@ -42,6 +42,7 @@ export interface Order {
   id: string;
   orderNumber?: string;
   userId: string;
+  customerType?: string;
   createdAt: number;
   updatedAt?: number;
   totalAmount: number;

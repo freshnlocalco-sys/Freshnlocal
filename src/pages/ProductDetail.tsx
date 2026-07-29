@@ -46,7 +46,7 @@ export function ProductDetail() {
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0] || { unit: '', price: 0, originalPrice: 0, horecaPrice: undefined, horecaUnit: '' };
   
   const isHoreca = user?.role === 'horeca';
-  const currentUnit = isHoreca && currentVariant.horecaPrice ? (currentVariant.horecaUnit || '1KG') : currentVariant.unit;
+  const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;
@@ -136,7 +136,7 @@ export function ProductDetail() {
 
   const handleAddToCart = () => {
     if (product && product.inStock) {
-      addItem({ ...product, id: cartProductId, price: currentPrice, originalPrice: currentOriginalPrice, unit: currentUnit }, quantity);
+      addItem({ ...product, id: cartProductId, price: isHoreca ? 0 : currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, quantity);
       toast.success(`${quantity} ${product.name} (${currentUnit || 'item'}) added to cart!`);
     }
   };
@@ -255,7 +255,7 @@ export function ProductDetail() {
             {allVariants.length > 1 ? (
               <div className="flex flex-wrap gap-2">
                 {allVariants.map((v, idx) => {
-                  const vDisplayUnit = isHoreca && v.horecaPrice ? (v.horecaUnit || '1KG') : v.unit;
+                  const vDisplayUnit = isHoreca ? (v.horecaUnit || v.unit || '1KG') : v.unit;
                   const vProductId = vDisplayUnit ? `${product.id}-${vDisplayUnit.trim()}` : product.id;
                   const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === vDisplayUnit);
                   const vQty = vCartItem ? vCartItem.quantity : 0;
@@ -286,19 +286,27 @@ export function ProductDetail() {
               </div>
             )}
             
-            <div className="flex items-end gap-3 tracking-tighter">
-              <div className="text-4xl font-black text-primary">₹{currentPrice}</div>
-              {currentOriginalPrice && currentOriginalPrice > currentPrice && (
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50">
-                    MRP ₹{currentOriginalPrice}
-                  </div>
-                  <span className="text-sm font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded">
-                    {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
-                  </span>
+            {isHoreca ? (
+              <div className="flex items-center gap-3">
+                <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-orange-600 bg-orange-500/10 border border-orange-500/20 px-3.5 py-2 rounded-xl">
+                  HoReCa B2B Order — Custom Pricing on Invoice
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex items-end gap-3 tracking-tighter">
+                <div className="text-4xl font-black text-primary">₹{currentPrice}</div>
+                {currentOriginalPrice && currentOriginalPrice > currentPrice && (
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50">
+                      MRP ₹{currentOriginalPrice}
+                    </div>
+                    <span className="text-sm font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded">
+                      {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           {product.description && (
@@ -340,8 +348,14 @@ export function ProductDetail() {
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Total Settlement</span>
-              <div className="font-sans font-black text-2xl text-foreground">₹{(currentPrice * quantity).toFixed(2)}</div>
+              <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">{isHoreca ? 'Requirement Summary' : 'Total Settlement'}</span>
+              <div className="font-sans font-black text-xl sm:text-2xl text-foreground">
+                {isHoreca ? (
+                  <span className="text-primary">{quantity} {quantity === 1 ? 'Pack' : 'Packs'} ({currentUnit})</span>
+                ) : (
+                  `₹${(currentPrice * quantity).toFixed(2)}`
+                )}
+              </div>
             </div>
           </div>
 
