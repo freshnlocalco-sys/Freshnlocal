@@ -104,13 +104,13 @@ export function Layout() {
               <>
                 {user ? (
                   <div className="flex items-center gap-1 sm:gap-4">
-                    {user.role === 'admin' && (
+                    {(user.role === 'admin' || user.role === 'horeca_admin') && (
                       <Link to="/admin" title="Admin Panel" className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-primary hidden lg:block border border-primary/25 hover:border-primary bg-primary/5 px-4 py-2 rounded-full transition-all">
-                        Admin Portal
+                        {user.role === 'horeca_admin' ? 'HoReCa Desk' : 'Admin Portal'}
                       </Link>
                     )}
                     <div className="relative group flex items-center gap-1 sm:gap-4">
-                      {user.role === 'horeca' && (
+                      {(user.role === 'horeca' || user.role === 'horeca_admin') && (
                         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full cursor-help shadow-2xs" title="Verified HoReCa B2B Wholesale Partner">
                           <Building2 className="w-3.5 h-3.5 text-primary" />
                           <span className="text-[9px] uppercase font-black tracking-widest text-primary">B2B Partner</span>
@@ -126,12 +126,12 @@ export function Layout() {
                         {user.displayName?.split(' ')[0] || 'User'}
                       </span>
                       <Link to="/profile" className="relative flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
-                        {user.role === 'horeca' ? (
+                        {(user.role === 'horeca' || user.role === 'horeca_admin') ? (
                           <ChefHat className="w-4 h-4 sm:w-4 sm:h-4 text-orange-600" />
                         ) : (
                           <User className="w-4 h-4 sm:w-4 sm:h-4 text-foreground" />
                         )}
-                        {user.role === 'horeca' && (
+                        {(user.role === 'horeca' || user.role === 'horeca_admin') && (
                           <span className="sm:hidden absolute -bottom-1.5 bg-orange-100 border border-orange-500/20 text-orange-600 text-[6px] font-black uppercase tracking-widest px-1 py-0.5 rounded-sm whitespace-nowrap">
                             Partner
                           </span>
@@ -141,8 +141,10 @@ export function Layout() {
                         <Link to="/profile" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">My Profile</Link>
                         <Link to="/orders" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">My Orders</Link>
                         <Link to="/profile?tab=recipes" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">Saved Recipes</Link>
-                        {user.role === 'admin' && (
-                          <Link to="/admin" className="block lg:hidden px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-primary transition-all">Admin Portal</Link>
+                        {(user.role === 'admin' || user.role === 'horeca_admin') && (
+                          <Link to="/admin" className="block lg:hidden px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-primary transition-all">
+                            {user.role === 'horeca_admin' ? 'HoReCa Desk' : 'Admin Portal'}
+                          </Link>
                         )}
                         <hr className="my-2 border-border" />
                         <button onClick={signOut} className="w-full text-left px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-red-600/10 hover:text-red-500 text-red-500 transition-all flex items-center gap-2">
@@ -296,7 +298,7 @@ export function Layout() {
                     <div className="flex justify-between items-start">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold">
                         Active Session: <span className="text-primary block font-mono text-sm mt-1">{user.displayName || user.email}</span>
-                        {user.role === 'horeca' && (
+                        {(user.role === 'horeca' || user.role === 'horeca_admin') && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-2 bg-orange-500/10 border border-orange-500/20 rounded-md">
                             <ChefHat className="w-3.5 h-3.5 text-orange-600" />
                             <span className="text-[9px] uppercase font-bold tracking-widest text-orange-600">Partner</span>

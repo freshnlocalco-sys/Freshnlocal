@@ -111,7 +111,7 @@ export interface AppUser {
   uid: string;
   email: string;
   displayName: string;
-  role: 'admin' | 'customer' | 'horeca';
+  role: 'admin' | 'customer' | 'horeca' | 'horeca_admin';
   phone?: string;
   address?: string; // legacy address
   addresses?: Address[];
@@ -138,7 +138,12 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   if (firebaseUser) {
     const userEmail = firebaseUser.email?.toLowerCase().trim() || '';
     const isAdmin = userEmail === 'freshnlocalco@gmail.com' || userEmail === 'mohitswami855@gmail.com' || userEmail === 'freshnlocal2@gmail.com' || userEmail.startsWith('admin@');
-    
+    const isHorecaAdmin = userEmail === 'horeca@gmail.com' || userEmail === 'horecaadmin@gmail.com' || userEmail.startsWith('horecaadmin@');
+
+    let autoRole: 'admin' | 'horeca_admin' | null = null;
+    if (isAdmin) autoRole = 'admin';
+    else if (isHorecaAdmin) autoRole = 'horeca_admin';
+
     try {
       const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
@@ -146,12 +151,12 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       
       if (userSnap.exists()) {
         const userData = userSnap.data() as Omit<AppUser, 'uid'>;
-        const finalRole = isAdmin ? 'admin' : (userData.role || 'customer');
-        if (isAdmin && userData.role !== 'admin') {
+        const finalRole = autoRole || userData.role || 'customer';
+        if (autoRole && userData.role !== autoRole) {
           try {
-            await setDoc(userRef, { role: 'admin' }, { merge: true });
+            await setDoc(userRef, { role: autoRole }, { merge: true });
           } catch (err) {
-            console.warn("Could not sync admin role to Firestore:", err);
+            console.warn("Could not sync role to Firestore:", err);
           }
         }
         useAuth.getState().setUser({ uid: firebaseUser.uid, ...userData, role: finalRole } as AppUser);
@@ -160,7 +165,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
         const newUser: Omit<AppUser, 'uid'> = {
           email: firebaseUser.email || '',
           displayName: firebaseUser.displayName || '',
-          role: isAdmin ? 'admin' : 'customer',
+          role: autoRole || 'customer',
           points: 0,
           createdAt: Date.now(),
         };
@@ -176,7 +181,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       const fallbackUser: Omit<AppUser, 'uid'> = {
         email: firebaseUser.email || '',
         displayName: firebaseUser.displayName || '',
-        role: isAdmin ? 'admin' : 'customer',
+        role: autoRole || 'customer',
         points: 0,
         createdAt: Date.now(),
       };
@@ -212,10 +217,18 @@ export const signUpWithEmail = async (email: string, pass: string, name: string)
     const snap = await getDoc(userRef);
     import('./cacheManager').then(m => m.trackFirestoreRead('users', 1)).catch(() => {});
     if (!snap.exists()) {
+       const userEmail = email.toLowerCase().trim();
+       let defaultRole: 'admin' | 'horeca_admin' | 'customer' = 'customer';
+       if (userEmail === 'freshnlocalco@gmail.com' || userEmail === 'mohitswami855@gmail.com' || userEmail === 'freshnlocal2@gmail.com' || userEmail.startsWith('admin@')) {
+         defaultRole = 'admin';
+       } else if (userEmail === 'horeca@gmail.com' || userEmail === 'horecaadmin@gmail.com' || userEmail.startsWith('horecaadmin@')) {
+         defaultRole = 'horeca_admin';
+       }
+
        await setDoc(userRef, {
           email: email,
           displayName: name,
-          role: (email === 'freshnlocalco@gmail.com' || email?.toLowerCase() === 'mohitswami855@gmail.com' || email?.toLowerCase() === 'freshnlocal2@gmail.com' || email?.startsWith('admin@')) ? 'admin' : 'customer',
+          role: defaultRole,
           createdAt: Date.now()
        });
     }

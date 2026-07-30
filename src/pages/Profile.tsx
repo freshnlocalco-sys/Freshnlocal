@@ -104,7 +104,7 @@ export function Profile() {
             <div className="space-y-1 mt-2 flex flex-col items-center">
               <h2 className="text-xl font-black uppercase text-foreground tracking-tight mt-2 flex items-center justify-center gap-2">
                 {user?.displayName || 'Customer'}
-                {user?.role === 'horeca' && (
+                {(user?.role === 'horeca' || user?.role === 'horeca_admin') && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full text-primary shadow-2xs" title="Verified HoReCa B2B Partner">
                     <Building2 className="w-3.5 h-3.5 text-primary" />
                     <span className="text-[10px] uppercase font-black tracking-widest text-primary">HoReCa B2B Partner</span>

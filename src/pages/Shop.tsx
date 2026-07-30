@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useProducts } from '../store/useProducts';
-import { db, handleFirestoreError, OperationType, isQuotaError } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType, isQuotaError, useAuth } from '../lib/firebase';
 import { Product, useCart } from '../store/useCart';
 import { Search, ShoppingBag, ArrowRight, Zap, Sparkles, History, TrendingUp, X, Filter } from 'lucide-react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
@@ -17,16 +17,39 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function Shop() {
+  const { user } = useAuth();
+  const isHorecaUser = user?.role === 'horeca' || user?.role === 'horeca_admin';
   const { products, loading: storeLoading, error, fetchProducts, fetchNextProducts, hasMore, loadingNext, hydrateFromIDB } = useProducts();
-  const { categoryImages, productCategories, fetchCategoryImages, lastFetched } = useSettings();
+  const { categoryImages, productCategories, horecaCategoryOrder, categoryVisibility, fetchCategoryImages, lastFetched } = useSettings();
+
   const allUiCategories = React.useMemo(() => {
-    const cleanCategories = productCategories.filter(cat => {
+    let baseCategories = productCategories;
+
+    if (isHorecaUser && horecaCategoryOrder && horecaCategoryOrder.length > 0) {
+      // Order based on horecaCategoryOrder, then append any remaining productCategories
+      const ordered = [...horecaCategoryOrder];
+      productCategories.forEach(cat => {
+        if (!ordered.some(c => c.toLowerCase().trim() === cat.toLowerCase().trim())) {
+          ordered.push(cat);
+        }
+      });
+      baseCategories = ordered;
+    }
+
+    const cleanCategories = baseCategories.filter(cat => {
       if (!cat) return false;
       const lower = cat.toLowerCase();
-      return !lower.includes('juice');
+      if (lower.includes('juice')) return false;
+
+      const vis = categoryVisibility[cat] || categoryVisibility[cat.trim()] || {};
+      if (isHorecaUser) {
+        return vis.horeca !== false;
+      } else {
+        return vis.retail !== false;
+      }
     });
     return ['All Products', ...cleanCategories];
-  }, [productCategories]);
+  }, [productCategories, horecaCategoryOrder, categoryVisibility, isHorecaUser]);
   const [loading, setLoading] = useState(true);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -206,6 +229,14 @@ export function Shop() {
       return false;
     }
 
+    // Filter out categories hidden for this channel (Retail vs HoReCa) unless actively searching
+    const catVis = categoryVisibility[p.category] || categoryVisibility[(p.category || '').trim()] || {};
+    if (isHorecaUser) {
+      if (catVis.horeca === false && !searchLower) return false;
+    } else {
+      if (catVis.retail === false && !searchLower) return false;
+    }
+
     // Handle singular/plural mismatches for vegetables
     const isVegetableMatch = (
       (productCategory === 'exotic vegetables' && categoryFilter.toLowerCase() === 'exotic vegetable') ||
@@ -236,10 +267,38 @@ export function Shop() {
 
   const filteredProducts = React.useMemo(() => {
     const list = [...filteredProductsRaw];
-    const catOrder = new Map();
-    try {
-      productCategories.forEach((c, i) => { if (c) catOrder.set(c.toLowerCase().trim(), i) });
-    } catch(e) {}
+    const catOrder = new Map<string, number>();
+
+    // Populate catOrder using allUiCategories (skip 'All Products')
+    const activeCategoriesList = allUiCategories.slice(1);
+    activeCategoriesList.forEach((c, i) => {
+      if (!c) return;
+      const lower = c.toLowerCase().trim().replace(' font-bold', '');
+      catOrder.set(lower, i);
+
+      // Handle common singular/plural/variation aliases
+      if (lower === 'exotic vegetable' || lower === 'exotic vegetables') {
+        catOrder.set('exotic vegetable', i);
+        catOrder.set('exotic vegetables', i);
+        catOrder.set('imported / super exotic vegetables', i);
+      }
+      if (lower === 'imported vegetable' || lower === 'imported vegetables') {
+        catOrder.set('imported vegetable', i);
+        catOrder.set('imported vegetables', i);
+      }
+      if (lower === 'mushroom' || lower === 'mushrooms') {
+        catOrder.set('mushroom', i);
+        catOrder.set('mushrooms', i);
+      }
+      if (lower === 'in season fruits' || lower === 'in season fruuts') {
+        catOrder.set('in season fruits', i);
+        catOrder.set('in season fruuts', i);
+      }
+      if (lower === 'clean cuts' || lower === 'fresh & hygenic cut fruits and vegetables') {
+        catOrder.set('clean cuts', i);
+        catOrder.set('fresh & hygenic cut fruits and vegetables', i);
+      }
+    });
 
     const searchLower = (searchQuery || '').toLowerCase();
 
@@ -255,28 +314,19 @@ export function Shop() {
         if (!aStarts && bStarts) return 1;
       }
 
-      const isOutA = a.inStock === false;
-      const isOutB = b.inStock === false;
-
       let catA = (a.category || '').toLowerCase().trim().replace(' font-bold', '');
       let catB = (b.category || '').toLowerCase().trim().replace(' font-bold', '');
-      
-      if (catA === 'exotic vegetables') catA = 'exotic vegetable';
-      if (catA === 'imported vegetables') catA = 'imported vegetable';
-      if (catA === 'imported / super exotic vegetables') catA = 'exotic vegetable';
-      if (catA === 'mushrooms') catA = 'mushroom';
-      
-      if (catB === 'exotic vegetables') catB = 'exotic vegetable';
-      if (catB === 'imported vegetables') catB = 'imported vegetable';
-      if (catB === 'imported / super exotic vegetables') catB = 'exotic vegetable';
-      if (catB === 'mushrooms') catB = 'mushroom';
 
       if (catA !== catB) {
-        const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
-        const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
-        return idxA - idxB;
+        const idxA = catOrder.has(catA) ? catOrder.get(catA)! : 999;
+        const idxB = catOrder.has(catB) ? catOrder.get(catB)! : 999;
+        if (idxA !== idxB) {
+          return idxA - idxB;
+        }
       }
 
+      const isOutA = a.inStock === false;
+      const isOutB = b.inStock === false;
       if (isOutA !== isOutB) {
         return isOutA ? 1 : -1;
       }
@@ -284,7 +334,7 @@ export function Shop() {
       return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
     });
     return list;
-  }, [filteredProductsRaw, productCategories]);
+  }, [filteredProductsRaw, allUiCategories, searchQuery]);
 
   // Infinite Scroll Intersection Observer
   useEffect(() => {

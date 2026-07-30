@@ -121,7 +121,7 @@ export function Cart() {
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const cartItems = items.filter(item => item && item.product && item.product.id);
   const { user, setUser } = useAuth();
-  const isHoreca = user?.role === 'horeca';
+  const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
   const navigate = useNavigate();
   const { deferredPrompt, showInstallPrompt } = usePWA();
   const [showPwaModal, setShowPwaModal] = useState(false);

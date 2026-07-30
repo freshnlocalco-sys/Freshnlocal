@@ -252,7 +252,8 @@ function HeroImage({ src, alt }: { src: string, alt: string }) {
 
 export function Home() {
   const { user } = useAuth();
-  const { categoryImages, productCategories, loading: settingsLoading } = useSettings();
+  const isHorecaUser = user?.role === 'horeca' || user?.role === 'horeca_admin';
+  const { categoryImages, productCategories, horecaCategoryOrder, categoryVisibility, loading: settingsLoading } = useSettings();
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
   const [spotlightsLoading, setSpotlightsLoading] = useState(true);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
@@ -261,7 +262,29 @@ export function Home() {
   const activeCategories: { id: string; name: string; tagline: string; discount: string; originalId?: string }[] = React.useMemo(() => {
     if (!productCategories || productCategories.length === 0) return CATEGORIES;
     
-    return productCategories.map(catName => {
+    let baseCategories = productCategories;
+
+    if (isHorecaUser && horecaCategoryOrder && horecaCategoryOrder.length > 0) {
+      const ordered = [...horecaCategoryOrder];
+      productCategories.forEach(cat => {
+        if (!ordered.some(c => c.toLowerCase().trim() === cat.toLowerCase().trim())) {
+          ordered.push(cat);
+        }
+      });
+      baseCategories = ordered;
+    }
+
+    const visibleCategories = baseCategories.filter(catName => {
+      if (!catName) return false;
+      const vis = categoryVisibility[catName] || categoryVisibility[catName.trim()] || {};
+      if (isHorecaUser) {
+        return vis.horeca !== false;
+      } else {
+        return vis.retail !== false;
+      }
+    });
+
+    return visibleCategories.map(catName => {
       const match = CATEGORIES.find(c => {
         const cLower = c.name.toLowerCase();
         const catLower = catName.toLowerCase();
@@ -288,7 +311,7 @@ export function Home() {
         originalId: catName.toLowerCase()
       };
     });
-  }, [productCategories]);
+  }, [productCategories, horecaCategoryOrder, categoryVisibility, isHorecaUser]);
 
   const { products, fetchProducts, hydrateFromIDB } = useProducts();
   const { addItem, items } = useCart();
@@ -722,9 +745,44 @@ export function Home() {
 
             {activeCategories.map(category => {
               const categoryProducts = products.filter(p => {
-                const pCat = (p.category || '').toLowerCase();
-                const cId = category.id.toLowerCase();
-                return pCat === cId || (category.originalId && pCat === category.originalId.toLowerCase());
+                let pCat = (p.category || '').toLowerCase().trim().replace(' font-bold', '');
+                let cName = (category.name || '').toLowerCase().trim().replace(' font-bold', '');
+                let cId = (category.id || '').toLowerCase().trim();
+                let origId = (category.originalId || '').toLowerCase().trim();
+
+                // Normalize vegetable / mushroom / fruits singular and plural forms
+                if (pCat === 'exotic vegetables' || pCat === 'imported / super exotic vegetables') pCat = 'exotic vegetable';
+                if (pCat === 'imported vegetables') pCat = 'imported vegetable';
+                if (pCat === 'mushrooms') pCat = 'mushroom';
+                if (pCat === 'in season fruuts') pCat = 'in season fruits';
+
+                if (cName === 'exotic vegetables' || cName === 'imported / super exotic vegetables') cName = 'exotic vegetable';
+                if (cName === 'imported vegetables') cName = 'imported vegetable';
+                if (cName === 'mushrooms') cName = 'mushroom';
+                if (cName === 'in season fruuts') cName = 'in season fruits';
+
+                if (cId === 'exotic vegetables' || cId === 'imported / super exotic vegetables') cId = 'exotic vegetable';
+                if (cId === 'imported vegetables') cId = 'imported vegetable';
+                if (cId === 'mushrooms') cId = 'mushroom';
+                if (cId === 'in season fruuts') cId = 'in season fruits';
+
+                if (origId === 'exotic vegetables' || origId === 'imported / super exotic vegetables') origId = 'exotic vegetable';
+                if (origId === 'imported vegetables') origId = 'imported vegetable';
+                if (origId === 'mushrooms') origId = 'mushroom';
+                if (origId === 'in season fruuts') origId = 'in season fruits';
+
+                const matchesCat = (pCat === cName || pCat === cId || (origId && pCat === origId));
+                if (!matchesCat) return false;
+
+                // Check channel visibility
+                const vis = categoryVisibility[p.category] || categoryVisibility[(p.category || '').trim()] || {};
+                if (isHorecaUser) {
+                  if (vis.horeca === false) return false;
+                } else {
+                  if (vis.retail === false) return false;
+                }
+
+                return true;
               });
               // Only show category if it has products
               if (categoryProducts.length === 0) return null;

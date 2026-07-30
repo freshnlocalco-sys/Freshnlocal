@@ -46,7 +46,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
   
-  const isHoreca = user?.role === 'horeca';
+  const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
   const [isExpanded, setIsExpanded] = useState(false);
   const [stagedQuantity, setStagedQuantity] = useState<number>(isHoreca ? 1 : 1);
 

@@ -15,9 +15,14 @@ service cloud.firestore {
           request.auth.token.email.lower() == 'freshnlocalco@gmail.com' || 
           request.auth.token.email.lower() == 'mohitswami855@gmail.com' || 
           request.auth.token.email.lower() == 'freshnlocal2@gmail.com' || 
+          request.auth.token.email.lower() == 'horeca@gmail.com' ||
+          request.auth.token.email.lower() == 'horecaadmin@gmail.com' ||
           request.auth.token.email.lower() == 'system-email-trigger@freshnlocal.com'
         )) || 
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'customer') == 'admin')
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'customer') == 'admin' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'customer') == 'horeca_admin'
+        ))
       ); 
     }
     
@@ -49,7 +54,7 @@ service cloud.firestore {
         return data.size() >= 3 && data.size() <= 30
           && data.keys().hasAll(['email', 'role', 'createdAt'])
           && data.email is string && data.email.size() <= 150
-          && data.role is string && (data.role == 'customer' || data.role == 'admin' || data.role == 'horeca')
+          && data.role is string && (data.role == 'customer' || data.role == 'admin' || data.role == 'horeca' || data.role == 'horeca_admin')
           && data.createdAt is number;
       }
       
@@ -59,12 +64,12 @@ service cloud.firestore {
       allow create: if isSignedIn() 
         && request.auth.uid == userId 
         && isValidUser(incoming())
-        && (incoming().role == 'customer' || incoming().role == 'horeca' || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email.lower() == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com' || request.auth.token.email.lower() == 'freshnlocal2@gmail.com')) || isAdmin());
+        && (incoming().role == 'customer' || incoming().role == 'horeca' || (incoming().role == 'horeca_admin' && request.auth.token.email != null && (request.auth.token.email.lower() == 'horeca@gmail.com' || request.auth.token.email.lower() == 'horecaadmin@gmail.com')) || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email.lower() == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com' || request.auth.token.email.lower() == 'freshnlocal2@gmail.com')) || isAdmin());
         
       allow update: if isSignedIn() 
         && (request.auth.uid == userId || isAdmin())
         && isValidUser(incoming())
-        && (incoming().role == existing().role || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email.lower() == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com' || request.auth.token.email.lower() == 'freshnlocal2@gmail.com')) || isAdmin());
+        && (incoming().role == existing().role || (incoming().role == 'horeca_admin' && request.auth.token.email != null && (request.auth.token.email.lower() == 'horeca@gmail.com' || request.auth.token.email.lower() == 'horecaadmin@gmail.com')) || (incoming().role == 'admin' && request.auth.token.email != null && (request.auth.token.email.lower() == 'freshnlocalco@gmail.com' || request.auth.token.email.lower() == 'mohitswami855@gmail.com' || request.auth.token.email.lower() == 'freshnlocal2@gmail.com')) || isAdmin());
     }
     
     match /products/{productId} {

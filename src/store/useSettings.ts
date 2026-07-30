@@ -9,6 +9,13 @@ export interface CategoryImageMapping {
   [category: string]: string;
 }
 
+export interface CategoryVisibility {
+  [category: string]: {
+    retail?: boolean;
+    horeca?: boolean;
+  };
+}
+
 export interface JuiceCategory {
   id: string;
   name: string;
@@ -19,19 +26,23 @@ export interface JuiceCategory {
 
 interface SettingsState {
   categoryImages: CategoryImageMapping;
+  categoryVisibility: CategoryVisibility;
   productCategories: string[];
+  horecaCategoryOrder: string[];
   juiceCategories: JuiceCategory[];
   lastFetched: number;
   loading: boolean;
   error: string | null;
   fetchCategoryImages: (force?: boolean) => Promise<void>;
   updateCategoryImage: (category: string, url: string) => Promise<void>;
+  updateCategoryVisibility: (category: string, target: 'retail' | 'horeca', visible: boolean) => Promise<void>;
   addProductCategory: (categoryName: string, imageUrl?: string) => Promise<void>;
   editProductCategory: (oldCategoryName: string, newCategoryName: string) => Promise<void>;
   addJuiceCategory: (name: string, tagline: string, imageUrl?: string) => Promise<void>;
   deleteProductCategory: (categoryName: string) => Promise<void>;
   deleteJuiceCategory: (id: string, name: string) => Promise<void>;
   reorderProductCategories: (newOrder: string[]) => Promise<void>;
+  reorderHorecaCategories: (newOrder: string[]) => Promise<void>;
   reorderJuiceCategories: (newOrder: JuiceCategory[]) => Promise<void>;
   faviconUrl: string | null;
   fetchFavicon: () => Promise<void>;
@@ -78,7 +89,9 @@ const getInitialFaviconUrl = () => {
 
 export const useSettings = create<SettingsState>((set, get) => ({
   categoryImages: {},
+  categoryVisibility: {},
   productCategories: DEFAULT_PRODUCT_CATEGORIES,
+  horecaCategoryOrder: [],
   juiceCategories: DEFAULT_JUICE_SECTIONS,
   faviconUrl: getInitialFaviconUrl(),
   lastFetched: 0,
@@ -95,7 +108,9 @@ export const useSettings = create<SettingsState>((set, get) => ({
     // 2. Load from localStorage immediately if cache exists (supports SWR instantly)
     const cachedImages = cacheManager.get<CategoryImageMapping>('categoryImages', true);
     const cachedProdCats = cacheManager.get<string[]>('productCategories', true);
+    const cachedHorecaOrder = cacheManager.get<string[]>('horecaCategoryOrder', true);
     const cachedJuiceCats = cacheManager.get<JuiceCategory[]>('juiceCategories', true);
+    const cachedVisibility = cacheManager.get<CategoryVisibility>('categoryVisibility', true);
 
     if (cachedImages) {
       set({ categoryImages: cachedImages });
@@ -103,11 +118,16 @@ export const useSettings = create<SettingsState>((set, get) => ({
     if (cachedProdCats) {
       set({ productCategories: cachedProdCats });
     }
+    if (cachedHorecaOrder) {
+      set({ horecaCategoryOrder: cachedHorecaOrder });
+    }
     if (cachedJuiceCats) {
       set({ juiceCategories: cachedJuiceCats });
     }
+    if (cachedVisibility) {
+      set({ categoryVisibility: cachedVisibility });
+    }
 
-    // 3. See if the cache is unexpired (< 24 hours) and we aren't forcing
     // 3. See if the cache is unexpired (< 24 hours) and we aren't forcing
     const isCacheFresh = cacheManager.isValid('categoryImages') && cacheManager.isValid('productCategories') && cacheManager.isValid('juiceCategories');
     if (!force && isCacheFresh && cachedImages && cachedProdCats && cachedJuiceCats) {
@@ -134,27 +154,39 @@ export const useSettings = create<SettingsState>((set, get) => ({
         const catSnap = await getDoc(catRef);
         trackFirestoreRead('settings', 1);
         let prodCats = DEFAULT_PRODUCT_CATEGORIES;
+        let horecaOrder: string[] = [];
         let juiceCats = DEFAULT_JUICE_SECTIONS;
+        let catVisibility: CategoryVisibility = {};
 
         if (catSnap.exists()) {
           const catData = catSnap.data();
           if (catData.productCategories) {
             prodCats = catData.productCategories;
           }
+          if (catData.horecaCategoryOrder) {
+            horecaOrder = catData.horecaCategoryOrder;
+          }
           if (catData.juiceCategories || catData.juiceData) {
             juiceCats = catData.juiceData || catData.juiceCategories;
+          }
+          if (catData.categoryVisibility) {
+            catVisibility = catData.categoryVisibility;
           }
         }
 
         // Save back to cache
         cacheManager.set('categoryImages', imagesData);
         cacheManager.set('productCategories', prodCats);
+        cacheManager.set('horecaCategoryOrder', horecaOrder);
         cacheManager.set('juiceCategories', juiceCats);
+        cacheManager.set('categoryVisibility', catVisibility);
 
         set({ 
           categoryImages: imagesData, 
           productCategories: prodCats,
+          horecaCategoryOrder: horecaOrder,
           juiceCategories: juiceCats,
+          categoryVisibility: catVisibility,
           lastFetched: Date.now(), 
           loading: false 
         });
@@ -197,6 +229,29 @@ export const useSettings = create<SettingsState>((set, get) => ({
       toast.success('Category image updated successfully');
     } catch (error: any) {
       handleFirestoreError(error, OperationType.WRITE, 'settings/categoryImages');
+      throw error;
+    }
+  },
+  updateCategoryVisibility: async (category: string, target: 'retail' | 'horeca', visible: boolean) => {
+    try {
+      const current = get().categoryVisibility || {};
+      const normKey = category.trim();
+      const updatedVisibility = {
+        ...current,
+        [normKey]: {
+          ...(current[normKey] || { retail: true, horeca: true }),
+          [target]: visible
+        }
+      };
+      
+      const docRef = doc(db, 'settings', 'categoriesConfig');
+      await setDoc(docRef, { categoryVisibility: updatedVisibility }, { merge: true });
+      
+      cacheManager.set('categoryVisibility', updatedVisibility);
+      set({ categoryVisibility: updatedVisibility });
+      toast.success(`Category "${normKey}" ${visible ? 'enabled' : 'hidden'} for ${target.toUpperCase()}`);
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
       throw error;
     }
   },
@@ -440,6 +495,18 @@ export const useSettings = create<SettingsState>((set, get) => ({
       set({ productCategories: newOrder });
     } catch (error: any) {
       toast.error('Failed to reorder categories');
+      throw error;
+    }
+  },
+  reorderHorecaCategories: async (newOrder: string[]) => {
+    try {
+      const docRef = doc(db, 'settings', 'categoriesConfig');
+      await setDoc(docRef, { horecaCategoryOrder: newOrder }, { merge: true });
+      cacheManager.set('horecaCategoryOrder', newOrder);
+      set({ horecaCategoryOrder: newOrder });
+      toast.success('HoReCa category order updated');
+    } catch (error: any) {
+      toast.error('Failed to reorder HoReCa categories');
       throw error;
     }
   },

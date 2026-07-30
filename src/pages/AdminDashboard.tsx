@@ -234,15 +234,19 @@ export function AdminDashboard() {
   
   const { 
     categoryImages, 
+    categoryVisibility,
     productCategories, 
+    horecaCategoryOrder,
     juiceCategories, 
     fetchCategoryImages, 
     updateCategoryImage, 
+    updateCategoryVisibility,
     addProductCategory, 
     addJuiceCategory, 
     deleteProductCategory,
     deleteJuiceCategory,
     reorderProductCategories,
+    reorderHorecaCategories,
     reorderJuiceCategories,
     loading: settingsLoading 
   } = useSettings();
@@ -839,12 +843,13 @@ export function AdminDashboard() {
 
   const [draggedProdCat, setDraggedProdCat] = useState<number | null>(null);
   const [dragOverProdCat, setDragOverProdCat] = useState<number | null>(null);
+  const [categoryOrderMode, setCategoryOrderMode] = useState<'retail' | 'horeca'>('retail');
   
   const [draggedJuiceCat, setDraggedJuiceCat] = useState<number | null>(null);
   const [dragOverJuiceCat, setDragOverJuiceCat] = useState<number | null>(null);
 
   useEffect(() => {
-    if (user?.role !== 'admin') return;
+    if (user?.role !== 'admin' && user?.role !== 'horeca_admin') return;
     
     async function fetchData() {
       try {
@@ -1125,12 +1130,12 @@ export function AdminDashboard() {
     );
   }
 
-  if (user?.role !== 'admin') {
+  if (user?.role !== 'admin' && user?.role !== 'horeca_admin') {
     return (
       <div className="max-w-md mx-auto my-24 p-8 rounded-[28px] bg-secondary border border-red-500/20 text-center space-y-4">
         <span className="text-red-400 font-mono text-xs uppercase tracking-widest block">403 FORBIDDEN</span>
         <h2 className="text-xl font-black uppercase text-foreground">Access Denied</h2>
-        <p className="text-xs text-muted-foreground">You do not possess the necessary administrative credentials to view this control desk.</p>
+        <p className="text-xs text-muted-foreground">You do not possess administrative or HoReCa control desk credentials to view this desk.</p>
       </div>
     );
   }
@@ -2443,10 +2448,22 @@ export function AdminDashboard() {
       {/* Admin Sidebar Navigation */}
       <div className="w-full md:w-64 lg:w-72 border-b md:border-b-0 md:border-r border-border bg-secondary shrink-0 flex flex-col p-4 sm:p-6 sticky top-0 md:top-20 z-10 md:h-[calc(100vh-80px)] overflow-y-auto">
         <div className="space-y-1.5 bg-transparent mb-6 sm:mb-8 mt-2">
-          <span className="glass-pill text-[8px] sm:text-[10px]">Command Station</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="glass-pill text-[8px] sm:text-[10px]">Command Station</span>
+            {user?.role === 'horeca_admin' && (
+              <span className="bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 font-black text-[8px] sm:text-[9px] px-2 py-0.5 rounded-md uppercase tracking-wider">
+                🏢 HoReCa Admin
+              </span>
+            )}
+          </div>
           <h1 className="text-xl sm:text-2xl font-sans font-black uppercase text-foreground tracking-tight mt-2.5">
-            Logistics
+            {user?.role === 'horeca_admin' ? 'HoReCa Logistics' : 'Logistics'}
           </h1>
+          {user?.role === 'horeca_admin' && (
+            <p className="text-[9px] text-muted-foreground font-semibold">
+              Signed in as <span className="font-mono text-primary font-bold">{user.email}</span>
+            </p>
+          )}
         </div>
         
         <nav className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0 no-scrollbar">
@@ -3687,39 +3704,106 @@ export function AdminDashboard() {
                 </button>
               </div>
 
-              {/* Grid of registered produce categories */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-                {productCategories.map((cat, index) => {
-                  if (!cat) return null;
-                  const currentImg = getCategoryImage(cat, categoryImages);
-                  const normalizedKey = cat.toLowerCase().replace(/ font-bold/gi, '').trim();
-                  const customImg = categoryImages[normalizedKey] || '';
-                  return (
-                    <div 
-                      key={cat} 
-                      draggable
-                      onDragStart={(e) => {
-                        setDraggedProdCat(index);
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setDragOverProdCat(index);
-                      }}
-                      onDragLeave={() => setDragOverProdCat(null)}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (draggedProdCat !== null && draggedProdCat !== index) {
-                          const newOrder = [...productCategories];
-                          const [removed] = newOrder.splice(draggedProdCat, 1);
-                          newOrder.splice(index, 0, removed);
-                          reorderProductCategories(newOrder);
-                        }
-                        setDraggedProdCat(null);
-                        setDragOverProdCat(null);
-                      }}
-                      className={`slice-card p-4 sm:p-6 bg-secondary border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group cursor-move transition-all ${dragOverProdCat === index ? 'border-primary border-dashed border-2' : 'border-border'}`}
-                    >
+              {/* Channel Order Selector bar */}
+              {(() => {
+                const displayedCategories = categoryOrderMode === 'retail'
+                  ? productCategories
+                  : (horecaCategoryOrder && horecaCategoryOrder.length > 0
+                      ? (() => {
+                          const list = [...horecaCategoryOrder];
+                          productCategories.forEach(cat => {
+                            if (!list.some(c => c.toLowerCase().trim() === cat.toLowerCase().trim())) {
+                              list.push(cat);
+                            }
+                          });
+                          return list;
+                        })()
+                      : productCategories);
+
+                return (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-secondary/60 p-4 rounded-2xl border border-border/80">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-extrabold text-xs uppercase tracking-wider text-foreground">Category Arrangement Mode</h3>
+                          <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                            categoryOrderMode === 'retail' 
+                              ? 'bg-primary/10 text-primary border border-primary/20' 
+                              : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/30'
+                          }`}>
+                            Active: {categoryOrderMode === 'retail' ? 'Retail View' : 'HoReCa View'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                          Drag and drop category cards below to set custom sequence for <strong className="text-foreground">{categoryOrderMode === 'retail' ? 'Retail Customers' : 'HoReCa Partners'}</strong>
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 bg-background p-1.5 rounded-xl border border-border self-start sm:self-auto shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setCategoryOrderMode('retail')}
+                          className={`px-3 py-1.5 rounded-lg text-[9.5px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+                            categoryOrderMode === 'retail'
+                              ? 'bg-primary text-primary-foreground shadow-xs'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                          }`}
+                        >
+                          <span>🛒</span>
+                          <span>Retail Order</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCategoryOrderMode('horeca')}
+                          className={`px-3 py-1.5 rounded-lg text-[9.5px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+                            categoryOrderMode === 'horeca'
+                              ? 'bg-emerald-600 text-white shadow-xs'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                          }`}
+                        >
+                          <span>🏢</span>
+                          <span>HoReCa Order</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Grid of registered produce categories */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+                      {displayedCategories.map((cat, index) => {
+                        if (!cat) return null;
+                        const currentImg = getCategoryImage(cat, categoryImages);
+                        const normalizedKey = cat.toLowerCase().replace(/ font-bold/gi, '').trim();
+                        const customImg = categoryImages[normalizedKey] || '';
+                        return (
+                          <div 
+                            key={cat} 
+                            draggable
+                            onDragStart={(e) => {
+                              setDraggedProdCat(index);
+                              e.dataTransfer.effectAllowed = 'move';
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setDragOverProdCat(index);
+                            }}
+                            onDragLeave={() => setDragOverProdCat(null)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (draggedProdCat !== null && draggedProdCat !== index) {
+                                const newOrder = [...displayedCategories];
+                                const [removed] = newOrder.splice(draggedProdCat, 1);
+                                newOrder.splice(index, 0, removed);
+                                if (categoryOrderMode === 'retail') {
+                                  reorderProductCategories(newOrder);
+                                } else {
+                                  reorderHorecaCategories(newOrder);
+                                }
+                              }
+                              setDraggedProdCat(null);
+                              setDragOverProdCat(null);
+                            }}
+                            className={`slice-card p-4 sm:p-6 bg-secondary border flex flex-col gap-3 sm:gap-4 relative overflow-hidden group cursor-move transition-all ${dragOverProdCat === index ? 'border-primary border-dashed border-2' : 'border-border'}`}
+                          >
                       <div className="flex justify-between items-start gap-2 z-10 w-full min-w-0">
                         <h3 className="font-extrabold text-[10px] sm:text-xs uppercase tracking-widest text-foreground truncate flex-1 leading-tight self-center" title={cat}>{cat}</h3>
                         <div className="flex gap-1 shrink-0 self-center">
@@ -3774,11 +3858,56 @@ export function AdminDashboard() {
                           className="slice-input w-full text-[9px]"
                         />
                       </div>
+
+                      {/* Showcase Channel Visibility Controls */}
+                      {(() => {
+                        const vis = categoryVisibility[cat] || categoryVisibility[normalizedKey] || {};
+                        const isRetailVisible = vis.retail !== false;
+                        const isHorecaVisible = vis.horeca !== false;
+                        return (
+                          <div className="z-10 mt-3 pt-3 border-t border-border/50 space-y-1.5">
+                            <div className="text-[8px] uppercase tracking-widest font-extrabold text-foreground/70 flex items-center justify-between">
+                              <span>Channel Visibility</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5 text-[8.5px] font-extrabold uppercase tracking-widest">
+                              <button
+                                type="button"
+                                onClick={() => updateCategoryVisibility(cat, 'retail', !isRetailVisible)}
+                                className={`py-1.5 px-2.5 rounded-lg border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                  isRetailVisible 
+                                    ? 'bg-primary/10 text-primary border-primary/20 shadow-xs font-black' 
+                                    : 'bg-secondary/60 text-muted-foreground/50 border-border/40 opacity-60'
+                                }`}
+                                title={isRetailVisible ? 'Enabled for Retail Catalog' : 'Hidden in Retail Catalog'}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${isRetailVisible ? 'bg-primary animate-pulse' : 'bg-neutral-300'}`} />
+                                <span>Retail</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateCategoryVisibility(cat, 'horeca', !isHorecaVisible)}
+                                className={`py-1.5 px-2.5 rounded-lg border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                  isHorecaVisible 
+                                    ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/25 shadow-xs font-black' 
+                                    : 'bg-secondary/60 text-muted-foreground/50 border-border/40 opacity-60'
+                                }`}
+                                title={isHorecaVisible ? 'Enabled for HoReCa Catalog' : 'Hidden in HoReCa Catalog'}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${isHorecaVisible ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-300/40'}`} />
+                                <span>HoReCa</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}
               </div>
             </div>
+          );
+        })()}
+      </div>
 
             <hr className="border-border" />
 

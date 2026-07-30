@@ -45,7 +45,7 @@ export function ProductDetail() {
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0] || { unit: '', price: 0, originalPrice: 0, horecaPrice: undefined, horecaUnit: '' };
   
-  const isHoreca = user?.role === 'horeca';
+  const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
