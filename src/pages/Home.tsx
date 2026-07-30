@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight, Snowflake, Building2, Recycle, PackageCheck, Bike, HeartHandshake, HeartPulse, Search, Bot } from 'lucide-react';
-import { db, isQuotaError } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight, Snowflake, Building2, Recycle, PackageCheck, Bike, HeartHandshake, HeartPulse, Search, Bot, RotateCcw } from 'lucide-react';
+import { db, isQuotaError, useAuth } from '../lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useSettings } from '../store/useSettings';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { getCategoryImage } from '../lib/constants';
@@ -113,6 +113,96 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
   );
 }
 
+function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products: Product[]; handleAddToCart: (product: Product) => void, onQuickView: (product: Product) => void }) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    let animationFrameId: number;
+    let accumulatedScroll = 0;
+    const pixelsPerFrame = 0.5;
+    
+    const smoothScroll = () => {
+      if (!isHovered && scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        
+        accumulatedScroll += pixelsPerFrame;
+        
+        if (accumulatedScroll >= 1) {
+          const scrollPixels = Math.floor(accumulatedScroll);
+          accumulatedScroll -= scrollPixels;
+          
+          if (container.scrollLeft >= maxScrollLeft - 1) {
+            container.scrollLeft = 0;
+          } else {
+            container.scrollLeft += scrollPixels;
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(smoothScroll);
+    };
+
+    animationFrameId = requestAnimationFrame(smoothScroll);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isHovered]);
+
+  return (
+    <div 
+      className="w-full relative group py-2 transition-all duration-300"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex justify-between items-end mb-4 sm:mb-6 px-1">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm">
+            <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">
+                REORDER
+              </h2>
+              <span className="bg-primary text-white text-[9px] sm:text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider shadow-xs">
+                BUY AGAIN
+              </span>
+            </div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-semibold">Your previously ordered products ready for quick restock</p>
+          </div>
+        </div>
+        <Link to="/orders" className="text-[10px] sm:text-xs font-bold text-primary flex items-center hover:underline uppercase tracking-wider shrink-0">
+          Order History <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5" />
+        </Link>
+      </div>
+      
+      <div 
+        ref={scrollContainerRef}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={() => setIsHovered(true)}
+        onTouchEnd={() => setIsHovered(false)}
+        className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1"
+      >
+        {products.map(product => (
+          <div key={`reorder-${product.id}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+            <div className="w-full">
+              <ProductCard 
+                product={product}
+                onAddToCart={handleAddToCart}
+                onQuickView={onQuickView}
+                isReorderItem={true}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CategoryImage({ src, alt }: { src?: string; alt: string }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   
@@ -161,10 +251,12 @@ function HeroImage({ src, alt }: { src: string, alt: string }) {
 }
 
 export function Home() {
+  const { user } = useAuth();
   const { categoryImages, productCategories, loading: settingsLoading } = useSettings();
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {image: string}>>({});
   const [spotlightsLoading, setSpotlightsLoading] = useState(true);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [reorderProducts, setReorderProducts] = useState<Product[]>([]);
 
   const activeCategories: { id: string; name: string; tagline: string; discount: string; originalId?: string }[] = React.useMemo(() => {
     if (!productCategories || productCategories.length === 0) return CATEGORIES;
@@ -220,6 +312,70 @@ export function Home() {
     }
     init();
   }, [fetchProducts, hydrateFromIDB]);
+
+  useEffect(() => {
+    async function fetchReorderItems() {
+      if (!user?.uid) {
+        setReorderProducts([]);
+        return;
+      }
+
+      try {
+        const q = query(
+          collection(db, 'orders'),
+          where('userId', '==', user.uid)
+        );
+        const querySnap = await getDocs(q);
+        trackFirestoreRead('orders', querySnap.docs.length || 1);
+
+        if (querySnap.empty) {
+          setReorderProducts([]);
+          return;
+        }
+
+        const orderedProductTimestamps = new Map<string, number>();
+
+        querySnap.docs.forEach((d) => {
+          const data = d.data();
+          const itemsArr = data.items || [];
+          const timestamp = data.createdAt || 0;
+
+          itemsArr.forEach((item: any) => {
+            const rawProduct = item.product || item;
+            const rawId = rawProduct.id || item.id;
+            if (rawId) {
+              const baseId = rawId.split('-')[0];
+              orderedProductTimestamps.set(baseId, Math.max(orderedProductTimestamps.get(baseId) || 0, timestamp));
+            }
+          });
+        });
+
+        if (orderedProductTimestamps.size === 0) {
+          setReorderProducts([]);
+          return;
+        }
+
+        const sortedBaseIds = Array.from(orderedProductTimestamps.entries())
+          .sort((a, b) => b[1] - a[1])
+          .map(entry => entry[0]);
+
+        const matchedList: Product[] = [];
+        sortedBaseIds.forEach(baseId => {
+          const found = products.find(p => p.id === baseId || (p.id && baseId.startsWith(p.id)));
+          if (found && !matchedList.some(m => m.id === found.id)) {
+            matchedList.push(found);
+          }
+        });
+
+        setReorderProducts(matchedList);
+      } catch (err) {
+        console.warn("Could not fetch user reorder items:", err);
+        setReorderProducts([]);
+      }
+    }
+
+    fetchReorderItems();
+  }, [user, products]);
 
   useEffect(() => {
     async function fetchHeroBanners() {
@@ -554,6 +710,16 @@ export function Home() {
                 transform: translateZ(0);
               }
             `}} />
+
+            {/* REORDER SECTION - Displayed on top of 1st category showcase line for existing customers with past orders */}
+            {reorderProducts.length > 0 && (
+              <ReorderCarousel 
+                products={reorderProducts}
+                handleAddToCart={handleAddToCart}
+                onQuickView={setQuickViewProduct}
+              />
+            )}
+
             {activeCategories.map(category => {
               const categoryProducts = products.filter(p => {
                 const pCat = (p.category || '').toLowerCase();

@@ -1,20 +1,124 @@
-import React, { useState } from 'react';
-import { useCart } from '../store/useCart';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2 } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight } from 'lucide-react';
 import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { usePWA } from '../store/usePWA';
+import { useProducts } from '../store/useProducts';
+import { ProductCard } from '../components/ProductCard';
+import { QuickViewModal } from '../components/QuickViewModal';
 import { QuantityInput } from '../components/QuantityInput';
 import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 
+function YouMightAlsoLikeSection({ 
+  products, 
+  onAddToCart, 
+  onQuickView 
+}: { 
+  products: Product[]; 
+  onAddToCart: (product: Product, quantity?: number) => void; 
+  onQuickView: (product: Product) => void; 
+}) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    let animationFrameId: number;
+    let accumulatedScroll = 0;
+    const pixelsPerFrame = 0.4; // Slow, smooth auto scroll like Home page
+    
+    const smoothScroll = () => {
+      if (!isHovered && scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        
+        accumulatedScroll += pixelsPerFrame;
+        
+        if (accumulatedScroll >= 1) {
+          const scrollPixels = Math.floor(accumulatedScroll);
+          accumulatedScroll -= scrollPixels;
+          
+          if (container.scrollLeft >= maxScrollLeft - 1) {
+            container.scrollLeft = 0;
+          } else {
+            container.scrollLeft += scrollPixels;
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(smoothScroll);
+    };
+
+    animationFrameId = requestAnimationFrame(smoothScroll);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isHovered, products]);
+
+  if (!products || products.length === 0) return null;
+
+  return (
+    <div 
+      className="w-full mt-12 pt-8 border-t border-border group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-2 px-2">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-sans font-black uppercase text-foreground tracking-tight">
+              YOU MIGHT ALSO LIKE
+            </h2>
+            <span className="bg-primary/10 text-primary border border-primary/20 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider">
+              MATCHING PAIRINGS
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground font-semibold mt-1">
+            Fresh recommendations selected to match products in your cart
+          </p>
+        </div>
+        <Link 
+          to="/shop" 
+          className="text-xs font-bold text-primary flex items-center hover:underline uppercase tracking-wider shrink-0 mt-2 sm:mt-0"
+        >
+          Browse All Products <ChevronRight className="w-4 h-4 ml-0.5" />
+        </Link>
+      </div>
+
+      <div 
+        ref={scrollContainerRef}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={() => setIsHovered(true)}
+        onTouchEnd={() => setIsHovered(false)}
+        className="w-full pb-6 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-2"
+      >
+        {products.map(product => (
+          <div key={`recom-${product.id}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+            <div className="w-full">
+              <ProductCard 
+                product={product}
+                onAddToCart={onAddToCart}
+                onQuickView={onQuickView}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Cart() {
   const { categoryImages, faviconUrl } = useSettings();
-  const { items, removeItem, updateQuantity, total, clearCart } = useCart();
+  const { items, removeItem, updateQuantity, total, clearCart, addItem } = useCart();
+  const { products, fetchProducts, hydrateFromIDB } = useProducts();
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const cartItems = items.filter(item => item && item.product && item.product.id);
   const { user, setUser } = useAuth();
   const isHoreca = user?.role === 'horeca';
@@ -76,6 +180,50 @@ export function Cart() {
 
   const hasOutOfStockItems = cartItems.some(item => !item.product.inStock);
   const hasInvalidRetailQuantity = !isHoreca && cartItems.some(item => item.quantity < 1);
+
+  useEffect(() => {
+    async function init() {
+      await hydrateFromIDB();
+      fetchProducts();
+    }
+    init();
+  }, [fetchProducts, hydrateFromIDB]);
+
+  const recommendedProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
+
+    const cartProductIds = new Set(cartItems.map(item => item.product.id));
+    const available = products.filter(p => p && p.id && !cartProductIds.has(p.id) && !cartItems.some(ci => ci.product.id.startsWith(p.id)));
+
+    if (available.length === 0) return [];
+
+    const cartCategories = Array.from(
+      new Set(
+        cartItems
+          .map(item => (item.product.category || '').toLowerCase().trim())
+          .filter(Boolean)
+      )
+    );
+
+    if (cartCategories.length === 0) {
+      return available.filter(p => p.inStock).slice(0, 8);
+    }
+
+    const sameCategory = available.filter(p => {
+      const pCat = (p.category || '').toLowerCase().trim();
+      return cartCategories.some(cCat => pCat.includes(cCat) || cCat.includes(pCat));
+    });
+
+    const otherCategory = available.filter(p => !sameCategory.includes(p));
+
+    const combined = [...sameCategory, ...otherCategory].filter(p => p.inStock);
+    return combined.slice(0, 8);
+  }, [products, cartItems]);
+
+  const handleAddToCartRecommended = (product: Product, quantity?: number) => {
+    addItem(product, quantity || 1);
+    toast.success(`Added ${product.name} to cart!`);
+  };
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -332,23 +480,32 @@ export function Cart() {
       )}
 
       {cartItems.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-36 px-4 text-center max-w-7xl mx-auto w-full bg-background text-foreground">
-          <div className="w-20 h-20 bg-secondary border border-border flex items-center justify-center rounded-[24px] mb-8 shadow-inner">
-            <ShoppingBag className="w-8 h-8 text-primary" />
+        <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 max-w-7xl mx-auto w-full bg-background text-foreground">
+          <div className="text-center flex flex-col items-center">
+            <div className="w-20 h-20 bg-secondary border border-border flex items-center justify-center rounded-[24px] mb-8 shadow-inner">
+              <ShoppingBag className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-sans font-black uppercase tracking-tight mb-3 text-foreground">Your order list is empty</h2>
+            <p className="text-muted-foreground text-xs font-semibold max-w-sm mb-8 leading-relaxed">
+              Unlock your fresh gourmet potential by placing hand-vetted local crops inside your checkout order.
+            </p>
+            <button 
+              onClick={() => navigate('/shop')} 
+              className="slice-btn-primary px-8 py-4 text-[10px]"
+            >
+              Begin Exploring Crops <ArrowLeft className="w-4 h-4 rotate-180 ml-1.5 text-white" />
+            </button>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-sans font-black uppercase tracking-tight mb-3 text-foreground">Your order list is empty</h2>
-          <p className="text-muted-foreground text-xs font-semibold max-w-sm mb-8 leading-relaxed">
-            Unlock your fresh gourmet potential by placing hand-vetted local crops inside your checkout order.
-          </p>
-          <button 
-            onClick={() => navigate('/shop')} 
-            className="slice-btn-primary px-8 py-4 text-[10px]"
-          >
-            Begin Exploring Crops <ArrowLeft className="w-4 h-4 rotate-180 ml-1.5 text-white" />
-          </button>
+
+          <YouMightAlsoLikeSection 
+            products={recommendedProducts}
+            onAddToCart={handleAddToCartRecommended}
+            onQuickView={setQuickViewProduct}
+          />
         </div>
       ) : (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 bg-background">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 w-full bg-background">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
       {/* Shopping Bag Items Roster */}
       <div className="lg:col-span-7 space-y-8">
         <div className="flex items-end justify-between border-b border-border pb-6">
@@ -825,7 +982,21 @@ export function Cart() {
         </div>
       </div>
     </div>
-    )}
-    </>
-  );
+
+    <YouMightAlsoLikeSection 
+      products={recommendedProducts}
+      onAddToCart={handleAddToCartRecommended}
+      onQuickView={setQuickViewProduct}
+    />
+  </div>
+)}
+
+{quickViewProduct && (
+  <QuickViewModal 
+    product={quickViewProduct} 
+    onClose={() => setQuickViewProduct(null)} 
+  />
+)}
+</>
+);
 }

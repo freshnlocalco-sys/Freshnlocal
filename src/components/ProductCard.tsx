@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Heart, Plus, Minus, Building2 } from 'lucide-react';
+import { ShoppingBag, Heart, Plus, Minus, Building2, RotateCcw } from 'lucide-react';
 import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
@@ -15,12 +15,13 @@ interface ProductCardProps {
   onAddToCart: (product: Product, quantity?: number) => void;
   displayCategoryOverride?: string;
   onQuickView?: (product: Product) => void;
+  isReorderItem?: boolean;
   key?: React.Key | string | number;
 }
 
 const loadedProductImages = new Set<string>();
 
-export const ProductCard = React.memo(function ProductCard({ product, onAddToCart, displayCategoryOverride, onQuickView }: ProductCardProps) {
+export const ProductCard = React.memo(function ProductCard({ product, onAddToCart, displayCategoryOverride, onQuickView, isReorderItem }: ProductCardProps) {
   const { categoryImages } = useSettings();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { items, updateQuantity, removeItem, addItem } = useCart();
@@ -107,6 +108,13 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             referrerPolicy="no-referrer"
           />
         </Link>
+        {isReorderItem && (
+          <div className="absolute top-2 left-2 z-20 pointer-events-none">
+            <span className="inline-flex items-center gap-1 bg-primary text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md border border-white/20">
+              <RotateCcw className="w-2.5 h-2.5 shrink-0" /> REORDER
+            </span>
+          </div>
+        )}
         <button
           onClick={(e) => {
             e.preventDefault();
