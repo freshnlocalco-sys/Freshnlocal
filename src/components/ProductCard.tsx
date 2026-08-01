@@ -47,8 +47,8 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
   
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [stagedQuantity, setStagedQuantity] = useState<number>(isHoreca ? 1 : 1);
+  const [isExpanded, setIsExpanded] = useState(isHoreca);
+  const [stagedQuantity, setStagedQuantity] = useState<number>(isHoreca ? 0 : 1);
 
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
@@ -64,10 +64,20 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const displayQuantity = quantity > 0 ? quantity : stagedQuantity;
 
   useEffect(() => {
-    if (quantity > 0) {
+    if (isHoreca) {
       setIsExpanded(true);
+      if (quantity === 0) {
+        setStagedQuantity(0);
+      }
+    } else {
+      if (quantity > 0) {
+        setIsExpanded(true);
+      } else {
+        setIsExpanded(false);
+        setStagedQuantity(1);
+      }
     }
-  }, [quantity]);
+  }, [isHoreca, quantity]);
   
   const catImage = getCategoryImage(displayCategory, categoryImages) || undefined;
   const productImgSrc = product.imageUrl || catImage || undefined;
@@ -237,20 +247,21 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                 onClick={(e) => { 
                   e.preventDefault(); 
                   e.stopPropagation(); 
+                  const currentStep = isHoreca ? 0.5 : step;
                   if (quantity > 0) {
-                    if (quantity <= step) {
+                    if (quantity <= currentStep) {
                       removeItem(cartProductId);
                       setStagedQuantity(0);
-                      setIsExpanded(false);
+                      if (!isHoreca) setIsExpanded(false);
                     } else {
-                      updateQuantity(cartProductId, quantity - step);
+                      updateQuantity(cartProductId, quantity - currentStep);
                     }
                   } else {
-                    if (stagedQuantity <= step) {
+                    if (stagedQuantity <= currentStep) {
                       setStagedQuantity(0);
-                      setIsExpanded(false);
+                      if (!isHoreca) setIsExpanded(false);
                     } else {
-                      setStagedQuantity(stagedQuantity - step);
+                      setStagedQuantity(stagedQuantity - currentStep);
                     }
                   }
                 }}
@@ -274,7 +285,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                       removeItem(cartProductId);
                     }
                     setStagedQuantity(0);
-                    setIsExpanded(false);
+                    if (!isHoreca) setIsExpanded(false);
                   }}
                 />
               </div>
@@ -283,10 +294,11 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                 onClick={(e) => { 
                   e.preventDefault(); 
                   e.stopPropagation(); 
+                  const currentStep = isHoreca ? 0.5 : step;
                   if (quantity > 0) {
-                    updateQuantity(cartProductId, quantity + step);
+                    updateQuantity(cartProductId, quantity + currentStep);
                   } else {
-                    setStagedQuantity(stagedQuantity + step);
+                    setStagedQuantity(stagedQuantity + currentStep);
                   }
                 }}
               >

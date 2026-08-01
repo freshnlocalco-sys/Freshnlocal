@@ -14,9 +14,13 @@ export function QuantityInput({ initialQuantity, isHoreca, onUpdate, onRemove, c
 
   useEffect(() => {
     if (document.activeElement !== inputRef.current) {
-      setInputValue(initialQuantity.toString());
+      if (isHoreca && initialQuantity === 0) {
+        setInputValue("0.0");
+      } else {
+        setInputValue(initialQuantity.toString());
+      }
     }
-  }, [initialQuantity]);
+  }, [initialQuantity, isHoreca]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let valStr = e.target.value;
@@ -32,8 +36,20 @@ export function QuantityInput({ initialQuantity, isHoreca, onUpdate, onRemove, c
 
   const handleBlur = () => {
     let val = parseFloat(inputValue);
-    if (isNaN(val) || val <= 0) {
-      onRemove();
+    if (isNaN(val)) {
+      if (isHoreca) {
+        setInputValue("0.0");
+        onUpdate(0);
+      } else {
+        onRemove();
+      }
+    } else if (val <= 0) {
+      if (isHoreca) {
+        setInputValue("0.0");
+        onUpdate(0);
+      } else {
+        onRemove();
+      }
     } else {
       setInputValue(val.toString());
       onUpdate(val);

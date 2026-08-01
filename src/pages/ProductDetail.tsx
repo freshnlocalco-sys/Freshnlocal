@@ -51,7 +51,15 @@ export function ProductDetail() {
   const currentOriginalPrice = currentVariant.originalPrice;
   const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;
 
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(isHoreca ? 0 : 1);
+
+  useEffect(() => {
+    if (isHoreca) {
+      setQuantity(0);
+    } else {
+      setQuantity(1);
+    }
+  }, [isHoreca]);
   const { items, addItem } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const allProducts = useProducts(state => state.products);
