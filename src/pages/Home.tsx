@@ -116,6 +116,30 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
 function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products: Product[]; handleAddToCart: (product: Product) => void, onQuickView: (product: Product) => void }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const { addItem } = useCart();
+  const navigate = useNavigate();
+
+  const handleReorderAll = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!products || products.length === 0) return;
+
+    let addedCount = 0;
+    products.forEach((product) => {
+      if (product && product.inStock !== false) {
+        addItem(product, 1);
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      toast.success(`Added ${addedCount} reorder item${addedCount > 1 ? 's' : ''} to cart! 🛒`);
+      navigate('/cart');
+    } else {
+      toast.error("No items available to reorder");
+    }
+  };
 
   useEffect(() => {
     let animationFrameId: number;
@@ -158,19 +182,29 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
     >
       <div className="flex justify-between items-end mb-4 sm:mb-6 px-1">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm">
-            <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
+          <button
+            type="button"
+            onClick={handleReorderAll}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white flex items-center justify-center shrink-0 shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer group/reorderbtn"
+            title="Click refresh button to add all reorder items to cart"
+          >
+            <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 group-hover/reorderbtn:-rotate-180 transition-transform duration-500" />
+          </button>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">
                 REORDER
               </h2>
-              <span className="bg-primary text-white text-[9px] sm:text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider shadow-xs">
-                BUY AGAIN
-              </span>
+              <button
+                type="button"
+                onClick={handleReorderAll}
+                className="bg-primary hover:bg-primary/90 text-white text-[9px] sm:text-[10px] font-black uppercase px-2.5 py-1 rounded-full tracking-wider shadow-xs flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                title="Click to add all reorder items to cart"
+              >
+                <RotateCcw className="w-3 h-3" /> REORDER ALL
+              </button>
             </div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground font-semibold">Your previously ordered products ready for quick restock</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-semibold">Your previously ordered products — click refresh button to add all to cart</p>
           </div>
         </div>
         <Link to="/orders" className="text-[10px] sm:text-xs font-bold text-primary flex items-center hover:underline uppercase tracking-wider shrink-0">

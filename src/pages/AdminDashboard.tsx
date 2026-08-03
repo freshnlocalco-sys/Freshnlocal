@@ -115,6 +115,11 @@ export function AdminDashboard() {
   const navigate = useNavigate();
   
   const activeTab = useMemo(() => {
+    if (user?.role === 'horeca_admin') {
+      if (location.pathname.includes('/admin/inventory') || location.pathname.includes('/admin/customers') || location.pathname.includes('/admin/branding')) {
+        return 'orders';
+      }
+    }
     if (location.pathname.includes('/admin/inventory')) return 'products';
     if (location.pathname.includes('/admin/customers')) return 'customers';
     if (location.pathname.includes('/admin/spotlights')) return 'spotlights';
@@ -123,7 +128,17 @@ export function AdminDashboard() {
     if (location.pathname.includes('/admin/hero')) return 'hero';
     if (location.pathname.includes('/admin/branding')) return 'branding';
     return 'orders'; // corresponds to consignments
-  }, [location.pathname]);
+  }, [location.pathname, user?.role]);
+
+  useEffect(() => {
+    if (user?.role === 'horeca_admin') {
+      const restrictedPaths = ['/admin/inventory', '/admin/customers', '/admin/branding'];
+      if (restrictedPaths.some(path => location.pathname.includes(path))) {
+        navigate('/admin/consignments', { replace: true });
+        toast.error("Access restricted: This section is reserved for super administrators.");
+      }
+    }
+  }, [location.pathname, user?.role, navigate]);
   
   const [diagError, setDiagError] = useState<any | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
@@ -782,6 +797,12 @@ export function AdminDashboard() {
 
   // Filtered orders logic
   const filteredOrders = orders.filter((order) => {
+    // If user is HORECA admin, restrict orders to HORECA orders only
+    if (user?.role === 'horeca_admin') {
+      const isHorecaOrder = order.customerType === 'horeca' || order.customerType === 'horeca_admin';
+      if (!isHorecaOrder) return false;
+    }
+
     // filter by search query (order number)
     if (orderSearchQuery.trim()) {
       const query = orderSearchQuery.toLowerCase().trim();
@@ -2473,12 +2494,14 @@ export function AdminDashboard() {
           >
             <ShoppingBag className="w-4 h-4" /> Consignments
           </button>
-          <button 
-            onClick={() => navigate('/admin/inventory')}
-            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
-          >
-            <Package className="w-4 h-4" /> Order Inventory
-          </button>
+          {user?.role !== 'horeca_admin' && (
+            <button 
+              onClick={() => navigate('/admin/inventory')}
+              className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+            >
+              <Package className="w-4 h-4" /> Order Inventory
+            </button>
+          )}
           <button 
             onClick={() => navigate('/admin/spotlights')}
             className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'spotlights' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
@@ -2491,12 +2514,14 @@ export function AdminDashboard() {
           >
             <Sliders className="w-4 h-4" /> Categories
           </button>
-          <button 
-            onClick={() => navigate('/admin/customers')}
-            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'customers' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
-          >
-            <Users className="w-4 h-4" /> Customers
-          </button>
+          {user?.role !== 'horeca_admin' && (
+            <button 
+              onClick={() => navigate('/admin/customers')}
+              className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'customers' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+            >
+              <Users className="w-4 h-4" /> Customers
+            </button>
+          )}
           <button 
             onClick={() => navigate('/admin/hero')}
             className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'hero' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
@@ -2509,12 +2534,14 @@ export function AdminDashboard() {
           >
             <Sparkles className="w-4 h-4" /> Reviews
           </button>
-          <button 
-            onClick={() => navigate('/admin/branding')}
-            className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'branding' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
-          >
-            <Globe className="w-4 h-4" /> Branding Settings
-          </button>
+          {user?.role !== 'horeca_admin' && (
+            <button 
+              onClick={() => navigate('/admin/branding')}
+              className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'branding' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+            >
+              <Globe className="w-4 h-4" /> Branding Settings
+            </button>
+          )}
         </nav>
       </div>
 

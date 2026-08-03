@@ -108,12 +108,17 @@ service cloud.firestore {
         && incoming().status == 'pending';
         
       allow update: if isSignedIn() 
-        && isValidOrder(incoming())
-        && incoming().userId == existing().userId
-        && incoming().createdAt == existing().createdAt
         && (
-          (request.auth.uid == existing().userId && (existing().status == 'pending') && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') || 
-          isAdmin()
+          isAdmin() || 
+          (
+            isValidOrder(incoming())
+            && incoming().userId == existing().userId
+            && incoming().createdAt == existing().createdAt
+            && request.auth.uid == existing().userId 
+            && (existing().status == 'pending') 
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) 
+            && incoming().status == 'cancelled'
+          )
         );
         
       allow delete: if isAdmin();

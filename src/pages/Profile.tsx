@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError } from '../lib/firebase';
-import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2 } from 'lucide-react';
+import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2, RotateCcw } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { trackFirestoreRead } from '../lib/cacheManager';
 import { SEO } from '../components/SEO';
+import { useCart } from '../store/useCart';
 import toast from 'react-hot-toast';
 import Markdown from 'react-markdown';
 
@@ -12,13 +13,74 @@ export function Profile() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { addItem } = useCart();
   const [orders, setOrders] = useState<any[]>([]);
   const [savedRecipes, setSavedRecipes] = useState<any[]>([]);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'orders' | 'recipes'>(() => {
     const params = new URLSearchParams(location.search);
     return params.get('tab') === 'recipes' ? 'recipes' : 'orders';
   });
   const [fetching, setFetching] = useState(true);
+
+  const handleOrderAgain = async (order: any) => {
+    if (reorderingId) return;
+    setReorderingId(order.id);
+    let itemsAdded = 0;
+    try {
+      for (const item of order.items || []) {
+        const product = item.product || item;
+        const qty = item.quantity || 1;
+
+        if (product.id) {
+          try {
+            const docRef = doc(db, 'products', product.id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              if (data.inStock !== false) {
+                addItem({ id: product.id, ...data } as any, qty);
+                itemsAdded++;
+                continue;
+              }
+            }
+          } catch (e) {
+            console.warn("Could not check product stock, using order snapshot", e);
+          }
+        }
+
+        if (product.name) {
+          addItem({
+            id: product.id || `order-item-${Date.now()}-${Math.random()}`,
+            name: product.name,
+            price: product.price || 0,
+            imageUrl: product.imageUrl || '',
+            category: product.category || 'General',
+            description: product.description || '',
+            unit: product.unit || 'unit',
+            stock: 999,
+            inStock: true,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            ...product
+          }, qty);
+          itemsAdded++;
+        }
+      }
+
+      if (itemsAdded > 0) {
+        toast.success(`Added ${itemsAdded} item${itemsAdded > 1 ? 's' : ''} to cart`);
+        navigate('/cart');
+      } else {
+        toast.error("Items from this order are no longer available.");
+      }
+    } catch(err) {
+      console.error(err);
+      toast.error("Failed to reorder items.");
+    } finally {
+      setReorderingId(null);
+    }
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -261,6 +323,26 @@ export function Profile() {
                         );
                       })}
                     </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4 border-t border-border">
+                    <button 
+                      onClick={() => handleOrderAgain(order)}
+                      disabled={reorderingId === order.id}
+                      className="slice-btn-primary px-6 py-3 text-[10px] flex items-center justify-center gap-2 group shadow-xs disabled:opacity-50"
+                    >
+                      {reorderingId === order.id ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          Reordering...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="w-3.5 h-3.5 transition-transform group-hover:-rotate-90 duration-300" />
+                          Reorder
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               ))}

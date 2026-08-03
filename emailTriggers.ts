@@ -818,7 +818,10 @@ export function setupOrderEmailTriggers() {
           // Transactionally mark confirmationEmailSent: true so we don't duplicate
           try {
             const orderDocRef = doc(db, 'orders', id);
-            await updateDoc(orderDocRef, { confirmationEmailSent: true });
+            await updateDoc(orderDocRef, { 
+              confirmationEmailSent: true,
+              updatedAt: Date.now()
+            });
           } catch (dbErr) {
             console.error(`[EMAIL TRIGGERS] Error updating confirmationEmailSent flag in Firestore for order ${id}:`, dbErr);
           }
@@ -851,7 +854,10 @@ export function setupOrderEmailTriggers() {
 
             // Transactionally update shippingEmailStatus to match current status
             const orderDocRef = doc(db, 'orders', id);
-            await updateDoc(orderDocRef, { shippingEmailStatus: order.status });
+            await updateDoc(orderDocRef, { 
+              shippingEmailStatus: order.status,
+              updatedAt: Date.now()
+            });
           } catch (sendErr) {
             console.error(`[EMAIL TRIGGERS] Error sending Shipping Update to ${email}:`, sendErr);
           }

@@ -5,7 +5,7 @@ import { trackFirestoreRead } from '../lib/cacheManager';
 import { Order, useCart, Product } from '../store/useCart';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { SEO } from '../components/SEO';
-import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck, RefreshCw, ShoppingBag, Building2 } from 'lucide-react';
+import { Package, ArrowRight, Sparkles, HelpCircle, Activity, CheckCircle2, Clock, Truck, FileCheck, RefreshCw, RotateCcw, ShoppingBag, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const TIMELINE_STEPS = [
@@ -124,32 +124,57 @@ export function Orders() {
   const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
   const { addItem } = useCart();
   const navigate = useNavigate();
 
   const handleOrderAgain = async (order: Order) => {
+    if (reorderingId) return;
+    setReorderingId(order.id);
     let itemsAdded = 0;
     try {
-      // Create an array of promises to fetch the latest product data for each item
-      const addedProducts = [];
-      for (const item of order.items) {
+      for (const item of order.items || []) {
         const product = (item as any).product || item;
-        // Verify product still exists in db to get latest price/stock
+        const qty = item.quantity || 1;
+        
         if (product.id) {
-          const docRef = doc(db, 'products', product.id);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-             const data = docSnap.data();
-             if (data.inStock) {
-               addItem({ id: product.id, ...data } as any, item.quantity);
-               itemsAdded++;
-             }
+          try {
+            const docRef = doc(db, 'products', product.id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              if (data.inStock !== false) {
+                addItem({ id: product.id, ...data } as any, qty);
+                itemsAdded++;
+                continue;
+              }
+            }
+          } catch (e) {
+            console.warn("Could not check product stock, falling back to snapshot", e);
           }
+        }
+        
+        if (product.name) {
+          addItem({
+            id: product.id || `order-item-${Date.now()}-${Math.random()}`,
+            name: product.name,
+            price: product.price || 0,
+            imageUrl: product.imageUrl || '',
+            category: product.category || 'General',
+            description: product.description || '',
+            unit: product.unit || 'unit',
+            stock: 999,
+            inStock: true,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            ...product
+          }, qty);
+          itemsAdded++;
         }
       }
       
       if (itemsAdded > 0) {
-        toast.success(`Added ${itemsAdded} items to cart`);
+        toast.success(`Added ${itemsAdded} item${itemsAdded > 1 ? 's' : ''} to cart`);
         navigate('/cart');
       } else {
         toast.error("Items from this order are no longer available.");
@@ -157,6 +182,8 @@ export function Orders() {
     } catch(err) {
       console.error(err);
       toast.error("Failed to re-order items.");
+    } finally {
+      setReorderingId(null);
     }
   };
 
@@ -341,15 +368,25 @@ export function Orders() {
                   </div>
                 )}
                 
-                {(order.status === 'delivered' || order.status === 'takeaway') && (
+                <div className="flex justify-end pt-2">
                   <button 
                     onClick={() => handleOrderAgain(order)}
-                    className="slice-btn-primary w-full sm:w-auto self-end px-6 py-3.5 text-[10px] flex items-center justify-center gap-2 group shadow-sm mt-2"
+                    disabled={reorderingId === order.id}
+                    className="slice-btn-primary w-full sm:w-auto px-6 py-3.5 text-[10px] flex items-center justify-center gap-2 group shadow-sm disabled:opacity-50"
                   >
-                    <RefreshCw className="w-3.5 h-3.5 transition-transform group-hover:rotate-180 duration-500" />
-                    Order Again
+                    {reorderingId === order.id ? (
+                      <>
+                        <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        Reordering...
+                      </>
+                    ) : (
+                      <>
+                        <RotateCcw className="w-3.5 h-3.5 transition-transform group-hover:-rotate-90 duration-300" />
+                        Reorder
+                      </>
+                    )}
                   </button>
-                )}
+                </div>
               </div>
 
             </div>
