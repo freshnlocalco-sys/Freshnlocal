@@ -288,14 +288,23 @@ export function Orders() {
                   </div>
                   <div className="space-y-1 col-span-2 md:col-span-1">
                     <span className="text-muted-foreground text-[8px] tracking-[0.15em] block font-black">
-                      {order.customerType === 'horeca' ? 'ORDER TYPE' : 'SETTLEMENT AMOUNT'}
+                      SETTLEMENT AMOUNT
                     </span>
                     <span className="text-primary text-xs font-black block">
-                      {order.customerType === 'horeca' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/25 text-[10px] font-black uppercase tracking-wider shadow-2xs">
-                          <Building2 className="w-3.5 h-3.5 text-primary" /> HoReCa B2B Wholesale Order
+                      {order.customerType === 'horeca' && order.totalAmount === 0 ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-500/10 text-yellow-600 border border-yellow-500/25 text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                          <Building2 className="w-3.5 h-3.5 text-yellow-600 shrink-0" /> Pricing Pending
                         </span>
-                      ) : `₹${order.totalAmount.toFixed(2)}`}
+                      ) : (
+                        <span className="text-xs sm:text-sm font-black flex items-center gap-2">
+                          <span>₹{order.totalAmount.toFixed(2)}</span>
+                          {order.customerType === 'horeca' && (
+                            <span className="text-[8px] font-black uppercase text-primary tracking-wider bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-md">
+                              B2B Settled
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -334,17 +343,21 @@ export function Orders() {
                         <div>
                           <p className="font-extrabold text-xs uppercase text-foreground tracking-wide">{product.name}</p>
                           <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">
-                            {order.customerType === 'horeca' ? `REQUIREMENT: ${item.quantity} ${product.unit || 'units'}` : `QUANTITY: ${item.quantity} × ₹${product.price}`}
+                            {order.customerType === 'horeca' && (product.price || 0) === 0 ? (
+                              `REQUIREMENT: ${item.quantity} ${product.unit || 'units'}`
+                            ) : (
+                              `QUANTITY: ${item.quantity} × ₹${product.price || 0}`
+                            )}
                           </p>
                         </div>
                       </div>
                       <div className="font-sans font-black text-sm text-foreground">
-                        {order.customerType === 'horeca' ? (
-                          <span className="inline-flex items-center gap-1 text-primary bg-primary/10 border border-primary/25 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider shadow-2xs">
-                            <Building2 className="w-3 h-3 text-primary shrink-0" /> Tax Invoice Settlement
+                        {order.customerType === 'horeca' && (product.price || 0) === 0 ? (
+                          <span className="inline-flex items-center gap-1 text-yellow-600 bg-yellow-500/10 border border-yellow-500/25 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider">
+                            <Building2 className="w-3 h-3 shrink-0 text-yellow-600" /> Pricing Pending
                           </span>
                         ) : (
-                          `₹${(product.price * item.quantity).toFixed(2)}`
+                          `₹${((product.price || 0) * item.quantity).toFixed(2)}`
                         )}
                       </div>
                     </div>

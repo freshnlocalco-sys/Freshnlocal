@@ -1501,6 +1501,44 @@ export function AdminDashboard() {
     }
   };
 
+  const handleUpdateItemPriceFromOrder = async (orderId: string, itemIndex: number, newPrice: number) => {
+    if (newPrice < 0) return;
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order || !order.items) return;
+      
+      const newItems = [...order.items];
+      const itemToUpdate = { ...newItems[itemIndex] };
+      if (itemToUpdate.product) {
+        itemToUpdate.product = { ...itemToUpdate.product, price: newPrice };
+      } else {
+        itemToUpdate.price = newPrice;
+      }
+      newItems[itemIndex] = itemToUpdate;
+      
+      const newTotal = newItems.reduce((sum, item) => {
+        const p = item.product || item;
+        return sum + (p.price || 0) * (item.quantity || 1);
+      }, 0);
+
+      await updateDoc(doc(db, 'orders', orderId), { 
+        items: newItems, 
+        totalAmount: newTotal,
+        updatedAt: Date.now() 
+      });
+      
+      const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
+      setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(updatedOrder);
+      }
+      toast.success('Item price updated');
+    } catch (e: any) {
+      handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
+      toast.error(e?.message || 'Failed to update item price');
+    }
+  };
+
   const handleAddProductToOrder = async (orderId: string, productToAdd: Product) => {
     try {
       const order = orders.find(o => o.id === orderId);
@@ -4404,9 +4442,36 @@ export function AdminDashboard() {
                               <span className="text-xs font-black">+</span>
                             </button>
                           </div>
-                          <div className="text-right whitespace-nowrap font-mono min-w-[60px]">
-                            <p className="text-xs font-black text-foreground">₹{(prod.price || 0) * (item.quantity || 1)}</p>
-                            <p className="text-[10px] text-muted-foreground font-bold mt-0.5">{item.quantity || 1} x ₹{prod.price || 0}</p>
+                          <div className="flex flex-col items-end gap-1 font-mono min-w-[110px]">
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-wider">Price: ₹</span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="any"
+                                key={`${selectedOrder.id}-${idx}-${prod.price}`}
+                                defaultValue={prod.price || 0}
+                                onBlur={(e) => {
+                                  const val = parseFloat(e.target.value);
+                                  if (!isNaN(val) && val >= 0 && val !== (prod.price || 0)) {
+                                    handleUpdateItemPriceFromOrder(selectedOrder.id, idx, val);
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    const val = parseFloat((e.target as HTMLInputElement).value);
+                                    if (!isNaN(val) && val >= 0 && val !== (prod.price || 0)) {
+                                      handleUpdateItemPriceFromOrder(selectedOrder.id, idx, val);
+                                      (e.target as HTMLInputElement).blur();
+                                    }
+                                  }
+                                }}
+                                className="w-20 px-2 py-1 text-xs font-black text-right border border-border rounded-xl focus:border-primary outline-none focus:ring-2 focus:ring-primary/10 bg-white shadow-xs"
+                              />
+                            </div>
+                            <div className="text-right text-[10px] text-muted-foreground font-extrabold whitespace-nowrap">
+                              Total: <span className="font-black text-primary text-xs">₹{((prod.price || 0) * (item.quantity || 1)).toFixed(2).replace(/\.00$/, '')}</span>
+                            </div>
                           </div>
                           {selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'delivered' && (
                             <button
