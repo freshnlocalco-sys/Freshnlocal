@@ -14,7 +14,9 @@ export function AdminNotifier() {
 
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(console.error);
+      Notification.requestPermission().catch(err => {
+        console.debug('Notifications not allowed or blocked in sandboxed preview:', err);
+      });
     }
 
     // We only want to notify for orders created AFTER the component mounts
