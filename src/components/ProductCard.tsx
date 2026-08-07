@@ -229,15 +229,15 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (product.inStock) {
+              if (product.inStock || isHoreca) {
                 setIsExpanded(true);
                 setStagedQuantity(1);
               }
             }}
-            disabled={!product.inStock}
-            className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1.5 mt-1.5 sm:mt-2.5 transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${product.inStock ? 'bg-primary text-white border border-primary hover:bg-[#09120b] hover:border-[#09120b] active:scale-[0.97] cursor-pointer shadow-sm' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
+            disabled={!product.inStock && !isHoreca}
+            className={`w-full py-1.5 sm:py-2.5 rounded-lg font-sans text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1.5 mt-1.5 sm:mt-2.5 transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${(product.inStock || isHoreca) ? 'bg-primary text-white border border-primary hover:bg-[#09120b] hover:border-[#09120b] active:scale-[0.97] cursor-pointer shadow-sm' : 'bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-75'}`}
           >
-            {product.inStock ? <span>Add</span> : <span>Out of Stock</span>}
+            {product.inStock ? <span>Add</span> : isHoreca ? <span>Request (Out of Stock)</span> : <span>Out of Stock</span>}
           </button>
         ) : (
           <div className="flex items-center gap-1.5 w-full mt-1.5 sm:mt-2.5 h-7 sm:h-9">
@@ -310,17 +310,17 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                 e.preventDefault(); 
                 e.stopPropagation();
                 if (quantity === 0) {
-                  if (product.inStock && stagedQuantity > 0) {
+                  if ((product.inStock || isHoreca) && stagedQuantity > 0) {
                     onAddToCart({ ...product, id: cartProductId, price: isHoreca ? 0 : currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, stagedQuantity); 
                   }
                 } else {
                   updateQuantity(cartProductId, quantity + step);
                 }
               }}
-              disabled={!product.inStock || displayQuantity < (isHoreca ? 0.01 : 1)}
-              className={`h-full px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center ${product.inStock && displayQuantity >= (isHoreca ? 0.01 : 1) ? 'bg-primary text-white shadow-sm active:scale-95 cursor-pointer hover:bg-[#09120b]' : 'bg-muted text-muted-foreground cursor-not-allowed opacity-75'}`}
+              disabled={(!product.inStock && !isHoreca) || displayQuantity < (isHoreca ? 0.01 : 1)}
+              className={`h-full px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center ${(product.inStock || isHoreca) && displayQuantity >= (isHoreca ? 0.01 : 1) ? 'bg-primary text-white shadow-sm active:scale-95 cursor-pointer hover:bg-[#09120b]' : 'bg-muted text-muted-foreground cursor-not-allowed opacity-75'}`}
             >
-              Add
+              {product.inStock ? 'Add' : 'Request'}
             </button>
           </div>
         )}

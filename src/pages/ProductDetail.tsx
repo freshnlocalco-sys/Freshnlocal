@@ -143,7 +143,7 @@ export function ProductDetail() {
   }, [id, navigate]);
 
   const handleAddToCart = () => {
-    if (product && product.inStock) {
+    if (product && (product.inStock || isHoreca)) {
       addItem({ ...product, id: cartProductId, price: isHoreca ? 0 : currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, quantity);
       toast.success(`${quantity} ${product.name} (${currentUnit || 'item'}) added to cart!`);
     }
@@ -388,10 +388,10 @@ export function ProductDetail() {
             <button 
               onClick={handleAddToCart}
               className="w-full py-4.5 rounded-xl bg-primary text-white font-sans text-[10px] uppercase font-black tracking-widest transition-colors hover:bg-[#09120b] hover:text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-md disabled:shadow-none"
-              disabled={!product.inStock || quantity < (isHoreca ? 0.01 : 1)}
+              disabled={(!product.inStock && !isHoreca) || quantity < (isHoreca ? 0.01 : 1)}
             >
               <ShoppingBag className="w-4.5 h-4.5" />
-              {product.inStock ? 'Checkout to Basket' : 'Out of Stock'}
+              {product.inStock ? 'Checkout to Basket' : isHoreca ? 'Request Requirement (Out of Stock)' : 'Out of Stock'}
             </button>
 
             {/* Quick trust metrics */}

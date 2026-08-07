@@ -71,7 +71,7 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       items: [],
       addItem: (product, quantity = 1) => {
-        if (!product || !product.id || !product.inStock) return;
+        if (!product || !product.id || (!product.inStock && product.price !== 0)) return;
         set((state) => {
           const existingItem = state.items.find((item) => item && item.product && item.product.id === product.id);
           if (existingItem) {

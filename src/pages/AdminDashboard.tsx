@@ -29,6 +29,46 @@ const PICKUP_STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelled', color: 'bg-red-500' },
 ];
 
+const formatTotalQuantity = (qty: number, unitStr: string | undefined): string => {
+  if (!unitStr) return `${qty}`;
+  const match = unitStr.match(/^([\d.]+)\s*(.*)$/);
+  if (match) {
+    const val = parseFloat(match[1]);
+    const unit = match[2].trim();
+    if (!isNaN(val)) {
+      const totalVal = val * qty;
+      const lowerUnit = unit.toLowerCase();
+      if ((lowerUnit === 'g' || lowerUnit === 'gm' || lowerUnit === 'gram' || lowerUnit === 'grams') && totalVal >= 1000) {
+        return `${(totalVal / 1000).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} Kg`;
+      }
+      if (lowerUnit === 'ml' && totalVal >= 1000) {
+        return `${(totalVal / 1000).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} L`;
+      }
+      return `${totalVal.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} ${unit}`;
+    }
+  }
+  const trimmed = unitStr.trim();
+  const lowerUnit = trimmed.toLowerCase();
+  if (lowerUnit === 'kg') {
+    return `${qty} Kg`;
+  } else if (lowerUnit === 'l') {
+    return `${qty} L`;
+  } else if (lowerUnit === 'g' || lowerUnit === 'gm') {
+    const totalVal = qty;
+    if (totalVal >= 1000) {
+      return `${(totalVal / 1000).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} Kg`;
+    }
+    return `${totalVal} ${trimmed}`;
+  } else if (lowerUnit === 'ml') {
+    const totalVal = qty;
+    if (totalVal >= 1000) {
+      return `${(totalVal / 1000).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} L`;
+    }
+    return `${totalVal} ${trimmed}`;
+  }
+  return `${qty} ${trimmed}`;
+};
+
 class BrandingErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
   state = { hasError: false, error: null };
 
@@ -286,6 +326,7 @@ export function AdminDashboard() {
 
   // Filters for orders
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterCustomerType, setFilterCustomerType] = useState<string>('all');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
@@ -814,6 +855,13 @@ export function AdminDashboard() {
 
     // filter by status
     if (filterStatus !== 'all' && order.status !== filterStatus) return false;
+
+    // filter by customer type
+    if (filterCustomerType !== 'all') {
+      const isHorecaOrder = order.customerType === 'horeca' || order.customerType === 'horeca_admin';
+      if (filterCustomerType === 'b2b' && !isHorecaOrder) return false;
+      if (filterCustomerType === 'b2c' && isHorecaOrder) return false;
+    }
     
     // filter by date
     if (dateRange.start) {
@@ -2646,13 +2694,27 @@ export function AdminDashboard() {
                     <select 
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                    className="appearance-none border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full sm:w-[160px] uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_12px_center] bg-no-repeat"
-                  >
-                    <option value="all">ANY STATUS</option>
-                    {Array.from(new Map([...STATUS_OPTIONS, ...PICKUP_STATUS_OPTIONS].map(item => [item.value, item])).values()).map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
-                  </select>
+                      className="appearance-none border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full sm:w-[160px] uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_12px_center] bg-no-repeat"
+                    >
+                      <option value="all">ANY STATUS</option>
+                      {Array.from(new Map([...STATUS_OPTIONS, ...PICKUP_STATUS_OPTIONS].map(item => [item.value, item])).values()).map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                    <label className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1.5"><Users className="w-3 h-3" /> Customer Type</label>
+                    <select 
+                      value={user?.role === 'horeca_admin' ? 'b2b' : filterCustomerType}
+                      onChange={(e) => setFilterCustomerType(e.target.value)}
+                      disabled={user?.role === 'horeca_admin'}
+                      className="appearance-none border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full sm:w-[160px] uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_12px_center] bg-no-repeat disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <option value="all">ALL ORDERS</option>
+                      <option value="b2b">B2B (HORECA)</option>
+                      <option value="b2c">B2C (RETAIL)</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
               <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                 <div className="flex flex-col gap-1.5 w-full sm:w-auto">
                   <label className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Start Date</label>
@@ -4402,8 +4464,9 @@ export function AdminDashboard() {
                     if (!prod) return null;
                     const catImg = getCategoryImage(prod.category, categoryImages);
                     return (
-                      <div key={idx} className="flex gap-4 p-3.5 items-center justify-between min-w-0 w-full">
-                        <div className="flex items-center gap-3 min-w-0">
+                      <div key={idx} className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-3.5 items-start sm:items-center justify-between min-w-0 w-full">
+                        {/* Left/Top Part: Image, Name, Category/Unit and Mobile Total Qty */}
+                        <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto sm:flex-1">
                           <div className="w-10 h-10 rounded-lg bg-white border border-border p-1 overflow-hidden flex shrink-0">
                             <img src={prod.imageUrl || catImg || null} alt={prod.name} className="w-full h-full object-contain object-center" />
                           </div>
@@ -4413,8 +4476,22 @@ export function AdminDashboard() {
                               {prod.category?.replace(/ font-bold/gi, '')} {prod.unit ? `• ${prod.unit}` : ''}
                             </p>
                           </div>
+
+                          {/* Mobile-only Total Qty badge */}
+                          <div className="sm:hidden flex flex-col items-center justify-center px-2 py-0.5 bg-primary/5 border border-primary/10 rounded-lg shrink-0 text-center">
+                            <span className="text-[7px] uppercase font-black tracking-widest text-primary/60 leading-none">Total Qty</span>
+                            <span className="text-[9px] font-black text-primary uppercase whitespace-nowrap mt-0.5 leading-none">{formatTotalQuantity(item.quantity || 1, prod.unit)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3 shrink-0">
+
+                        {/* Right/Bottom Part: Total Qty (Desktop), Controls, Price, Remove Button */}
+                        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 border-t border-dashed border-border/60 pt-2.5 sm:pt-0 sm:border-t-0">
+                          {/* Desktop-only Total Qty badge */}
+                          <div className="hidden sm:flex flex-col items-center justify-center px-2.5 py-1 bg-primary/5 border border-primary/10 rounded-xl min-w-[75px] shrink-0 text-center mx-1 sm:mx-2">
+                            <span className="text-[8px] uppercase font-black tracking-widest text-primary/60">Total Qty</span>
+                            <span className="text-[10px] sm:text-xs font-black text-primary uppercase whitespace-nowrap">{formatTotalQuantity(item.quantity || 1, prod.unit)}</span>
+                          </div>
+
                           <div className="flex items-center gap-2 bg-secondary rounded-lg p-1 border border-border">
                             <button
                               type="button"
@@ -4443,7 +4520,7 @@ export function AdminDashboard() {
                             </button>
                           </div>
                           {selectedOrder.customerType === 'horeca' || selectedOrder.customerType === 'horeca_admin' ? (
-                            <div className="flex flex-col items-end gap-1 font-mono min-w-[110px]">
+                            <div className="flex flex-col items-end gap-1 font-mono min-w-[100px] sm:min-w-[110px]">
                               <div className="flex items-center gap-1">
                                 <span className="text-[9px] text-muted-foreground font-black uppercase tracking-wider">Price: ₹</span>
                                 <input
@@ -4467,7 +4544,7 @@ export function AdminDashboard() {
                                       }
                                     }
                                   }}
-                                  className="w-20 px-2 py-1 text-xs font-black text-right border border-border rounded-xl focus:border-primary outline-none focus:ring-2 focus:ring-primary/10 bg-white shadow-xs"
+                                  className="w-16 sm:w-20 px-2 py-1 text-xs font-black text-right border border-border rounded-xl focus:border-primary outline-none focus:ring-2 focus:ring-primary/10 bg-white shadow-xs"
                                 />
                               </div>
                               <div className="text-right text-[10px] text-muted-foreground font-extrabold whitespace-nowrap">
@@ -4475,7 +4552,7 @@ export function AdminDashboard() {
                               </div>
                             </div>
                           ) : (
-                            <div className="text-right whitespace-nowrap font-mono min-w-[60px]">
+                            <div className="text-right whitespace-nowrap font-mono min-w-[55px] sm:min-w-[60px]">
                               <p className="text-xs font-black text-foreground">₹{((prod.price || 0) * (item.quantity || 1)).toFixed(2).replace(/\.00$/, '')}</p>
                               <p className="text-[10px] text-muted-foreground font-bold mt-0.5">{item.quantity || 1} x ₹{prod.price || 0}</p>
                             </div>

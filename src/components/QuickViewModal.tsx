@@ -203,11 +203,11 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
 
             <button 
               onClick={handleAddToCart}
-              disabled={!product.inStock || quantity < (isHoreca ? 0.01 : 1)}
+              disabled={(!product.inStock && !isHoreca) || quantity < (isHoreca ? 0.01 : 1)}
               className="w-full py-4 rounded-xl bg-primary text-white font-sans text-xs uppercase font-black tracking-widest transition-colors hover:bg-primary/90 flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed shadow-md"
             >
               <ShoppingBag className="w-4 h-4" />
-              {product.inStock ? 'Checkout to Basket' : 'Out of Stock'}
+              {product.inStock ? 'Checkout to Basket' : isHoreca ? 'Request Requirement (Out of Stock)' : 'Out of Stock'}
             </button>
             
             <div className="text-center pt-2">
