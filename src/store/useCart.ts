@@ -77,6 +77,7 @@ export const useCart = create<CartState>()(
         if (!product || !product.id || (!product.inStock && product.price !== 0)) return;
         const config = getUnitQuantityConfig(product.unit);
         const qtyToAdd = quantity !== undefined ? quantity : config.initialQty;
+
         set((state) => {
           const existingItem = state.items.find((item) => item && item.product && item.product.id === product.id);
           if (existingItem) {
