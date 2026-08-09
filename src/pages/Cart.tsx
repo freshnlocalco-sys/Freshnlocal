@@ -12,6 +12,7 @@ import { useProducts } from '../store/useProducts';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { QuantityInput } from '../components/QuantityInput';
+import { getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
 import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 
@@ -179,7 +180,7 @@ export function Cart() {
   const finalTotal = total() - discount;
 
   const hasOutOfStockItems = !isHoreca && cartItems.some(item => !item.product.inStock);
-  const hasInvalidRetailQuantity = !isHoreca && cartItems.some(item => item.quantity < 1);
+  const hasInvalidRetailQuantity = !isHoreca && cartItems.some(item => item.quantity <= 0);
 
   useEffect(() => {
     async function init() {
@@ -567,12 +568,16 @@ export function Cart() {
                         </div>
                       </>
                     ) : (
-                      <>
-                        <div className="text-primary font-black text-base">₹{(item.product.price * item.quantity).toFixed(2)}</div>
-                        {item.quantity !== 1 && (
-                          <div className="text-xs text-muted-foreground font-medium">₹{item.product.price} / {item.product.unit || 'unit'}</div>
-                        )}
-                      </>
+                      (() => {
+                        const config = getUnitQuantityConfig(item.product.unit);
+                        const itemSubtotal = (item.product.price * item.quantity) / (config.initialQty || 1);
+                        return (
+                          <>
+                            <div className="text-primary font-black text-base">₹{itemSubtotal.toFixed(2)}</div>
+                            <div className="text-xs text-muted-foreground font-medium">₹{item.product.price} / {item.product.unit || 'unit'}</div>
+                          </>
+                        );
+                      })()
                     )}
                   </div>
                   {!item.product.inStock && (
@@ -594,36 +599,43 @@ export function Cart() {
                   </button>
                   
                   {/* Glass Quantity Controls */}
-                  <div className={`flex items-center border border-border rounded-xl overflow-hidden p-1 order-1 sm:order-2 ${(item.product.inStock || isHoreca) ? 'bg-background' : 'bg-muted opacity-50'}`}>
-                    <button 
-                      onClick={() => {
-                        const newQty = item.quantity - (isHoreca ? 0.5 : 1);
-                        if (newQty <= 0) {
-                          removeItem(item.product.id);
-                        } else {
-                          updateQuantity(item.product.id, newQty);
-                        }
-                      }}
-                      disabled={!item.product.inStock && !isHoreca}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-foreground ${(item.product.inStock || isHoreca) ? 'hover:bg-[#09120b] hover:text-white transition-colors cursor-pointer' : 'cursor-not-allowed'}`}
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <QuantityInput
-                      initialQuantity={item.quantity}
-                      isHoreca={isHoreca}
-                      className="w-14 text-center font-bold text-xs text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
-                      onUpdate={(val) => updateQuantity(item.product.id, val)}
-                      onRemove={() => removeItem(item.product.id)}
-                    />
-                    <button 
-                      onClick={() => updateQuantity(item.product.id, item.quantity + (isHoreca ? 0.5 : 1))} 
-                      disabled={!item.product.inStock && !isHoreca}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-foreground ${(item.product.inStock || isHoreca) ? 'hover:bg-[#09120b] hover:text-white transition-colors cursor-pointer' : 'cursor-not-allowed'}`}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  {(() => {
+                    const config = getUnitQuantityConfig(item.product.unit);
+                    const step = isHoreca ? 0.5 : config.step;
+                    const isDiscrete = config.isDiscrete;
+                    return (
+                      <div className={`flex items-center border border-border rounded-xl overflow-hidden p-1 order-1 sm:order-2 ${(item.product.inStock || isHoreca) ? 'bg-background' : 'bg-muted opacity-50'}`}>
+                        <button 
+                          onClick={() => {
+                            const newQty = safeSubtractQuantity(item.quantity, step, isDiscrete);
+                            if (newQty <= 0) {
+                              removeItem(item.product.id);
+                            } else {
+                              updateQuantity(item.product.id, newQty);
+                            }
+                          }}
+                          disabled={!item.product.inStock && !isHoreca}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg text-foreground ${(item.product.inStock || isHoreca) ? 'hover:bg-[#09120b] hover:text-white transition-colors cursor-pointer' : 'cursor-not-allowed'}`}
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <QuantityInput
+                          initialQuantity={item.quantity}
+                          isHoreca={isHoreca}
+                          className="w-14 text-center font-bold text-xs text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
+                          onUpdate={(val) => updateQuantity(item.product.id, val)}
+                          onRemove={() => removeItem(item.product.id)}
+                        />
+                        <button 
+                          onClick={() => updateQuantity(item.product.id, safeAddQuantity(item.quantity, step, isDiscrete))} 
+                          disabled={!item.product.inStock && !isHoreca}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg text-foreground ${(item.product.inStock || isHoreca) ? 'hover:bg-[#09120b] hover:text-white transition-colors cursor-pointer' : 'cursor-not-allowed'}`}
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

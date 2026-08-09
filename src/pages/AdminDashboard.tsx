@@ -945,7 +945,7 @@ export function AdminDashboard() {
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[] }>({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
+  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[] }>({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -1977,6 +1977,7 @@ export function AdminDashboard() {
       const productId = editingProductId || doc(collection(db, 'products')).id;
       const variantsToSave = (newProduct.variants || []).map(v => ({
         ...v,
+        packSize: v.packSize || '',
         quantityValue: v.quantityValue ? Number(v.quantityValue) : null,
         quantityUnit: v.quantityUnit || 'Kg',
         price: Number(v.price),
@@ -1984,8 +1985,6 @@ export function AdminDashboard() {
         horecaPrice: v.horecaPrice ? Number(v.horecaPrice) : null,
         horecaUnit: v.horecaUnit || '',
       }));
-
-
 
       if (editingProductId) {
         await updateDoc(doc(db, 'products', editingProductId), {
@@ -2001,6 +2000,7 @@ export function AdminDashboard() {
           unit: newProduct.unit || '',
           quantityValue: newProduct.quantityValue ? Number(newProduct.quantityValue) : null,
           quantityUnit: newProduct.quantityUnit || 'Kg',
+          packSize: newProduct.packSize || '',
           variants: variantsToSave,
           updatedAt: Date.now()
         });
@@ -2018,6 +2018,7 @@ export function AdminDashboard() {
           unit: newProduct.unit || '',
           quantityValue: newProduct.quantityValue ? Number(newProduct.quantityValue) : null,
           quantityUnit: newProduct.quantityUnit || 'Kg',
+          packSize: newProduct.packSize || '',
           variants: variantsToSave,
           stock: 100,
           inStock: true,
@@ -2042,6 +2043,7 @@ export function AdminDashboard() {
         unit: newProduct.unit || '',
         quantityValue: newProduct.quantityValue ? Number(newProduct.quantityValue) : undefined,
         quantityUnit: newProduct.quantityUnit || 'Kg',
+        packSize: newProduct.packSize || '',
         variants: variantsToSave,
         stock: 100,
         inStock: true,
@@ -2111,7 +2113,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
+      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -2119,27 +2121,46 @@ export function AdminDashboard() {
     }
   };
 
-  const parseQuantityAndUnit = (unitStr: string | undefined): { qVal: string, qUnit: string } => {
-    if (!unitStr) return { qVal: '', qUnit: 'Kg' };
+  const normalizeUnit = (u: string) => {
+    const low = u.toLowerCase();
+    if (low === 'kg') return 'Kg';
+    if (low === 'gm' || low === 'g') return 'g';
+    if (low === 'l') return 'L';
+    if (low === 'ml') return 'ml';
+    if (low === 'pc' || low === 'piece') return 'Pc';
+    if (low === 'pack' || low === 'pkt') return 'Pack';
+    if (low === 'box') return 'Box';
+    if (low === 'bottle') return 'Bottle';
+    if (low === 'can') return 'Can';
+    if (low === 'dozen') return 'Dozen';
+    if (low === 'bunch') return 'Bunch';
+    if (low === 'tray') return 'Tray';
+    return 'Kg';
+  };
+
+  const parseQuantityAndUnit = (unitStr: string | undefined): { qVal: string, qUnit: string, packSize: string } => {
+    if (!unitStr) return { qVal: '', qUnit: 'Kg', packSize: '' };
+    const packMatch = unitStr.match(/^([\d.]+)\s*([a-zA-Z]+)\s*(?:\(([^)]+)\)|-\s*(.+))$/);
+    if (packMatch) {
+      const u = normalizeUnit(packMatch[2]);
+      const pSize = (packMatch[3] || packMatch[4] || '').trim();
+      return { qVal: packMatch[1], qUnit: u, packSize: pSize };
+    }
     const match = unitStr.match(/^([\d.]+)\s*(.*)$/);
     if (match) {
-      let u = match[2].trim();
-      if (u.toLowerCase() === 'kg') u = 'Kg';
-      else if (u.toLowerCase() === 'gm' || u.toLowerCase() === 'g') u = 'g';
-      else if (u.toLowerCase() === 'l') u = 'L';
-      else if (u.toLowerCase() === 'ml') u = 'ml';
-      else if (u.toLowerCase() === 'pc' || u.toLowerCase() === 'piece') u = 'Pc';
-      else if (u.toLowerCase() === 'pack') u = 'Pack';
-      else if (u.toLowerCase() === 'box') u = 'Box';
-      else if (u.toLowerCase() === 'bottle') u = 'Bottle';
-      else if (u.toLowerCase() === 'can') u = 'Can';
-      else if (u.toLowerCase() === 'dozen') u = 'Dozen';
-      else if (u.toLowerCase() === 'bunch') u = 'Bunch';
-      else if (u.toLowerCase() === 'tray') u = 'Tray';
-      else u = 'Kg';
-      return { qVal: match[1], qUnit: u };
+      const u = normalizeUnit(match[2]);
+      return { qVal: match[1], qUnit: u, packSize: '' };
     }
-    return { qVal: '', qUnit: 'Kg' };
+    return { qVal: '', qUnit: 'Kg', packSize: '' };
+  };
+
+  const buildUnitString = (qVal: string, qUnit: string, packSize?: string) => {
+    const val = qVal || '';
+    const unitName = qUnit || 'Kg';
+    if (packSize && packSize.trim()) {
+      return `${val}${unitName === 'Pack' ? 'Pack' : ' ' + unitName} (${packSize.trim()})`;
+    }
+    return `${val}${unitName === 'Pack' ? 'Pack' : ' ' + unitName}`.trim();
   };
 
   const handleEditSetup = (product: Product) => {
@@ -2149,6 +2170,7 @@ export function AdminDashboard() {
     const parsedMain = parseQuantityAndUnit(product.unit);
     const mainQuantityValue = product.quantityValue ? product.quantityValue.toString() : parsedMain.qVal;
     const mainQuantityUnit = product.quantityUnit || parsedMain.qUnit;
+    const mainPackSize = product.packSize || parsedMain.packSize;
     
     const parsedHoreca = parseQuantityAndUnit(product.horecaUnit || '');
 
@@ -2165,6 +2187,7 @@ export function AdminDashboard() {
       unit: product.unit || '',
       quantityValue: mainQuantityValue,
       quantityUnit: mainQuantityUnit,
+      packSize: mainPackSize,
       horecaQuantityValue: parsedHoreca.qVal,
       horecaQuantityUnit: parsedHoreca.qUnit,
       variants: ((product as any).variants || []).map((v: any) => {
@@ -2174,6 +2197,7 @@ export function AdminDashboard() {
           unit: v.unit,
           quantityValue: v.quantityValue ? v.quantityValue.toString() : parsedV.qVal,
           quantityUnit: v.quantityUnit || parsedV.qUnit,
+          packSize: v.packSize || parsedV.packSize,
           price: v.price ? v.price.toString() : '',
           originalPrice: v.originalPrice ? v.originalPrice.toString() : '',
           horecaPrice: v.horecaPrice ? v.horecaPrice.toString() : '',
@@ -2189,7 +2213,7 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
+    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
   };
 
   const uploadRawFileToStorage = async (
@@ -3254,15 +3278,23 @@ export function AdminDashboard() {
                             required
                             type="number"
                             step="any"
-                            placeholder="Qty (e.g. 1, 500)" 
+                            placeholder="Qty (e.g. 1)" 
                             className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
                             value={newProduct.quantityValue || ''} 
-                            onChange={e => setNewProduct({...newProduct, quantityValue: e.target.value, unit: `${e.target.value} ${newProduct.quantityUnit || 'Kg'}`})} 
+                            onChange={e => {
+                              const val = e.target.value;
+                              const uStr = buildUnitString(val, newProduct.quantityUnit || 'Kg', newProduct.packSize);
+                              setNewProduct({...newProduct, quantityValue: val, unit: uStr});
+                            }} 
                           />
                           <select
-                            className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
+                            className="w-24 sm:w-28 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
                             value={newProduct.quantityUnit || 'Kg'}
-                            onChange={e => setNewProduct({...newProduct, quantityUnit: e.target.value, unit: `${newProduct.quantityValue || ''} ${e.target.value}`})}
+                            onChange={e => {
+                              const qUnit = e.target.value;
+                              const uStr = buildUnitString(newProduct.quantityValue || '', qUnit, newProduct.packSize);
+                              setNewProduct({...newProduct, quantityUnit: qUnit, unit: uStr});
+                            }}
                           >
                             {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
                               <option key={u} value={u}>{u}</option>
@@ -3270,6 +3302,30 @@ export function AdminDashboard() {
                           </select>
                         </div>
                       </div>
+
+                      {(['Pack', 'Box', 'Tray', 'Dozen', 'Pc', 'Bottle', 'Can'].includes(newProduct.quantityUnit || '') || Boolean(newProduct.packSize)) && (
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                              Pack Weight / Net Qty
+                            </label>
+                            {newProduct.packSize && (
+                              <span className="text-[8px] text-muted-foreground font-semibold">1 {newProduct.quantityUnit || 'Pack'} = {newProduct.packSize}</span>
+                            )}
+                          </div>
+                          <input 
+                            type="text"
+                            placeholder="e.g. 125g, 250g, 500g" 
+                            className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
+                            value={newProduct.packSize || ''} 
+                            onChange={e => {
+                              const pSize = e.target.value;
+                              const uStr = buildUnitString(newProduct.quantityValue || '', newProduct.quantityUnit || 'Pack', pSize);
+                              setNewProduct({...newProduct, packSize: pSize, unit: uStr});
+                            }} 
+                          />
+                        </div>
+                      )}
                       
                       <div className="space-y-1.5 sm:space-y-2">
                         <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Unit (Optional)</label>
@@ -3375,7 +3431,7 @@ export function AdminDashboard() {
 
                                 <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-1">
                                   <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Quantity & Unit</label>
-                                  <div className="flex gap-2">
+                                  <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                                     <input 
                                       required
                                       type="number"
@@ -3384,19 +3440,21 @@ export function AdminDashboard() {
                                       value={variant.quantityValue || ''}
                                       onChange={(e) => {
                                         const newVariants = [...newProduct.variants];
-                                        newVariants[vIdx].quantityValue = e.target.value;
-                                        newVariants[vIdx].unit = `${e.target.value} ${newVariants[vIdx].quantityUnit || 'Kg'}`;
+                                        const val = e.target.value;
+                                        newVariants[vIdx].quantityValue = val;
+                                        newVariants[vIdx].unit = buildUnitString(val, newVariants[vIdx].quantityUnit || 'Kg', newVariants[vIdx].packSize);
                                         setNewProduct({...newProduct, variants: newVariants});
                                       }}
-                                      className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
+                                      className="flex-1 min-w-[60px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
                                     />
                                     <select
                                       className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
                                       value={variant.quantityUnit || 'Kg'}
                                       onChange={(e) => {
                                         const newVariants = [...newProduct.variants];
-                                        newVariants[vIdx].quantityUnit = e.target.value;
-                                        newVariants[vIdx].unit = `${newVariants[vIdx].quantityValue || ''} ${e.target.value}`;
+                                        const qUnit = e.target.value;
+                                        newVariants[vIdx].quantityUnit = qUnit;
+                                        newVariants[vIdx].unit = buildUnitString(newVariants[vIdx].quantityValue || '', qUnit, newVariants[vIdx].packSize);
                                         setNewProduct({...newProduct, variants: newVariants});
                                       }}
                                     >
@@ -3404,6 +3462,21 @@ export function AdminDashboard() {
                                         <option key={u} value={u}>{u}</option>
                                       ))}
                                     </select>
+                                    {(variant.quantityUnit === 'Pack' || variant.quantityUnit === 'Box' || variant.quantityUnit === 'Tray' || variant.quantityUnit === 'Dozen' || variant.quantityUnit === 'Pc') && (
+                                      <input 
+                                        type="text"
+                                        placeholder="Pack weight (e.g. 125g, 250g)" 
+                                        value={variant.packSize || ''}
+                                        onChange={(e) => {
+                                          const newVariants = [...newProduct.variants];
+                                          const pSize = e.target.value;
+                                          newVariants[vIdx].packSize = pSize;
+                                          newVariants[vIdx].unit = buildUnitString(newVariants[vIdx].quantityValue || '', newVariants[vIdx].quantityUnit || 'Pack', pSize);
+                                          setNewProduct({...newProduct, variants: newVariants});
+                                        }}
+                                        className="w-28 sm:w-36 flex-shrink-0 border border-primary/40 bg-primary/5 rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-2.5 sm:py-3.5 outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-semibold"
+                                      />
+                                    )}
                                   </div>
                                 </div>
                                 

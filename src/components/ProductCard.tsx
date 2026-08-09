@@ -6,7 +6,7 @@ import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
-import { calculateHorecaPrice, calculateBaseUnitPrice } from '../lib/horecaUtils';
+import { calculateHorecaPrice, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
 import { QuantityInput } from './QuantityInput';
 import { motion } from 'motion/react';
 
@@ -47,21 +47,25 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
   
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
-  const [isExpanded, setIsExpanded] = useState(isHoreca);
-  const [stagedQuantity, setStagedQuantity] = useState<number>(isHoreca ? 0 : 1);
-
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   const baseUnitPrice = calculateBaseUnitPrice(currentPrice, currentUnit);
-  
+
+  const unitConfig = React.useMemo(() => getUnitQuantityConfig(currentUnit), [currentUnit]);
+  const step = isHoreca ? 0.5 : unitConfig.step;
+  const initialQty = isHoreca ? 0 : unitConfig.initialQty;
+  const isDiscrete = unitConfig.isDiscrete;
+
+  const [isExpanded, setIsExpanded] = useState(isHoreca);
+  const [stagedQuantity, setStagedQuantity] = useState<number>(initialQty);
+
   // Ensure cartProductId is strictly unique per variant
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
 
   const cartItem = items.find((item) => item?.product?.id === cartProductId && item?.product?.unit === currentUnit);
   const quantity = cartItem ? cartItem.quantity : 0;
   
-  const step = 1;
   const displayQuantity = quantity > 0 ? quantity : stagedQuantity;
 
   useEffect(() => {
@@ -75,10 +79,10 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
         setIsExpanded(true);
       } else {
         setIsExpanded(false);
-        setStagedQuantity(1);
+        setStagedQuantity(initialQty);
       }
     }
-  }, [isHoreca, quantity]);
+  }, [isHoreca, quantity, initialQty]);
   
   const catImage = getCategoryImage(displayCategory, categoryImages) || undefined;
   const productImgSrc = product.imageUrl || catImage || undefined;
@@ -237,7 +241,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
               e.stopPropagation();
               if (product.inStock || isHoreca) {
                 setIsExpanded(true);
-                setStagedQuantity(1);
+                setStagedQuantity(initialQty);
               }
             }}
             disabled={!product.inStock && !isHoreca}
@@ -255,19 +259,19 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                   e.stopPropagation(); 
                   const currentStep = isHoreca ? 0.5 : step;
                   if (quantity > 0) {
-                    if (quantity <= currentStep) {
+                    if (quantity <= currentStep + 0.001) {
                       removeItem(cartProductId);
                       setStagedQuantity(0);
                       if (!isHoreca) setIsExpanded(false);
                     } else {
-                      updateQuantity(cartProductId, quantity - currentStep);
+                      updateQuantity(cartProductId, safeSubtractQuantity(quantity, currentStep, isDiscrete));
                     }
                   } else {
-                    if (stagedQuantity <= currentStep) {
+                    if (stagedQuantity <= currentStep + 0.001) {
                       setStagedQuantity(0);
                       if (!isHoreca) setIsExpanded(false);
                     } else {
-                      setStagedQuantity(stagedQuantity - currentStep);
+                      setStagedQuantity(safeSubtractQuantity(stagedQuantity, currentStep, isDiscrete));
                     }
                   }
                 }}
@@ -302,9 +306,9 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                   e.stopPropagation(); 
                   const currentStep = isHoreca ? 0.5 : step;
                   if (quantity > 0) {
-                    updateQuantity(cartProductId, quantity + currentStep);
+                    updateQuantity(cartProductId, safeAddQuantity(quantity, currentStep, isDiscrete));
                   } else {
-                    setStagedQuantity(stagedQuantity + currentStep);
+                    setStagedQuantity(safeAddQuantity(stagedQuantity, currentStep, isDiscrete));
                   }
                 }}
               >
@@ -320,11 +324,11 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                     onAddToCart({ ...product, id: cartProductId, price: isHoreca ? 0 : currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, stagedQuantity); 
                   }
                 } else {
-                  updateQuantity(cartProductId, quantity + step);
+                  updateQuantity(cartProductId, safeAddQuantity(quantity, step, isDiscrete));
                 }
               }}
-              disabled={(!product.inStock && !isHoreca) || displayQuantity < (isHoreca ? 0.01 : 1)}
-              className={`h-full px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center ${(product.inStock || isHoreca) && displayQuantity >= (isHoreca ? 0.01 : 1) ? 'bg-primary text-white shadow-sm active:scale-95 cursor-pointer hover:bg-[#09120b]' : 'bg-muted text-muted-foreground cursor-not-allowed opacity-75'}`}
+              disabled={(!product.inStock && !isHoreca) || displayQuantity <= 0}
+              className={`h-full px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center ${(product.inStock || isHoreca) && displayQuantity > 0 ? 'bg-primary text-white shadow-sm active:scale-95 cursor-pointer hover:bg-[#09120b]' : 'bg-muted text-muted-foreground cursor-not-allowed opacity-75'}`}
             >
               {product.inStock ? 'Add' : 'Request'}
             </button>

@@ -5,7 +5,7 @@ import { useWishlist } from '../store/useWishlist';
 import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
-import { calculateHorecaPrice, getBaseUnit, parseUnitScale } from '../lib/horecaUtils';
+import { calculateHorecaPrice, getBaseUnit, parseUnitScale, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
@@ -44,15 +44,20 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const currentOriginalPrice = currentVariant.originalPrice;
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
 
-  const [quantity, setQuantity] = useState(isHoreca ? 0 : 1);
+  const unitConfig = React.useMemo(() => getUnitQuantityConfig(currentUnit), [currentUnit]);
+  const step = isHoreca ? 0.5 : unitConfig.step;
+  const initialQty = isHoreca ? 0 : unitConfig.initialQty;
+  const isDiscrete = unitConfig.isDiscrete;
+
+  const [quantity, setQuantity] = useState(initialQty);
 
   React.useEffect(() => {
     if (isHoreca) {
       setQuantity(0);
     } else {
-      setQuantity(1);
+      setQuantity(initialQty);
     }
-  }, [isHoreca]);
+  }, [isHoreca, currentUnit, initialQty]);
   const inWishlist = isInWishlist(product.id!);
   const productImgSrc = product.imageUrl || getCategoryImage(product.category, categoryImages) || undefined;
 
@@ -177,7 +182,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
               </div>
               <div className="flex items-center border border-border rounded-xl overflow-hidden p-1">
                 <button 
-                  onClick={() => setQuantity(Math.max(isHoreca ? 0.01 : 1, quantity - (isHoreca ? 0.5 : 1)))}
+                  onClick={() => setQuantity(safeSubtractQuantity(quantity, step, isDiscrete))}
                   className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
                 >
                   <Minus className="w-3 h-3" />
@@ -188,12 +193,12 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
                     isHoreca={isHoreca}
                     className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
                     onUpdate={(val) => setQuantity(val)}
-                    onRemove={() => setQuantity(isHoreca ? 0.01 : 1)}
+                    onRemove={() => setQuantity(isHoreca ? 0.01 : initialQty)}
                   />
                   <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
                 </div>
                 <button 
-                  onClick={() => setQuantity(quantity + (isHoreca ? 0.5 : 1))}
+                  onClick={() => setQuantity(safeAddQuantity(quantity, step, isDiscrete))}
                   className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
                 >
                   <Plus className="w-3 h-3" />
@@ -203,7 +208,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
 
             <button 
               onClick={handleAddToCart}
-              disabled={(!product.inStock && !isHoreca) || quantity < (isHoreca ? 0.01 : 1)}
+              disabled={(!product.inStock && !isHoreca) || quantity <= 0}
               className="w-full py-4 rounded-xl bg-primary text-white font-sans text-xs uppercase font-black tracking-widest transition-colors hover:bg-primary/90 flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed shadow-md"
             >
               <ShoppingBag className="w-4 h-4" />

@@ -61,21 +61,102 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
     return `₹${formattedPrice}/1 Litre`;
   }
   
-  // Piece / count units
-  if (['pc', 'pcs', 'piece', 'pieces', 'pkt', 'packet', 'packets', 'pack', 'packs', 'bunch', 'bunches', 'box', 'boxes', 'bottle', 'bottles'].includes(unit)) {
+  // Piece units (PC)
+  if (['pc', 'pcs', 'piece', 'pieces'].includes(unit)) {
     if (val <= 0) return null;
-    const basePrice = (price / val) * 10;
+    const basePrice = price / val;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
-    return `₹${formattedPrice}/10 PC`;
+    return `₹${formattedPrice}/1 PC`;
   }
-  
-  // Fallback for custom text units with no leading number
-  if (unit) {
-    const basePrice = price * 10;
+
+  // Pack units (PACK)
+  if (['pack', 'packs', 'pkt', 'packet', 'packets'].includes(unit)) {
+    if (val <= 0) return null;
+    const basePrice = price / val;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
-    return `₹${formattedPrice}/10 PC`;
+    return `₹${formattedPrice}/1 PACK`;
+  }
+
+  // Box units
+  if (['box', 'boxes'].includes(unit)) {
+    if (val <= 0) return null;
+    const basePrice = price / val;
+    const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
+    return `₹${formattedPrice}/1 BOX`;
+  }
+
+  // Bottle units
+  if (['bottle', 'bottles'].includes(unit)) {
+    if (val <= 0) return null;
+    const basePrice = price / val;
+    const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
+    return `₹${formattedPrice}/1 BOTTLE`;
+  }
+
+  // Bunch units
+  if (['bunch', 'bunches'].includes(unit)) {
+    if (val <= 0) return null;
+    const basePrice = price / val;
+    const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
+    return `₹${formattedPrice}/1 BUNCH`;
+  }
+
+  // Fallback for custom/other units
+  if (unit) {
+    if (val <= 0) return null;
+    const basePrice = price / val;
+    const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
+    const unitLabel = unit.toUpperCase();
+    return `₹${formattedPrice}/1 ${unitLabel}`;
   }
   
   return null;
+}
+
+export function getUnitQuantityConfig(unitStr: string | undefined): { initialQty: number; step: number; isDiscrete: boolean } {
+  if (!unitStr) return { initialQty: 1, step: 1, isDiscrete: true };
+
+  const trimmed = unitStr.trim();
+  const match = trimmed.match(/^([\d.]+)\s*(.*)$/);
+
+  let val = 1;
+  let unit = trimmed.toLowerCase();
+
+  if (match) {
+    val = parseFloat(match[1]) || 1;
+    unit = match[2].trim().toLowerCase();
+  }
+
+  // Weight units -> convert g/gm to Kg (e.g., 500gm -> 0.5, 200g -> 0.2, 1kg -> 1)
+  if (['g', 'gm', 'gram', 'grams', 'kg', 'kilogram', 'kilograms'].includes(unit)) {
+    const weightInKg = ['kg', 'kilogram', 'kilograms'].includes(unit) ? val : val / 1000;
+    const qty = Math.max(0.01, Number(weightInKg.toFixed(3)));
+    return { initialQty: qty, step: qty, isDiscrete: false };
+  }
+
+  // Volume units -> convert ml to Litre (e.g., 500ml -> 0.5, 1.5l -> 1.5)
+  if (['ml', 'l', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(unit)) {
+    const volumeInL = ['ml'].includes(unit) ? val / 1000 : val;
+    const qty = Math.max(0.01, Number(volumeInL.toFixed(3)));
+    return { initialQty: qty, step: qty, isDiscrete: false };
+  }
+
+  // Discrete count units (pc, pcs, pack, pkt, box, bottle, bunch) -> whole integers (1, 2, 3, 4, 5...)
+  const initialCount = Math.max(1, Math.round(val));
+  return { initialQty: initialCount, step: 1, isDiscrete: true };
+}
+
+export function safeAddQuantity(current: number, step: number, isDiscrete: boolean): number {
+  if (isDiscrete) {
+    return Math.max(1, Math.round(current + step));
+  }
+  return Number((current + step).toFixed(3));
+}
+
+export function safeSubtractQuantity(current: number, step: number, isDiscrete: boolean): number {
+  if (isDiscrete) {
+    return Math.round(current - step);
+  }
+  return Number((current - step).toFixed(3));
 }
 

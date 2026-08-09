@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getUnitQuantityConfig } from '../lib/horecaUtils';
 
 export interface ProductVariant {
   unit: string;
   quantityValue?: number;
   quantityUnit?: string;
+  packSize?: string;
   price: number;
   originalPrice?: number;
   horecaPrice?: number;
@@ -25,6 +27,7 @@ export interface Product {
   unit?: string;
   quantityValue?: number;
   quantityUnit?: string;
+  packSize?: string;
   variants?: ProductVariant[];
   stock: number;
   inStock: boolean;
@@ -70,20 +73,22 @@ export const useCart = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
-      addItem: (product, quantity = 1) => {
+      addItem: (product, quantity) => {
         if (!product || !product.id || (!product.inStock && product.price !== 0)) return;
+        const config = getUnitQuantityConfig(product.unit);
+        const qtyToAdd = quantity !== undefined ? quantity : config.initialQty;
         set((state) => {
           const existingItem = state.items.find((item) => item && item.product && item.product.id === product.id);
           if (existingItem) {
             return {
               items: state.items.map((item) =>
                 item && item.product && item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? { ...item, quantity: Number((item.quantity + qtyToAdd).toFixed(3)) }
                   : item
               ),
             };
           }
-          return { items: [...state.items || [], { product, quantity }] };
+          return { items: [...(state.items || []), { product, quantity: qtyToAdd }] };
         });
       },
       removeItem: (productId) => {
@@ -106,7 +111,9 @@ export const useCart = create<CartState>()(
       total: () => {
         return (get().items || []).reduce((total, item) => {
           if (!item || !item.product) return total;
-          return total + (item.product.price || 0) * (item.quantity || 0);
+          const config = getUnitQuantityConfig(item.product.unit);
+          const packs = config.initialQty > 0 ? (item.quantity || 0) / config.initialQty : (item.quantity || 0);
+          return total + (item.product.price || 0) * packs;
         }, 0);
       },
     }),
