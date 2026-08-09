@@ -631,14 +631,14 @@ export function RecipeAI() {
   // Trigger search if coming from Home Search with "?q=..."
   const hasTriggeredRef = useRef(false);
   useEffect(() => {
-    if (initialQuery && !hasTriggeredRef.current && availableProducts.length > 0) {
+    if (initialQuery && !hasTriggeredRef.current && !loadingHistory && activeSessionId) {
       hasTriggeredRef.current = true;
       // Clean query parameter from address bar
       setSearchParams({}, { replace: true });
       // Trigger search
       handleSend(initialQuery);
     }
-  }, [initialQuery, availableProducts, setSearchParams]);
+  }, [initialQuery, loadingHistory, activeSessionId, setSearchParams]);
 
   // Form Submission
   const handleFormSubmit = (e: React.FormEvent) => {
