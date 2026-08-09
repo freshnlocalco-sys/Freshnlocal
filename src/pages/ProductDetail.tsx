@@ -13,7 +13,7 @@ import { useWishlist } from '../store/useWishlist';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { ProductCard } from '../components/ProductCard';
 import { ProductReviews } from '../components/ProductReviews';
-import { calculateHorecaPrice, getBaseUnit, parseUnitScale } from '../lib/horecaUtils';
+import { calculateHorecaPrice, getBaseUnit, parseUnitScale, calculateBaseUnitPrice } from '../lib/horecaUtils';
 import toast from 'react-hot-toast';
 
 import { QuantityInput } from '../components/QuantityInput';
@@ -49,6 +49,7 @@ export function ProductDetail() {
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
+  const baseUnitPrice = calculateBaseUnitPrice(currentPrice, currentUnit);
   const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;
 
   const [quantity, setQuantity] = useState(isHoreca ? 0 : 1);
@@ -318,16 +319,23 @@ export function ProductDetail() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-end gap-3 tracking-tighter">
-                <div className="text-4xl font-black text-primary">₹{currentPrice}</div>
-                {currentOriginalPrice && currentOriginalPrice > currentPrice && (
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50">
-                      MRP ₹{currentOriginalPrice}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-end gap-3 tracking-tighter">
+                  <div className="text-4xl font-black text-primary font-sans">₹{currentPrice}</div>
+                  {currentOriginalPrice && currentOriginalPrice > currentPrice && (
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50">
+                        MRP ₹{currentOriginalPrice}
+                      </div>
+                      <span className="text-sm font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded">
+                        {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
+                      </span>
                     </div>
-                    <span className="text-sm font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded">
-                      {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
-                    </span>
+                  )}
+                </div>
+                {baseUnitPrice && (
+                  <div className="text-xs uppercase font-extrabold text-muted-foreground/80">
+                    Est. Unit Price: <span className="text-foreground font-black font-sans">{baseUnitPrice}</span>
                   </div>
                 )}
               </div>

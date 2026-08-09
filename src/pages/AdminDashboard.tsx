@@ -330,6 +330,14 @@ export function AdminDashboard() {
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
+  // States for exporting Horeca/B2B Orders
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportParty, setExportParty] = useState<string>('all');
+  const [exportStatus, setExportStatus] = useState<string>('pending');
+  const [exportStartDate, setExportStartDate] = useState<string>('');
+  const [exportEndDate, setExportEndDate] = useState<string>('');
+  const [exportFormat, setExportFormat] = useState<'sheets' | 'single' | 'picking'>('sheets');
+
   // Filter for products
   const [productSearch, setProductSearch] = useState('');
   const [productSection, setProductSection] = useState<'all' | 'veg-fruits' | 'juices'>('veg-fruits');
@@ -894,6 +902,43 @@ export function AdminDashboard() {
     return Object.values(productCounts).sort((a, b) => b.quantity - a.quantity).slice(0, 5);
   }, [filteredOrders]);
 
+  const uniqueB2BParties = React.useMemo(() => {
+    return Array.from(new Set(
+      orders
+        .filter(o => o.customerType === 'horeca' || o.customerType === 'horeca_admin')
+        .map(o => o.shippingDetails?.name || 'Unknown B2B Customer')
+    )).filter(Boolean).sort();
+  }, [orders]);
+
+  const getExportPreviewStats = () => {
+    let list = orders.filter(o => o.customerType === 'horeca' || o.customerType === 'horeca_admin');
+    if (exportParty !== 'all') {
+      list = list.filter(o => (o.shippingDetails?.name || 'Unknown B2B Customer') === exportParty);
+    }
+    if (exportStatus !== 'all') {
+      list = list.filter(o => o.status === exportStatus);
+    }
+    if (exportStartDate) {
+      const start = new Date(exportStartDate).getTime();
+      list = list.filter(o => new Date(o.createdAt).getTime() >= start);
+    }
+    if (exportEndDate) {
+      const end = new Date(exportEndDate).getTime() + (24 * 60 * 60 * 1000);
+      list = list.filter(o => new Date(o.createdAt).getTime() <= end);
+    }
+
+    const totalQty = list.reduce((sum, o) => sum + (o.items?.reduce((s: number, i: any) => s + (i.quantity || 1), 0) || 0), 0);
+    const totalAmt = list.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
+
+    return {
+      orderCount: list.length,
+      itemCount: totalQty,
+      totalAmount: totalAmt
+    };
+  };
+
+  const previewStats = getExportPreviewStats();
+
   // Spotlights state
   const [spotlightsConfig, setSpotlightsConfig] = useState<Record<string, {title: string, image: string}>>({});
   const [heroBanners, setHeroBanners] = useState<{id: string, imageUrl: string, link: string}[]>([]);
@@ -1287,6 +1332,240 @@ export function AdminDashboard() {
     } catch (err) {
       console.error("Horeca Export error:", err);
       toast.error("Failed to export Horeca products.");
+    }
+  };
+
+  const handleExportHorecaOrders = () => {
+    try {
+      // 1. Get B2B orders
+      let b2bOrders = orders.filter(o => o.customerType === 'horeca' || o.customerType === 'horeca_admin');
+
+      // 2. Filter by selected Party
+      if (exportParty !== 'all') {
+        b2bOrders = b2bOrders.filter(o => (o.shippingDetails?.name || 'Unknown B2B Customer') === exportParty);
+      }
+
+      // 3. Filter by selected Status
+      if (exportStatus !== 'all') {
+        b2bOrders = b2bOrders.filter(o => o.status === exportStatus);
+      }
+
+      // 4. Filter by Date range
+      if (exportStartDate) {
+        const startDate = new Date(exportStartDate).getTime();
+        b2bOrders = b2bOrders.filter(o => new Date(o.createdAt).getTime() >= startDate);
+      }
+      if (exportEndDate) {
+        // add 24 hours to include the entire end date
+        const endDate = new Date(exportEndDate).getTime() + (24 * 60 * 60 * 1000);
+        b2bOrders = b2bOrders.filter(o => new Date(o.createdAt).getTime() <= endDate);
+      }
+
+      if (b2bOrders.length === 0) {
+        toast.error("No Horeca orders found for the selected criteria.");
+        return;
+      }
+
+      const workbook = XLSX.utils.book_new();
+
+      if (exportFormat === 'sheets') {
+        // Format A: Separate Sheets per Party
+        const partiesMap = new Map<string, any[]>();
+        b2bOrders.forEach(o => {
+          const partyName = o.shippingDetails?.name || 'Unknown Party';
+          if (!partiesMap.has(partyName)) {
+            partiesMap.set(partyName, []);
+          }
+          partiesMap.get(partyName)!.push(o);
+        });
+
+        partiesMap.forEach((partyOrders, partyName) => {
+          const sheetData: any[] = [];
+          
+          partyOrders.forEach(order => {
+            const orderNo = order.orderNumber || `FNL-${order.id.slice(0, 8).toUpperCase()}`;
+            const orderDate = new Date(order.createdAt).toLocaleString();
+            
+            order.items.forEach((item: any) => {
+              const prod = item.product || item;
+              if (!prod) return;
+              sheetData.push({
+                "Order Number": orderNo,
+                "Order Date": orderDate,
+                "Customer Name": partyName,
+                "Phone": order.shippingDetails?.phone || '',
+                "Address": order.shippingDetails?.address || '',
+                "Product Name": prod.name || '',
+                "Unit": prod.unit || '',
+                "Quantity": item.quantity || 1,
+                "Price (₹)": item.price !== undefined ? item.price : (prod.price || 0),
+                "Total (₹)": (item.quantity || 1) * (item.price !== undefined ? item.price : (prod.price || 0)),
+                "Payment Method": order.paymentMethod || 'COD',
+                "Status": order.status || 'pending'
+              });
+            });
+          });
+
+          if (sheetData.length > 0) {
+            const totalQty = sheetData.reduce((sum, r) => sum + r["Quantity"], 0);
+            const totalAmt = sheetData.reduce((sum, r) => sum + r["Total (₹)"], 0);
+            sheetData.push({
+              "Order Number": "TOTAL",
+              "Order Date": "",
+              "Customer Name": "",
+              "Phone": "",
+              "Address": "",
+              "Product Name": "",
+              "Unit": "",
+              "Quantity": totalQty,
+              "Price (₹)": "",
+              "Total (₹)": totalAmt,
+              "Payment Method": "",
+              "Status": ""
+            });
+          }
+
+          const cleanedSheetName = partyName.replace(/[\\\/\?\*\[\]]/g, '').slice(0, 30) || 'Sheet';
+          const worksheet = XLSX.utils.json_to_sheet(sheetData);
+          XLSX.utils.book_append_sheet(workbook, worksheet, cleanedSheetName);
+        });
+
+      } else if (exportFormat === 'single') {
+        // Format B: Single Sheet, sorted by party name
+        const sheetData: any[] = [];
+        
+        const sortedOrders = [...b2bOrders].sort((a, b) => {
+          const nameA = a.shippingDetails?.name || '';
+          const nameB = b.shippingDetails?.name || '';
+          return nameA.localeCompare(nameB);
+        });
+
+        sortedOrders.forEach(order => {
+          const orderNo = order.orderNumber || `FNL-${order.id.slice(0, 8).toUpperCase()}`;
+          const orderDate = new Date(order.createdAt).toLocaleString();
+          const partyName = order.shippingDetails?.name || 'Unknown Party';
+          
+          order.items.forEach((item: any) => {
+            const prod = item.product || item;
+            if (!prod) return;
+            sheetData.push({
+              "Party/Customer Name": partyName,
+              "Order Number": orderNo,
+              "Order Date": orderDate,
+              "Phone": order.shippingDetails?.phone || '',
+              "Address": order.shippingDetails?.address || '',
+              "Product Name": prod.name || '',
+              "Unit": prod.unit || '',
+              "Quantity": item.quantity || 1,
+              "Price (₹)": item.price !== undefined ? item.price : (prod.price || 0),
+              "Total (₹)": (item.quantity || 1) * (item.price !== undefined ? item.price : (prod.price || 0)),
+              "Payment Method": order.paymentMethod || 'COD',
+              "Status": order.status || 'pending'
+            });
+          });
+        });
+
+        if (sheetData.length > 0) {
+          const totalQty = sheetData.reduce((sum, r) => sum + r["Quantity"], 0);
+          const totalAmt = sheetData.reduce((sum, r) => sum + r["Total (₹)"], 0);
+          sheetData.push({
+            "Party/Customer Name": "TOTAL",
+            "Order Number": "",
+            "Order Date": "",
+            "Phone": "",
+            "Address": "",
+            "Product Name": "",
+            "Unit": "",
+            "Quantity": totalQty,
+            "Price (₹)": "",
+            "Total (₹)": totalAmt,
+            "Payment Method": "",
+            "Status": ""
+          });
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(sheetData);
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'All B2B Orders');
+
+      } else if (exportFormat === 'picking') {
+        // Format C: Picking Summary
+        const productAggrMap = new Map<string, { name: string; unit: string; totalQty: number; totalAmt: number; parties: Set<string> }>();
+
+        b2bOrders.forEach(order => {
+          const partyName = order.shippingDetails?.name || 'Unknown Party';
+          order.items.forEach((item: any) => {
+            const prod = item.product || item;
+            if (!prod) return;
+            const pKey = `${prod.name}_${prod.unit || ''}`;
+            const price = item.price !== undefined ? item.price : (prod.price || 0);
+            const qty = item.quantity || 1;
+            const amt = qty * price;
+
+            if (!productAggrMap.has(pKey)) {
+              productAggrMap.set(pKey, {
+                name: prod.name,
+                unit: prod.unit || '',
+                totalQty: 0,
+                totalAmt: 0,
+                parties: new Set()
+              });
+            }
+
+            const existing = productAggrMap.get(pKey)!;
+            existing.totalQty += qty;
+            existing.totalAmt += amt;
+            existing.parties.add(partyName);
+          });
+        });
+
+        const sheetData = Array.from(productAggrMap.values()).map(item => ({
+          "Product Name": item.name,
+          "Unit": item.unit,
+          "Total Quantity": item.totalQty,
+          "Fulfillment Unit Helper": formatTotalQuantity(item.totalQty, item.unit),
+          "Estimated Total Value (₹)": item.totalAmt,
+          "Ordered By Parties": Array.from(item.parties).join(", ")
+        }));
+
+        sheetData.sort((a, b) => a["Product Name"].localeCompare(b["Product Name"]));
+
+        if (sheetData.length > 0) {
+          const totalQty = sheetData.reduce((sum, r) => sum + r["Total Quantity"], 0);
+          const totalAmt = sheetData.reduce((sum, r) => sum + r["Estimated Total Value (₹)"], 0);
+          sheetData.push({
+            "Product Name": "TOTAL SUMMARY",
+            "Unit": "",
+            "Total Quantity": totalQty,
+            "Fulfillment Unit Helper": "",
+            "Estimated Total Value (₹)": totalAmt,
+            "Ordered By Parties": ""
+          });
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(sheetData);
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Picking List Summary');
+      }
+
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      
+      const fileDateSuffix = new Date().toISOString().split('T')[0];
+      const filename = `Horeca_B2B_Export_${exportFormat}_${exportStatus}_${fileDateSuffix}.xlsx`;
+      
+      link.setAttribute("download", filename);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Horeca orders exported successfully.");
+      setIsExportModalOpen(false);
+    } catch (err) {
+      console.error("Horeca orders export error:", err);
+      toast.error("Failed to export Horeca orders.");
     }
   };
 
@@ -2675,8 +2954,8 @@ export function AdminDashboard() {
 
             {/* Filter Section */}
             <div className="flex flex-col gap-4 bg-secondary p-4 sm:p-5 rounded-2xl border border-border/70 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-              <div className="flex flex-col sm:flex-row gap-4 items-end justify-between">
-                <div className="flex flex-col gap-1.5 w-full">
+              <div className="flex flex-col md:flex-row gap-4 items-end justify-between">
+                <div className="flex flex-col gap-1.5 w-full md:flex-1">
                   <label className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1.5"><Search className="w-3 h-3" /> Search Order</label>
                   <input
                     type="text"
@@ -2686,6 +2965,19 @@ export function AdminDashboard() {
                     className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportStatus(filterStatus === 'all' ? 'pending' : filterStatus);
+                    setExportStartDate(dateRange.start);
+                    setExportEndDate(dateRange.end);
+                    setExportParty('all');
+                    setIsExportModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15 transition-all text-[10px] uppercase font-black tracking-widest cursor-pointer w-full md:w-auto shrink-0 shadow-xs h-[40px]"
+                >
+                  <FileText className="w-4 h-4" /> Export B2B/HoReCa Orders
+                </button>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 items-end justify-between">
                 <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -4795,6 +5087,181 @@ export function AdminDashboard() {
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
               >
                 Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export HoReCa B2B Orders Modal */}
+      {isExportModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsExportModalOpen(false)} />
+          <div className="bg-secondary border border-border rounded-2xl max-w-lg w-full p-6 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center border-b border-border pb-3.5 mb-4">
+              <div>
+                <h3 className="text-sm font-black uppercase text-foreground flex items-center gap-2 tracking-wider">
+                  <FileText className="w-5 h-5 text-primary" /> Export HoReCa (B2B) Orders
+                </h3>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-1">
+                  Generate customized spreadsheets according to party, status, and date range
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsExportModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground p-1 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* 1. Horeca Party Selector */}
+              <div>
+                <label className="block text-[9px] uppercase font-black tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" /> Select Horeca Party / Party Customer
+                </label>
+                <select
+                  value={exportParty}
+                  onChange={(e) => setExportParty(e.target.value)}
+                  className="appearance-none border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_12px_center] bg-no-repeat"
+                >
+                  <option value="all">ALL HORECA PARTIES</option>
+                  {uniqueB2BParties.map((party, idx) => (
+                    <option key={idx} value={party}>{party.toUpperCase()}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 2. Status Selector */}
+              <div>
+                <label className="block text-[9px] uppercase font-black tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                  <Filter className="w-3.5 h-3.5" /> Order Status Filter
+                </label>
+                <select
+                  value={exportStatus}
+                  onChange={(e) => setExportStatus(e.target.value)}
+                  className="appearance-none border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full uppercase font-black tracking-wider text-foreground cursor-pointer shadow-sm pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[right_12px_center] bg-no-repeat"
+                >
+                  <option value="all">ANY STATUS</option>
+                  <option value="pending">PENDING ONLY</option>
+                  <option value="confirmed">CONFIRMED ONLY</option>
+                  <option value="processing">PROCESSING ONLY</option>
+                  <option value="delivered">DELIVERED ONLY</option>
+                  <option value="cancelled">CANCELLED ONLY</option>
+                </select>
+              </div>
+
+              {/* 3. Date Range Selector */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] uppercase font-black tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" /> Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={exportStartDate}
+                    onChange={(e) => setExportStartDate(e.target.value)}
+                    className="border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full font-mono font-bold tracking-wider text-foreground shadow-sm uppercase min-h-[38px]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] uppercase font-black tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" /> End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={exportEndDate}
+                    onChange={(e) => setExportEndDate(e.target.value)}
+                    min={exportStartDate}
+                    className="border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full font-mono font-bold tracking-wider text-foreground shadow-sm uppercase min-h-[38px]"
+                  />
+                </div>
+              </div>
+
+              {/* 4. Format Selector */}
+              <div>
+                <label className="block text-[9px] uppercase font-black tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5" /> Export Spreadsheet Format
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${exportFormat === 'sheets' ? 'border-primary bg-primary/5' : 'border-border bg-white hover:bg-neutral-50'}`}>
+                    <input
+                      type="radio"
+                      name="exportFormat"
+                      checked={exportFormat === 'sheets'}
+                      onChange={() => setExportFormat('sheets')}
+                      className="mt-1 accent-primary"
+                    />
+                    <div>
+                      <p className="text-[10px] sm:text-xs font-black text-foreground uppercase tracking-wide">Separate sheets per party</p>
+                      <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">Creates separate tabs in the Excel file for each B2B customer</p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${exportFormat === 'single' ? 'border-primary bg-primary/5' : 'border-border bg-white hover:bg-neutral-50'}`}>
+                    <input
+                      type="radio"
+                      name="exportFormat"
+                      checked={exportFormat === 'single'}
+                      onChange={() => setExportFormat('single')}
+                      className="mt-1 accent-primary"
+                    />
+                    <div>
+                      <p className="text-[10px] sm:text-xs font-black text-foreground uppercase tracking-wide">Single consolidated sheet</p>
+                      <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">Combines all selected party orders into a single list sorted by customer</p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${exportFormat === 'picking' ? 'border-primary bg-primary/5' : 'border-border bg-white hover:bg-neutral-50'}`}>
+                    <input
+                      type="radio"
+                      name="exportFormat"
+                      checked={exportFormat === 'picking'}
+                      onChange={() => setExportFormat('picking')}
+                      className="mt-1 accent-primary"
+                    />
+                    <div>
+                      <p className="text-[10px] sm:text-xs font-black text-foreground uppercase tracking-wide">Procurement / Picking List Summary</p>
+                      <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">Sums item quantities across all selected orders (perfect for packing/sourcing)</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* 5. Live Preview Stats Box */}
+              <div className="bg-primary/5 border border-primary/15 rounded-xl p-3 flex items-center justify-between">
+                <span className="text-[10px] uppercase font-black tracking-widest text-primary/80">MATCHING STATS:</span>
+                <div className="flex gap-4 text-right">
+                  <div>
+                    <span className="block text-[8px] uppercase tracking-wider text-muted-foreground font-extrabold">Orders</span>
+                    <span className="text-xs font-black text-foreground">{previewStats.orderCount}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase tracking-wider text-muted-foreground font-extrabold">Total Items</span>
+                    <span className="text-xs font-black text-foreground">{previewStats.itemCount}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[8px] uppercase tracking-wider text-muted-foreground font-extrabold">Estimated Value</span>
+                    <span className="text-xs font-black text-primary font-mono">₹{previewStats.totalAmount}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6 border-t border-border pt-3.5">
+              <button
+                onClick={() => setIsExportModalOpen(false)}
+                className="px-4 py-2.5 border border-border rounded-xl text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:bg-muted/10 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExportHorecaOrders}
+                disabled={previewStats.orderCount === 0}
+                className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer shadow-md"
+              >
+                <Download className="w-3.5 h-3.5" /> Download Excel file
               </button>
             </div>
           </div>

@@ -6,7 +6,7 @@ import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
-import { calculateHorecaPrice } from '../lib/horecaUtils';
+import { calculateHorecaPrice, calculateBaseUnitPrice } from '../lib/horecaUtils';
 import { QuantityInput } from './QuantityInput';
 import { motion } from 'motion/react';
 
@@ -53,6 +53,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
+  const baseUnitPrice = calculateBaseUnitPrice(currentPrice, currentUnit);
   
   // Ensure cartProductId is strictly unique per variant
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
@@ -220,6 +221,11 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                 <div className="text-xs sm:text-sm font-bold text-foreground leading-none flex items-center gap-0.5">
                   <span className="text-[9px] sm:text-[10px] text-muted-foreground">₹</span>{currentPrice}
                 </div>
+                {baseUnitPrice && (
+                  <div className="text-[9px] sm:text-[10px] text-muted-foreground/80 font-bold mt-1">
+                    {baseUnitPrice}
+                  </div>
+                )}
               </div>
             )}
           </div>
