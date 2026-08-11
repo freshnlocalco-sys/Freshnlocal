@@ -34,7 +34,18 @@ const loadLocalStorageProducts = (): { products: Product[]; lastFetched: number 
   }
 };
 
+const deduplicateProducts = (list: Product[]): Product[] => {
+  const seen = new Set<string>();
+  return list.filter(p => {
+    if (!p || !p.id) return false;
+    if (seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true;
+  });
+};
+
 const offline = loadLocalStorageProducts();
+offline.products = deduplicateProducts(offline.products);
 
 export const useProducts = create<ProductsState>((set, get) => ({
   products: offline.products,
@@ -57,7 +68,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
 
       if (dbProducts && dbProducts.length > 0) {
         set({
-          products: dbProducts,
+          products: deduplicateProducts(dbProducts),
           lastFetched: dbLastFetched || Date.now()
         });
       }
@@ -144,18 +155,20 @@ export const useProducts = create<ProductsState>((set, get) => ({
       lastVisibleDoc = null;
       const hasMore = false;
 
+      const uniqueList = deduplicateProducts(fetchedList);
+
       // Sync fetched list to IndexedDB and LocalStorage fallback
       try {
-        cacheManager.set('products_v6', fetchedList);
+        cacheManager.set('products_v6', uniqueList);
         cacheManager.set('products_last_fetched_v4', Date.now());
-        await idb.set('products_v6', fetchedList, 24 * 60 * 60 * 1000);
+        await idb.set('products_v6', uniqueList, 24 * 60 * 60 * 1000);
         await idb.set('products_last_fetched_v4', Date.now(), 24 * 60 * 60 * 1000);
       } catch (cacheErr) {
         console.warn("Cache set failed safely:", cacheErr);
       }
 
       set({
-        products: fetchedList,
+        products: uniqueList,
         lastFetched: Date.now(),
         loading: false,
         hasMore,
@@ -223,7 +236,7 @@ export const useProducts = create<ProductsState>((set, get) => ({
       lastVisibleDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
       const nextHasMore = querySnapshot.docs.length === 50;
 
-      const updatedProducts = [...products, ...nextList];
+      const updatedProducts = deduplicateProducts([...products, ...nextList]);
 
       try {
         await idb.set('products_v6', updatedProducts, 24 * 60 * 60 * 1000);

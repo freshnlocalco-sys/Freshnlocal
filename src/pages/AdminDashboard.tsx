@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { useSettings } from '../store/useSettings';
 import { BrandingSettings } from '../components/BrandingSettings';
@@ -797,7 +797,13 @@ export function AdminDashboard() {
   });
 
   const categorizedFilteredProducts = useMemo(() => {
-    const list = [...filteredProducts];
+    const seen = new Set<string>();
+    const list = filteredProducts.filter(p => {
+      if (!p || !p.id) return false;
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
     const catOrder = new Map();
     productCategories.forEach((c, i) => { if (c) catOrder.set(c.toLowerCase().trim(), i) });
     const juiceOrder = new Map();
@@ -945,12 +951,16 @@ export function AdminDashboard() {
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[] }>({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
+  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[]; useBasePricing?: boolean; basePrice?: string; baseUnit?: string; baseOriginalPrice?: string; baseHorecaPrice?: string }>({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
   const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
+
+  // Bulk update states
+  const [bulkUpdateModalOpen, setBulkUpdateModalOpen] = useState(false);
+  const [bulkChangedProducts, setBulkChangedProducts] = useState<any[]>([]);
 
   const [draggedProductIdx, setDraggedProductIdx] = useState<number | null>(null);
   const [dragOverProductIdx, setDragOverProductIdx] = useState<number | null>(null);
@@ -1986,6 +1996,16 @@ export function AdminDashboard() {
         horecaUnit: v.horecaUnit || '',
       }));
 
+      const useBasePricing = newProduct.useBasePricing ?? false;
+      const basePrice = newProduct.basePrice ? Number(newProduct.basePrice) : null;
+      const primaryUnitNorm = normalizeBaseUnit(newProduct.quantityUnit, 'Kg');
+      let baseUnit = normalizeBaseUnit(newProduct.baseUnit, primaryUnitNorm);
+      if (baseUnit === 'Kg' && primaryUnitNorm !== 'Kg') {
+        baseUnit = primaryUnitNorm;
+      }
+      const baseOriginalPrice = newProduct.baseOriginalPrice ? Number(newProduct.baseOriginalPrice) : null;
+      const baseHorecaPrice = newProduct.baseHorecaPrice ? Number(newProduct.baseHorecaPrice) : null;
+
       if (editingProductId) {
         await updateDoc(doc(db, 'products', editingProductId), {
           name: newProduct.name,
@@ -2002,6 +2022,11 @@ export function AdminDashboard() {
           quantityUnit: newProduct.quantityUnit || 'Kg',
           packSize: newProduct.packSize || '',
           variants: variantsToSave,
+          useBasePricing,
+          basePrice,
+          baseUnit,
+          baseOriginalPrice,
+          baseHorecaPrice,
           updatedAt: Date.now()
         });
       } else {
@@ -2020,6 +2045,11 @@ export function AdminDashboard() {
           quantityUnit: newProduct.quantityUnit || 'Kg',
           packSize: newProduct.packSize || '',
           variants: variantsToSave,
+          useBasePricing,
+          basePrice,
+          baseUnit,
+          baseOriginalPrice,
+          baseHorecaPrice,
           stock: 100,
           inStock: true,
           createdAt: Date.now(),
@@ -2045,6 +2075,11 @@ export function AdminDashboard() {
         quantityUnit: newProduct.quantityUnit || 'Kg',
         packSize: newProduct.packSize || '',
         variants: variantsToSave,
+        useBasePricing,
+        basePrice: basePrice !== null ? basePrice : undefined,
+        baseUnit,
+        baseOriginalPrice: baseOriginalPrice !== null ? baseOriginalPrice : undefined,
+        baseHorecaPrice: baseHorecaPrice !== null ? baseHorecaPrice : undefined,
         stock: 100,
         inStock: true,
         createdAt: editingProductId ? (products.find(p => p.id === editingProductId)?.createdAt || Date.now()) : Date.now(),
@@ -2113,7 +2148,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
+      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -2122,20 +2157,25 @@ export function AdminDashboard() {
   };
 
   const normalizeUnit = (u: string) => {
-    const low = u.toLowerCase();
-    if (low === 'kg') return 'Kg';
-    if (low === 'gm' || low === 'g') return 'g';
-    if (low === 'l') return 'L';
-    if (low === 'ml') return 'ml';
-    if (low === 'pc' || low === 'piece') return 'Pc';
-    if (low === 'pack' || low === 'pkt') return 'Pack';
-    if (low === 'box') return 'Box';
-    if (low === 'bottle') return 'Bottle';
-    if (low === 'can') return 'Can';
-    if (low === 'dozen') return 'Dozen';
-    if (low === 'bunch') return 'Bunch';
-    if (low === 'tray') return 'Tray';
-    return 'Kg';
+    if (!u) return 'Kg';
+    const low = u.trim().toLowerCase();
+    if (['kg', 'kilogram', 'kilograms'].includes(low)) return 'Kg';
+    if (['gm', 'g', 'gram', 'grams'].includes(low)) return 'g';
+    if (['l', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(low)) return 'Ltr';
+    if (['ml', 'milliliter', 'milliliters'].includes(low)) return 'ml';
+    if (['pc', 'pcs', 'piece', 'pieces', 'item', 'items'].includes(low)) return 'Pc';
+    if (['pack', 'packs', 'pkt', 'packet', 'packets'].includes(low)) return 'Pack';
+    if (['box', 'boxes'].includes(low)) return 'Box';
+    if (['bottle', 'bottles', 'bottel', 'bot'].includes(low)) return 'Bottle';
+    if (['can', 'cans'].includes(low)) return 'Can';
+    if (['dozen', 'dozens', 'dz'].includes(low)) return 'Dozen';
+    if (['bunch', 'bunches'].includes(low)) return 'Bunch';
+    if (['tray', 'trays'].includes(low)) return 'Tray';
+    if (['pouch', 'pouches'].includes(low)) return 'Pouch';
+    if (['jar', 'jars'].includes(low)) return 'Jar';
+    if (['carton', 'cartons'].includes(low)) return 'Carton';
+    if (['crate', 'crates'].includes(low)) return 'Crate';
+    return low.charAt(0).toUpperCase() + low.slice(1);
   };
 
   const parseQuantityAndUnit = (unitStr: string | undefined): { qVal: string, qUnit: string, packSize: string } => {
@@ -2163,6 +2203,300 @@ export function AdminDashboard() {
     return `${val}${unitName === 'Pack' ? 'Pack' : ' ' + unitName}`.trim();
   };
 
+  const normalizeBaseUnit = (bu?: string | null, defaultUnit: string = 'Kg'): string => {
+    if (!bu || !String(bu).trim()) return defaultUnit;
+    const lower = String(bu).trim().toLowerCase();
+    
+    // Weight
+    if (['g', 'gm', 'gram', 'grams', 'kg', 'kilogram', 'kilograms'].includes(lower)) return 'Kg';
+    
+    // Volume
+    if (['ml', 'l', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(lower)) return 'Ltr';
+    
+    // Pieces / Items
+    if (['pc', 'pcs', 'piece', 'pieces', 'item', 'items'].includes(lower)) return 'Pc';
+    
+    // Packs / Packets
+    if (['pack', 'packs', 'pkt', 'packet', 'packets'].includes(lower)) return 'Pack';
+    
+    // Boxes
+    if (['box', 'boxes'].includes(lower)) return 'Box';
+    
+    // Bottles
+    if (['bottle', 'bottles', 'bottel', 'bot'].includes(lower)) return 'Bottle';
+    
+    // Cans
+    if (['can', 'cans'].includes(lower)) return 'Can';
+    
+    // Dozens
+    if (['dozen', 'dozens', 'dz'].includes(lower)) return 'Dozen';
+    
+    // Bunches
+    if (['bunch', 'bunches'].includes(lower)) return 'Bunch';
+    
+    // Trays
+    if (['tray', 'trays'].includes(lower)) return 'Tray';
+
+    // Pouches
+    if (['pouch', 'pouches'].includes(lower)) return 'Pouch';
+
+    // Jars
+    if (['jar', 'jars'].includes(lower)) return 'Jar';
+
+    // Cartons
+    if (['carton', 'cartons'].includes(lower)) return 'Carton';
+
+    // Crates
+    if (['crate', 'crates'].includes(lower)) return 'Crate';
+
+    const trimmed = String(bu).trim();
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  };
+
+  const calculatePriceFromBase = (
+    basePriceVal: string | number | undefined,
+    baseUnit: string,
+    targetValueStr: string | number | undefined,
+    targetUnit: string
+  ): string => {
+    const basePrice = parseFloat(String(basePriceVal || ''));
+    const targetValue = parseFloat(String(targetValueStr || ''));
+    
+    if (isNaN(basePrice) || isNaN(targetValue) || targetValue <= 0) {
+      return '';
+    }
+
+    const normalizedBase = normalizeBaseUnit(baseUnit, 'Kg').toLowerCase();
+    const normalizedTarget = (targetUnit || 'Kg').toLowerCase();
+
+    let factor = 1;
+
+    // Weight conversions (Base rate is ALWAYS per 1000g / 1 Kg)
+    const isBaseWeight = ['kg', 'g', 'gm', 'gram', 'grams', 'kilogram', 'kilograms'].includes(normalizedBase);
+    const isTargetWeight = ['kg', 'g', 'gm', 'gram', 'grams', 'kilogram', 'kilograms'].includes(normalizedTarget);
+
+    // Volume conversions (Base rate is ALWAYS per 1000ml / 1 Ltr)
+    const isBaseVolume = ['l', 'ml', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(normalizedBase);
+    const isTargetVolume = ['l', 'ml', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(normalizedTarget);
+
+    if (isBaseWeight && isTargetWeight) {
+      const baseInGrams = 1000;
+      const targetInGrams = ['kg', 'kilogram', 'kilograms'].includes(normalizedTarget) ? 1000 : 1;
+      factor = (targetValue * targetInGrams) / baseInGrams;
+    } else if (isBaseVolume && isTargetVolume) {
+      const baseInMl = 1000;
+      const targetInMl = ['l', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(normalizedTarget) ? 1000 : 1;
+      factor = (targetValue * targetInMl) / baseInMl;
+    } else {
+      // Discrete or unmatched units
+      const getMultiplier = (unit: string) => {
+        if (unit === 'dozen') return 12;
+        return 1;
+      };
+      const baseMult = getMultiplier(normalizedBase);
+      const targetMult = getMultiplier(normalizedTarget);
+      
+      if (normalizedBase === normalizedTarget) {
+        factor = targetValue;
+      } else {
+        factor = (targetValue * targetMult) / baseMult;
+      }
+    }
+
+    const finalPrice = basePrice * factor;
+    if (finalPrice % 1 === 0) {
+      return finalPrice.toString();
+    }
+    return Number(finalPrice.toFixed(2)).toString();
+  };
+
+  const inferBasePricing = (
+    product: any,
+    mainQuantityValue: string,
+    mainQuantityUnit: string
+  ) => {
+    const priceNum = parseFloat(product.price);
+    const qtyVal = parseFloat(mainQuantityValue);
+    const primaryUnitNorm = normalizeBaseUnit(mainQuantityUnit, 'Kg');
+    const qUnit = primaryUnitNorm || 'Kg';
+    
+    if (isNaN(priceNum) || isNaN(qtyVal) || qtyVal <= 0) {
+      return {
+        useBasePricing: false,
+        basePrice: '',
+        baseUnit: qUnit,
+        baseOriginalPrice: '',
+        baseHorecaPrice: ''
+      };
+    }
+
+    if (product.useBasePricing !== undefined && product.useBasePricing !== null) {
+      let existingBaseU = product.baseUnit ? normalizeBaseUnit(product.baseUnit, qUnit) : qUnit;
+      if (existingBaseU === 'Kg' && qUnit !== 'Kg') {
+        existingBaseU = qUnit;
+      }
+
+      return {
+        useBasePricing: !!product.useBasePricing,
+        basePrice: product.basePrice ? product.basePrice.toString() : '',
+        baseUnit: existingBaseU,
+        baseOriginalPrice: product.baseOriginalPrice ? product.baseOriginalPrice.toString() : '',
+        baseHorecaPrice: product.baseHorecaPrice ? product.baseHorecaPrice.toString() : ''
+      };
+    }
+
+    let baseUnit = 'Kg';
+    let basePrice = '';
+    let baseOriginalPrice = '';
+    let baseHorecaPrice = '';
+
+    const qUnitLower = qUnit.toLowerCase();
+    if (['kg', 'g', 'gm', 'gram', 'grams', 'kilogram', 'kilograms'].includes(qUnitLower)) {
+      baseUnit = 'Kg';
+      const mainInKg = ['kg', 'kilogram', 'kilograms'].includes(qUnitLower) ? qtyVal : qtyVal / 1000;
+      basePrice = Math.round(priceNum / mainInKg).toString();
+      if (product.originalPrice) {
+        baseOriginalPrice = Math.round(parseFloat(product.originalPrice) / mainInKg).toString();
+      }
+      if (product.horecaPrice) {
+        baseHorecaPrice = Math.round(parseFloat(product.horecaPrice) / mainInKg).toString();
+      }
+    } else if (['l', 'ml', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(qUnitLower)) {
+      baseUnit = 'Ltr';
+      const mainInL = ['l', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(qUnitLower) ? qtyVal : qtyVal / 1000;
+      basePrice = Math.round(priceNum / mainInL).toString();
+      if (product.originalPrice) {
+        baseOriginalPrice = Math.round(parseFloat(product.originalPrice) / mainInL).toString();
+      }
+      if (product.horecaPrice) {
+        baseHorecaPrice = Math.round(parseFloat(product.horecaPrice) / mainInL).toString();
+      }
+    } else {
+      baseUnit = normalizeBaseUnit(qUnit, 'Kg');
+      basePrice = Math.round(priceNum / qtyVal).toString();
+      if (product.originalPrice) {
+        baseOriginalPrice = Math.round(parseFloat(product.originalPrice) / qtyVal).toString();
+      }
+      if (product.horecaPrice) {
+        baseHorecaPrice = Math.round(parseFloat(product.horecaPrice) / qtyVal).toString();
+      }
+    }
+
+    return {
+      useBasePricing: true,
+      basePrice,
+      baseUnit,
+      baseOriginalPrice,
+      baseHorecaPrice
+    };
+  };
+
+  const recalculatePrices = (
+    baseP: string,
+    baseU: string,
+    baseOrig: string,
+    baseHoreca: string,
+    currentProd: any
+  ) => {
+    const mainPrice = calculatePriceFromBase(baseP, baseU, currentProd.quantityValue, currentProd.quantityUnit);
+    const mainOriginalPrice = calculatePriceFromBase(baseOrig, baseU, currentProd.quantityValue, currentProd.quantityUnit);
+    const mainHorecaPrice = calculatePriceFromBase(baseHoreca, baseU, currentProd.quantityValue, currentProd.quantityUnit);
+
+    const updatedVariants = (currentProd.variants || []).map((v: any) => {
+      return {
+        ...v,
+        price: calculatePriceFromBase(baseP, baseU, v.quantityValue, v.quantityUnit),
+        originalPrice: calculatePriceFromBase(baseOrig, baseU, v.quantityValue, v.quantityUnit),
+        horecaPrice: calculatePriceFromBase(baseHoreca, baseU, v.quantityValue, v.quantityUnit)
+      };
+    });
+
+    return {
+      ...currentProd,
+      price: mainPrice || currentProd.price,
+      originalPrice: mainOriginalPrice || currentProd.originalPrice,
+      horecaPrice: mainHorecaPrice || currentProd.horecaPrice,
+      variants: updatedVariants,
+      basePrice: baseP,
+      baseUnit: baseU,
+      baseOriginalPrice: baseOrig,
+      baseHorecaPrice: baseHoreca
+    };
+  };
+
+  const handleBasePriceChange = (field: 'basePrice' | 'baseOriginalPrice' | 'baseHorecaPrice' | 'baseUnit', val: string) => {
+    let nextBasePrice = newProduct.basePrice || '';
+    let nextBaseOriginalPrice = newProduct.baseOriginalPrice || '';
+    let nextBaseHorecaPrice = newProduct.baseHorecaPrice || '';
+    let nextBaseUnit = newProduct.baseUnit || 'Kg';
+
+    if (field === 'basePrice') nextBasePrice = val;
+    else if (field === 'baseOriginalPrice') nextBaseOriginalPrice = val;
+    else if (field === 'baseHorecaPrice') nextBaseHorecaPrice = val;
+    else if (field === 'baseUnit') nextBaseUnit = val;
+
+    const mainPrice = calculatePriceFromBase(nextBasePrice, nextBaseUnit, newProduct.quantityValue, newProduct.quantityUnit || 'Kg');
+    const mainOriginalPrice = calculatePriceFromBase(nextBaseOriginalPrice, nextBaseUnit, newProduct.quantityValue, newProduct.quantityUnit || 'Kg');
+    const mainHorecaPrice = calculatePriceFromBase(nextBaseHorecaPrice, nextBaseUnit, newProduct.quantityValue, newProduct.quantityUnit || 'Kg');
+
+    const updatedVariants = (newProduct.variants || []).map((v) => {
+      return {
+        ...v,
+        price: calculatePriceFromBase(nextBasePrice, nextBaseUnit, v.quantityValue, v.quantityUnit),
+        originalPrice: calculatePriceFromBase(nextBaseOriginalPrice, nextBaseUnit, v.quantityValue, v.quantityUnit),
+        horecaPrice: calculatePriceFromBase(nextBaseHorecaPrice, nextBaseUnit, v.quantityValue, v.quantityUnit)
+      };
+    });
+
+    setNewProduct({
+      ...newProduct,
+      basePrice: nextBasePrice,
+      baseOriginalPrice: nextBaseOriginalPrice,
+      baseHorecaPrice: nextBaseHorecaPrice,
+      baseUnit: nextBaseUnit,
+      price: mainPrice || newProduct.price,
+      originalPrice: mainOriginalPrice || newProduct.originalPrice,
+      horecaPrice: mainHorecaPrice || newProduct.horecaPrice,
+      variants: updatedVariants
+    });
+  };
+
+  const updateProductWithBaseRecalc = (updatedFields: Partial<typeof newProduct>) => {
+    const merged = { ...newProduct, ...updatedFields };
+
+    if (updatedFields.quantityUnit || updatedFields.unit) {
+      const { qUnit } = parseQuantityAndUnit(merged.unit);
+      const primaryU = normalizeBaseUnit(updatedFields.quantityUnit || qUnit || merged.quantityUnit, 'Kg');
+      const oldBaseU = normalizeBaseUnit(newProduct.baseUnit, 'Kg');
+      const oldQUnit = normalizeBaseUnit(newProduct.quantityUnit, 'Kg');
+
+      if (!newProduct.baseUnit || oldBaseU === 'Kg' || oldBaseU === oldQUnit) {
+        merged.baseUnit = primaryU;
+      }
+    }
+
+    if (merged.useBasePricing && merged.basePrice) {
+      const activeBaseUnit = merged.baseUnit || normalizeBaseUnit(merged.quantityUnit, 'Kg');
+      const mainPrice = calculatePriceFromBase(merged.basePrice, activeBaseUnit, merged.quantityValue, merged.quantityUnit || 'Kg');
+      const mainOriginalPrice = calculatePriceFromBase(merged.baseOriginalPrice, activeBaseUnit, merged.quantityValue, merged.quantityUnit || 'Kg');
+      const mainHorecaPrice = calculatePriceFromBase(merged.baseHorecaPrice, activeBaseUnit, merged.quantityValue, merged.quantityUnit || 'Kg');
+
+      merged.price = mainPrice || merged.price;
+      merged.originalPrice = mainOriginalPrice || merged.originalPrice;
+      merged.horecaPrice = mainHorecaPrice || merged.horecaPrice;
+
+      if (merged.variants && merged.variants.length > 0) {
+        merged.variants = merged.variants.map(v => ({
+          ...v,
+          price: calculatePriceFromBase(merged.basePrice, activeBaseUnit, v.quantityValue, v.quantityUnit),
+          originalPrice: calculatePriceFromBase(merged.baseOriginalPrice, activeBaseUnit, v.quantityValue, v.quantityUnit),
+          horecaPrice: calculatePriceFromBase(merged.baseHorecaPrice, activeBaseUnit, v.quantityValue, v.quantityUnit)
+        }));
+      }
+    }
+    setNewProduct(merged);
+  };
+
   const handleEditSetup = (product: Product) => {
     setEditingProductId(product.id);
     const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
@@ -2173,6 +2507,8 @@ export function AdminDashboard() {
     const mainPackSize = product.packSize || parsedMain.packSize;
     
     const parsedHoreca = parseQuantityAndUnit(product.horecaUnit || '');
+
+    const inferred = inferBasePricing(product, mainQuantityValue, mainQuantityUnit);
 
     setNewProduct({
       name: product.name,
@@ -2205,7 +2541,12 @@ export function AdminDashboard() {
           horecaQuantityValue: parsedVHoreca.qVal,
           horecaQuantityUnit: parsedVHoreca.qUnit
         };
-      })
+      }),
+      useBasePricing: inferred.useBasePricing,
+      basePrice: inferred.basePrice,
+      baseUnit: inferred.baseUnit,
+      baseOriginalPrice: inferred.baseOriginalPrice,
+      baseHorecaPrice: inferred.baseHorecaPrice
     });
     setProductSection(isJuice ? 'juices' : 'veg-fruits');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2213,7 +2554,7 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [] });
+    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
   };
 
   const uploadRawFileToStorage = async (
@@ -2586,6 +2927,49 @@ export function AdminDashboard() {
     setEditingPrices(prev => ({ ...prev, [productId]: newPrice }));
   };
 
+  const recalculateProductPriceInline = (product: Product, newBasePrice: number) => {
+    let qtyValue = product.quantityValue !== undefined && product.quantityValue !== null ? String(product.quantityValue) : '';
+    let qtyUnit = product.quantityUnit || 'Kg';
+    if (!qtyValue) {
+      const parsed = parseQuantityAndUnit(product.unit);
+      qtyValue = parsed.qVal || '1';
+      qtyUnit = parsed.qUnit || 'Kg';
+    }
+
+    const baseUnit = product.baseUnit || 'Kg';
+    const baseOrig = product.baseOriginalPrice ? String(product.baseOriginalPrice) : '';
+    const baseHoreca = product.baseHorecaPrice ? String(product.baseHorecaPrice) : '';
+
+    const calculatedPrice = calculatePriceFromBase(newBasePrice, baseUnit, qtyValue, qtyUnit);
+    const calculatedOriginal = baseOrig ? calculatePriceFromBase(baseOrig, baseUnit, qtyValue, qtyUnit) : '';
+    const calculatedHoreca = baseHoreca ? calculatePriceFromBase(baseHoreca, baseUnit, qtyValue, qtyUnit) : '';
+
+    const updatedVariants = (product.variants || []).map((v: any) => {
+      let vQtyValue = v.quantityValue !== undefined && v.quantityValue !== null ? String(v.quantityValue) : '';
+      let vQtyUnit = v.quantityUnit || 'Kg';
+      if (!vQtyValue) {
+        const parsedV = parseQuantityAndUnit(v.unit);
+        vQtyValue = parsedV.qVal || '1';
+        vQtyUnit = parsedV.qUnit || 'Kg';
+      }
+      return {
+        ...v,
+        price: calculatePriceFromBase(newBasePrice, baseUnit, vQtyValue, vQtyUnit),
+        originalPrice: baseOrig ? calculatePriceFromBase(baseOrig, baseUnit, vQtyValue, vQtyUnit) : (v.originalPrice || ''),
+        horecaPrice: baseHoreca ? calculatePriceFromBase(baseHoreca, baseUnit, vQtyValue, vQtyUnit) : (v.horecaPrice || '')
+      };
+    });
+
+    return {
+      ...product,
+      price: calculatedPrice ? Number(calculatedPrice) : product.price,
+      originalPrice: calculatedOriginal ? Number(calculatedOriginal) : product.originalPrice,
+      horecaPrice: calculatedHoreca ? Number(calculatedHoreca) : product.horecaPrice,
+      variants: updatedVariants,
+      basePrice: newBasePrice
+    };
+  };
+
   const handleSavePrice = async (product: Product) => {
     const newPriceValue = editingPrices[product.id];
     if (!newPriceValue || isNaN(Number(newPriceValue))) {
@@ -2594,16 +2978,168 @@ export function AdminDashboard() {
     }
     const parsedPrice = Number(newPriceValue);
     try {
-      await updateDoc(doc(db, 'products', product.id), { price: parsedPrice, updatedAt: Date.now() });
-      setProducts(products.map(p => p.id === product.id ? { ...p, price: parsedPrice } : p));
+      if (product.useBasePricing) {
+        const updatedProduct = recalculateProductPriceInline(product, parsedPrice);
+        const updateData: any = {
+          price: updatedProduct.price,
+          basePrice: parsedPrice,
+          variants: updatedProduct.variants,
+          updatedAt: Date.now()
+        };
+        if (updatedProduct.originalPrice) updateData.originalPrice = updatedProduct.originalPrice;
+        if (updatedProduct.horecaPrice) updateData.horecaPrice = updatedProduct.horecaPrice;
+
+        await updateDoc(doc(db, 'products', product.id), updateData);
+        setProducts(products.map(p => p.id === product.id ? updatedProduct : p));
+        toast.success(`Base price updated to ₹${parsedPrice}/${product.baseUnit || 'Kg'}. Recalculated main price to ₹${updatedProduct.price}`);
+      } else {
+        await updateDoc(doc(db, 'products', product.id), { price: parsedPrice, updatedAt: Date.now() });
+        setProducts(products.map(p => p.id === product.id ? { ...p, price: parsedPrice } : p));
+        toast.success(`Price updated to ₹${parsedPrice}`);
+      }
       
       const newEditingPrices = { ...editingPrices };
       delete newEditingPrices[product.id];
       setEditingPrices(newEditingPrices);
-      
-      toast.success(`Price updated to ₹${parsedPrice}`);
     } catch (error) {
       toast.error('Failed to update price.');
+    }
+  };
+
+  const handleExportCatalogForBulkEdit = () => {
+    try {
+      const data = products
+        .filter(p => p.category !== 'fnl juices' && p.category !== 'fnl juice')
+        .map(p => {
+          const { qUnit } = parseQuantityAndUnit(p.unit);
+          const primaryUnitNorm = normalizeBaseUnit(p.quantityUnit || qUnit, 'Kg');
+          let effectiveBaseUnit = p.baseUnit ? normalizeBaseUnit(p.baseUnit, primaryUnitNorm) : primaryUnitNorm;
+          if (effectiveBaseUnit === 'Kg' && primaryUnitNorm !== 'Kg') {
+            effectiveBaseUnit = primaryUnitNorm;
+          }
+
+          return {
+            'ID (Do not edit)': p.id,
+            'Product Name': p.name || '',
+            'Category': p.category || '',
+            'Base Unit': effectiveBaseUnit,
+            'Base Price': p.basePrice !== undefined && p.basePrice !== null && String(p.basePrice) !== '' ? p.basePrice : (p.price || ''),
+            'Base MRP': p.baseOriginalPrice !== undefined && p.baseOriginalPrice !== null && String(p.baseOriginalPrice) !== '' ? p.baseOriginalPrice : (p.originalPrice || ''),
+            'Base HoReCa Price': p.baseHorecaPrice !== undefined && p.baseHorecaPrice !== null && String(p.baseHorecaPrice) !== '' ? p.baseHorecaPrice : (p.horecaPrice || ''),
+            'Stock': p.stock !== undefined && p.stock !== null ? p.stock : '',
+            'In Stock': p.inStock ? 'TRUE' : 'FALSE'
+          };
+        });
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Catalog Bulk Edit');
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `FreshNLocal_Catalog_Bulk_Edit_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Current product catalog downloaded for bulk editing (Base Unit pricing).");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to export catalog for bulk editing.");
+    }
+  };
+
+  const commitBulkUpdates = async () => {
+    try {
+      setLoading(true);
+      const chunks = [];
+      for (let i = 0; i < bulkChangedProducts.length; i += 100) {
+        chunks.push(bulkChangedProducts.slice(i, i + 100));
+      }
+
+      for (const chunk of chunks) {
+        const batch = writeBatch(db);
+        chunk.forEach(item => {
+          const docRef = doc(db, 'products', item.id);
+          const nextData: any = {
+            name: item.updated.name,
+            category: item.updated.category,
+            unit: item.updated.unit,
+            price: Number(item.updated.price) || 0,
+            stock: Number(item.updated.stock) || 0,
+            inStock: item.updated.inStock,
+            updatedAt: Date.now()
+          };
+
+          if (item.updated.description !== undefined) nextData.description = item.updated.description;
+          if (item.updated.imageUrl !== undefined) nextData.imageUrl = item.updated.imageUrl;
+          
+          if (item.updated.originalPrice !== undefined && item.updated.originalPrice !== null && item.updated.originalPrice !== '') {
+            nextData.originalPrice = Number(item.updated.originalPrice);
+          } else {
+            nextData.originalPrice = null;
+          }
+          
+          if (item.updated.horecaPrice !== undefined && item.updated.horecaPrice !== null && item.updated.horecaPrice !== '') {
+            nextData.horecaPrice = Number(item.updated.horecaPrice);
+          } else {
+            nextData.horecaPrice = null;
+          }
+          
+          if (item.updated.horecaUnit !== undefined) nextData.horecaUnit = item.updated.horecaUnit;
+          if (item.updated.quantityValue !== undefined && item.updated.quantityValue !== null && item.updated.quantityValue !== '') {
+            nextData.quantityValue = Number(item.updated.quantityValue);
+          } else {
+            nextData.quantityValue = null;
+          }
+          if (item.updated.quantityUnit !== undefined) nextData.quantityUnit = item.updated.quantityUnit;
+          if (item.updated.packSize !== undefined) nextData.packSize = item.updated.packSize;
+          if (item.updated.useBasePricing !== undefined) nextData.useBasePricing = item.updated.useBasePricing;
+          
+          if (item.updated.basePrice !== undefined && item.updated.basePrice !== null && item.updated.basePrice !== '') {
+            nextData.basePrice = Number(item.updated.basePrice);
+          } else {
+            nextData.basePrice = null;
+          }
+          if (item.updated.baseUnit !== undefined) nextData.baseUnit = item.updated.baseUnit;
+          if (item.updated.baseOriginalPrice !== undefined && item.updated.baseOriginalPrice !== null && item.updated.baseOriginalPrice !== '') {
+            nextData.baseOriginalPrice = Number(item.updated.baseOriginalPrice);
+          } else {
+            nextData.baseOriginalPrice = null;
+          }
+          if (item.updated.baseHorecaPrice !== undefined && item.updated.baseHorecaPrice !== null && item.updated.baseHorecaPrice !== '') {
+            nextData.baseHorecaPrice = Number(item.updated.baseHorecaPrice);
+          } else {
+            nextData.baseHorecaPrice = null;
+          }
+          if (item.updated.variants !== undefined) nextData.variants = item.updated.variants;
+
+          if (item.isNew) {
+            nextData.createdAt = Date.now();
+            batch.set(docRef, nextData);
+          } else {
+            batch.update(docRef, nextData);
+          }
+        });
+        await batch.commit();
+      }
+
+      const m = await import('../store/useProducts');
+      await m.useProducts.getState().fetchProducts(true);
+      setProducts(m.useProducts.getState().products);
+
+      const addedCount = bulkChangedProducts.filter(p => p.isNew).length;
+      const updatedCount = bulkChangedProducts.filter(p => !p.isNew).length;
+      toast.success(`Bulk updates applied successfully! Added ${addedCount} and updated ${updatedCount} items.`);
+      setBulkUpdateModalOpen(false);
+      setBulkChangedProducts([]);
+    } catch (err: any) {
+      console.error("Bulk commit error:", err);
+      toast.error(`Bulk update failed: ${err.message || 'Server error'}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -2678,99 +3214,187 @@ export function AdminDashboard() {
         rawJson = XLSX.utils.sheet_to_json(worksheet) as any[];
       }
 
-      const validRows: any[] = [];
-
-      for (const rawRow of rawJson) {
-        const row: Record<string, any> = {};
-        for (const key in rawRow) {
-          const cleanKey = key.replace(/^\ufeff/, '').replace(/^["']|["']$/g, '').trim().toLowerCase();
-          row[cleanKey] = rawRow[key];
-        }
-
-        let rowName = row.name || row.title || row.product || row.item || row.heading || row.label;
-        let rowPrice = row.price || row.sellingprice || row.rate || row.amount || row.priceinrs || row.rupees;
-        let rowMrp = row.mrp || row.originalprice || row.regularprice || row.retailprice || row.strikeoutprice;
-
-        if (!rowName || rowPrice === undefined) {
-          for (const key of Object.keys(row)) {
-            const lowerKey = key.toLowerCase();
-            if (!rowName && (lowerKey.includes('name') || lowerKey.includes('product') || lowerKey.includes('title') || lowerKey.includes('item') || lowerKey.includes('fruit') || lowerKey.includes('vegetable') || lowerKey.includes('veg'))) {
-              rowName = row[key];
-            }
-            if (rowPrice === undefined && (lowerKey.includes('price') && !lowerKey.includes('mrp') && !lowerKey.includes('original') || lowerKey.includes('cost') || lowerKey.includes('rate') || lowerKey.includes('amount') || lowerKey.includes('value') || lowerKey.includes('rupee'))) {
-              rowPrice = row[key];
-            }
-            if (rowMrp === undefined && (lowerKey.includes('mrp') || lowerKey.includes('original') || lowerKey.includes('regular'))) {
-              rowMrp = row[key];
-            }
-          }
-        }
-
-        let rowHorecaPrice = row.horecaprice || row.horeca_price || row.horecarate || row.horeca_rate || row.horecaamt || row.horeca_amount;
-        let rowHorecaUnit = row.horecaunit || row.horeca_unit || row.horecaqty || row.horeca_qty || row.horecapack || row.horeca_pack || row.horecapackage || row.horeca_package;
-
-        if (rowHorecaPrice === undefined || rowHorecaUnit === undefined) {
-          for (const key of Object.keys(row)) {
-            const lowerKey = key.toLowerCase();
-            if (rowHorecaPrice === undefined && (lowerKey.includes('horecaprice') || lowerKey.includes('horeca_price') || lowerKey.includes('horecarate') || lowerKey.includes('horeca_rate'))) {
-              rowHorecaPrice = row[key];
-            }
-            if (rowHorecaUnit === undefined && (lowerKey.includes('horecaunit') || lowerKey.includes('horeca_unit') || lowerKey.includes('horecaqty') || lowerKey.includes('horeca_qty'))) {
-              rowHorecaUnit = row[key];
-            }
-          }
-        }
-
-        if (!rowName || rowPrice === undefined) continue;
-        
-        let parsedPrice = Number(String(rowPrice).replace(/[^0-9.]/g, '') || 0);
-        let parsedMrp = rowMrp ? Number(String(rowMrp).replace(/[^0-9.]/g, '')) : undefined;
-        let parsedHorecaPrice = rowHorecaPrice !== undefined && rowHorecaPrice !== null && String(rowHorecaPrice).trim() !== '' ? Number(String(rowHorecaPrice).replace(/[^0-9.]/g, '')) : undefined;
-
-        validRows.push({
-          name: String(rowName).trim(),
-          price: parsedPrice,
-          originalPrice: parsedMrp && parsedMrp > parsedPrice ? parsedMrp : null,
-          horecaPrice: parsedHorecaPrice || null,
-          horecaUnit: rowHorecaUnit ? String(rowHorecaUnit).trim() : '',
-          category: (row.category || row.type || 'indian fruits').toLowerCase().trim(),
-          description: row.description || row.desc || row.details || '',
-          imageUrl: row.imageurl || row.image || row.img || row.photo || '',
-          stock: Number(row.stock || row.quantity || row.qty || 100),
-          inStock: true,
-          createdAt: Date.now(),
-          updatedAt: Date.now()
-        });
-      }
-      
-      if (validRows.length === 0) {
-        toast.error('No suitable products identified inside CSV. Standard columns expected: "Name", "Price".');
+      if (rawJson.length === 0) {
+        toast.error('No suitable data identified inside the uploaded file.');
         setLoading(false);
         if (e.target) e.target.value = '';
         return;
       }
-      
-      const chunks = [];
-      for (let i = 0; i < validRows.length; i += 100) {
-        chunks.push(validRows.slice(i, i + 100));
-      }
 
-      for (const chunk of chunks) {
-        const batch = writeBatch(db);
-        chunk.forEach(newProd => {
-          const docRef = doc(collection(db, 'products'));
-          batch.set(docRef, newProd);
+      const parseBoolean = (val: any): boolean => {
+        if (val === undefined || val === null) return false;
+        const s = String(val).trim().toLowerCase();
+        return s === 'true' || s === 'yes' || s === '1' || s === 'y' || s === 'active';
+      };
+
+      const cleanAndParseRow = (rawRow: any) => {
+        const row: Record<string, any> = {};
+        for (const key in rawRow) {
+          const cleanKey = key.replace(/^\ufeff/, '').replace(/^["']|["']$/g, '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+          row[cleanKey] = rawRow[key];
+        }
+
+        const id = String(row.id || row.iddonotedit || row.productid || '').trim();
+        const name = String(row.productname || row.name || row.title || '').trim();
+        const category = String(row.category || 'indian fruits').toLowerCase().trim();
+        
+        const rowUnitStr = row.baseunit || row.quantityunit;
+        const { qUnit: extractedUnit } = parseQuantityAndUnit(row.unit);
+        const baseUnit = normalizeBaseUnit(rowUnitStr || extractedUnit, 'Kg');
+        
+        const parseNum = (val: any) => {
+          if (val === undefined || val === null || val === '') return undefined;
+          const num = Number(val);
+          return isNaN(num) ? undefined : num;
+        };
+
+        const basePrice = parseNum(row.baseprice) ?? parseNum(row.basepriceperbaseunit) ?? parseNum(row.rateprice) ?? parseNum(row.price) ?? parseNum(row.rate);
+        const baseOriginalPrice = parseNum(row.basemrp) ?? parseNum(row.mrp) ?? parseNum(row.baseoriginalprice) ?? parseNum(row.originalprice);
+        const baseHorecaPrice = parseNum(row.basehorecaprice) ?? parseNum(row.horecaprice) ?? parseNum(row.basehorecarate);
+        
+        const stock = parseNum(row.stock) ?? 100;
+        const inStock = row.instock !== undefined ? parseBoolean(row.instock) : true;
+
+        return {
+          id,
+          name,
+          category,
+          baseUnit,
+          basePrice,
+          baseOriginalPrice,
+          baseHorecaPrice,
+          stock,
+          inStock
+        };
+      };
+
+      const changesList: any[] = [];
+
+      for (const rawRow of rawJson) {
+        const parsed = cleanAndParseRow(rawRow);
+        if (!parsed.name) continue;
+
+        // Find match by ID or Name
+        const match = products.find(p => {
+          if (parsed.id && p.id === parsed.id) return true;
+          if (!parsed.id && p.name.toLowerCase().trim() === parsed.name.toLowerCase().trim()) return true;
+          return false;
         });
-        await batch.commit();
+
+        // Skip FNL Juice House products from bulk import
+        if (parsed.category === 'fnl juices' || parsed.category === 'fnl juice' || (match && (match.category === 'fnl juices' || match.category === 'fnl juice'))) {
+          continue;
+        }
+
+        const updated: any = match ? { ...match } : {
+          id: doc(collection(db, 'products')).id,
+          name: parsed.name,
+          category: parsed.category,
+          description: '',
+          imageUrl: '',
+          variants: [],
+          quantityValue: 1,
+          quantityUnit: parsed.baseUnit || 'Kg',
+          unit: `1 ${parsed.baseUnit || 'Kg'}`
+        };
+
+        updated.useBasePricing = true;
+        if (parsed.name) updated.name = parsed.name;
+        if (parsed.category) updated.category = parsed.category;
+        const matchUnit = match ? (match.baseUnit || match.quantityUnit || parseQuantityAndUnit(match.unit).qUnit) : undefined;
+        updated.baseUnit = normalizeBaseUnit(parsed.baseUnit || matchUnit, 'Kg');
+        if (parsed.basePrice !== undefined) updated.basePrice = parsed.basePrice;
+        if (parsed.baseOriginalPrice !== undefined) updated.baseOriginalPrice = parsed.baseOriginalPrice;
+        if (parsed.baseHorecaPrice !== undefined) updated.baseHorecaPrice = parsed.baseHorecaPrice;
+        if (parsed.stock !== undefined) updated.stock = parsed.stock;
+        if (parsed.inStock !== undefined) updated.inStock = parsed.inStock;
+
+        // Calculate main selling price from base unit
+        const qVal = updated.quantityValue !== undefined && updated.quantityValue !== null ? updated.quantityValue : 1;
+        const qUnit = updated.quantityUnit || updated.baseUnit || 'Kg';
+
+        const calcP = calculatePriceFromBase(updated.basePrice, updated.baseUnit, qVal, qUnit);
+        if (calcP) {
+          updated.price = Number(calcP);
+        } else if (updated.basePrice !== undefined) {
+          updated.price = Number(updated.basePrice);
+        }
+
+        if (updated.baseOriginalPrice !== undefined) {
+          const calcMRP = calculatePriceFromBase(updated.baseOriginalPrice, updated.baseUnit, qVal, qUnit);
+          if (calcMRP) updated.originalPrice = Number(calcMRP);
+        }
+
+        if (updated.baseHorecaPrice !== undefined) {
+          const calcHoreca = calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, qVal, qUnit);
+          if (calcHoreca) updated.horecaPrice = Number(calcHoreca);
+        }
+
+        // Recalculate variants based on updated base prices
+        if (match && match.variants && match.variants.length > 0) {
+          updated.variants = match.variants.map((v: any) => {
+            let vQtyValue = v.quantityValue !== undefined && v.quantityValue !== null ? String(v.quantityValue) : '';
+            let vQtyUnit = v.quantityUnit || 'Kg';
+            if (!vQtyValue) {
+              const parsedV = parseQuantityAndUnit(v.unit);
+              vQtyValue = parsedV.qVal || '1';
+              vQtyUnit = parsedV.qUnit || 'Kg';
+            }
+            
+            return {
+              ...v,
+              price: Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.price),
+              originalPrice: updated.baseOriginalPrice ? Number(calculatePriceFromBase(updated.baseOriginalPrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.originalPrice) : v.originalPrice,
+              horecaPrice: updated.baseHorecaPrice ? Number(calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.horecaPrice) : v.horecaPrice
+            };
+          });
+        }
+
+        if (match) {
+          // Check for differences
+          const diffs: string[] = [];
+          if (updated.name !== match.name) diffs.push(`Name: "${match.name}" ➜ "${updated.name}"`);
+          if (updated.category !== match.category) diffs.push(`Category: "${match.category}" ➜ "${updated.category}"`);
+          if (updated.baseUnit !== (match.baseUnit || 'Kg')) diffs.push(`Base Unit: "${match.baseUnit || 'Kg'}" ➜ "${updated.baseUnit}"`);
+          if (updated.basePrice !== match.basePrice) diffs.push(`Base Price: ₹${match.basePrice || 'None'} ➜ ₹${updated.basePrice || 'None'}`);
+          if (updated.baseOriginalPrice !== match.baseOriginalPrice) diffs.push(`Base MRP: ₹${match.baseOriginalPrice || 'None'} ➜ ₹${updated.baseOriginalPrice || 'None'}`);
+          if (updated.baseHorecaPrice !== match.baseHorecaPrice) diffs.push(`Base HoReCa Price: ₹${match.baseHorecaPrice || 'None'} ➜ ₹${updated.baseHorecaPrice || 'None'}`);
+          if (Number(updated.price) !== Number(match.price)) diffs.push(`Calculated Price: ₹${match.price} ➜ ₹${updated.price}`);
+          if (Number(updated.stock) !== Number(match.stock)) diffs.push(`Stock: ${match.stock} ➜ ${updated.stock}`);
+          if (updated.inStock !== match.inStock) diffs.push(`In Stock: ${match.inStock ? 'Yes' : 'No'} ➜ ${updated.inStock ? 'Yes' : 'No'}`);
+
+          if (diffs.length > 0) {
+            changesList.push({
+              id: match.id,
+              name: match.name,
+              original: match,
+              updated,
+              changes: diffs,
+              isNew: false
+            });
+          }
+        } else {
+          // Brand new product
+          changesList.push({
+            id: updated.id,
+            name: updated.name,
+            original: null,
+            updated,
+            changes: ['New Product Added with Base Unit pricing'],
+            isNew: true
+          });
+        }
       }
 
-      let importedCount = validRows.length;
-      
-      const m = await import('../store/useProducts');
-      await m.useProducts.getState().fetchProducts(true);
-      setProducts(m.useProducts.getState().products);
+      if (changesList.length === 0) {
+        toast.success("Spreadsheet uploaded, but no changed values were detected compared to your live catalog!");
+        setLoading(false);
+        if (e.target) e.target.value = '';
+        return;
+      }
 
-      toast.success(`Excel Import Complete! Cataloged ${importedCount} items.`);
+      setBulkChangedProducts(changesList);
+      setBulkUpdateModalOpen(true);
     } catch (error: any) {
       console.error(error);
       toast.error(`Import failed: ${error.message || 'Server error'}`);
@@ -2781,10 +3405,10 @@ export function AdminDashboard() {
   };
 
   const downloadCsvTemplate = () => {
-    const headers = ['Name', 'Price', 'MRP', 'Category', 'HorecaPrice', 'HorecaUnit', 'Description', 'ImageUrl', 'Stock'];
+    const headers = ['Product Name', 'Category', 'Base Unit', 'Base Price', 'Base MRP', 'Base HoReCa Price', 'Stock', 'In Stock'];
     const sampleData = [
-      ['Gourmet Red Apples', '180', '250', 'Exotic Fruits', '150', '5 Kg', 'Sweet and crisp red apples imported from premium orchards.', 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=800', '100'],
-      ['Fresh Broccoli Crown', '95', '', 'Exotic Vegetables', '80', '10 Kg', 'Grown fresh Broccoli clusters rich in vitamin C.', 'https://images.pexels.com/photos/1359421/pexels-photo-1359421.jpeg?auto=compress&cs=tinysrgb&w=800', '80']
+      ['Gourmet Red Apples', 'Exotic Fruits', 'Kg', '180', '250', '150', '100', 'TRUE'],
+      ['Fresh Broccoli Crown', 'Exotic Vegetables', 'Kg', '95', '120', '80', '80', 'TRUE']
     ];
 
     const csvRows = [
@@ -2807,13 +3431,14 @@ export function AdminDashboard() {
     try {
       const templateData = [
         {
-          'Name': 'Premium Devgad Alphonso Mangoes',
-          'Price': 250,
-          'MRP': 350,
+          'Product Name': 'Premium Devgad Alphonso Mangoes',
           'Category': 'indian fruits',
-          'Description': 'Naturally ripened sweet, aromatic mangoes direct from farmers.',
-          'ImageUrl': 'https://images.pexels.com/photos/2290753/pexels-photo-2290753.jpeg?auto=compress&cs=tinysrgb&w=800',
-          'Stock': 150
+          'Base Unit': 'Kg',
+          'Base Price': 250,
+          'Base MRP': 350,
+          'Base HoReCa Price': 220,
+          'Stock': 150,
+          'In Stock': 'TRUE'
         }
       ];
 
@@ -3236,36 +3861,156 @@ export function AdminDashboard() {
                       />
                     </div>
 
+                    {/* Base Pricing Toggle & Inputs */}
+                    <div className="p-3.5 bg-background border border-border rounded-2xl space-y-3 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Calculator className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="text-[10px] font-black uppercase tracking-wider text-foreground">Base Unit Price Engine</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={!!newProduct.useBasePricing}
+                            onChange={e => {
+                              const active = e.target.checked;
+                              if (active) {
+                                // Infer base pricing from current prices
+                                const inferred = inferBasePricing(
+                                  {
+                                    price: newProduct.price,
+                                    originalPrice: newProduct.originalPrice,
+                                    horecaPrice: newProduct.horecaPrice
+                                  },
+                                  newProduct.quantityValue || '1',
+                                  newProduct.quantityUnit || 'Kg'
+                                );
+                                setNewProduct({
+                                  ...newProduct,
+                                  useBasePricing: true,
+                                  basePrice: inferred.basePrice,
+                                  baseUnit: inferred.baseUnit,
+                                  baseOriginalPrice: inferred.baseOriginalPrice,
+                                  baseHorecaPrice: inferred.baseHorecaPrice
+                                });
+                              } else {
+                                setNewProduct({
+                                  ...newProduct,
+                                  useBasePricing: false
+                                });
+                              }
+                            }}
+                          />
+                          <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                      </div>
+
+                      {newProduct.useBasePricing && (
+                        <div className="space-y-3 pt-1 border-t border-border/60">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-black uppercase tracking-wider text-muted-foreground">Base Price (₹ / unit)</label>
+                              <input 
+                                required
+                                type="number" 
+                                placeholder="e.g. 240" 
+                                className="w-full border border-border rounded-xl px-2.5 py-2 bg-white outline-none focus:border-primary text-foreground text-[10px] sm:text-xs font-mono" 
+                                value={newProduct.basePrice || ''} 
+                                onChange={e => handleBasePriceChange('basePrice', e.target.value)} 
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-black uppercase tracking-wider text-muted-foreground">Base Unit</label>
+                              <select
+                                className="w-full appearance-none border border-border rounded-xl px-2.5 py-2 pr-8 bg-white outline-none focus:border-primary text-foreground text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-[right_8px_center] bg-no-repeat"
+                                value={normalizeBaseUnit(newProduct.baseUnit, 'Kg')}
+                                onChange={e => handleBasePriceChange('baseUnit', e.target.value)}
+                              >
+                                {['Kg', 'Ltr', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray', 'Pouch', 'Jar', 'Carton', 'Crate'].map(u => (
+                                  <option key={u} value={u}>Per {u}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-black uppercase tracking-wider text-muted-foreground">Base MRP (Optional ₹)</label>
+                              <input 
+                                type="number" 
+                                placeholder="e.g. 300" 
+                                className="w-full border border-border rounded-xl px-2.5 py-2 bg-white outline-none focus:border-primary text-foreground text-[10px] sm:text-xs font-mono" 
+                                value={newProduct.baseOriginalPrice || ''} 
+                                onChange={e => handleBasePriceChange('baseOriginalPrice', e.target.value)} 
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-black uppercase tracking-wider text-muted-foreground">Base HoReCa (Optional ₹)</label>
+                              <input 
+                                type="number" 
+                                placeholder="e.g. 200" 
+                                className="w-full border border-border rounded-xl px-2.5 py-2 bg-white outline-none focus:border-primary text-foreground text-[10px] sm:text-xs font-mono" 
+                                value={newProduct.baseHorecaPrice || ''} 
+                                onChange={e => handleBasePriceChange('baseHorecaPrice', e.target.value)} 
+                              />
+                            </div>
+                          </div>
+
+                          {newProduct.basePrice && newProduct.quantityValue && (
+                            <div className="p-2 bg-neutral-50/50 rounded-xl text-[9px] text-[#4a4a4a] leading-tight font-semibold flex flex-col gap-0.5 border border-border/40">
+                              <span className="text-emerald-700 font-black uppercase tracking-wider text-[8px]">Auto-Calculation Active:</span>
+                              <span>• Main Item ({buildUnitString(newProduct.quantityValue, newProduct.quantityUnit || 'Kg', newProduct.packSize)}): ₹{newProduct.price}</span>
+                              {newProduct.variants && newProduct.variants.length > 0 && (
+                                <span className="text-emerald-800 font-bold">• Recalculating {newProduct.variants.length} custom variant sizes instantly.</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3 sm:gap-4">
                       <div className="space-y-1.5 sm:space-y-2">
-                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Rate Price (₹)</label>
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                          Rate Price (₹) {newProduct.useBasePricing && <span className="text-emerald-600 font-bold">(Calculated)</span>}
+                        </label>
                         <input 
                           required 
                           type="number" 
                           placeholder="180" 
-                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
+                          readOnly={!!newProduct.useBasePricing}
+                          className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`} 
                           value={newProduct.price} 
                           onChange={e => setNewProduct({...newProduct, price: e.target.value})} 
                         />
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-2">
-                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">MRP (Optional ₹)</label>
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                          MRP (Optional ₹) {newProduct.useBasePricing && <span className="text-emerald-600 font-bold">(Calculated)</span>}
+                        </label>
                         <input 
                           type="number" 
                           placeholder="250" 
-                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
+                          readOnly={!!newProduct.useBasePricing}
+                          className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`} 
                           value={newProduct.originalPrice} 
                           onChange={e => setNewProduct({...newProduct, originalPrice: e.target.value})} 
                         />
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-2">
-                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Price (Optional ₹)</label>
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                          HoReCa Price (Optional ₹) {newProduct.useBasePricing && <span className="text-emerald-600 font-bold">(Calculated)</span>}
+                        </label>
                         <input 
                           type="number" 
                           placeholder="150" 
-                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono" 
+                          readOnly={!!newProduct.useBasePricing}
+                          className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`} 
                           value={newProduct.horecaPrice} 
                           onChange={e => setNewProduct({...newProduct, horecaPrice: e.target.value})} 
                         />
@@ -3284,7 +4029,7 @@ export function AdminDashboard() {
                             onChange={e => {
                               const val = e.target.value;
                               const uStr = buildUnitString(val, newProduct.quantityUnit || 'Kg', newProduct.packSize);
-                              setNewProduct({...newProduct, quantityValue: val, unit: uStr});
+                              updateProductWithBaseRecalc({ quantityValue: val, unit: uStr });
                             }} 
                           />
                           <select
@@ -3293,7 +4038,7 @@ export function AdminDashboard() {
                             onChange={e => {
                               const qUnit = e.target.value;
                               const uStr = buildUnitString(newProduct.quantityValue || '', qUnit, newProduct.packSize);
-                              setNewProduct({...newProduct, quantityUnit: qUnit, unit: uStr});
+                              updateProductWithBaseRecalc({ quantityUnit: qUnit, unit: uStr });
                             }}
                           >
                             {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
@@ -3305,7 +4050,7 @@ export function AdminDashboard() {
 
                       {(['Pack', 'Box', 'Tray', 'Dozen', 'Pc', 'Bottle', 'Can'].includes(newProduct.quantityUnit || '') || Boolean(newProduct.packSize)) && (
                         <div className="space-y-1.5 sm:space-y-2">
-                          <div className="flex items-center justify-between">
+                           <div className="flex items-center justify-between">
                             <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                               Pack Weight / Net Qty
                             </label>
@@ -3321,7 +4066,7 @@ export function AdminDashboard() {
                             onChange={e => {
                               const pSize = e.target.value;
                               const uStr = buildUnitString(newProduct.quantityValue || '', newProduct.quantityUnit || 'Pack', pSize);
-                              setNewProduct({...newProduct, packSize: pSize, unit: uStr});
+                              updateProductWithBaseRecalc({ packSize: pSize, unit: uStr });
                             }} 
                           />
                         </div>
@@ -3385,47 +4130,56 @@ export function AdminDashboard() {
                               
                               <div className="grid grid-cols-2 gap-4 sm:gap-5">
                                 <div className="space-y-1.5 sm:space-y-2">
-                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Rate Price (₹)</label>
+                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                                    Rate Price (₹) {newProduct.useBasePricing && <span className="text-emerald-600 font-bold">(Calculated)</span>}
+                                  </label>
                                   <input 
                                     placeholder="180" 
                                     type="number"
                                     value={variant.price}
+                                    readOnly={!!newProduct.useBasePricing}
                                     onChange={(e) => {
                                       const newVariants = [...newProduct.variants];
                                       newVariants[vIdx].price = e.target.value;
                                       setNewProduct({...newProduct, variants: newVariants});
                                     }}
-                                    className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono"
+                                    className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`}
                                   />
                                 </div>
                                 
                                 <div className="space-y-1.5 sm:space-y-2">
-                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">MRP (Optional ₹)</label>
+                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                                    MRP (Optional ₹) {newProduct.useBasePricing && <span className="text-emerald-600 font-bold">(Calculated)</span>}
+                                  </label>
                                   <input 
                                     placeholder="250" 
                                     type="number"
                                     value={variant.originalPrice}
+                                    readOnly={!!newProduct.useBasePricing}
                                     onChange={(e) => {
                                       const newVariants = [...newProduct.variants];
                                       newVariants[vIdx].originalPrice = e.target.value;
                                       setNewProduct({...newProduct, variants: newVariants});
                                     }}
-                                    className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono"
+                                    className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`}
                                   />
                                 </div>
 
                                 <div className="space-y-1.5 sm:space-y-2">
-                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Price (Optional ₹)</label>
+                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                                    HoReCa Price (Optional ₹) {newProduct.useBasePricing && <span className="text-emerald-600 font-bold">(Calculated)</span>}
+                                  </label>
                                   <input 
                                     placeholder="150" 
                                     type="number"
                                     value={variant.horecaPrice}
+                                    readOnly={!!newProduct.useBasePricing}
                                     onChange={(e) => {
                                       const newVariants = [...newProduct.variants];
                                       newVariants[vIdx].horecaPrice = e.target.value;
                                       setNewProduct({...newProduct, variants: newVariants});
                                     }}
-                                    className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono"
+                                    className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`}
                                   />
                                 </div>
 
@@ -3443,7 +4197,7 @@ export function AdminDashboard() {
                                         const val = e.target.value;
                                         newVariants[vIdx].quantityValue = val;
                                         newVariants[vIdx].unit = buildUnitString(val, newVariants[vIdx].quantityUnit || 'Kg', newVariants[vIdx].packSize);
-                                        setNewProduct({...newProduct, variants: newVariants});
+                                        updateProductWithBaseRecalc({ variants: newVariants });
                                       }}
                                       className="flex-1 min-w-[60px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
                                     />
@@ -3455,7 +4209,7 @@ export function AdminDashboard() {
                                         const qUnit = e.target.value;
                                         newVariants[vIdx].quantityUnit = qUnit;
                                         newVariants[vIdx].unit = buildUnitString(newVariants[vIdx].quantityValue || '', qUnit, newVariants[vIdx].packSize);
-                                        setNewProduct({...newProduct, variants: newVariants});
+                                        updateProductWithBaseRecalc({ variants: newVariants });
                                       }}
                                     >
                                       {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
@@ -3472,7 +4226,7 @@ export function AdminDashboard() {
                                           const pSize = e.target.value;
                                           newVariants[vIdx].packSize = pSize;
                                           newVariants[vIdx].unit = buildUnitString(newVariants[vIdx].quantityValue || '', newVariants[vIdx].quantityUnit || 'Pack', pSize);
-                                          setNewProduct({...newProduct, variants: newVariants});
+                                          updateProductWithBaseRecalc({ variants: newVariants });
                                         }}
                                         className="w-28 sm:w-36 flex-shrink-0 border border-primary/40 bg-primary/5 rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-2.5 sm:py-3.5 outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-semibold"
                                       />
@@ -3653,6 +4407,22 @@ export function AdminDashboard() {
                       <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" /> <span className="hidden sm:inline">CSV</span> (.csv)
                     </button>
                   </div>
+                </div>
+
+                <div className="p-4 sm:p-5 bg-white border border-dashed border-border rounded-xl sm:rounded-2xl space-y-2.5">
+                  <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center gap-1.5">
+                    <Sliders className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" /> Bulk Edit Existing Catalog
+                  </h4>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground leading-normal font-semibold">
+                    Download your current catalog with system IDs, update rates/stocks in Excel, and upload below to auto-detect changes.
+                  </p>
+                  <button 
+                    type="button" 
+                    onClick={handleExportCatalogForBulkEdit} 
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-lg sm:rounded-xl transition-colors cursor-pointer shadow-sm"
+                  >
+                    <Download className="w-3.5 h-3.5 text-white" /> Download Live Catalog (.xlsx)
+                  </button>
                 </div>
 
                 <label className="w-full py-3 sm:py-4.5 rounded-xl sm:rounded-[18px] bg-white hover:bg-primary/5 border border-border hover:border-primary/50 text-foreground hover:text-primary transition-all flex items-center justify-center gap-2 text-[9px] sm:text-[10px] font-black uppercase tracking-widest cursor-pointer">
@@ -3904,22 +4674,37 @@ export function AdminDashboard() {
                           </td>
                           <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 font-bold font-mono text-foreground text-[10px] sm:text-xs whitespace-nowrap">
                             {isEditingPrice ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground">₹</span>
-                                <input
-                                  type="number"
-                                  className="w-16 sm:w-20 bg-white border border-border rounded px-2 py-1 text-xs outline-none focus:border-primary"
-                                  value={editingPrices[product.id] ?? ''}
-                                  onChange={(e) => handlePriceChange(product.id, e.target.value)}
-                                />
-                                <button onClick={() => handleSavePrice(product)} className="text-primary hover:text-green-600 font-black bg-primary/10 rounded px-2 py-1 tracking-widest uppercase text-[8px]">
-                                  Save
-                                </button>
+                              <div className="flex flex-col gap-1">
+                                {product.useBasePricing && (
+                                  <span className="text-[7.5px] text-emerald-600 font-black uppercase tracking-wider">Base Price / {normalizeBaseUnit(product.baseUnit, 'Kg')}</span>
+                                )}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground">₹</span>
+                                  <input
+                                    type="number"
+                                    className="w-16 sm:w-20 bg-white border border-border rounded px-2 py-1 text-xs outline-none focus:border-primary"
+                                    value={editingPrices[product.id] ?? ''}
+                                    onChange={(e) => handlePriceChange(product.id, e.target.value)}
+                                  />
+                                  <button onClick={() => handleSavePrice(product)} className="text-primary hover:text-green-600 font-black bg-primary/10 rounded px-2 py-1 tracking-widest uppercase text-[8px]">
+                                    Save
+                                  </button>
+                                </div>
                               </div>
                             ) : (
                               <div className="flex items-center gap-2 group">
-                                <span>₹{product.price}</span>
-                                <button onClick={() => handlePriceChange(product.id, String(product.price))} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary p-1 bg-white border border-border rounded">
+                                {product.useBasePricing ? (
+                                  <div className="flex flex-col leading-tight">
+                                    <span className="text-foreground">₹{product.price}</span>
+                                    <span className="text-[8.5px] text-emerald-600 font-black uppercase tracking-wide">₹{product.basePrice}/{normalizeBaseUnit(product.baseUnit, 'Kg')}</span>
+                                  </div>
+                                ) : (
+                                  <span>₹{product.price}</span>
+                                )}
+                                <button 
+                                  onClick={() => handlePriceChange(product.id, String(product.useBasePricing ? (product.basePrice || '') : product.price))} 
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary p-1 bg-white border border-border rounded cursor-pointer"
+                                >
                                   <Edit2 className="w-3 h-3" />
                                 </button>
                               </div>
@@ -4726,6 +5511,99 @@ export function AdminDashboard() {
             <BrandingSettings />
           </BrandingErrorBoundary>
         ) : null
+      )}
+
+      {bulkUpdateModalOpen && bulkChangedProducts.length > 0 && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
+          <div className="fixed inset-0" onClick={() => setBulkUpdateModalOpen(false)}></div>
+          <div className="bg-white border border-border rounded-[28px] max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col relative z-10 animate-in slide-in-from-bottom-4 duration-300">
+            {/* Header */}
+            <div className="px-5 py-4 sm:px-8 sm:py-6 border-b border-border flex justify-between items-center bg-neutral-50 shrink-0">
+              <div>
+                <span className="text-emerald-600 font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-widest block mb-1">Spreadsheet Injector Review</span>
+                <h2 className="text-lg sm:text-2xl font-black uppercase text-foreground shrink-0 leading-tight">
+                  Verify Bulk Updates ({bulkChangedProducts.length} Changes)
+                </h2>
+                <p className="text-muted-foreground text-[10px] sm:text-xs font-semibold mt-0.5">
+                  Review calculated price adjustments and edits before committing to live database.
+                </p>
+              </div>
+              <button 
+                onClick={() => setBulkUpdateModalOpen(false)}
+                className="p-1.5 sm:p-2 hover:bg-neutral-200 text-muted-foreground hover:text-foreground rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* List */}
+            <div className="p-4 sm:p-8 overflow-y-auto space-y-4 flex-1 bg-white">
+              <div className="space-y-3.5">
+                {bulkChangedProducts.map((item, idx) => (
+                  <div 
+                    key={`${item.id || 'new'}-${idx}`} 
+                    className={`p-4 rounded-xl border transition-all ${
+                      item.isNew 
+                        ? 'bg-emerald-50/40 border-emerald-100 hover:border-emerald-200' 
+                        : 'bg-neutral-50/50 border-neutral-100 hover:border-neutral-200'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-neutral-100/70">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs sm:text-sm font-black text-foreground uppercase tracking-tight">{item.name}</h4>
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-neutral-100 text-muted-foreground rounded-md">
+                          {item.updated.category}
+                        </span>
+                      </div>
+                      <div>
+                        {item.isNew ? (
+                          <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-emerald-500 text-white rounded-full">
+                            New Product
+                          </span>
+                        ) : (
+                          <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-blue-500 text-white rounded-full">
+                            Update
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {item.changes.map((change: string, cIdx: number) => (
+                        <div key={cIdx} className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold text-neutral-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
+                          <span className="font-mono">{change}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-5 py-4 sm:px-8 sm:py-6 border-t border-border flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-4 bg-neutral-50 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkUpdateModalOpen(false);
+                  setBulkChangedProducts([]);
+                }}
+                className="w-full sm:w-auto px-5 py-3 border border-border hover:bg-neutral-100 text-[10px] sm:text-xs font-black uppercase tracking-widest text-foreground rounded-xl transition-colors cursor-pointer text-center"
+              >
+                Cancel & Discard
+              </button>
+              <button
+                type="button"
+                onClick={commitBulkUpdates}
+                disabled={loading}
+                className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-md cursor-pointer text-center flex items-center justify-center gap-1.5"
+              >
+                {loading ? 'Applying Updates...' : 'Apply Bulk Updates'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {selectedOrder && (

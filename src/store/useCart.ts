@@ -34,6 +34,11 @@ export interface Product {
   orderIndex?: number;
   createdAt: number;
   updatedAt: number;
+  useBasePricing?: boolean;
+  basePrice?: number;
+  baseUnit?: string;
+  baseOriginalPrice?: number;
+  baseHorecaPrice?: number;
 }
 
 export interface CartItem {

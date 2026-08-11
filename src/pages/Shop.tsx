@@ -266,7 +266,13 @@ export function Shop() {
   });
 
   const filteredProducts = React.useMemo(() => {
-    const list = [...filteredProductsRaw];
+    const seen = new Set<string>();
+    const list = filteredProductsRaw.filter(p => {
+      if (!p || !p.id) return false;
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
     const catOrder = new Map<string, number>();
 
     // Populate catOrder using allUiCategories (skip 'All Products')
