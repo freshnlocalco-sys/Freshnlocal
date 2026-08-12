@@ -1966,11 +1966,29 @@ export function AdminDashboard() {
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
+      const order = orders.find(o => o.id === orderId);
       await updateDoc(doc(db, 'orders', orderId), { 
         status, 
         shippingEmailStatus: null,
         updatedAt: Date.now() 
       });
+
+      if (status === 'confirmed' && order) {
+        const customerUserId = order.userId || '';
+        const customerEmail = order.shippingDetails?.email || (order as any).customerEmail || '';
+        if (customerUserId || customerEmail) {
+          for (const item of order.items || []) {
+            const prod = item.product || item;
+            const pId = prod.id || prod.productId || '';
+            const pName = prod.name || prod.productName || '';
+            const pPrice = typeof prod.price === 'number' ? prod.price : (typeof item.price === 'number' ? item.price : 0);
+            if (pPrice > 0 && (pId || pName)) {
+              await saveCustomerHorecaPrice(customerUserId, pId, pPrice, pName, customerEmail);
+            }
+          }
+        }
+      }
+
       setOrders(orders.map(o => o.id === orderId ? { ...o, status, shippingEmailStatus: null } : o));
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder(prev => prev ? { ...prev, status, shippingEmailStatus: null } : null);
@@ -2302,14 +2320,23 @@ export function AdminDashboard() {
     targetUnit: string
   ): string => {
     const basePrice = parseFloat(String(basePriceVal || ''));
-    const targetValue = parseFloat(String(targetValueStr || ''));
+    let targetValue = parseFloat(String(targetValueStr || ''));
     
     if (isNaN(basePrice) || isNaN(targetValue) || targetValue <= 0) {
       return '';
     }
 
+    let activeTargetUnit = (targetUnit || 'Kg').toLowerCase();
+    
+    // Fix database mismatch: e.g. quantityValue = 500, quantityUnit = "Kg" (should be 500g)
+    if (targetValue >= 10 && activeTargetUnit === 'kg') {
+      activeTargetUnit = 'g';
+    } else if (targetValue >= 10 && activeTargetUnit === 'ltr') {
+      activeTargetUnit = 'ml';
+    }
+
     const normalizedBase = normalizeBaseUnit(baseUnit, 'Kg').toLowerCase();
-    const normalizedTarget = (targetUnit || 'Kg').toLowerCase();
+    const normalizedTarget = activeTargetUnit;
 
     let factor = 1;
 
@@ -2350,6 +2377,73 @@ export function AdminDashboard() {
       return finalPrice.toString();
     }
     return Number(finalPrice.toFixed(2)).toString();
+  };
+
+  const calculateBaseFromPrice = (
+    priceVal: string | number | undefined,
+    baseUnit: string,
+    targetValueStr: string | number | undefined,
+    targetUnit: string
+  ): string => {
+    const price = parseFloat(String(priceVal || ''));
+    let targetValue = parseFloat(String(targetValueStr || ''));
+    
+    if (isNaN(price) || isNaN(targetValue) || targetValue <= 0) {
+      return '';
+    }
+
+    let activeTargetUnit = (targetUnit || 'Kg').toLowerCase();
+
+    // Fix database mismatch: e.g. quantityValue = 500, quantityUnit = "Kg" (should be 500g)
+    if (targetValue >= 10 && activeTargetUnit === 'kg') {
+      activeTargetUnit = 'g';
+    } else if (targetValue >= 10 && activeTargetUnit === 'ltr') {
+      activeTargetUnit = 'ml';
+    }
+
+    const normalizedBase = normalizeBaseUnit(baseUnit, 'Kg').toLowerCase();
+    const normalizedTarget = activeTargetUnit;
+
+    let factor = 1;
+
+    // Weight conversions (Base rate is ALWAYS per 1000g / 1 Kg)
+    const isBaseWeight = ['kg', 'g', 'gm', 'gram', 'grams', 'kilogram', 'kilograms'].includes(normalizedBase);
+    const isTargetWeight = ['kg', 'g', 'gm', 'gram', 'grams', 'kilogram', 'kilograms'].includes(normalizedTarget);
+
+    // Volume conversions (Base rate is ALWAYS per 1000ml / 1 Ltr)
+    const isBaseVolume = ['l', 'ml', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(normalizedBase);
+    const isTargetVolume = ['l', 'ml', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(normalizedTarget);
+
+    if (isBaseWeight && isTargetWeight) {
+      const baseInGrams = 1000;
+      const targetInGrams = ['kg', 'kilogram', 'kilograms'].includes(normalizedTarget) ? 1000 : 1;
+      factor = (targetValue * targetInGrams) / baseInGrams;
+    } else if (isBaseVolume && isTargetVolume) {
+      const baseInMl = 1000;
+      const targetInMl = ['l', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(normalizedTarget) ? 1000 : 1;
+      factor = (targetValue * targetInMl) / baseInMl;
+    } else {
+      // Discrete or unmatched units
+      const getMultiplier = (unit: string) => {
+        if (unit === 'dozen') return 12;
+        return 1;
+      };
+      const baseMult = getMultiplier(normalizedBase);
+      const targetMult = getMultiplier(normalizedTarget);
+      
+      if (normalizedBase === normalizedTarget) {
+        factor = targetValue;
+      } else {
+        factor = (targetValue * targetMult) / baseMult;
+      }
+    }
+
+    if (factor <= 0) return '';
+    const basePrice = price / factor;
+    if (basePrice % 1 === 0) {
+      return basePrice.toString();
+    }
+    return Number(basePrice.toFixed(2)).toString();
   };
 
   const inferBasePricing = (
@@ -3053,21 +3147,36 @@ export function AdminDashboard() {
       const data = products
         .filter(p => p.category !== 'fnl juices' && p.category !== 'fnl juice')
         .map(p => {
-          const { qUnit } = parseQuantityAndUnit(p.unit);
-          const primaryUnitNorm = normalizeBaseUnit(p.quantityUnit || qUnit, 'Kg');
+          const parsedUnit = parseQuantityAndUnit(p.unit);
+          const qVal = p.quantityValue !== undefined && p.quantityValue !== null && p.quantityValue !== '' ? p.quantityValue : parseFloat(parsedUnit.qVal || '1');
+          const qUnit = p.quantityUnit || parsedUnit.qUnit || 'Kg';
+
+          const primaryUnitNorm = normalizeBaseUnit(qUnit, 'Kg');
           let effectiveBaseUnit = p.baseUnit ? normalizeBaseUnit(p.baseUnit, primaryUnitNorm) : primaryUnitNorm;
           if (effectiveBaseUnit === 'Kg' && primaryUnitNorm !== 'Kg') {
             effectiveBaseUnit = primaryUnitNorm;
           }
+
+          const finalBasePrice = p.basePrice !== undefined && p.basePrice !== null && String(p.basePrice) !== ''
+            ? p.basePrice
+            : (p.price ? calculateBaseFromPrice(p.price, effectiveBaseUnit, qVal, qUnit) : '');
+
+          const finalBaseMRP = p.baseOriginalPrice !== undefined && p.baseOriginalPrice !== null && String(p.baseOriginalPrice) !== ''
+            ? p.baseOriginalPrice
+            : (p.originalPrice ? calculateBaseFromPrice(p.originalPrice, effectiveBaseUnit, qVal, qUnit) : '');
+
+          const finalBaseHorecaPrice = p.baseHorecaPrice !== undefined && p.baseHorecaPrice !== null && String(p.baseHorecaPrice) !== ''
+            ? p.baseHorecaPrice
+            : (p.horecaPrice ? calculateBaseFromPrice(p.horecaPrice, effectiveBaseUnit, qVal, qUnit) : '');
 
           return {
             'ID (Do not edit)': p.id,
             'Product Name': p.name || '',
             'Category': p.category || '',
             'Base Unit': effectiveBaseUnit,
-            'Base Price': p.basePrice !== undefined && p.basePrice !== null && String(p.basePrice) !== '' ? p.basePrice : (p.price || ''),
-            'Base MRP': p.baseOriginalPrice !== undefined && p.baseOriginalPrice !== null && String(p.baseOriginalPrice) !== '' ? p.baseOriginalPrice : (p.originalPrice || ''),
-            'Base HoReCa Price': p.baseHorecaPrice !== undefined && p.baseHorecaPrice !== null && String(p.baseHorecaPrice) !== '' ? p.baseHorecaPrice : (p.horecaPrice || ''),
+            'Base Price': finalBasePrice,
+            'Base MRP': finalBaseMRP,
+            'Base HoReCa Price': finalBaseHorecaPrice,
             'Stock': p.stock !== undefined && p.stock !== null ? p.stock : '',
             'In Stock': p.inStock ? 'TRUE' : 'FALSE'
           };

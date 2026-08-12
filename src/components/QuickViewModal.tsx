@@ -40,13 +40,13 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
 
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
-  const { prices: rememberedPrices, subscribePrices } = useHorecaPrices();
+  const { prices: rememberedPrices, loadPrices } = useHorecaPrices();
 
   useEffect(() => {
     if ((user?.uid || user?.email) && isHoreca) {
-      subscribePrices(user.uid, user.email || undefined);
+      loadPrices(user.uid, user.email || undefined);
     }
-  }, [user?.uid, user?.email, isHoreca, subscribePrices]);
+  }, [user?.uid, user?.email, isHoreca, loadPrices]);
 
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
@@ -69,10 +69,10 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
     (pNameKey ? rememberedPrices[pNameKey] : undefined)
   ) : undefined;
 
+  const hasRememberedPrice = isHoreca && typeof rememberedPrice === 'number' && rememberedPrice > 0;
+
   const currentPrice = isHoreca 
-    ? (typeof rememberedPrice === 'number' && rememberedPrice > 0 
-        ? rememberedPrice 
-        : (currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price))
+    ? (hasRememberedPrice ? rememberedPrice : 0)
     : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
 
@@ -151,24 +151,20 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
             
             {isHoreca ? (
               <div className="flex items-center gap-2 mb-4 md:mb-6">
-                {currentPrice > 0 ? (
+                {hasRememberedPrice ? (
                   <div className="flex flex-col gap-1">
-                    <div className="text-2xl md:text-3xl font-black text-primary">₹{currentPrice}</div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold self-start">
-                      <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <span>{typeof rememberedPrice === 'number' && rememberedPrice > 0 ? "Your Confirmed Rate" : `Custom B2B Price (${currentUnit || '1KG'})`}</span>
+                    <div className="text-2xl md:text-3xl font-black text-foreground">₹{currentPrice}</div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold self-start">
+                      <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Last Price ({currentUnit || '1KG'})</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-secondary border border-primary/30 text-foreground shadow-2xs">
-                    <Building2 className="w-4 h-4 text-primary shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] md:text-xs font-black uppercase tracking-wider text-primary">
-                        Custom B2B Price
-                      </span>
-                      <span className="text-[8px] md:text-[9px] text-muted-foreground font-medium">
-                        Wholesale Invoice Tier ({currentUnit || '1KG'})
-                      </span>
+                  <div className="flex flex-col gap-1">
+                    <div className="text-2xl md:text-3xl font-black text-primary">₹0</div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/20 text-xs font-bold self-start">
+                      <Building2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                      <span>CUSTOM B2B PRICE ({currentUnit || '1KG'})</span>
                     </div>
                   </div>
                 )}

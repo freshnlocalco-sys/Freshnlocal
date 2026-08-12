@@ -48,13 +48,13 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
   
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
-  const { prices: rememberedPrices, subscribePrices } = useHorecaPrices();
+  const { prices: rememberedPrices, loadPrices } = useHorecaPrices();
 
   useEffect(() => {
     if ((user?.uid || user?.email) && isHoreca) {
-      subscribePrices(user.uid, user.email || undefined);
+      loadPrices(user.uid, user.email || undefined);
     }
-  }, [user?.uid, user?.email, isHoreca, subscribePrices]);
+  }, [user?.uid, user?.email, isHoreca, loadPrices]);
 
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   
@@ -79,10 +79,10 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
     (pNameKey ? rememberedPrices[pNameKey] : undefined)
   ) : undefined;
 
+  const hasRememberedPrice = isHoreca && typeof rememberedPrice === 'number' && rememberedPrice > 0;
+
   const currentPrice = isHoreca 
-    ? (typeof rememberedPrice === 'number' && rememberedPrice > 0 
-        ? rememberedPrice 
-        : (currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price))
+    ? (hasRememberedPrice ? rememberedPrice : 0)
     : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   const baseUnitPrice = calculateBaseUnitPrice(currentPrice, currentUnit);
@@ -232,26 +232,24 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
           <div className="flex items-end justify-between w-full mt-1">
             {isHoreca ? (
               <div className="flex flex-col gap-1 w-full">
-                {currentPrice > 0 ? (
+                {hasRememberedPrice ? (
                   <div className="flex flex-col gap-0.5">
                     <div className="text-xs sm:text-sm font-bold text-foreground leading-none flex items-center gap-0.5">
                       <span className="text-[9px] sm:text-[10px] text-muted-foreground">₹</span>{currentPrice}
                     </div>
-                    <div className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[8px] sm:text-[9px] font-bold">
-                      <Building2 className="w-2.5 h-2.5 text-primary shrink-0" />
-                      <span>{typeof rememberedPrice === 'number' && rememberedPrice > 0 ? "Your Confirmed Rate" : `Custom B2B Tier (${currentUnit || '1KG'})`}</span>
+                    <div className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-[8px] sm:text-[9px] font-bold self-start">
+                      <Building2 className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+                      <span>Last Price ({currentUnit || '1KG'})</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-secondary border border-primary/30 text-foreground shadow-2xs">
-                    <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-[8.5px] sm:text-[9.5px] font-black tracking-wider uppercase text-primary leading-none">
-                        CUSTOM B2B PRICE
-                      </span>
-                      <span className="text-[7.5px] font-semibold text-muted-foreground leading-tight">
-                        Wholesale Invoice Tier ({currentUnit || '1KG'})
-                      </span>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="text-xs sm:text-sm font-bold text-primary leading-none flex items-center gap-0.5">
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground">₹</span>0
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/20 text-[8px] sm:text-[9px] font-bold self-start">
+                      <Building2 className="w-2.5 h-2.5 text-orange-600 shrink-0" />
+                      <span>CUSTOM B2B PRICE ({currentUnit || '1KG'})</span>
                     </div>
                   </div>
                 )}

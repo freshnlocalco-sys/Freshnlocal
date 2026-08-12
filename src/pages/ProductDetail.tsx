@@ -17,10 +17,12 @@ import { calculateHorecaPrice, getBaseUnit, parseUnitScale, calculateBaseUnitPri
 import toast from 'react-hot-toast';
 
 import { QuantityInput } from '../components/QuantityInput';
+import { useHorecaPrices } from '../store/useHorecaPrices';
 
 export function ProductDetail() {
   const { categoryImages } = useSettings();
   const { user } = useAuth();
+  const { prices: rememberedPrices, loadPrices } = useHorecaPrices();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
@@ -46,11 +48,41 @@ export function ProductDetail() {
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0] || { unit: '', price: 0, originalPrice: 0, horecaPrice: undefined, horecaUnit: '' };
   
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
+
+  useEffect(() => {
+    if ((user?.uid || user?.email) && isHoreca) {
+      loadPrices(user.uid, user.email || undefined);
+    }
+  }, [user?.uid, user?.email, isHoreca, loadPrices]);
+
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
-  const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
+  const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;
+
+  const pNameRaw = product?.name?.trim();
+  const pNameKey = product?.name?.toLowerCase().trim();
+  const baseIdKey = product?.id ? product.id.split('-')[0] : '';
+  const pidLower = product?.id ? product.id.toLowerCase().trim() : '';
+  const cartPidLower = cartProductId ? cartProductId.toLowerCase().trim() : '';
+  const baseIdLower = baseIdKey ? baseIdKey.toLowerCase().trim() : '';
+
+  const rememberedPrice = isHoreca ? (
+    (product?.id ? rememberedPrices[product.id] : undefined) ??
+    (pidLower ? rememberedPrices[pidLower] : undefined) ??
+    (cartProductId ? rememberedPrices[cartProductId] : undefined) ??
+    (cartPidLower ? rememberedPrices[cartPidLower] : undefined) ??
+    (baseIdKey ? rememberedPrices[baseIdKey] : undefined) ??
+    (baseIdLower ? rememberedPrices[baseIdLower] : undefined) ??
+    (pNameRaw ? rememberedPrices[pNameRaw] : undefined) ??
+    (pNameKey ? rememberedPrices[pNameKey] : undefined)
+  ) : undefined;
+
+  const hasRememberedPrice = isHoreca && typeof rememberedPrice === 'number' && rememberedPrice > 0;
+
+  const currentPrice = isHoreca 
+    ? (hasRememberedPrice ? rememberedPrice : 0)
+    : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   const baseUnitPrice = calculateBaseUnitPrice(currentPrice, currentUnit);
-  const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;
 
   const unitConfig = useMemo(() => getUnitQuantityConfig(currentUnit), [currentUnit]);
   const step = isHoreca ? 0.5 : unitConfig.step;
@@ -302,26 +334,27 @@ export function ProductDetail() {
             
             {isHoreca ? (
               <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-secondary border border-primary/30 text-foreground shadow-2xs">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                      <Building2 className="w-4 h-4 text-primary" />
+                {hasRememberedPrice ? (
+                  <div className="flex flex-col gap-1">
+                    <div className="text-3xl sm:text-4xl font-black text-foreground font-sans flex items-center gap-1">
+                      <span className="text-lg text-muted-foreground">₹</span>{currentPrice}
                     </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-primary font-sans">
-                          HoReCa B2B Wholesale Order
-                        </span>
-                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-primary text-white">
-                          Custom Pricing
-                        </span>
-                      </div>
-                      <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-                        Custom Wholesale Pricing applied directly to Tax Invoice
-                      </span>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold self-start">
+                      <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Last Price ({currentUnit || '1KG'})</span>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    <div className="text-3xl sm:text-4xl font-black text-primary font-sans flex items-center gap-1">
+                      <span className="text-lg text-muted-foreground">₹</span>0
+                    </div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/20 text-xs font-bold self-start">
+                      <Building2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                      <span>CUSTOM B2B PRICE ({currentUnit || '1KG'})</span>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col gap-1.5">

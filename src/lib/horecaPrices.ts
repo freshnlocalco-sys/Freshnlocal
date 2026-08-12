@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, query, where, getDocs, doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 
 export interface CustomerHorecaPrice {
   userId: string;
@@ -63,58 +63,6 @@ export async function getCustomerHorecaPrices(userId: string, userEmail?: string
     console.error('Error fetching customer HoReCa prices:', err);
     return {};
   }
-}
-
-/**
- * Subscribes in real-time to custom HoReCa prices for a specific customer.
- */
-export function subscribeToCustomerHorecaPrices(
-  userId: string,
-  userEmail: string | undefined,
-  callback: (prices: Record<string, number>) => void
-): () => void {
-  if (!userId && !userEmail) {
-    callback({});
-    return () => {};
-  }
-
-  let docs1Map: Record<string, any> = {};
-  let docs2Map: Record<string, any> = {};
-
-  const emitCombined = () => {
-    const combined = [...Object.values(docs1Map), ...Object.values(docs2Map)];
-    callback(processHorecaDocs(combined));
-  };
-
-  const unsub1 = userId
-    ? onSnapshot(
-        query(collection(db, 'horecaPrices'), where('userId', '==', userId)),
-        (snap) => {
-          docs1Map = {};
-          snap.docs.forEach(d => { docs1Map[d.id] = d.data(); });
-          emitCombined();
-        },
-        (err) => console.error('Realtime listener error (userId):', err)
-      )
-    : () => {};
-
-  const cleanEmail = userEmail ? userEmail.toLowerCase().trim() : '';
-  const unsub2 = cleanEmail
-    ? onSnapshot(
-        query(collection(db, 'horecaPrices'), where('userEmail', '==', cleanEmail)),
-        (snap) => {
-          docs2Map = {};
-          snap.docs.forEach(d => { docs2Map[d.id] = d.data(); });
-          emitCombined();
-        },
-        (err) => console.error('Realtime listener error (userEmail):', err)
-      )
-    : () => {};
-
-  return () => {
-    unsub1();
-    unsub2();
-  };
 }
 
 /**
