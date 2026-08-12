@@ -3148,7 +3148,7 @@ export function AdminDashboard() {
         .filter(p => p.category !== 'fnl juices' && p.category !== 'fnl juice')
         .map(p => {
           const parsedUnit = parseQuantityAndUnit(p.unit);
-          const qVal = p.quantityValue !== undefined && p.quantityValue !== null && p.quantityValue !== '' ? p.quantityValue : parseFloat(parsedUnit.qVal || '1');
+          const qVal = p.quantityValue !== undefined && p.quantityValue !== null && String(p.quantityValue) !== '' ? p.quantityValue : parseFloat(parsedUnit.qVal || '1');
           const qUnit = p.quantityUnit || parsedUnit.qUnit || 'Kg';
 
           const primaryUnitNorm = normalizeBaseUnit(qUnit, 'Kg');
