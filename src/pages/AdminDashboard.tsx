@@ -3710,7 +3710,7 @@ export function AdminDashboard() {
         </nav>
       </div>
 
-      <div className="flex-1 min-w-0 w-full max-w-[1600px] mx-auto p-4 md:p-8 lg:p-12">
+      <div className="flex-1 min-w-0 w-full max-w-[1700px] mx-auto p-3 sm:p-5 md:p-6 lg:p-8">
 
       {loading ? (
         <div className="max-w-7xl mx-auto px-4 py-36 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest flex flex-col items-center justify-center gap-4">
@@ -3963,9 +3963,9 @@ export function AdminDashboard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-6 lg:gap-8 xl:gap-10 items-start">
               {/* Left form desk: manual additions & CSV operations */}
-              <div className={`col-span-12 lg:col-span-4 xl:col-span-3 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[32px] shadow-sm transition-all ${
+              <div className={`col-span-12 lg:col-span-4 xl:col-span-4 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-5 md:p-6 rounded-2xl sm:rounded-[32px] shadow-sm transition-all min-w-0 ${
                 productSection === 'juices' ? 'ring-2 ring-orange-500/10' : 'ring-2 ring-emerald-500/10'
               }`}>
                 <div className="space-y-4">
@@ -4169,13 +4169,13 @@ export function AdminDashboard() {
 
                       <div className="space-y-1.5 sm:space-y-2">
                         <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Quantity & Unit</label>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5 min-w-0">
                           <input 
                             required
                             type="number"
                             step="any"
-                            placeholder="Qty (e.g. 1)" 
-                            className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
+                            placeholder="Qty" 
+                            className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
                             value={newProduct.quantityValue || ''} 
                             onChange={e => {
                               const val = e.target.value;
@@ -4184,7 +4184,7 @@ export function AdminDashboard() {
                             }} 
                           />
                           <select
-                            className="w-24 sm:w-28 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
+                            className="w-18 sm:w-22 min-w-[65px] shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-2 sm:px-3 py-2.5 sm:py-3.5 pr-6 sm:pr-7 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] sm:bg-[length:11px_11px] bg-[right_6px_center] sm:bg-[right_8px_center] bg-no-repeat"
                             value={newProduct.quantityUnit || 'Kg'}
                             onChange={e => {
                               const qUnit = e.target.value;
@@ -4225,17 +4225,17 @@ export function AdminDashboard() {
                       
                       <div className="space-y-1.5 sm:space-y-2">
                         <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Unit (Optional)</label>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5 min-w-0">
                           <input 
                             type="number"
                             step="any"
                             placeholder="Qty" 
-                            className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
+                            className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
                             value={newProduct.horecaQuantityValue || ''} 
                             onChange={e => setNewProduct({...newProduct, horecaQuantityValue: e.target.value, horecaUnit: e.target.value ? `${e.target.value} ${newProduct.horecaQuantityUnit || 'Kg'}` : ''})} 
                           />
                           <select
-                            className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
+                            className="w-18 sm:w-22 min-w-[65px] shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-2 sm:px-3 py-2.5 sm:py-3.5 pr-6 sm:pr-7 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] sm:bg-[length:11px_11px] bg-[right_6px_center] sm:bg-[right_8px_center] bg-no-repeat"
                             value={newProduct.horecaQuantityUnit || 'Kg'}
                             onChange={e => setNewProduct({...newProduct, horecaQuantityUnit: e.target.value, horecaUnit: newProduct.horecaQuantityValue ? `${newProduct.horecaQuantityValue} ${e.target.value}` : ''})}
                           >
@@ -4334,9 +4334,9 @@ export function AdminDashboard() {
                                   />
                                 </div>
 
-                                <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-1">
+                                <div className="space-y-1.5 sm:space-y-2 col-span-2">
                                   <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">Quantity & Unit</label>
-                                  <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                                  <div className="flex gap-1.5 flex-wrap sm:flex-nowrap min-w-0">
                                     <input 
                                       required
                                       type="number"
@@ -4350,10 +4350,10 @@ export function AdminDashboard() {
                                         newVariants[vIdx].unit = buildUnitString(val, newVariants[vIdx].quantityUnit || 'Kg', newVariants[vIdx].packSize);
                                         updateProductWithBaseRecalc({ variants: newVariants });
                                       }}
-                                      className="flex-1 min-w-[60px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
+                                      className="flex-1 min-w-[60px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
                                     />
                                     <select
-                                      className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
+                                      className="w-18 sm:w-22 min-w-[65px] shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-2 sm:px-3 py-2.5 sm:py-3.5 pr-6 sm:pr-7 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] sm:bg-[length:11px_11px] bg-[right_6px_center] sm:bg-[right_8px_center] bg-no-repeat"
                                       value={variant.quantityUnit || 'Kg'}
                                       onChange={(e) => {
                                         const newVariants = [...newProduct.variants];
@@ -4385,9 +4385,9 @@ export function AdminDashboard() {
                                   </div>
                                 </div>
                                 
-                                <div className="space-y-1.5 sm:space-y-2">
+                                <div className="space-y-1.5 sm:space-y-2 col-span-2">
                                   <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">HoReCa Unit</label>
-                                  <div className="flex gap-2">
+                                  <div className="flex gap-1.5 min-w-0">
                                     <input 
                                       type="number"
                                       step="any"
@@ -4399,10 +4399,10 @@ export function AdminDashboard() {
                                         newVariants[vIdx].horecaUnit = e.target.value ? `${e.target.value} ${newVariants[vIdx].horecaQuantityUnit || 'Kg'}` : '';
                                         setNewProduct({...newProduct, variants: newVariants});
                                       }}
-                                      className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
+                                      className="flex-1 min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none border border-border rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs"
                                     />
                                     <select
-                                      className="w-20 sm:w-24 flex-shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 pr-8 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] sm:bg-[length:12px_12px] bg-[right_8px_center] sm:bg-[right_10px_center] bg-no-repeat"
+                                      className="w-18 sm:w-22 min-w-[65px] shrink-0 appearance-none border border-border rounded-xl sm:rounded-2xl px-2 sm:px-3 py-2.5 sm:py-3.5 pr-6 sm:pr-7 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-bold bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300b853%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] sm:bg-[length:11px_11px] bg-[right_6px_center] sm:bg-[right_8px_center] bg-no-repeat"
                                       value={variant.horecaQuantityUnit || 'Kg'}
                                       onChange={(e) => {
                                         const newVariants = [...newProduct.variants];
@@ -4671,8 +4671,8 @@ export function AdminDashboard() {
             </div>
             
             {/* Live table view of product catalogs */}
-            <div className="col-span-12 lg:col-span-8 xl:col-span-9 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden min-w-0">
-              <div className="p-4 sm:p-5 md:p-6 border-b border-border bg-secondary flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="col-span-12 lg:col-span-8 xl:col-span-8 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden min-w-0">
+              <div className="p-4 sm:p-5 border-b border-border bg-secondary flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
                   <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><Package className="w-4 h-4" /> Active Catalog</h3>
                   <p className="text-[9px] text-[#059669] font-bold uppercase tracking-wider">
@@ -4701,16 +4701,16 @@ export function AdminDashboard() {
                     placeholder="Search inventory..."
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
-                    className="w-full max-w-[200px] sm:max-w-xs border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
+                    className="w-full sm:w-40 lg:w-48 border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
                   />
                 </div>
               </div>
 
               {/* SECTION NAVIGATION FOR FRUITS/VEGETABLES VS JUICE SECTIONS */}
-              <div className="flex border-b border-border bg-neutral-50 p-1.5 gap-1.5">
+              <div className="flex border-b border-border bg-neutral-50 p-1.5 gap-1.5 overflow-x-auto no-scrollbar">
                 <button
                   onClick={() => setProductSection('all')}
-                  className={`flex-1 py-2 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[90px] py-2 px-2 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer whitespace-nowrap ${
                     productSection === 'all'
                       ? 'bg-neutral-900 text-white shadow-sm'
                       : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100'
@@ -4720,7 +4720,7 @@ export function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setProductSection('veg-fruits')}
-                  className={`flex-1 py-2 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[150px] py-2 px-2 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer whitespace-nowrap ${
                     productSection === 'veg-fruits'
                       ? 'bg-[#059669] text-white shadow-sm'
                       : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100'
@@ -4730,7 +4730,7 @@ export function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setProductSection('juices')}
-                  className={`flex-1 py-2 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[120px] py-2 px-2 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer whitespace-nowrap ${
                     productSection === 'juices'
                       ? 'bg-orange-600 text-white shadow-sm'
                       : 'text-orange-600 hover:text-orange-700 hover:bg-neutral-100'
@@ -4741,14 +4741,14 @@ export function AdminDashboard() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[550px] lg:min-w-full">
+                <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border bg-secondary text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 whitespace-nowrap">Product Details</th>
-                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 whitespace-nowrap">Catalog Category</th>
-                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 whitespace-nowrap">Rate (₹)</th>
-                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 whitespace-nowrap text-center">In Stock</th>
-                      <th className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 text-right whitespace-nowrap">Controls</th>
+                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Product Details</th>
+                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Catalog Category</th>
+                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Rate (₹)</th>
+                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap text-center">In Stock</th>
+                      <th className="px-3 sm:px-4 py-3 text-right whitespace-nowrap">Controls</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-[10px] sm:text-xs text-foreground">
@@ -4806,13 +4806,13 @@ export function AdminDashboard() {
                           }}
                           className={`transition-colors cursor-move ${dragOverProductIdx === idx ? 'border-primary border-t-2 border-dashed' : ''} ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}
                         >
-                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 flex items-center gap-2 sm:gap-3">
-                            <div className={`w-10 sm:w-12 md:w-16 aspect-[4/3] rounded-lg sm:rounded-xl bg-white dark:bg-white overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
+                          <td className="px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
+                            <div className={`w-10 sm:w-12 md:w-14 aspect-[4/3] rounded-lg sm:rounded-xl bg-white dark:bg-white overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
                               <img src={product.imageUrl || getCategoryImage(product.category) || undefined} alt="" loading="lazy" className="w-full h-full object-contain object-center" />
                             </div>
-                            <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px] text-[9px] sm:text-xs">{product.name}</span>
+                            <span className="font-extrabold text-foreground uppercase tracking-wide truncate max-w-[90px] sm:max-w-[140px] lg:max-w-[180px] xl:max-w-[220px] text-[9px] sm:text-xs">{product.name}</span>
                           </td>
-                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 font-bold uppercase tracking-wider text-[8px] sm:text-[10px] whitespace-nowrap">
+                          <td className="px-3 sm:px-4 py-3 font-bold uppercase tracking-wider text-[8px] sm:text-[10px] whitespace-nowrap">
                             {isJuice ? (
                               <span className="bg-orange-500/10 border border-orange-500/20 text-orange-600 px-2 py-0.5 rounded-full inline-block font-extrabold tracking-widest text-[7.5px] uppercase">
                                 🍹 {displayJuiceLabel}
@@ -4823,7 +4823,7 @@ export function AdminDashboard() {
                               </span>
                             )}
                           </td>
-                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 font-bold font-mono text-foreground text-[10px] sm:text-xs whitespace-nowrap">
+                          <td className="px-3 sm:px-4 py-3 font-bold font-mono text-foreground text-[10px] sm:text-xs whitespace-nowrap">
                             {isEditingPrice ? (
                               <div className="flex flex-col gap-1">
                                 {product.useBasePricing && (
@@ -4861,7 +4861,7 @@ export function AdminDashboard() {
                               </div>
                             )}
                           </td>
-                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 text-center whitespace-nowrap">
+                          <td className="px-3 sm:px-4 py-3 text-center whitespace-nowrap">
                             <button
                               onClick={() => handleToggleStock(product)}
                               className={`relative inline-flex h-5 sm:h-6 w-9 sm:w-11 items-center rounded-full transition-colors ${
@@ -4878,18 +4878,18 @@ export function AdminDashboard() {
                               {product.inStock !== false ? 'In Stock' : 'Out'}
                             </span>
                           </td>
-                          <td className="p-3 sm:p-4 md:p-5 lg:p-3 xl:p-4 text-right space-x-2 whitespace-nowrap">
+                          <td className="px-3 sm:px-4 py-3 text-right space-x-1.5 sm:space-x-2 whitespace-nowrap">
                           <button 
                             onClick={() => handleEditSetup(product)} 
-                            className="text-muted-foreground hover:text-primary p-1.5 sm:p-2 md:p-2.5 bg-background border border-border rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
+                            className="text-muted-foreground hover:text-primary p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
                           <button 
                             onClick={() => handleDeleteProduct(product.id)} 
-                            className="text-muted-foreground hover:text-red-500 p-1.5 sm:p-2 md:p-2.5 bg-background border border-border rounded-full hover:bg-red-500/10 transition-colors cursor-pointer"
+                            className="text-muted-foreground hover:text-red-500 p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-red-500/10 transition-colors cursor-pointer"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
                         </td>
                       </tr>
