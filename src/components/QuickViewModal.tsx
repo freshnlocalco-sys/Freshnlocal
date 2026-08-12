@@ -40,13 +40,13 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
 
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
-  const { prices: rememberedPrices, loadPrices } = useHorecaPrices();
+  const { prices: rememberedPrices, subscribePrices } = useHorecaPrices();
 
   useEffect(() => {
-    if (user?.uid && isHoreca) {
-      loadPrices(user.uid);
+    if ((user?.uid || user?.email) && isHoreca) {
+      subscribePrices(user.uid, user.email || undefined);
     }
-  }, [user?.uid, isHoreca, loadPrices]);
+  }, [user?.uid, user?.email, isHoreca, subscribePrices]);
 
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
@@ -75,12 +75,6 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
         : (currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price))
     : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
-
-  React.useEffect(() => {
-    if ((user?.uid || user?.email) && isHoreca) {
-      loadPrices(user.uid, user.email || undefined);
-    }
-  }, [user?.uid, user?.email, isHoreca, loadPrices]);
 
   const unitConfig = React.useMemo(() => getUnitQuantityConfig(currentUnit), [currentUnit]);
   const step = isHoreca ? 0.5 : unitConfig.step;

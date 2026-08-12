@@ -48,13 +48,13 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
   
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
-  const { prices: rememberedPrices, loadPrices } = useHorecaPrices();
+  const { prices: rememberedPrices, subscribePrices } = useHorecaPrices();
 
   useEffect(() => {
     if ((user?.uid || user?.email) && isHoreca) {
-      loadPrices(user.uid, user.email || undefined);
+      subscribePrices(user.uid, user.email || undefined);
     }
-  }, [user?.uid, user?.email, isHoreca, loadPrices]);
+  }, [user?.uid, user?.email, isHoreca, subscribePrices]);
 
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   
