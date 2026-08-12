@@ -7,6 +7,7 @@ import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
 import { calculateHorecaPrice, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
+import { useHorecaPrices } from '../store/useHorecaPrices';
 import { QuantityInput } from './QuantityInput';
 import { motion } from 'motion/react';
 
@@ -47,8 +48,21 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
   
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
+  const { prices: rememberedPrices, loadPrices } = useHorecaPrices();
+
+  useEffect(() => {
+    if (user?.uid && isHoreca) {
+      loadPrices(user.uid);
+    }
+  }, [user?.uid, isHoreca, loadPrices]);
+
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
-  const currentPrice = isHoreca && currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price;
+  const rememberedPrice = product.id ? rememberedPrices[product.id] : undefined;
+  const currentPrice = isHoreca 
+    ? (typeof rememberedPrice === 'number' && rememberedPrice > 0 
+        ? rememberedPrice 
+        : (currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price))
+    : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   const baseUnitPrice = calculateBaseUnitPrice(currentPrice, currentUnit);
 

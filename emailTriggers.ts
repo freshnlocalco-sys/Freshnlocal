@@ -71,30 +71,34 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
  */
 function renderOrderConfirmationHtml(order: any, id: string): string {
   const isPickup = order.deliveryMethod === 'pickup' || (order.shippingDetails?.address || '').toLowerCase().includes('pickup');
+  const isHorecaOrder = order.isHoreca || order.customerType === 'horeca' || order.customerType === 'horeca_admin' || order.paymentMethod === 'B2B Invoice';
 
   const itemsHtml = (order.items || []).map((item: any) => {
-    const p = item.product || {};
+    const p = item.product || item || {};
     const imgUrl = p.imageUrl || "https://images.unsplash.com/photo-1610348725531-843dff103e2c?w=100&h=100&fit=crop";
+    const priceVal = typeof p.price === 'number' ? p.price : (typeof item.price === 'number' ? item.price : 0);
+    const itemTotal = priceVal * (item.quantity || 1);
+    const priceDisplay = priceVal > 0 ? `₹${itemTotal.toFixed(2)}` : `<span style="color: #ea580c; font-size: 12px; font-weight: 600;">Quote Pending</span>`;
     return `
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 16px 12px; vertical-align: middle;">
           <table style="border-collapse: collapse; border: 0;">
             <tr>
               <td style="padding: 0 12px 0 0; vertical-align: middle;">
-                <img src="${imgUrl}" alt="${p.name}" class="product-img" style="width: 48px; height: 48px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0; display: block;" referrerPolicy="no-referrer" />
+                <img src="${imgUrl}" alt="${p.name || 'Product'}" class="product-img" style="width: 48px; height: 48px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0; display: block;" referrerPolicy="no-referrer" />
               </td>
               <td style="padding: 0; vertical-align: middle;">
-                <span class="product-name" style="font-weight: 600; color: #1e293b; font-size: 14px; display: block; line-height: 1.4; max-width: 250px;">${p.name}</span>
+                <span class="product-name" style="font-weight: 600; color: #1e293b; font-size: 14px; display: block; line-height: 1.4; max-width: 250px;">${p.name || 'Item'}</span>
                 <span style="font-size: 11px; color: #64748b; display: block; margin-top: 2px;">${p.category || 'Local Produce'}</span>
               </td>
             </tr>
           </table>
         </td>
         <td style="padding: 16px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; color: #475569; font-weight: 500; font-size: 14px;">
-          ${item.quantity} <span style="font-size: 12px; color: #94a3b8; font-weight: normal;">x ${p.unit || 'Unit'}</span>
+          ${item.quantity} <span style="font-size: 12px; color: #94a3b8; font-weight: normal;">x ${p.unit || item.unit || 'Unit'}</span>
         </td>
         <td style="padding: 16px 12px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">
-          ₹${(p.price || 0).toFixed(2)}
+          ${priceDisplay}
         </td>
       </tr>
     `;
@@ -119,11 +123,15 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
     </tr>
   `;
 
-  const headerTitle = isPickup ? "Pickup Confirmed" : "Harvest Confirmed";
+  const headerTitle = isHorecaOrder
+    ? "HoReCa Quote Received"
+    : (isPickup ? "Pickup Confirmed" : "Harvest Confirmed");
   
-  const introMessage = isPickup 
-    ? "Thank you for your order! Your organic selections are being reserved and freshly prepared. Our partner farmers in Surat, Gujarat are harvesting them fresh, and we will have your custom bundle ready for pickup at our Bhatar store soon!"
-    : "Thank you for supporting 100% natural, regional farming! Our partner farmers in Surat, Gujarat have reserved your selections and are preparing to deliver them fresh.";
+  const introMessage = isHorecaOrder
+    ? "Thank you for submitting your HoReCa harvest request! Our team in Surat, Gujarat is reviewing your item quantities and custom rates. We will update your order with confirmed pricing and notify you as soon as your custom quote is finalized."
+    : (isPickup 
+      ? "Thank you for your order! Your organic selections are being reserved and freshly prepared. Our partner farmers in Surat, Gujarat are harvesting them fresh, and we will have your custom bundle ready for pickup at our Bhatar store soon!"
+      : "Thank you for supporting 100% natural, regional farming! Our partner farmers in Surat, Gujarat have reserved your selections and are preparing to deliver them fresh.");
 
   const destinationRow = isPickup ? `
     <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
@@ -147,6 +155,8 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
   const recipeNotice = isPickup
     ? "Once you collect your fresh organic harvest from our store, use the built-in <strong>Freshi AI Chef</strong> assistant inside our application to instantly design gourmet farm-to-table culinary recipes tailored specifically to these exact ingredients!"
     : "Once your fresh organic harvest arrives, use the built-in <strong>Freshi AI Chef</strong> assistant inside our application to instantly design gourmet farm-to-table culinary recipes tailored specifically to these exact ingredients!";
+
+  const totalDisplay = (order.totalAmount || 0) > 0 ? `₹${(order.totalAmount || 0).toFixed(2)}` : `<span style="color: #ea580c; font-size: 16px; font-weight: 700;">Quote Pending</span>`;
 
   return `
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -236,7 +246,7 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
                 ${deliveryRow}
                 <tr>
                   <td colspan="2" style="padding: 20px 12px 12px; text-align: right; font-weight: 700; color: #0f172a; font-size: 15px;">Total Payable Amount:</td>
-                  <td style="padding: 20px 12px 12px; text-align: right; font-weight: 800; color: #15803d; font-size: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">₹${(order.totalAmount || 0).toFixed(2)}</td>
+                  <td style="padding: 20px 12px 12px; text-align: right; font-weight: 800; color: #15803d; font-size: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${totalDisplay}</td>
                 </tr>
               </tfoot>
             </table>
@@ -486,6 +496,55 @@ function renderShippingUpdateHtml(order: any, id: string): string {
                 </tr>
               </table>
             </div>
+
+            <!-- Items Table Breakdown for Order Update Email -->
+            <h3 style="margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Harvest & Pricing Breakdown</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+              <thead>
+                <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Product</th>
+                  <th style="padding: 12px; text-align: center; font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Quantity</th>
+                  <th style="padding: 12px; text-align: right; font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(order.items || []).map((item: any) => {
+                  const p = item.product || item || {};
+                  const imgUrl = p.imageUrl || "https://images.unsplash.com/photo-1610348725531-843dff103e2c?w=100&h=100&fit=crop";
+                  const priceVal = typeof p.price === 'number' ? p.price : (typeof item.price === 'number' ? item.price : 0);
+                  const itemTotal = priceVal * (item.quantity || 1);
+                  return `
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 16px 12px; vertical-align: middle;">
+                        <table style="border-collapse: collapse; border: 0;">
+                          <tr>
+                            <td style="padding: 0 12px 0 0; vertical-align: middle;">
+                              <img src="${imgUrl}" alt="${p.name || 'Product'}" class="product-img" style="width: 48px; height: 48px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0; display: block;" referrerPolicy="no-referrer" />
+                            </td>
+                            <td style="padding: 0; vertical-align: middle;">
+                              <span class="product-name" style="font-weight: 600; color: #1e293b; font-size: 14px; display: block; line-height: 1.4; max-width: 250px;">${p.name || 'Item'}</span>
+                              <span style="font-size: 11px; color: #64748b; display: block; margin-top: 2px;">${p.category || 'Local Produce'}</span>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <td style="padding: 16px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; color: #475569; font-weight: 500; font-size: 14px;">
+                        ${item.quantity} <span style="font-size: 12px; color: #94a3b8; font-weight: normal;">x ${p.unit || item.unit || 'Unit'}</span>
+                      </td>
+                      <td style="padding: 16px 12px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">
+                        ${priceVal > 0 ? `₹${itemTotal.toFixed(2)}` : '<span style="color: #ea580c; font-size: 12px;">Quote Pending</span>'}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2" style="padding: 20px 12px 12px; text-align: right; font-weight: 700; color: #0f172a; font-size: 15px;">Total Payable Amount:</td>
+                  <td style="padding: 20px 12px 12px; text-align: right; font-weight: 800; color: #15803d; font-size: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">₹${(order.totalAmount || 0).toFixed(2)}</td>
+                </tr>
+              </tfoot>
+            </table>
 
             ${dynamicNotice}
 
@@ -827,21 +886,26 @@ export function setupOrderEmailTriggers() {
           }
         }
 
-        // Trigger 2: Shipping / Delivery / Cancellation Status Updates
-        // Only trigger if status is different from pending, and we haven't sent the update for this exact status yet
-        if (order.status !== 'pending' && order.shippingEmailStatus !== order.status) {
-          console.log(`[EMAIL TRIGGERS] Detected order status update: ${orderNum} is now "${order.status}". Sending Shipping Update email to ${email}`);
+        // Trigger 2: Shipping / Delivery / Cancellation / Pricing Status Updates
+        const needsEmailUpdate = (order.status !== 'pending' && order.shippingEmailStatus !== order.status) || order.priceUpdatedEmailPending;
+        if (needsEmailUpdate) {
+          const isHorecaOrder = order.isHoreca || order.customerType === 'horeca' || order.customerType === 'horeca_admin' || order.paymentMethod === 'B2B Invoice';
+          const emailSubject = isHorecaOrder && order.status === 'confirmed'
+            ? `🌾 FreshNLocal Co. — Order Pricing Confirmed (#${orderNum})`
+            : `🚚 FreshNLocal Co. — Order Update: ${order.status.toUpperCase()} (#${orderNum})`;
+
+          console.log(`[EMAIL TRIGGERS] Triggering Order Update email for ${orderNum} (Status: "${order.status}", PriceUpdated: ${!!order.priceUpdatedEmailPending}) to ${email}`);
 
           const mailOptions = {
             from: senderFrom,
             to: email,
-            subject: `🚚 FreshNLocal Co. — Order Update: ${order.status.toUpperCase()} (#${orderNum})`,
+            subject: emailSubject,
             html: renderShippingUpdateHtml(order, id)
           };
 
           try {
             const info = await mailTransporter.sendMail(mailOptions);
-            console.log(`[EMAIL TRIGGERS] Shipping Update email sent to ${email}. MessageID: ${info.messageId}`);
+            console.log(`[EMAIL TRIGGERS] Order Update email sent to ${email}. MessageID: ${info.messageId}`);
             
             // Get test message link if sent via Ethereal Mail
             const previewUrl = nodemailer.getTestMessageUrl(info);
@@ -852,14 +916,15 @@ export function setupOrderEmailTriggers() {
               console.log(`=============================================================\n`);
             }
 
-            // Transactionally update shippingEmailStatus to match current status
+            // Transactionally update shippingEmailStatus to match current status and clear priceUpdatedEmailPending
             const orderDocRef = doc(db, 'orders', id);
             await updateDoc(orderDocRef, { 
               shippingEmailStatus: order.status,
+              priceUpdatedEmailPending: false,
               updatedAt: Date.now()
             });
           } catch (sendErr) {
-            console.error(`[EMAIL TRIGGERS] Error sending Shipping Update to ${email}:`, sendErr);
+            console.error(`[EMAIL TRIGGERS] Error sending Order Update to ${email}:`, sendErr);
           }
         }
       }

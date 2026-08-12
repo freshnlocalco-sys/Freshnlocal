@@ -312,6 +312,7 @@ export function Cart() {
         orderNumber,
         userId: user.uid,
         customerType: user.role || 'customer',
+        isHoreca: isHoreca,
         items: cartItems.map(i => {
           const p: any = {
             id: i.product.id,

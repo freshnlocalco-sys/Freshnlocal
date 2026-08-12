@@ -3,8 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail } from 'lucide-react';
 import { Product } from '../store/useCart';
+import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
 import { useSettings } from '../store/useSettings';
 import { BrandingSettings } from '../components/BrandingSettings';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
@@ -1858,18 +1859,33 @@ export function AdminDashboard() {
         return sum + (p.price || 0) * (item.quantity || 1);
       }, 0);
 
+      const prod = itemToUpdate.product || itemToUpdate;
+
       await updateDoc(doc(db, 'orders', orderId), { 
         items: newItems, 
         totalAmount: newTotal,
+        priceUpdatedEmailPending: true,
+        shippingEmailStatus: null,
         updatedAt: Date.now() 
       });
+
+      // Save remembered price for HoReCa customer
+      if (order.userId && prod.id) {
+        await saveCustomerHorecaPrice(order.userId, prod.id, newPrice, prod.name);
+      }
       
-      const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
+      const updatedOrder = { 
+        ...order, 
+        items: newItems, 
+        totalAmount: newTotal, 
+        priceUpdatedEmailPending: true, 
+        shippingEmailStatus: null 
+      };
       setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder(updatedOrder);
       }
-      toast.success('Item price updated');
+      toast.success('Item price updated & customer rate remembered!');
     } catch (e: any) {
       handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
       toast.error(e?.message || 'Failed to update item price');
@@ -1913,16 +1929,29 @@ export function AdminDashboard() {
       await updateDoc(doc(db, 'orders', orderId), { 
         items: cleanItems, 
         totalAmount: newTotal,
+        priceUpdatedEmailPending: true,
+        shippingEmailStatus: null,
         updatedAt: Date.now() 
       });
+
+      // Save remembered price if added
+      if (order.userId && productToAdd.id) {
+        await saveCustomerHorecaPrice(order.userId, productToAdd.id, productToAdd.price, productToAdd.name);
+      }
       
-      const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
+      const updatedOrder = { 
+        ...order, 
+        items: newItems, 
+        totalAmount: newTotal, 
+        priceUpdatedEmailPending: true, 
+        shippingEmailStatus: null 
+      };
       setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder(updatedOrder);
       }
       setOrderProductSearch('');
-      toast.success('Product added to order');
+      toast.success('Product added & rate queued');
     } catch (e: any) {
       handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
       toast.error(e?.message || 'Failed to add product');
@@ -1931,9 +1960,16 @@ export function AdminDashboard() {
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), { status, updatedAt: Date.now() });
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));
-      toast.success(`Order ${orderId.slice(0, 6)} state changed to ${status}`);
+      await updateDoc(doc(db, 'orders', orderId), { 
+        status, 
+        shippingEmailStatus: null,
+        updatedAt: Date.now() 
+      });
+      setOrders(orders.map(o => o.id === orderId ? { ...o, status, shippingEmailStatus: null } : o));
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(prev => prev ? { ...prev, status, shippingEmailStatus: null } : null);
+      }
+      toast.success(`Order ${orderId.slice(0, 6)} changed to ${status} & confirmation queued`);
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
       toast.error('Failed to update status.');
@@ -5651,6 +5687,28 @@ export function AdminDashboard() {
                 >
                   {(selectedOrder.shippingDetails?.address?.includes('Store Pickup') ? PICKUP_STATUS_OPTIONS : STATUS_OPTIONS).map(opt => <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>)}
                 </select>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await updateDoc(doc(db, 'orders', selectedOrder.id), {
+                        priceUpdatedEmailPending: true,
+                        shippingEmailStatus: null,
+                        updatedAt: Date.now()
+                      });
+                      toast.success('Updated rates email queued for customer!');
+                    } catch (e: any) {
+                      toast.error('Failed to queue rate email');
+                    }
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] sm:text-xs px-2.5 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                  title="Send email notification with updated item rates to customer"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Send Rates Email</span>
+                  <span className="sm:hidden">Send Email</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setOrderToDelete(selectedOrder.id)}
