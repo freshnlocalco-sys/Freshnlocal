@@ -1870,8 +1870,12 @@ export function AdminDashboard() {
       });
 
       // Save remembered price for HoReCa customer
-      if (order.userId && prod.id) {
-        await saveCustomerHorecaPrice(order.userId, prod.id, newPrice, prod.name);
+      const customerUserId = order.userId || '';
+      const customerEmail = order.shippingDetails?.email || (order as any).customerEmail || '';
+      if ((customerUserId || customerEmail) && prod) {
+        const pId = prod.id || prod.productId || '';
+        const pName = prod.name || prod.productName || '';
+        await saveCustomerHorecaPrice(customerUserId, pId, newPrice, pName, customerEmail);
       }
       
       const updatedOrder = { 
@@ -1935,8 +1939,10 @@ export function AdminDashboard() {
       });
 
       // Save remembered price if added
-      if (order.userId && productToAdd.id) {
-        await saveCustomerHorecaPrice(order.userId, productToAdd.id, productToAdd.price, productToAdd.name);
+      const customerUserIdAdd = order.userId || '';
+      const customerEmailAdd = order.shippingDetails?.email || (order as any).customerEmail || '';
+      if ((customerUserIdAdd || customerEmailAdd) && productToAdd) {
+        await saveCustomerHorecaPrice(customerUserIdAdd, productToAdd.id || '', productToAdd.price, productToAdd.name, customerEmailAdd);
       }
       
       const updatedOrder = { 

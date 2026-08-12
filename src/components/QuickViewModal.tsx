@@ -49,14 +49,29 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   }, [user?.uid, isHoreca, loadPrices]);
 
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
-  const rememberedPrice = product.id ? rememberedPrices[product.id] : undefined;
+  const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
+
+  const pNameKey = product.name?.toLowerCase().trim();
+  const baseIdKey = product.id ? product.id.split('-')[0] : '';
+  const rememberedPrice = isHoreca ? (
+    (product.id ? rememberedPrices[product.id] : undefined) ??
+    (cartProductId ? rememberedPrices[cartProductId] : undefined) ??
+    (baseIdKey ? rememberedPrices[baseIdKey] : undefined) ??
+    (pNameKey ? rememberedPrices[pNameKey] : undefined)
+  ) : undefined;
+
   const currentPrice = isHoreca 
     ? (typeof rememberedPrice === 'number' && rememberedPrice > 0 
         ? rememberedPrice 
         : (currentVariant.horecaPrice ? calculateHorecaPrice(currentVariant.horecaPrice, currentUnit) : currentVariant.price))
     : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
-  const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
+
+  React.useEffect(() => {
+    if ((user?.uid || user?.email) && isHoreca) {
+      loadPrices(user.uid, user.email || undefined);
+    }
+  }, [user?.uid, user?.email, isHoreca, loadPrices]);
 
   const unitConfig = React.useMemo(() => getUnitQuantityConfig(currentUnit), [currentUnit]);
   const step = isHoreca ? 0.5 : unitConfig.step;
@@ -78,7 +93,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const handleAddToCart = () => {
     if (product) {
       if (quantity <= 0) return;
-      addItem({ ...product, id: cartProductId, price: isHoreca ? 0 : currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, quantity);
+      addItem({ ...product, id: cartProductId, price: currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, quantity);
       toast.success(`${quantity} ${product.name} added to cart!`);
       onClose();
     }
@@ -133,17 +148,27 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
             
             {isHoreca ? (
               <div className="flex items-center gap-2 mb-4 md:mb-6">
-                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-secondary border border-primary/30 text-foreground shadow-2xs">
-                  <Building2 className="w-4 h-4 text-primary shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="text-[10px] md:text-xs font-black uppercase tracking-wider text-primary">
-                      Custom B2B Price
-                    </span>
-                    <span className="text-[8px] md:text-[9px] text-muted-foreground font-medium">
-                      Wholesale Invoice Tier ({currentUnit || '1KG'})
-                    </span>
+                {currentPrice > 0 ? (
+                  <div className="flex flex-col gap-1">
+                    <div className="text-2xl md:text-3xl font-black text-primary">₹{currentPrice}</div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold self-start">
+                      <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span>{typeof rememberedPrice === 'number' && rememberedPrice > 0 ? "Your Confirmed Rate" : `Custom B2B Price (${currentUnit || '1KG'})`}</span>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-secondary border border-primary/30 text-foreground shadow-2xs">
+                    <Building2 className="w-4 h-4 text-primary shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] md:text-xs font-black uppercase tracking-wider text-primary">
+                        Custom B2B Price
+                      </span>
+                      <span className="text-[8px] md:text-[9px] text-muted-foreground font-medium">
+                        Wholesale Invoice Tier ({currentUnit || '1KG'})
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-end gap-2 md:gap-3 mb-4 md:mb-6">

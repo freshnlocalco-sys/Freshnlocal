@@ -51,13 +51,25 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const { prices: rememberedPrices, loadPrices } = useHorecaPrices();
 
   useEffect(() => {
-    if (user?.uid && isHoreca) {
-      loadPrices(user.uid);
+    if ((user?.uid || user?.email) && isHoreca) {
+      loadPrices(user.uid, user.email || undefined);
     }
-  }, [user?.uid, isHoreca, loadPrices]);
+  }, [user?.uid, user?.email, isHoreca, loadPrices]);
 
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
-  const rememberedPrice = product.id ? rememberedPrices[product.id] : undefined;
+  
+  // Ensure cartProductId is strictly unique per variant
+  const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
+
+  const pNameKey = product.name?.toLowerCase().trim();
+  const baseIdKey = product.id ? product.id.split('-')[0] : '';
+  const rememberedPrice = isHoreca ? (
+    (product.id ? rememberedPrices[product.id] : undefined) ??
+    (cartProductId ? rememberedPrices[cartProductId] : undefined) ??
+    (baseIdKey ? rememberedPrices[baseIdKey] : undefined) ??
+    (pNameKey ? rememberedPrices[pNameKey] : undefined)
+  ) : undefined;
+
   const currentPrice = isHoreca 
     ? (typeof rememberedPrice === 'number' && rememberedPrice > 0 
         ? rememberedPrice 
@@ -73,9 +85,6 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
 
   const [isExpanded, setIsExpanded] = useState(isHoreca);
   const [stagedQuantity, setStagedQuantity] = useState<number>(initialQty);
-
-  // Ensure cartProductId is strictly unique per variant
-  const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
 
   const cartItem = items.find((item) => item?.product?.id === cartProductId && item?.product?.unit === currentUnit);
   const quantity = cartItem ? cartItem.quantity : 0;
@@ -214,17 +223,29 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
           <div className="flex items-end justify-between w-full mt-1">
             {isHoreca ? (
               <div className="flex flex-col gap-1 w-full">
-                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-secondary border border-primary/30 text-foreground shadow-2xs">
-                  <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="text-[8.5px] sm:text-[9.5px] font-black tracking-wider uppercase text-primary leading-none">
-                      CUSTOM B2B PRICE
-                    </span>
-                    <span className="text-[7.5px] font-semibold text-muted-foreground leading-tight">
-                      Wholesale Invoice Tier ({currentUnit || '1KG'})
-                    </span>
+                {currentPrice > 0 ? (
+                  <div className="flex flex-col gap-0.5">
+                    <div className="text-xs sm:text-sm font-bold text-foreground leading-none flex items-center gap-0.5">
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground">₹</span>{currentPrice}
+                    </div>
+                    <div className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[8px] sm:text-[9px] font-bold">
+                      <Building2 className="w-2.5 h-2.5 text-primary shrink-0" />
+                      <span>{typeof rememberedPrice === 'number' && rememberedPrice > 0 ? "Your Confirmed Rate" : `Custom B2B Tier (${currentUnit || '1KG'})`}</span>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-secondary border border-primary/30 text-foreground shadow-2xs">
+                    <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-[8.5px] sm:text-[9.5px] font-black tracking-wider uppercase text-primary leading-none">
+                        CUSTOM B2B PRICE
+                      </span>
+                      <span className="text-[7.5px] font-semibold text-muted-foreground leading-tight">
+                        Wholesale Invoice Tier ({currentUnit || '1KG'})
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col gap-0.5">
@@ -335,7 +356,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                 e.stopPropagation();
                 if (quantity === 0) {
                   if ((product.inStock || isHoreca) && stagedQuantity > 0) {
-                    onAddToCart({ ...product, id: cartProductId, price: isHoreca ? 0 : currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, stagedQuantity); 
+                    onAddToCart({ ...product, id: cartProductId, price: currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, stagedQuantity); 
                   }
                 } else {
                   updateQuantity(cartProductId, safeAddQuantity(quantity, step, isDiscrete));
