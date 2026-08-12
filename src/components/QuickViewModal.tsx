@@ -51,12 +51,21 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
 
+  const pNameRaw = product.name?.trim();
   const pNameKey = product.name?.toLowerCase().trim();
   const baseIdKey = product.id ? product.id.split('-')[0] : '';
+  const pidLower = product.id ? product.id.toLowerCase().trim() : '';
+  const cartPidLower = cartProductId ? cartProductId.toLowerCase().trim() : '';
+  const baseIdLower = baseIdKey ? baseIdKey.toLowerCase().trim() : '';
+
   const rememberedPrice = isHoreca ? (
     (product.id ? rememberedPrices[product.id] : undefined) ??
+    (pidLower ? rememberedPrices[pidLower] : undefined) ??
     (cartProductId ? rememberedPrices[cartProductId] : undefined) ??
+    (cartPidLower ? rememberedPrices[cartPidLower] : undefined) ??
     (baseIdKey ? rememberedPrices[baseIdKey] : undefined) ??
+    (baseIdLower ? rememberedPrices[baseIdLower] : undefined) ??
+    (pNameRaw ? rememberedPrices[pNameRaw] : undefined) ??
     (pNameKey ? rememberedPrices[pNameKey] : undefined)
   ) : undefined;
 

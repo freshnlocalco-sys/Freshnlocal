@@ -18,33 +18,39 @@ export async function getCustomerHorecaPrices(userId: string, userEmail?: string
   try {
     const map: Record<string, number> = {};
 
+    const storeData = (data: any) => {
+      if (!data || typeof data.price !== 'number') return;
+      const price = data.price;
+      if (data.productId) {
+        const rawPid = String(data.productId).trim();
+        const lowerPid = rawPid.toLowerCase();
+        map[rawPid] = price;
+        map[lowerPid] = price;
+        const basePid = rawPid.split('-')[0];
+        if (basePid) {
+          map[basePid] = price;
+          map[basePid.toLowerCase()] = price;
+        }
+      }
+      if (data.productName) {
+        const rawPname = String(data.productName).trim();
+        const lowerPname = rawPname.toLowerCase();
+        map[rawPname] = price;
+        map[lowerPname] = price;
+      }
+    };
+
     if (userId) {
       const q1 = query(collection(db, 'horecaPrices'), where('userId', '==', userId));
       const snap1 = await getDocs(q1);
-      snap1.forEach(d => {
-        const data = d.data();
-        if (data.productId && typeof data.price === 'number') {
-          map[data.productId] = data.price;
-        }
-        if (data.productName && typeof data.price === 'number') {
-          map[data.productName.toLowerCase().trim()] = data.price;
-        }
-      });
+      snap1.forEach(d => storeData(d.data()));
     }
 
     if (userEmail) {
       const cleanEmail = userEmail.toLowerCase().trim();
       const q2 = query(collection(db, 'horecaPrices'), where('userEmail', '==', cleanEmail));
       const snap2 = await getDocs(q2);
-      snap2.forEach(d => {
-        const data = d.data();
-        if (data.productId && typeof data.price === 'number') {
-          map[data.productId] = data.price;
-        }
-        if (data.productName && typeof data.price === 'number') {
-          map[data.productName.toLowerCase().trim()] = data.price;
-        }
-      });
+      snap2.forEach(d => storeData(d.data()));
     }
 
     return map;
@@ -69,34 +75,43 @@ export async function saveCustomerHorecaPrice(
 
   const cleanEmail = userEmail ? userEmail.toLowerCase().trim() : '';
   const cleanName = productName ? productName.toLowerCase().trim() : '';
-  const baseProductId = productId ? productId.split('-')[0] : '';
+  const cleanPid = productId ? productId.toLowerCase().trim() : '';
+  const baseProductId = cleanPid ? cleanPid.split('-')[0] : '';
 
   const docPayload = {
     userId: userId || '',
     userEmail: cleanEmail,
-    productId: productId || '',
+    productId: cleanPid,
     productName: productName || '',
     price: Number(price),
     updatedAt: Date.now()
   };
 
   try {
-    const docId = `${userId || cleanEmail}_${productId || cleanName}`;
-    await setDoc(doc(db, 'horecaPrices', docId), docPayload, { merge: true });
-
-    // Also index by baseProductId if different
-    if (baseProductId && baseProductId !== productId) {
-      const baseDocId = `${userId || cleanEmail}_${baseProductId}`;
-      await setDoc(doc(db, 'horecaPrices', baseDocId), { ...docPayload, productId: baseProductId }, { merge: true });
+    const keyPrefix = userId || cleanEmail;
+    
+    if (cleanPid) {
+      await setDoc(doc(db, 'horecaPrices', `${keyPrefix}_${cleanPid}`), docPayload, { merge: true });
+      if (baseProductId && baseProductId !== cleanPid) {
+        await setDoc(doc(db, 'horecaPrices', `${keyPrefix}_${baseProductId}`), { ...docPayload, productId: baseProductId }, { merge: true });
+      }
     }
 
-    // Also index by email if available and distinct
+    if (cleanName) {
+      await setDoc(doc(db, 'horecaPrices', `${keyPrefix}_${cleanName}`), docPayload, { merge: true });
+    }
+
     if (cleanEmail) {
-      const emailDocId = `${cleanEmail}_${productId || cleanName}`;
-      await setDoc(doc(db, 'horecaPrices', emailDocId), docPayload, { merge: true });
+      if (cleanPid) {
+        await setDoc(doc(db, 'horecaPrices', `${cleanEmail}_${cleanPid}`), docPayload, { merge: true });
+      }
+      if (cleanName) {
+        await setDoc(doc(db, 'horecaPrices', `${cleanEmail}_${cleanName}`), docPayload, { merge: true });
+      }
     }
   } catch (err) {
     console.error('Error saving customer HoReCa price:', err);
   }
 }
+
 

@@ -317,7 +317,7 @@ export function Cart() {
           const p: any = {
             id: i.product.id,
             name: typeof i.product.name === 'string' ? i.product.name.substring(0, 100) : i.product.name,
-            price: isHoreca ? 0 : i.product.price,
+            price: typeof i.product.price === 'number' && i.product.price > 0 ? i.product.price : (isHoreca ? 0 : (i.product.price || 0)),
             unit: i.product.unit,
           };
           if (i.product.imageUrl && typeof i.product.imageUrl === 'string' && i.product.imageUrl.length < 500 && i.product.imageUrl.startsWith('http')) {
@@ -327,7 +327,7 @@ export function Cart() {
           Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
           return { product: p, quantity: i.quantity };
         }),
-        totalAmount: isHoreca ? 0 : finalTotal,
+        totalAmount: isHoreca ? (finalTotal > 0 ? finalTotal : 0) : finalTotal,
         discount: isHoreca ? 0 : discount,
         pointsEarned: isHoreca ? 0 : Math.floor(finalTotal / 100) * 2,
         pointsRedeemed: isHoreca ? 0 : (discount > 0 ? 100 : 0),
