@@ -1,6 +1,6 @@
 export function parseUnitScale(unitStr: string | undefined): number {
   if (!unitStr) return 1;
-  const match = unitStr.match(/^([\d.]+)\s*(kg|g|gm|l|ml|ltr|pc|pcs)$/i);
+  const match = unitStr.match(/^([\d.]+)\s*(kg|g|gm|l|ml|ltr|pc|pcs|pack|pkt|packet|box|bottle|bunch)$/i);
   if (!match) return 1;
   const val = parseFloat(match[1]);
   const unit = match[2].toLowerCase();
@@ -8,19 +8,22 @@ export function parseUnitScale(unitStr: string | undefined): number {
   if (unit === 'g' || unit === 'gm') return val / 1000;
   if (unit === 'ml') return val / 1000;
   if (unit === 'kg' || unit === 'l' || unit === 'ltr') return val;
-  if (unit === 'pc' || unit === 'pcs') return val;
-  return 1;
+  return val;
 }
 
 export function getBaseUnit(unitStr: string | undefined): string {
   if (!unitStr) return 'Units';
-  const match = unitStr.match(/^([\d.]+)\s*(kg|g|gm|l|ml|ltr|pc|pcs)$/i);
+  const match = unitStr.match(/^([\d.]+)\s*(kg|g|gm|l|ml|ltr|pc|pcs|pack|pkt|packet|box|bottle|bunch)$/i);
   if (!match) return 'Units';
   const unit = match[2].toLowerCase();
   
   if (unit === 'g' || unit === 'gm' || unit === 'kg') return 'Kg';
   if (unit === 'ml' || unit === 'l' || unit === 'ltr') return 'Ltr';
   if (unit === 'pc' || unit === 'pcs') return 'Pcs';
+  if (['pack', 'pkt', 'packet'].includes(unit)) return 'Packs';
+  if (['box'].includes(unit)) return 'Boxes';
+  if (['bottle'].includes(unit)) return 'Bottles';
+  if (['bunch'].includes(unit)) return 'Bunches';
   return 'Units';
 }
 
@@ -114,36 +117,8 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
 }
 
 export function getUnitQuantityConfig(unitStr: string | undefined): { initialQty: number; step: number; isDiscrete: boolean } {
-  if (!unitStr) return { initialQty: 1, step: 1, isDiscrete: true };
-
-  const trimmed = unitStr.trim();
-  const match = trimmed.match(/^([\d.]+)\s*(.*)$/);
-
-  let val = 1;
-  let unit = trimmed.toLowerCase();
-
-  if (match) {
-    val = parseFloat(match[1]) || 1;
-    unit = match[2].trim().toLowerCase();
-  }
-
-  // Weight units -> convert g/gm to Kg (e.g., 500gm -> 0.5, 200g -> 0.2, 1kg -> 1)
-  if (['g', 'gm', 'gram', 'grams', 'kg', 'kilogram', 'kilograms'].includes(unit)) {
-    const weightInKg = ['kg', 'kilogram', 'kilograms'].includes(unit) ? val : val / 1000;
-    const qty = Math.max(0.01, Number(weightInKg.toFixed(3)));
-    return { initialQty: qty, step: qty, isDiscrete: false };
-  }
-
-  // Volume units -> convert ml to Litre (e.g., 500ml -> 0.5, 1.5l -> 1.5)
-  if (['ml', 'l', 'ltr', 'litre', 'litres', 'liter', 'liters'].includes(unit)) {
-    const volumeInL = ['ml'].includes(unit) ? val / 1000 : val;
-    const qty = Math.max(0.01, Number(volumeInL.toFixed(3)));
-    return { initialQty: qty, step: qty, isDiscrete: false };
-  }
-
-  // Discrete count units (pc, pcs, pack, pkt, box, bottle, bunch) -> whole integers (1, 2, 3, 4, 5...)
-  const initialCount = Math.max(1, Math.round(val));
-  return { initialQty: initialCount, step: 1, isDiscrete: true };
+  // Treat every pack/variant size (like 250g, 500g, 1Kg, 1 Litre, etc.) as 1 Unit
+  return { initialQty: 1, step: 1, isDiscrete: true };
 }
 
 export function safeAddQuantity(current: number, step: number, isDiscrete: boolean): number {
