@@ -3,12 +3,13 @@ import React, { useState, useEffect, useRef } from 'react';
 interface QuantityInputProps {
   initialQuantity: number;
   isHoreca: boolean;
+  minQuantity?: number;
   onUpdate: (newQuantity: number) => void;
   onRemove: () => void;
   className?: string;
 }
 
-export function QuantityInput({ initialQuantity, isHoreca, onUpdate, onRemove, className = "" }: QuantityInputProps) {
+export function QuantityInput({ initialQuantity, isHoreca, minQuantity, onUpdate, onRemove, className = "" }: QuantityInputProps) {
   const [inputValue, setInputValue] = useState(initialQuantity.toString());
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,20 +37,18 @@ export function QuantityInput({ initialQuantity, isHoreca, onUpdate, onRemove, c
 
   const handleBlur = () => {
     let val = parseFloat(inputValue);
-    if (isNaN(val)) {
+    const minAllowed = minQuantity !== undefined ? minQuantity : (isHoreca ? 0.01 : 0.01);
+
+    if (isNaN(val) || val <= 0) {
       if (isHoreca) {
         setInputValue("0.0");
         onUpdate(0);
       } else {
         onRemove();
       }
-    } else if (val <= 0) {
-      if (isHoreca) {
-        setInputValue("0.0");
-        onUpdate(0);
-      } else {
-        onRemove();
-      }
+    } else if (!isHoreca && minAllowed > 0 && val < minAllowed) {
+      setInputValue(minAllowed.toString());
+      onUpdate(minAllowed);
     } else {
       setInputValue(val.toString());
       onUpdate(val);

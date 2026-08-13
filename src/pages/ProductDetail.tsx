@@ -393,28 +393,42 @@ export function ProductDetail() {
                 <span className="text-[9px] text-primary font-bold mt-1">Total: {quantity * parseUnitScale(currentUnit)} {getBaseUnit(currentUnit)}</span>
               </div>
               <div className="flex items-center border border-border bg-background rounded-2xl overflow-hidden p-1.5">
-                <button 
-                  onClick={() => setQuantity(safeSubtractQuantity(quantity, step, isDiscrete))}
-                  className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <div className="flex items-center">
-                  <QuantityInput
-                    initialQuantity={quantity}
-                    isHoreca={isHoreca}
-                    className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
-                    onUpdate={(val) => setQuantity(val)}
-                    onRemove={() => setQuantity(isHoreca ? 0.01 : initialQty)}
-                  />
-                  <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
-                </div>
-                <button 
-                  onClick={() => setQuantity(safeAddQuantity(quantity, step, isDiscrete))}
-                  className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+                {(() => {
+                  const minQty = isHoreca ? 0.01 : unitConfig.initialQty;
+                  return (
+                    <>
+                      <button 
+                        onClick={() => {
+                          if (quantity <= minQty + 0.001) {
+                            setQuantity(minQty);
+                          } else {
+                            setQuantity(safeSubtractQuantity(quantity, step, isDiscrete, minQty));
+                          }
+                        }}
+                        className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <div className="flex items-center">
+                        <QuantityInput
+                          initialQuantity={quantity}
+                          isHoreca={isHoreca}
+                          minQuantity={minQty}
+                          className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
+                          onUpdate={(val) => setQuantity(val)}
+                          onRemove={() => setQuantity(isHoreca ? 0.01 : initialQty)}
+                        />
+                        <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
+                      </div>
+                      <button 
+                        onClick={() => setQuantity(safeAddQuantity(quantity, step, isDiscrete))}
+                        className="w-10 h-10 rounded-xl hover:bg-[#09120b] hover:text-white flex items-center justify-center cursor-pointer text-foreground transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
             </div>
             
@@ -434,7 +448,7 @@ export function ProductDetail() {
             <button 
               onClick={handleAddToCart}
               className="w-full py-4.5 rounded-xl bg-primary text-white font-sans text-[10px] uppercase font-black tracking-widest transition-colors hover:bg-[#09120b] hover:text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-md disabled:shadow-none"
-              disabled={(!product.inStock && !isHoreca) || quantity < (isHoreca ? 0.01 : 1)}
+              disabled={(!product.inStock && !isHoreca) || quantity < (isHoreca ? 0.01 : unitConfig.initialQty)}
             >
               <ShoppingBag className="w-4.5 h-4.5" />
               {product.inStock ? 'Checkout to Basket' : isHoreca ? 'Request Requirement (Out of Stock)' : 'Out of Stock'}

@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { initializeFirestore, doc, getDoc, setDoc, serverTimestamp, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
+import { initializeFirestore, doc, getDoc, setDoc, serverTimestamp, enableMultiTabIndexedDbPersistence, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { create } from 'zustand';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -19,8 +19,20 @@ if (primaryBucket.endsWith('.appspot.com')) {
 export const fallbackStorage = getStorage(app, fallbackBucketUrl);
 export const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
-  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true,
 }, "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
+
+// Test Firestore connection on boot to catch potential offline/transient stream issues
+async function testFirestoreConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.warn("Firestore connection check: Client offline or transient stream reconnecting.");
+    }
+  }
+}
+testFirestoreConnection();
 
 if (typeof window !== 'undefined') {
   enableMultiTabIndexedDbPersistence(db).catch((err) => {

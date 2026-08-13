@@ -3963,9 +3963,9 @@ export function AdminDashboard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-6 lg:gap-8 xl:gap-10 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8 xl:gap-10 items-start">
               {/* Left form desk: manual additions & CSV operations */}
-              <div className={`col-span-12 lg:col-span-4 xl:col-span-4 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-5 md:p-6 rounded-2xl sm:rounded-[32px] shadow-sm transition-all min-w-0 ${
+              <div className={`col-span-12 xl:col-span-4 2xl:col-span-4 space-y-6 sm:space-y-8 bg-secondary border border-border p-4 sm:p-5 md:p-6 rounded-2xl sm:rounded-[32px] shadow-sm transition-all min-w-0 ${
                 productSection === 'juices' ? 'ring-2 ring-orange-500/10' : 'ring-2 ring-emerald-500/10'
               }`}>
                 <div className="space-y-4">
@@ -4671,7 +4671,7 @@ export function AdminDashboard() {
             </div>
             
             {/* Live table view of product catalogs */}
-            <div className="col-span-12 lg:col-span-8 xl:col-span-8 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden min-w-0">
+            <div className="col-span-12 xl:col-span-8 2xl:col-span-8 bg-white border border-border shadow-sm rounded-2xl sm:rounded-[32px] overflow-hidden min-w-0">
               <div className="p-4 sm:p-5 border-b border-border bg-secondary flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
                   <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><Package className="w-4 h-4" /> Active Catalog</h3>
@@ -4701,7 +4701,7 @@ export function AdminDashboard() {
                     placeholder="Search inventory..."
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
-                    className="w-full sm:w-40 lg:w-48 border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
+                    className="w-full sm:w-36 md:w-44 xl:w-48 border border-border/80 rounded-xl px-3 py-2 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
                   />
                 </div>
               </div>

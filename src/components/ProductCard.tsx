@@ -90,6 +90,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const unitConfig = React.useMemo(() => getUnitQuantityConfig(currentUnit), [currentUnit]);
   const step = isHoreca ? 0.5 : unitConfig.step;
   const initialQty = isHoreca ? 0 : unitConfig.initialQty;
+  const minQty = isHoreca ? 0.01 : unitConfig.initialQty;
   const isDiscrete = unitConfig.isDiscrete;
 
   const [isExpanded, setIsExpanded] = useState(isHoreca);
@@ -301,19 +302,19 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                   e.stopPropagation(); 
                   const currentStep = isHoreca ? 0.5 : step;
                   if (quantity > 0) {
-                    if (quantity <= currentStep + 0.001) {
+                    if (quantity <= minQty + 0.001) {
                       removeItem(cartProductId);
-                      setStagedQuantity(0);
+                      setStagedQuantity(initialQty);
                       if (!isHoreca) setIsExpanded(false);
                     } else {
-                      updateQuantity(cartProductId, safeSubtractQuantity(quantity, currentStep, isDiscrete));
+                      updateQuantity(cartProductId, safeSubtractQuantity(quantity, currentStep, isDiscrete, minQty));
                     }
                   } else {
-                    if (stagedQuantity <= currentStep + 0.001) {
-                      setStagedQuantity(0);
+                    if (stagedQuantity <= minQty + 0.001) {
+                      setStagedQuantity(initialQty);
                       if (!isHoreca) setIsExpanded(false);
                     } else {
-                      setStagedQuantity(safeSubtractQuantity(stagedQuantity, currentStep, isDiscrete));
+                      setStagedQuantity(safeSubtractQuantity(stagedQuantity, currentStep, isDiscrete, minQty));
                     }
                   }
                 }}
@@ -324,6 +325,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                 <QuantityInput
                   initialQuantity={displayQuantity}
                   isHoreca={isHoreca}
+                  minQuantity={minQty}
                   className="font-bold text-[10px] sm:text-[11px] flex-1 text-center bg-transparent outline-none w-full border-b border-dashed border-primary/30 focus:border-primary mx-1"
                   onUpdate={(val) => {
                     if (quantity > 0) {
@@ -336,7 +338,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                     if (quantity > 0) {
                       removeItem(cartProductId);
                     }
-                    setStagedQuantity(0);
+                    setStagedQuantity(initialQty);
                     if (!isHoreca) setIsExpanded(false);
                   }}
                 />
@@ -357,23 +359,29 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                 <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </button>
             </div>
-            <button 
-              onClick={(e) => { 
-                e.preventDefault(); 
-                e.stopPropagation();
-                if (quantity === 0) {
-                  if ((product.inStock || isHoreca) && stagedQuantity > 0) {
-                    onAddToCart({ ...product, id: cartProductId, price: currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, stagedQuantity); 
-                  }
-                } else {
-                  updateQuantity(cartProductId, safeAddQuantity(quantity, step, isDiscrete));
-                }
-              }}
-              disabled={(!product.inStock && !isHoreca) || displayQuantity <= 0}
-              className={`h-full px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center ${(product.inStock || isHoreca) && displayQuantity > 0 ? 'bg-primary text-white shadow-sm active:scale-95 cursor-pointer hover:bg-[#09120b]' : 'bg-muted text-muted-foreground cursor-not-allowed opacity-75'}`}
-            >
-              {product.inStock ? 'Add' : 'Request'}
-            </button>
+            {(() => {
+              const isAddDisabled = (!product.inStock && !isHoreca) || displayQuantity < minQty;
+              return (
+                <button 
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    e.stopPropagation();
+                    if (isAddDisabled) return;
+                    if (quantity === 0) {
+                      if ((product.inStock || isHoreca) && stagedQuantity >= minQty) {
+                        onAddToCart({ ...product, id: cartProductId, price: currentPrice, originalPrice: isHoreca ? 0 : currentOriginalPrice, unit: currentUnit }, stagedQuantity); 
+                      }
+                    } else {
+                      updateQuantity(cartProductId, safeAddQuantity(quantity, step, isDiscrete));
+                    }
+                  }}
+                  disabled={isAddDisabled}
+                  className={`h-full px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center ${!isAddDisabled ? 'bg-primary text-white shadow-sm active:scale-95 cursor-pointer hover:bg-[#09120b]' : 'bg-muted text-muted-foreground cursor-not-allowed opacity-75'}`}
+                >
+                  {product.inStock ? 'Add' : 'Request'}
+                </button>
+              );
+            })()}
           </div>
         )}
       </div>

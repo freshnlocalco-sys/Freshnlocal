@@ -153,10 +153,11 @@ export function safeAddQuantity(current: number, step: number, isDiscrete: boole
   return Number((current + step).toFixed(3));
 }
 
-export function safeSubtractQuantity(current: number, step: number, isDiscrete: boolean): number {
+export function safeSubtractQuantity(current: number, step: number, isDiscrete: boolean, minQty: number = 0.01): number {
   if (isDiscrete) {
-    return Math.round(current - step);
+    return Math.max(Math.round(minQty), Math.round(current - step));
   }
-  return Number((current - step).toFixed(3));
+  const result = Number((current - step).toFixed(3));
+  return Math.max(minQty, result);
 }
 

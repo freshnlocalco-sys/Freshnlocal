@@ -602,16 +602,17 @@ export function Cart() {
                   {/* Glass Quantity Controls */}
                   {(() => {
                     const config = getUnitQuantityConfig(item.product.unit);
+                    const minQty = isHoreca ? 0.5 : config.initialQty;
                     const step = isHoreca ? 0.5 : config.step;
                     const isDiscrete = config.isDiscrete;
                     return (
                       <div className={`flex items-center border border-border rounded-xl overflow-hidden p-1 order-1 sm:order-2 ${(item.product.inStock || isHoreca) ? 'bg-background' : 'bg-muted opacity-50'}`}>
                         <button 
                           onClick={() => {
-                            const newQty = safeSubtractQuantity(item.quantity, step, isDiscrete);
-                            if (newQty <= 0) {
+                            if (item.quantity <= minQty + 0.001) {
                               removeItem(item.product.id);
                             } else {
+                              const newQty = safeSubtractQuantity(item.quantity, step, isDiscrete, minQty);
                               updateQuantity(item.product.id, newQty);
                             }
                           }}
@@ -623,8 +624,13 @@ export function Cart() {
                         <QuantityInput
                           initialQuantity={item.quantity}
                           isHoreca={isHoreca}
+                          minQuantity={minQty}
                           className="w-14 text-center font-bold text-xs text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
-                          onUpdate={(val) => updateQuantity(item.product.id, val)}
+                          onUpdate={(val) => {
+                            if (val >= minQty) {
+                              updateQuantity(item.product.id, val);
+                            }
+                          }}
                           onRemove={() => removeItem(item.product.id)}
                         />
                         <button 

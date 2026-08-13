@@ -219,34 +219,48 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
                 <span className="text-[9px] text-primary font-bold mt-1">Total: {quantity * parseUnitScale(currentUnit)} {getBaseUnit(currentUnit)}</span>
               </div>
               <div className="flex items-center border border-border rounded-xl overflow-hidden p-1">
-                <button 
-                  onClick={() => setQuantity(safeSubtractQuantity(quantity, step, isDiscrete))}
-                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
-                >
-                  <Minus className="w-3 h-3" />
-                </button>
-                <div className="flex items-center">
-                  <QuantityInput
-                    initialQuantity={quantity}
-                    isHoreca={isHoreca}
-                    className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
-                    onUpdate={(val) => setQuantity(val)}
-                    onRemove={() => setQuantity(isHoreca ? 0.01 : initialQty)}
-                  />
-                  <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
-                </div>
-                <button 
-                  onClick={() => setQuantity(safeAddQuantity(quantity, step, isDiscrete))}
-                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                </button>
+                {(() => {
+                  const minQty = isHoreca ? 0.01 : unitConfig.initialQty;
+                  return (
+                    <>
+                      <button 
+                        onClick={() => {
+                          if (quantity <= minQty + 0.001) {
+                            setQuantity(minQty);
+                          } else {
+                            setQuantity(safeSubtractQuantity(quantity, step, isDiscrete, minQty));
+                          }
+                        }}
+                        className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <div className="flex items-center">
+                        <QuantityInput
+                          initialQuantity={quantity}
+                          isHoreca={isHoreca}
+                          minQuantity={minQty}
+                          className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
+                          onUpdate={(val) => setQuantity(val)}
+                          onRemove={() => setQuantity(isHoreca ? 0.01 : initialQty)}
+                        />
+                        <span className="text-[10px] font-bold text-muted-foreground ml-1 mr-2">x</span>
+                      </div>
+                      <button 
+                        onClick={() => setQuantity(safeAddQuantity(quantity, step, isDiscrete))}
+                        className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-foreground transition-colors"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
             <button 
               onClick={handleAddToCart}
-              disabled={(!product.inStock && !isHoreca) || quantity <= 0}
+              disabled={(!product.inStock && !isHoreca) || quantity < (isHoreca ? 0.01 : unitConfig.initialQty)}
               className="w-full py-4 rounded-xl bg-primary text-white font-sans text-xs uppercase font-black tracking-widest transition-colors hover:bg-primary/90 flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed shadow-md"
             >
               <ShoppingBag className="w-4 h-4" />
