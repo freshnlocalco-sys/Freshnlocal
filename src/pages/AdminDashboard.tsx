@@ -1267,21 +1267,42 @@ export function AdminDashboard() {
 
   const handleExportCSV = () => {
     try {
-      const headers = ["PRODUCT NAME", "CATEGORY", "UNIT", "MRP", "RATE PRICE", "HORECA PRICE", "HORECA UNIT", "DESCRIPTION", "IMAGE URL"];
+      const headers = [
+        "ID",
+        "NAME",
+        "CATEGORY",
+        "BASE UNIT",
+        "BASE PRICE",
+        "UNIT",
+        "THIS UNIT PRICE",
+        "SECOND UNIT",
+        "SECOND UNIT PRICE",
+        "HORECA UNIT",
+        "HORECA PRICE",
+        "SECOND HORECA UNIT",
+        "SECOND HORECA UNIT PRICE"
+      ];
       const csvRows = [];
       csvRows.push(headers.join(","));
       
       filteredProducts.forEach(product => {
+        const v1 = product.variants && product.variants[0] ? product.variants[0] : null;
+        const v2 = product.variants && product.variants[1] ? product.variants[1] : null;
+
         const row = [
+          `"${(product.id || '').replace(/"/g, '""')}"`,
           `"${(product.name || '').replace(/"/g, '""')}"`,
           `"${(product.category || '').replace(/"/g, '""')}"`,
-          `"${(product.unit || '').replace(/"/g, '""')}"`,
-          `"${product.originalPrice || product.price || ''}"`,
-          `"${product.price || ''}"`,
-          `"${product.horecaPrice !== undefined && product.horecaPrice !== null ? product.horecaPrice : ''}"`,
-          `"${(product.horecaUnit || '').replace(/"/g, '""')}"`,
-          `"${(product.description || '').replace(/"/g, '""')}"`,
-          `"${(product.imageUrl || '').replace(/"/g, '""')}"`
+          `"${(product.baseUnit || product.quantityUnit || 'Kg').replace(/"/g, '""')}"`,
+          `"${product.basePrice !== undefined && product.basePrice !== null ? product.basePrice : ''}"`,
+          `"${(product.unit || (product.quantityValue ? `${product.quantityValue} ${product.quantityUnit || 'Kg'}` : '1 Kg')).replace(/"/g, '""')}"`,
+          `"${product.price !== undefined && product.price !== null ? product.price : ''}"`,
+          `"${(v1 ? v1.unit || '' : '').replace(/"/g, '""')}"`,
+          `"${v1 && v1.price !== undefined && v1.price !== null ? v1.price : ''}"`,
+          `"${(product.horecaUnit || (v1 && v1.horecaPrice ? v1.unit : '')).replace(/"/g, '""')}"`,
+          `"${product.horecaPrice !== undefined && product.horecaPrice !== null ? product.horecaPrice : (v1 ? v1.horecaPrice || '' : '')}"`,
+          `"${(v2 ? v2.unit || '' : '').replace(/"/g, '""')}"`,
+          `"${v2 && v2.price !== undefined && v2.price !== null ? (v2.horecaPrice || v2.price) : ''}"`
         ];
         csvRows.push(row.join(","));
       });
@@ -1291,13 +1312,13 @@ export function AdminDashboard() {
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", `products_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute("download", `products_base_unit_export_${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      toast.success("Products exported successfully.");
+      toast.success("Products exported successfully with Base Unit & Variant price details.");
     } catch (err) {
       console.error("Export error:", err);
       toast.error("Failed to export products.");
@@ -3169,6 +3190,9 @@ export function AdminDashboard() {
             ? p.baseHorecaPrice
             : (p.horecaPrice ? calculateBaseFromPrice(p.horecaPrice, effectiveBaseUnit, qVal, qUnit) : '');
 
+          const v1 = p.variants && p.variants[0] ? p.variants[0] : null;
+          const v2 = p.variants && p.variants[1] ? p.variants[1] : null;
+
           return {
             'ID (Do not edit)': p.id,
             'Product Name': p.name || '',
@@ -3177,6 +3201,14 @@ export function AdminDashboard() {
             'Base Price': finalBasePrice,
             'Base MRP': finalBaseMRP,
             'Base HoReCa Price': finalBaseHorecaPrice,
+            'Unit': p.unit || (qVal ? `${qVal} ${qUnit}` : '1 Kg'),
+            'This Unit Price': p.price !== undefined && p.price !== null ? p.price : '',
+            'Second Unit': v1 ? v1.unit || '' : '',
+            'Second Unit Price': v1 && v1.price !== undefined && v1.price !== null ? v1.price : '',
+            'Horeca Unit': p.horecaUnit || (v1 && v1.horecaPrice ? v1.unit : ''),
+            'Horeca Price': p.horecaPrice !== undefined && p.horecaPrice !== null ? p.horecaPrice : (v1 ? v1.horecaPrice || '' : ''),
+            'Second Horeca Unit': v2 ? v2.unit || '' : '',
+            'Second Horeca Unit Price': v2 && v2.price !== undefined && v2.price !== null ? (v2.horecaPrice || v2.price) : '',
             'Stock': p.stock !== undefined && p.stock !== null ? p.stock : '',
             'In Stock': p.inStock ? 'TRUE' : 'FALSE'
           };
@@ -3195,7 +3227,7 @@ export function AdminDashboard() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast.success("Current product catalog downloaded for bulk editing (Base Unit pricing).");
+      toast.success("Current product catalog downloaded for bulk editing with full Base Unit & Sub-Unit details.");
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to export catalog for bulk editing.");
@@ -3390,8 +3422,9 @@ export function AdminDashboard() {
         const category = String(row.category || 'indian fruits').toLowerCase().trim();
         
         const rowUnitStr = row.baseunit || row.quantityunit;
-        const { qUnit: extractedUnit } = parseQuantityAndUnit(row.unit);
-        const baseUnit = normalizeBaseUnit(rowUnitStr || extractedUnit, 'Kg');
+        const primaryUnitStr = row.unit || row.thisunit || '1 Kg';
+        const parsedPrimaryUnit = parseQuantityAndUnit(primaryUnitStr);
+        const baseUnit = normalizeBaseUnit(rowUnitStr || parsedPrimaryUnit.qUnit, 'Kg');
         
         const parseNum = (val: any) => {
           if (val === undefined || val === null || val === '') return undefined;
@@ -3403,6 +3436,14 @@ export function AdminDashboard() {
         const baseOriginalPrice = parseNum(row.basemrp) ?? parseNum(row.mrp) ?? parseNum(row.baseoriginalprice) ?? parseNum(row.originalprice);
         const baseHorecaPrice = parseNum(row.basehorecaprice) ?? parseNum(row.horecaprice) ?? parseNum(row.basehorecarate);
         
+        const thisUnitPrice = parseNum(row.thisunitprice) ?? parseNum(row.rateprice) ?? parseNum(row.price);
+        const secondUnit = String(row.secondunit || row.variant1unit || '').trim();
+        const secondUnitPrice = parseNum(row.secondunitprice) ?? parseNum(row.variant1price);
+        const horecaUnit = String(row.horecaunit || '').trim();
+        const horecaPrice = parseNum(row.horecaprice);
+        const secondHorecaUnit = String(row.secondhorecaunit || '').trim();
+        const secondHorecaUnitPrice = parseNum(row.secondhorecaprice);
+
         const stock = parseNum(row.stock) ?? 100;
         const inStock = row.instock !== undefined ? parseBoolean(row.instock) : true;
 
@@ -3414,6 +3455,16 @@ export function AdminDashboard() {
           basePrice,
           baseOriginalPrice,
           baseHorecaPrice,
+          quantityValue: parsedPrimaryUnit.qVal || 1,
+          quantityUnit: parsedPrimaryUnit.qUnit || baseUnit,
+          unit: primaryUnitStr,
+          thisUnitPrice,
+          secondUnit,
+          secondUnitPrice,
+          horecaUnit,
+          horecaPrice,
+          secondHorecaUnit,
+          secondHorecaUnitPrice,
           stock,
           inStock
         };
@@ -3444,31 +3495,43 @@ export function AdminDashboard() {
           description: '',
           imageUrl: '',
           variants: [],
-          quantityValue: 1,
-          quantityUnit: parsed.baseUnit || 'Kg',
-          unit: `1 ${parsed.baseUnit || 'Kg'}`
+          quantityValue: parsed.quantityValue,
+          quantityUnit: parsed.quantityUnit,
+          unit: parsed.unit
         };
 
         updated.useBasePricing = true;
         if (parsed.name) updated.name = parsed.name;
         if (parsed.category) updated.category = parsed.category;
-        const matchUnit = match ? (match.baseUnit || match.quantityUnit || parseQuantityAndUnit(match.unit).qUnit) : undefined;
-        updated.baseUnit = normalizeBaseUnit(parsed.baseUnit || matchUnit, 'Kg');
-        if (parsed.basePrice !== undefined) updated.basePrice = parsed.basePrice;
+        
+        let effectiveBasePrice = parsed.basePrice;
+        if (effectiveBasePrice === undefined && parsed.thisUnitPrice !== undefined) {
+          // Back calculate base price if only thisUnitPrice was provided
+          const backCalc = calculateBaseFromPrice(parsed.thisUnitPrice, parsed.baseUnit, parsed.quantityValue, parsed.quantityUnit);
+          if (backCalc) effectiveBasePrice = Number(backCalc);
+        }
+
+        if (effectiveBasePrice !== undefined) updated.basePrice = effectiveBasePrice;
         if (parsed.baseOriginalPrice !== undefined) updated.baseOriginalPrice = parsed.baseOriginalPrice;
         if (parsed.baseHorecaPrice !== undefined) updated.baseHorecaPrice = parsed.baseHorecaPrice;
         if (parsed.stock !== undefined) updated.stock = parsed.stock;
         if (parsed.inStock !== undefined) updated.inStock = parsed.inStock;
+        if (parsed.quantityValue !== undefined) updated.quantityValue = parsed.quantityValue;
+        if (parsed.quantityUnit !== undefined) updated.quantityUnit = parsed.quantityUnit;
+        if (parsed.unit) updated.unit = parsed.unit;
+
+        updated.baseUnit = normalizeBaseUnit(parsed.baseUnit || (match ? match.baseUnit : 'Kg'), 'Kg');
 
         // Calculate main selling price from base unit
         const qVal = updated.quantityValue !== undefined && updated.quantityValue !== null ? updated.quantityValue : 1;
         const qUnit = updated.quantityUnit || updated.baseUnit || 'Kg';
 
-        const calcP = calculatePriceFromBase(updated.basePrice, updated.baseUnit, qVal, qUnit);
-        if (calcP) {
-          updated.price = Number(calcP);
-        } else if (updated.basePrice !== undefined) {
-          updated.price = Number(updated.basePrice);
+        if (parsed.thisUnitPrice !== undefined) {
+          updated.price = Number(parsed.thisUnitPrice);
+        } else {
+          const calcP = calculatePriceFromBase(updated.basePrice, updated.baseUnit, qVal, qUnit);
+          if (calcP) updated.price = Number(calcP);
+          else if (updated.basePrice !== undefined) updated.price = Number(updated.basePrice);
         }
 
         if (updated.baseOriginalPrice !== undefined) {
@@ -3476,13 +3539,56 @@ export function AdminDashboard() {
           if (calcMRP) updated.originalPrice = Number(calcMRP);
         }
 
-        if (updated.baseHorecaPrice !== undefined) {
+        if (parsed.horecaPrice !== undefined) {
+          updated.horecaPrice = Number(parsed.horecaPrice);
+        } else if (updated.baseHorecaPrice !== undefined) {
           const calcHoreca = calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, qVal, qUnit);
           if (calcHoreca) updated.horecaPrice = Number(calcHoreca);
         }
+        if (parsed.horecaUnit) {
+          updated.horecaUnit = parsed.horecaUnit;
+        }
 
-        // Recalculate variants based on updated base prices
-        if (match && match.variants && match.variants.length > 0) {
+        // Handle Variants (secondUnit, secondUnitPrice, etc.)
+        const newVariants: any[] = [];
+        if (parsed.secondUnit) {
+          const parsedV = parseQuantityAndUnit(parsed.secondUnit);
+          const vPrice = parsed.secondUnitPrice !== undefined 
+            ? parsed.secondUnitPrice 
+            : Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, parsedV.qVal || 1, parsedV.qUnit || 'Kg') || 0);
+          
+          newVariants.push({
+            id: `v_${Date.now()}_1`,
+            unit: parsed.secondUnit,
+            quantityValue: parsedV.qVal || 1,
+            quantityUnit: parsedV.qUnit || 'Kg',
+            price: vPrice,
+            originalPrice: updated.baseOriginalPrice ? Number(calculatePriceFromBase(updated.baseOriginalPrice, updated.baseUnit, parsedV.qVal || 1, parsedV.qUnit || 'Kg') || 0) : undefined,
+            horecaPrice: parsed.secondHorecaUnitPrice !== undefined ? parsed.secondHorecaUnitPrice : (updated.baseHorecaPrice ? Number(calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, parsedV.qVal || 1, parsedV.qUnit || 'Kg') || 0) : undefined)
+          });
+        }
+
+        if (parsed.secondHorecaUnit) {
+          const parsedV2 = parseQuantityAndUnit(parsed.secondHorecaUnit);
+          const v2Price = parsed.secondHorecaUnitPrice !== undefined
+            ? parsed.secondHorecaUnitPrice
+            : Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, parsedV2.qVal || 1, parsedV2.qUnit || 'Kg') || 0);
+
+          newVariants.push({
+            id: `v_${Date.now()}_2`,
+            unit: parsed.secondHorecaUnit,
+            quantityValue: parsedV2.qVal || 1,
+            quantityUnit: parsedV2.qUnit || 'Kg',
+            price: v2Price,
+            originalPrice: undefined,
+            horecaPrice: v2Price
+          });
+        }
+
+        if (newVariants.length > 0) {
+          updated.variants = newVariants;
+        } else if (match && match.variants && match.variants.length > 0 && !parsed.secondUnit) {
+          // Keep existing variants recalculated if base price changed
           updated.variants = match.variants.map((v: any) => {
             let vQtyValue = v.quantityValue !== undefined && v.quantityValue !== null ? String(v.quantityValue) : '';
             let vQtyUnit = v.quantityUnit || 'Kg';
@@ -3556,10 +3662,13 @@ export function AdminDashboard() {
   };
 
   const downloadCsvTemplate = () => {
-    const headers = ['Product Name', 'Category', 'Base Unit', 'Base Price', 'Base MRP', 'Base HoReCa Price', 'Stock', 'In Stock'];
+    const headers = [
+      'ID', 'Name', 'Category', 'Base Unit', 'Base Price', 'Unit', 'This Unit Price', 
+      'Second Unit', 'Second Unit Price', 'Horeca Unit', 'Horeca Price', 'Second Horeca Unit', 'Second Horeca Unit Price', 'Stock', 'In Stock'
+    ];
     const sampleData = [
-      ['Gourmet Red Apples', 'Exotic Fruits', 'Kg', '180', '250', '150', '100', 'TRUE'],
-      ['Fresh Broccoli Crown', 'Exotic Vegetables', 'Kg', '95', '120', '80', '80', 'TRUE']
+      ['', 'Pear Babugosha', 'exotic fruits', 'Kg', '250', '250 g', '62.5', '500 g', '125', '250 g', '150', '', '', '100', 'TRUE'],
+      ['', 'Gourmet Red Apples', 'exotic fruits', 'Kg', '180', '1 Kg', '180', '500 g', '90', '1 Kg', '150', '', '', '80', 'TRUE']
     ];
 
     const csvRows = [
@@ -3572,7 +3681,7 @@ export function AdminDashboard() {
     const link = document.createElement("a");
     link.id = "download-csv-link";
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "FreshNLocal_Bulk_Product_Template.csv");
+    link.setAttribute("download", "FreshNLocal_Product_Catalog_Template.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -3582,13 +3691,20 @@ export function AdminDashboard() {
     try {
       const templateData = [
         {
-          'Product Name': 'Premium Devgad Alphonso Mangoes',
-          'Category': 'indian fruits',
+          'ID': '',
+          'Name': 'Pear Babugosha',
+          'Category': 'exotic fruits',
           'Base Unit': 'Kg',
           'Base Price': 250,
-          'Base MRP': 350,
-          'Base HoReCa Price': 220,
-          'Stock': 150,
+          'Unit': '250 g',
+          'This Unit Price': 62.5,
+          'Second Unit': '500 g',
+          'Second Unit Price': 125,
+          'Horeca Unit': '250 g',
+          'Horeca Price': 150,
+          'Second Horeca Unit': '',
+          'Second Horeca Unit Price': '',
+          'Stock': 100,
           'In Stock': 'TRUE'
         }
       ];
@@ -3602,7 +3718,7 @@ export function AdminDashboard() {
       const link = document.createElement('a');
       link.id = "download-xlsx-link";
       link.href = url;
-      link.setAttribute('download', 'FreshNLocal_Bulk_Product_Template.xlsx');
+      link.setAttribute('download', 'FreshNLocal_Product_Catalog_Template.xlsx');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
