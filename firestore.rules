@@ -128,6 +128,11 @@ service cloud.firestore {
       allow read, list: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    match /horecaPrices/{priceId} {
+      allow read, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
     
     match /reviews/{reviewId} {
       function isValidReview(data) {
