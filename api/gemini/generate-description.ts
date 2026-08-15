@@ -2,24 +2,22 @@ import { GoogleGenAI } from "@google/genai";
 import crypto from "crypto";
 
 let aiClient: GoogleGenAI | null = null;
-function getAIClient() {
-  if (!aiClient) {
-    const rawApiKey = process.env.GEMINI_API_KEY;
-    const apiKey = rawApiKey ? rawApiKey.replace(/^["']|["']$/g, '').trim() : undefined;
-    
-    if (!apiKey) {
-      console.warn("GEMINI_API_KEY is not set.");
-    }
-    aiClient = new GoogleGenAI({
-      apiKey: apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        }
-      }
-    });
+function getAIClient(customApiKey?: string) {
+  const rawApiKey = customApiKey || process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const apiKey = rawApiKey ? rawApiKey.replace(/^["']|["']$/g, '').trim() : undefined;
+  
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured on your server/domain hosting environment. Please add GEMINI_API_KEY in your Vercel or hosting environment settings.");
   }
-  return aiClient;
+  
+  return new GoogleGenAI({
+    apiKey: apiKey,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      }
+    }
+  });
 }
 
 // Security & Budgeting: In-memory stores
@@ -108,15 +106,17 @@ Format your output exactly as a JSON object with these keys:
 - description: (a string containing the 60-90 words description)
 - metaDescription: (a string containing the SEO meta description under 155 characters)`;
 
-    const ai = getAIClient();
-    if (!ai) {
-      return res.status(500).json({ error: "Gemini API client not initialized." });
+    let ai;
+    try {
+      ai = getAIClient(req.body.customApiKey);
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message || "Gemini API client not initialized." });
     }
 
     let response;
     let retries = 0;
     const MAX_RETRIES = 2;
-    const modelName = "gemini-3.6-flash"; // Smarter default model that follows complex prompt instructions perfectly
+    const modelName = "gemini-3.7-flash"; // Supported standard Gemini model
     
     while (retries <= MAX_RETRIES) {
       try {
@@ -124,7 +124,7 @@ Format your output exactly as a JSON object with these keys:
           model: modelName,
           contents: prompt,
           config: {
-            maxOutputTokens: 500, // Safe limit for description and meta description
+            maxOutputTokens: 1000, // Safe limit for description and meta description
             responseMimeType: "application/json",
             responseSchema: {
               type: "OBJECT",

@@ -544,6 +544,7 @@ export function AdminDashboard() {
       let localProcessed = 0;
       let localGenerated = 0;
       let localErrors = 0;
+      let lastErrorMessage = '';
 
       const BATCH_SIZE = 3;
       for (let i = 0; i < docsToGenerate.length; i += BATCH_SIZE) {
@@ -563,7 +564,12 @@ export function AdminDashboard() {
             });
 
             if (!res.ok) {
-              throw new Error(`HTTP error ${res.status}`);
+              let serverError = `HTTP error ${res.status}`;
+              try {
+                const errJson = await res.json();
+                if (errJson.error) serverError = errJson.error;
+              } catch {}
+              throw new Error(serverError);
             }
 
             const result = await res.json();
@@ -581,6 +587,7 @@ export function AdminDashboard() {
             localGenerated++;
           } catch (err: any) {
             console.error(`Failed generation for ${data.name}:`, err);
+            lastErrorMessage = err?.message || 'Generation failed';
             localErrors++;
           } finally {
             localProcessed++;
@@ -597,7 +604,11 @@ export function AdminDashboard() {
         await new Promise(resolve => setTimeout(resolve, 1500));
       }
 
-      toast.success(`AI generation complete! Successfully generated descriptions for ${localGenerated} products.`, { id: 'ai-desc-generation' });
+      if (localGenerated > 0) {
+        toast.success(`AI generation complete! Successfully generated descriptions for ${localGenerated} products.${localErrors > 0 ? ` (${localErrors} failed)` : ''}`, { id: 'ai-desc-generation' });
+      } else if (localErrors > 0) {
+        toast.error(`AI generation failed: ${lastErrorMessage || 'Check server configuration'}`, { id: 'ai-desc-generation', duration: 8000 });
+      }
       
       // Trigger local store update
       const mProductsStore = await import('../store/useProducts');
@@ -910,12 +921,30 @@ export function AdminDashboard() {
   }, [filteredOrders]);
 
   const uniqueB2BParties = React.useMemo(() => {
-    return Array.from(new Set(
-      orders
-        .filter(o => o.customerType === 'horeca' || o.customerType === 'horeca_admin')
-        .map(o => o.shippingDetails?.name || 'Unknown B2B Customer')
-    )).filter(Boolean).sort();
-  }, [orders]);
+    const partiesSet = new Set<string>();
+
+    // 1. From HoReCa orders only
+    orders.forEach(o => {
+      if (o.customerType === 'horeca' || o.customerType === 'horeca_admin') {
+        const name = o.shippingDetails?.name || o.customerName;
+        if (name && name.trim()) {
+          partiesSet.add(name.trim());
+        }
+      }
+    });
+
+    // 2. From HoReCa customers / users only
+    customers.forEach((c: any) => {
+      if (c.role === 'horeca' || c.role === 'horeca_admin') {
+        const name = c.businessName || c.displayName || c.name || c.shippingDetails?.name;
+        if (name && typeof name === 'string' && name.trim()) {
+          partiesSet.add(name.trim());
+        }
+      }
+    });
+
+    return Array.from(partiesSet).filter(Boolean).sort();
+  }, [orders, customers]);
 
   const getExportPreviewStats = () => {
     let list = orders.filter(o => o.customerType === 'horeca' || o.customerType === 'horeca_admin');
@@ -976,6 +1005,18 @@ export function AdminDashboard() {
   useEffect(() => {
     if (user?.role !== 'admin' && user?.role !== 'horeca_admin') return;
     
+    // Always load orders and customers on mount so export modal and dropdowns have all parties
+    const loadInitialAdminData = async () => {
+      try {
+        const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(150)));
+        setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        fetchCustomers();
+      } catch (e) {
+        console.error("Error loading initial admin data:", e);
+      }
+    };
+    loadInitialAdminData();
+
     async function fetchData() {
       try {
         setLoading(true);

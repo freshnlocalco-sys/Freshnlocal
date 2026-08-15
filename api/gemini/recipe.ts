@@ -2,24 +2,22 @@ import { GoogleGenAI } from "@google/genai";
 import crypto from "crypto";
 
 let aiClient: GoogleGenAI | null = null;
-function getAIClient() {
-  if (!aiClient) {
-    const rawApiKey = process.env.GEMINI_API_KEY;
-    const apiKey = rawApiKey ? rawApiKey.replace(/^["']|["']$/g, '').trim() : undefined;
-    
-    if (!apiKey) {
-      console.warn("GEMINI_API_KEY is not set.");
-    }
-    aiClient = new GoogleGenAI({
-      apiKey: apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        }
-      }
-    });
+function getAIClient(customApiKey?: string) {
+  const rawApiKey = customApiKey || process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const apiKey = rawApiKey ? rawApiKey.replace(/^["']|["']$/g, '').trim() : undefined;
+  
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured on your server/domain hosting environment. Please add GEMINI_API_KEY in your Vercel or hosting environment settings.");
   }
-  return aiClient;
+  
+  return new GoogleGenAI({
+    apiKey: apiKey,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      }
+    }
+  });
 }
 
 // Security & Budgeting: In-memory stores (Note: In a serverless environment like Vercel, 
@@ -221,7 +219,12 @@ CRITICAL DIRECTIONS FOR INGREDIENTS COOKING:
 - Use the EXACT product name as it appears in the catalog.`;
     }
     
-    const ai = getAIClient();
+    let ai;
+    try {
+      ai = getAIClient(req.body.customApiKey);
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message || "Gemini API client not initialized." });
+    }
     console.log(`[REQ ${requestId}] Sending Gemini request... (Prompt length: ${prompt.length} chars)`);
     
     let response;
@@ -230,7 +233,7 @@ CRITICAL DIRECTIONS FOR INGREDIENTS COOKING:
     
     while (retries <= MAX_RETRIES) {
       try {
-        const modelName = "gemini-3.6-flash"; // Smarter default model that follows complex prompt instructions perfectly
+        const modelName = "gemini-3.7-flash"; // Supported standard Gemini model
         response = await ai.models.generateContent({
           model: modelName,
           contents: prompt,

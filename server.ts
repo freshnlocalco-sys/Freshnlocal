@@ -400,7 +400,7 @@ Format your output exactly as a JSON object with these keys:
       let response;
       let retries = 0;
       const MAX_RETRIES = 2;
-      const modelName = "gemini-3.1-flash-lite"; // Fully supported ultra-low-cost model
+      const modelName = "gemini-3.7-flash"; // Fully supported standard Gemini model
       
       while (retries <= MAX_RETRIES) {
         try {
@@ -408,7 +408,7 @@ Format your output exactly as a JSON object with these keys:
             model: modelName,
             contents: prompt,
             config: {
-              maxOutputTokens: 300, // Small output for descriptions
+              maxOutputTokens: 1000, // Safe output for descriptions and meta tags
               responseMimeType: "application/json",
               responseSchema: {
                 type: "OBJECT",
