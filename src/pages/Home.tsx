@@ -750,9 +750,6 @@ export function Home() {
             </div>
           </div>
 
-          {/* Divider between Categories Grid and Product Showcases */}
-          <SectionDivider className="max-w-[1020px] mx-auto py-2 sm:py-4" />
-
           {/* All Categories Product Showcases */}
           <div className="w-full max-w-[1020px] mx-auto mt-12 md:mt-20 text-left relative z-20 space-y-12 md:space-y-16 overflow-hidden">
             <style dangerouslySetInnerHTML={{__html: `
@@ -1021,8 +1018,8 @@ export function Home() {
         className="w-full text-secondary -mt-[1px] relative z-10" 
       />
 
-      {/* Subtle organic separator before bottom banner */}
-      <WaveDivider variant="separator" className="max-w-5xl mx-auto py-6" />
+      {/* Wavy lines with logo separator before bottom Ready to Slice Freshness banner */}
+      <SectionDivider className="max-w-5xl mx-auto py-8 sm:py-10" />
 
       {/* Transition into Bottom CTA Banner */}
       <WaveDivider 

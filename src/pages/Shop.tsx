@@ -10,7 +10,6 @@ import { useSettings } from '../store/useSettings';
 import { ProductSkeleton } from '../components/ProductSkeleton';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
-import { SectionDivider } from '../components/SectionDivider';
 import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 
@@ -615,8 +614,6 @@ export function Shop() {
                   <Filter className="w-3.5 h-3.5"/> Filter
                </button>
             </div>
-
-            <SectionDivider className="py-0 mb-6" />
 
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pb-6">
               <AnimatePresence mode="popLayout">

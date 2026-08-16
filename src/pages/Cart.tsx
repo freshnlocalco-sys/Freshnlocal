@@ -12,6 +12,7 @@ import { useProducts } from '../store/useProducts';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { QuantityInput } from '../components/QuantityInput';
+import { FreeDeliveryProgressBar } from '../components/FreeDeliveryProgressBar';
 import { getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
 import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
@@ -519,19 +520,13 @@ export function Cart() {
           </div>
         </div>
         
-        {/* Banner with fresh gradient mimicking fintech benefits */}
-        <div className="rounded-[22px] bg-secondary border border-primary/30 p-5 flex items-center justify-between text-foreground relative overflow-hidden">
-          <div className="absolute -left-10 top-[-50px] w-24 h-24 bg-primary/10 rounded-full blur-xl"></div>
-          <div className="flex items-center gap-3 z-10">
-            <Truck className="w-5 h-5 text-primary" />
-            <span className="font-extrabold text-[10px] uppercase tracking-widest text-[#2c3e30]">
-              Instant local transport in Surat
-            </span>
-          </div>
-          <span className="font-extrabold text-[10px] uppercase tracking-widest text-primary z-10">
-            FREE ON BOARD
-          </span>
-        </div>
+        {/* Free Delivery Progress Bar */}
+        <FreeDeliveryProgressBar 
+          currentTotal={total()} 
+          threshold={1000} 
+          isHoreca={isHoreca} 
+          showShopLink={true}
+        />
 
         <div className="space-y-6">
           <div className="bg-primary/10 border border-primary/20 text-primary p-4 rounded-2xl text-xs sm:text-sm font-bold flex items-start gap-3 shadow-sm">

@@ -4,13 +4,16 @@ import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navig
 import { useAuth, signOut } from '../lib/firebase';
 import { useCart } from '../store/useCart';
 import { useSettings } from '../store/useSettings';
+import { useProducts } from '../store/useProducts';
 import { AuthModal } from './AuthModal';
 import { AdminNotifier } from './AdminNotifier';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function Layout() {
   const { user, loading } = useAuth();
-  const { faviconUrl } = useSettings();
+  const isHorecaUser = user?.role === 'horeca' || user?.role === 'horeca_admin';
+  const { faviconUrl, productCategories, categoryVisibility, fetchCategoryImages } = useSettings();
+  const { products } = useProducts();
   const [logoError, setLogoError] = useState(false);
   const cartItemsCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -21,6 +24,11 @@ export function Layout() {
   const [searchParams] = useSearchParams();
   const [localSearch, setLocalSearch] = useState('');
 
+  // Fetch settings / categories on mount
+  React.useEffect(() => {
+    fetchCategoryImages();
+  }, [fetchCategoryImages]);
+
   // Sync local search when URL changes
   React.useEffect(() => {
     if (location.pathname === '/shop') {
@@ -29,6 +37,43 @@ export function Layout() {
       setLocalSearch('');
     }
   }, [location.pathname, searchParams]);
+
+  // Compute dynamic footer categories based on store settings & product catalog
+  const footerCategories = React.useMemo(() => {
+    const allCats: string[] = [];
+    
+    // Add all categories from configured productCategories list
+    if (productCategories && productCategories.length > 0) {
+      productCategories.forEach((cat) => {
+        if (cat && typeof cat === 'string' && !allCats.some(c => c.toLowerCase().trim() === cat.toLowerCase().trim())) {
+          allCats.push(cat.trim());
+        }
+      });
+    }
+
+    // Also include any newly added categories directly from product catalog
+    if (products && products.length > 0) {
+      products.forEach((p) => {
+        if (p.category && typeof p.category === 'string') {
+          const trimmed = p.category.trim().replace(' font-bold', '');
+          if (trimmed && !allCats.some(c => c.toLowerCase().trim() === trimmed.toLowerCase().trim())) {
+            allCats.push(trimmed);
+          }
+        }
+      });
+    }
+
+    // Filter by visibility settings and exclude separate juice link
+    return allCats.filter((cat) => {
+      const lower = cat.toLowerCase();
+      if (lower === 'fnl juices' || lower === 'fnl juice' || lower === 'cold pressed juices') return false;
+      const vis = categoryVisibility[cat] || categoryVisibility[cat.trim()] || {};
+      if (isHorecaUser) {
+        return vis.horeca !== false;
+      }
+      return vis.retail !== false;
+    });
+  }, [productCategories, products, categoryVisibility, isHorecaUser]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -339,9 +384,10 @@ export function Layout() {
         </div>
       </main>
 
-      <footer className="bg-secondary border-t border-border/60 py-24 mt-20 text-[10px] uppercase tracking-[0.2em] font-extrabold text-[#506053]">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 text-[#2c3e30]">
-          <div className="md:col-span-2 space-y-6">
+      <footer className="bg-secondary border-t border-border/60 py-16 sm:py-20 md:py-24 mt-20 text-[10px] uppercase tracking-[0.2em] font-extrabold text-[#506053]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10 lg:gap-12 text-[#2c3e30]">
+          {/* Brand & Contact Info */}
+          <div className="md:col-span-5 lg:col-span-4 space-y-6">
             <h3 className="font-sans font-black text-foreground text-2xl tracking-tighter uppercase normal-case flex items-center gap-3">
               {faviconUrl && !logoError && (
                 <motion.img 
@@ -352,7 +398,7 @@ export function Layout() {
                   src={faviconUrl} 
                   alt="Logo" 
                   onError={() => setLogoError(true)}
-                  className="w-10 h-10 object-contain rounded-lg" 
+                  className="w-10 h-10 object-contain rounded-lg shadow-xs" 
                 />
               )}
               <span>FreshNLocal<span className="text-primary">.CO</span></span>
@@ -360,48 +406,72 @@ export function Layout() {
             <p className="text-muted-foreground max-w-sm leading-relaxed normal-case tracking-normal text-xs font-sans font-medium">
               Surat's finest technology-driven fresh delivery order. Bringing fully vetted, hand-harvested fresh crops, local seasonal fruits, and premium exotics straight to your micro-kitchen.
             </p>
-            <div className="text-muted-foreground space-y-3.5 normal-case tracking-normal text-xs font-sans font-semibold">
+            <div className="text-muted-foreground space-y-3 normal-case tracking-normal text-xs font-sans font-semibold">
               <p className="flex items-start gap-2.5">
-                <MapPin className="text-primary w-4 h-4 mt-0.5 shrink-0" /> <span>Gr Floor Hall, Reva Dham Apartment, Uma Bhawan Crossroad, Opp. Ashirwad Palace, Bhatar, Surat, Gujarat</span>
+                <MapPin className="text-primary w-4 h-4 mt-0.5 shrink-0" /> 
+                <span>Gr Floor Hall, Reva Dham Apartment, Uma Bhawan Crossroad, Opp. Ashirwad Palace, Bhatar, Surat, Gujarat</span>
               </p>
               <p className="flex items-center gap-2.5">
-                <Phone className="text-primary w-4 h-4 shrink-0" /> <span>+91 7284000881</span>
+                <Phone className="text-primary w-4 h-4 shrink-0" /> 
+                <a href="tel:+917284000881" className="hover:text-primary transition-colors">+91 7284000881</a>
               </p>
               <p className="flex items-center gap-2.5">
-                <Mail className="text-primary w-4 h-4 shrink-0" /> <a href="mailto:freshnlocalco@gmail.com" className="hover:text-primary transition-colors border-b border-border/40">freshnlocalco@gmail.com</a>
+                <Mail className="text-primary w-4 h-4 shrink-0" /> 
+                <a href="mailto:freshnlocalco@gmail.com" className="hover:text-primary transition-colors border-b border-border/40">freshnlocalco@gmail.com</a>
               </p>
-              <div className="flex items-center gap-4 pt-4">
-                <a href="https://www.instagram.com/freshnlocalco?igsh=MWlrcWFoNjBjYnh2Yg==" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-all">
+              <div className="flex items-center gap-3.5 pt-2">
+                <a href="https://www.instagram.com/freshnlocalco?igsh=MWlrcWFoNjBjYnh2Yg==" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-all shadow-xs" aria-label="Instagram">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
                 </a>
-                <a href="https://m.facebook.com/freshnlocalco/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center hover:border-blue-500 hover:text-blue-500 transition-all">
+                <a href="https://m.facebook.com/freshnlocalco/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center hover:border-blue-500 hover:text-blue-500 transition-all shadow-xs" aria-label="Facebook">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
                 </a>
               </div>
             </div>
           </div>
-          <div>
-            <h4 className="font-sans font-black tracking-[0.25em] text-foreground opacity-90 border-b border-border pb-2.5">Collections</h4>
-            <ul className="space-y-3.5 mt-6">
-              <li><Link to="/shop" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Shop All Products</Link></li>
-              <li><Link to="/juice" className="hover:text-orange-500 hover:translate-x-1.5 text-orange-600 font-extrabold inline-block transition-all duration-200">🍹 FNL Cold-Pressed Juices</Link></li>
-              <li><Link to="/shop?category=Indian%20Fruits" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Indian Fruits</Link></li>
-              <li><Link to="/shop?category=Exotic%20Fruits" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Exotic Fruits</Link></li>
-              <li><Link to="/shop?category=Exotic%20Vegetables" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Exotic Vegetables</Link></li>
-              <li><Link to="/shop?category=Leafy%20Greens" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Leafy Greens</Link></li>
-            </ul>
+
+          {/* Dynamic Collections Grid (2-column layout on tablet/desktop to stay compact & balanced) */}
+          <div className="md:col-span-4 lg:col-span-5">
+            <h4 className="font-sans font-black tracking-[0.25em] text-foreground opacity-90 border-b border-border pb-2.5">
+              Collections
+            </h4>
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-xs font-sans font-medium normal-case tracking-normal">
+              <div className="col-span-1 sm:col-span-2 flex flex-col sm:flex-row gap-2 sm:gap-4 pb-1">
+                <Link to="/shop" className="hover:text-primary font-bold text-foreground hover:translate-x-1 inline-flex items-center gap-1 transition-all duration-200">
+                  Shop All Products →
+                </Link>
+                <Link to="/juice" className="hover:text-orange-500 text-orange-600 font-extrabold hover:translate-x-1 inline-flex items-center gap-1 transition-all duration-200">
+                  🍹 Cold-Pressed Juices
+                </Link>
+              </div>
+              {footerCategories.map((catName) => (
+                <Link 
+                  key={catName}
+                  to={`/shop?category=${encodeURIComponent(catName)}`} 
+                  className="text-muted-foreground hover:text-primary hover:translate-x-1 transition-all duration-200 capitalize truncate block py-0.5"
+                  title={catName}
+                >
+                  {catName}
+                </Link>
+              ))}
+            </div>
           </div>
-          <div>
-            <h4 className="font-sans font-black tracking-[0.25em] text-foreground opacity-90 border-b border-border pb-2.5">Information</h4>
-            <ul className="space-y-3.5 mt-6">
-              <li><Link to="/about" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Our Story & Mission</Link></li>
-              <li><Link to="#" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Privacy Policy</Link></li>
-              <li><Link to="#" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Terms of Service</Link></li>
-              <li><Link to="/returns" className="hover:text-primary hover:translate-x-1.5 inline-block transition-all duration-200">Returns & Refund Policy</Link></li>
+
+          {/* Information & Policies */}
+          <div className="md:col-span-3 lg:col-span-3">
+            <h4 className="font-sans font-black tracking-[0.25em] text-foreground opacity-90 border-b border-border pb-2.5">
+              Information
+            </h4>
+            <ul className="space-y-3 mt-5 text-xs font-sans font-medium normal-case tracking-normal">
+              <li><Link to="/about" className="text-muted-foreground hover:text-primary hover:translate-x-1 inline-block transition-all duration-200">Our Story & Mission</Link></li>
+              <li><Link to="#" className="text-muted-foreground hover:text-primary hover:translate-x-1 inline-block transition-all duration-200">Privacy Policy</Link></li>
+              <li><Link to="#" className="text-muted-foreground hover:text-primary hover:translate-x-1 inline-block transition-all duration-200">Terms of Service</Link></li>
+              <li><Link to="/returns" className="text-muted-foreground hover:text-primary hover:translate-x-1 inline-block transition-all duration-200">Returns & Refund Policy</Link></li>
             </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 mt-20 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-[9px] text-muted-foreground">
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-16 pt-6 border-t border-border/70 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-muted-foreground">
           <p>© {new Date().getFullYear()} FreshNLocal.CO Vetted fresh farming, delivered cold in Surat.</p>
           <p className="font-serif italic lowercase tracking-normal text-xs text-muted-foreground/80">sliced with precision engineering</p>
         </div>
