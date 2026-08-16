@@ -424,10 +424,14 @@ export function RecipeAI() {
     };
   }, [messages.length]);
 
-  // Filter to unique, available products that might be good for recipes
+  // Filter to unique, in-stock products that might be good for recipes
   const availableProducts = useMemo(() => {
     return products
       .filter(p => {
+        // Strictly exclude out of stock products
+        const isOutOfStock = p.inStock === false || (typeof p.stock === 'number' && p.stock <= 0);
+        if (isOutOfStock) return false;
+
         const cat = p.category?.toLowerCase() || '';
         const name = p.name.toLowerCase();
         return !cat.includes('juice') && !cat.includes('fnl') && !name.includes('juice');
@@ -512,11 +516,15 @@ export function RecipeAI() {
       }
 
       if (response.ok) {
-        // Find matching products in store based on AI suggestions
+        // Find matching in-stock products in store based on AI suggestions
         const suggestions: Product[] = [];
         if (data.suggestedProductNames && Array.isArray(data.suggestedProductNames)) {
           data.suggestedProductNames.forEach((name: string) => {
             const match = products.find(p => {
+              // Strictly ensure product is in stock
+              const isOutOfStock = p.inStock === false || (typeof p.stock === 'number' && p.stock <= 0);
+              if (isOutOfStock) return false;
+
               const cat = p.category?.toLowerCase() || '';
               const pName = p.name.toLowerCase();
               // Prevent matching any juice, beverage, or FNL brand drink
@@ -749,6 +757,10 @@ export function RecipeAI() {
         if (data.suggestedProductNames && Array.isArray(data.suggestedProductNames)) {
           data.suggestedProductNames.forEach((name: string) => {
             const match = products.find(p => {
+              // Strictly ensure product is in stock
+              const isOutOfStock = p.inStock === false || (typeof p.stock === 'number' && p.stock <= 0);
+              if (isOutOfStock) return false;
+
               const cat = p.category?.toLowerCase() || '';
               const pName = p.name.toLowerCase();
               // Prevent matching any juice, beverage, or FNL brand drink

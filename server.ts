@@ -197,7 +197,7 @@ If the request IS related to food or cooking:
 CRITICAL INSTRUCTIONS FOR VARIETY & RECOMMENDATIONS:
 - To keep things exciting and diverse, you MUST NOT generate the exact same recipe every time. Use a wide variety of fresh vegetables, exotic fruits, herbs, and local spices from the catalog.
 - Check the 'Recent Chat History' if provided. If you have already suggested a specific recipe earlier in this chat session, you MUST suggest a completely different, unique recipe or a highly creative variation. DO NOT repeat the same recipe under any circumstances!
-- You MUST select recommendations ONLY from the following exact store catalog:
+- You MUST select recommendations ONLY from the following exact in-stock store catalog (all listed items are currently in stock, do NOT recommend any out of stock items or items outside this list):
 [ ${catalogText} ]
 - Try to recommend MORE items from the catalog that fit well into the recipe to make it complete (e.g. key ingredients, seasonings, fresh garnishes).
 - You MUST NEVER suggest, recommend, or add any FNL Juices, juices, cold-pressed juices, beverages, or drinks in either the recipe markdown or the suggested products. Focus strictly on solid foods, fresh produce, groceries, spices, or garnishes.
@@ -216,7 +216,7 @@ If the request IS related to food or cooking:
 CRITICAL INSTRUCTIONS FOR VARIETY & RECOMMENDATIONS:
 - To keep things exciting and diverse, you MUST NOT generate the exact same recipe every time. Be creative and explore different culinary directions (e.g. street food, gourmet, light snack, traditional Indian/Gujarati, or healthy options).
 - Check the 'Recent Chat History' if provided. If you have already suggested a specific recipe earlier in this chat session, you MUST suggest a completely different, unique recipe or a highly creative variation. DO NOT repeat the same recipe under any circumstances!
-- You MUST select recommendations ONLY from the following exact store catalog:
+- You MUST select recommendations ONLY from the following exact in-stock store catalog (all listed items are currently in stock, do NOT recommend any out of stock items or items outside this list):
 [ ${catalogText} ]
 - Do NOT suggest any product that is already in the user's selected list.
 - Try to recommend MORE items from the catalog that fit well into the recipe to make it complete (e.g. key ingredients, seasonings, fresh garnishes).
