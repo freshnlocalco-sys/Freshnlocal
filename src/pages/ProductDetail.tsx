@@ -346,12 +346,12 @@ export function ProductDetail() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-1">
-                    <div className="text-3xl sm:text-4xl font-black text-primary font-sans flex items-center gap-1">
-                      <span className="text-lg text-muted-foreground">₹</span>0
+                    <div className="text-2xl sm:text-3xl font-black text-primary font-sans">
+                      Wholesale Contract Rate
                     </div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/20 text-xs font-bold self-start">
-                      <Building2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                      <span>CUSTOM B2B PRICE ({currentUnit || '1KG'})</span>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold self-start">
+                      <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span>Custom B2B Quotation ({currentUnit || '1KG'})</span>
                     </div>
                   </div>
                 )}

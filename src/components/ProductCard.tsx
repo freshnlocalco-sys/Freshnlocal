@@ -245,12 +245,12 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                   </div>
                 ) : (
                   <div className="flex flex-col gap-0.5">
-                    <div className="text-xs sm:text-sm font-bold text-primary leading-none flex items-center gap-0.5">
-                      <span className="text-[9px] sm:text-[10px] text-muted-foreground">₹</span>0
+                    <div className="text-xs font-bold text-primary leading-none">
+                      Wholesale Rate
                     </div>
-                    <div className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/20 text-[8px] sm:text-[9px] font-bold self-start">
-                      <Building2 className="w-2.5 h-2.5 text-orange-600 shrink-0" />
-                      <span>CUSTOM B2B PRICE ({currentUnit || '1KG'})</span>
+                    <div className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[8px] sm:text-[9px] font-bold self-start">
+                      <Building2 className="w-2.5 h-2.5 text-primary shrink-0" />
+                      <span>B2B Contract ({currentUnit || '1KG'})</span>
                     </div>
                   </div>
                 )}
