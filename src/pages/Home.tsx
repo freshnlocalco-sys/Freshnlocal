@@ -13,6 +13,7 @@ import { useCart, Product } from '../store/useCart';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { SectionDivider } from '../components/SectionDivider';
+import { WaveDivider } from '../components/WaveDivider';
 import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 
@@ -862,11 +863,16 @@ export function Home() {
         </motion.div>
       </section>
 
-      {/* Divider between Hero/Catalog Showcases and Bento */}
-      <SectionDivider className="max-w-7xl mx-auto py-2 sm:py-4" />
+      {/* Transition into Bento Value Proposition Section */}
+      <WaveDivider 
+        variant="layered" 
+        fillColor="var(--color-secondary)" 
+        height={54} 
+        className="w-full text-secondary -mb-[1px] relative z-10" 
+      />
 
       {/* Modern Bento Value Proposition Section */}
-      <section className="w-full bg-secondary border-y border-border/40 py-24">
+      <section className="w-full bg-secondary py-20 md:py-24">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <span className="glass-pill">Core Powerhouse</span>
@@ -1006,8 +1012,25 @@ export function Home() {
         </div>
       </section>
 
-      {/* Divider between Bento and Bottom CTA Banner */}
-      <SectionDivider className="max-w-7xl mx-auto py-2 sm:py-4" />
+      {/* Transition out of Bento Section */}
+      <WaveDivider 
+        variant="layered" 
+        flip 
+        fillColor="var(--color-secondary)" 
+        height={54} 
+        className="w-full text-secondary -mt-[1px] relative z-10" 
+      />
+
+      {/* Subtle organic separator before bottom banner */}
+      <WaveDivider variant="separator" className="max-w-5xl mx-auto py-6" />
+
+      {/* Transition into Bottom CTA Banner */}
+      <WaveDivider 
+        variant="crest" 
+        fillColor="var(--color-primary)" 
+        height={60} 
+        className="w-full text-primary -mb-[1px] relative z-10" 
+      />
 
       {/* Beautiful bottom banner resembling slice dynamic launch screens */}
       <section className="w-full bg-primary text-white py-20 px-4 text-center relative overflow-hidden">

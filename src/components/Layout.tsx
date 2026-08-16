@@ -190,15 +190,15 @@ export function Layout() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white border-l border-border z-50 md:hidden p-8 flex flex-col justify-between shadow-[0_0_80px_rgba(0,0,0,0.08)]"
+              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-background border-l border-border z-50 md:hidden p-8 flex flex-col justify-between shadow-[0_0_80px_rgba(0,0,0,0.08)]"
               style={{ position: 'fixed', top: 0, bottom: 0, right: 0 }}
             >
               <div>
                 <div className="flex items-center justify-between pb-6 border-b border-border/40 mb-6">
-                  <span className="font-sans font-black uppercase text-sm tracking-[0.15em] text-[#506053] flex items-center gap-2">Navigation</span>
+                  <span className="font-sans font-black uppercase text-sm tracking-[0.15em] text-foreground flex items-center gap-2">Navigation</span>
                   <button 
                     onClick={() => setIsMobileNavOpen(false)}
-                    className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-[#09120b]/5 text-foreground"
+                    className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-secondary text-foreground"
                   >
                     <X className="w-4 h-4" />
                   </button>
