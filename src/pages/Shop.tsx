@@ -57,6 +57,30 @@ export function Shop() {
     return ['All Products', ...cleanCategories];
   }, [productCategories, horecaCategoryOrder, categoryVisibility, isHorecaUser]);
   const [loading, setLoading] = useState(true);
+  const productNames = React.useMemo(() => {
+    if (products && products.length > 0) {
+      return products.map(p => p.name).filter(Boolean);
+    }
+    return ['Apple', 'Avocado', 'Oyster Mushroom', 'Golden Pear', 'Shimla Apple', 'Fresh Spinach', 'Hass Avocados'];
+  }, [products]);
+
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [isFading, setIsFading] = useState(true);
+
+  useEffect(() => {
+    if (productNames.length === 0) return;
+    const timer = setInterval(() => {
+      setIsFading(false); // fade out
+      setTimeout(() => {
+        setPlaceholderIndex(prev => (prev + 1) % productNames.length);
+        setIsFading(true); // fade in
+      }, 300);
+    }, 2500); // every 2.5 seconds
+
+    return () => clearInterval(timer);
+  }, [productNames]);
+
+  const currentPlaceholderName = productNames[placeholderIndex] || 'Fresh produce';
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '');
@@ -387,16 +411,23 @@ export function Shop() {
       {/* Mobile Search Header */}
       <div className="md:hidden px-3 py-3 bg-background/95 backdrop-blur-md border-b border-border relative z-40">
         <div className="relative w-full search-container z-50">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary z-10" />
             <input 
               type="text" 
-              placeholder="Search products..." 
               value={searchQuery}
               onChange={handleSearchChange}
               onKeyDown={handleSearchKeyDown}
               onFocus={() => setIsSearchFocused(true)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border text-xs text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-white placeholder-muted-foreground transition-all"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border text-xs text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-white placeholder-transparent transition-all relative z-0"
             />
+            {!searchQuery && (
+              <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-muted-foreground z-10 overflow-hidden flex items-center">
+                <span className="mr-1">Search for</span>
+                <span className={`text-muted-foreground transition-opacity duration-300 ${isFading ? 'opacity-100' : 'opacity-0'}`}>
+                  "{currentPlaceholderName}"
+                </span>
+              </div>
+            )}
             {searchQuery && (
               <button 
                 onClick={() => handleSearchSelect('')}
@@ -538,16 +569,23 @@ export function Shop() {
               
               <div className="flex gap-3 w-full lg:w-auto relative">
                 <div className="relative w-full lg:w-[400px] shrink-0 search-container">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
                   <input 
                     type="text" 
-                    placeholder="Search active crop rosters..." 
                     value={searchQuery}
                     onChange={handleSearchChange}
                     onKeyDown={handleSearchKeyDown}
                     onFocus={() => setIsSearchFocused(true)}
-                    className="w-full pl-11 pr-4 py-3.5 rounded-full border border-border text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-secondary placeholder-muted-foreground transition-colors"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-full border border-border text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm bg-secondary placeholder-transparent transition-colors relative z-0"
                   />
+                  {!searchQuery && (
+                    <div className="absolute left-11 top-1/2 -translate-y-1/2 pointer-events-none text-sm text-muted-foreground z-10 overflow-hidden flex items-center">
+                      <span className="mr-1.5">Search for</span>
+                      <span className={`text-muted-foreground transition-opacity duration-300 ${isFading ? 'opacity-100' : 'opacity-0'}`}>
+                        "{currentPlaceholderName}"
+                      </span>
+                    </div>
+                  )}
                   {isSearchFocused && (
                     <div className="absolute top-full mt-2 w-full bg-background border border-border rounded-xl shadow-xl z-50 overflow-hidden text-xs py-2">
                        {!searchQuery ? (
