@@ -125,7 +125,15 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
             className="w-full h-full object-contain object-center"
           />
           <button
-            onClick={() => inWishlist ? removeFromWishlist(product.id!) : addToWishlist(product)}
+            onClick={() => {
+              if (inWishlist) {
+                removeFromWishlist(product.id!);
+                toast.success('Removed from wishlist');
+              } else {
+                addToWishlist(product);
+                toast.success('Added to wishlist');
+              }
+            }}
             className="absolute top-3 left-3 md:top-4 md:left-4 p-2 z-10 bg-background/80 backdrop-blur-sm rounded-full transition-transform active:scale-90"
           >
             <Heart className={`w-4 h-4 md:w-5 md:h-5 ${inWishlist ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />

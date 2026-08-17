@@ -6,10 +6,12 @@ import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
+import { useRecentlyViewed } from '../store/useRecentlyViewed';
 import { calculateHorecaPrice, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
 import { useHorecaPrices } from '../store/useHorecaPrices';
 import { QuantityInput } from './QuantityInput';
 import { motion } from 'motion/react';
+import toast from 'react-hot-toast';
 
 interface ProductCardProps {
   product: Product;
@@ -25,6 +27,7 @@ const loadedProductImages = new Set<string>();
 export const ProductCard = React.memo(function ProductCard({ product, onAddToCart, displayCategoryOverride, onQuickView, isReorderItem }: ProductCardProps) {
   const { categoryImages } = useSettings();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { addProduct } = useRecentlyViewed();
   const { items, updateQuantity, removeItem, addItem } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -140,7 +143,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
         {!imageLoaded && (
           <div className="absolute inset-0 bg-secondary/20 animate-pulse" />
         )}
-        <Link to={`/product/${product.id}`} className="block w-full h-full relative">
+        <Link to={`/product/${product.id}`} onClick={() => addProduct(product)} className="block w-full h-full relative">
           <img 
             src={productImgSrc} 
             alt={product.name}
@@ -169,8 +172,10 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             e.stopPropagation();
             if (inWishlist) {
               removeFromWishlist(product.id!);
+              toast.success('Removed from wishlist');
             } else {
               addToWishlist(product);
+              toast.success('Added to wishlist');
             }
           }}
           className="absolute top-2 right-2 p-1.5 z-20 transition-transform active:scale-90"

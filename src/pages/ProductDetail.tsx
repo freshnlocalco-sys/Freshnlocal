@@ -10,6 +10,7 @@ import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useProducts } from '../store/useProducts';
 import { useWishlist } from '../store/useWishlist';
+import { useRecentlyViewed } from '../store/useRecentlyViewed';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { ProductCard } from '../components/ProductCard';
 import { ProductReviews } from '../components/ProductReviews';
@@ -100,9 +101,16 @@ export function ProductDetail() {
   }, [isHoreca, currentUnit, initialQty]);
   const { items, addItem } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { addProduct } = useRecentlyViewed();
   const allProducts = useProducts(state => state.products);
 
   const inWishlist = product ? isInWishlist(product.id!) : false;
+
+  useEffect(() => {
+    if (product) {
+      addProduct(product);
+    }
+  }, [product]);
 
   const relatedProducts = useMemo(() => {
     if (!product || allProducts.length === 0) return [];

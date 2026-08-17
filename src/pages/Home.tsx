@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight, Snowflake, Building2, Recycle, PackageCheck, Bike, HeartHandshake, HeartPulse, Search, Bot, RotateCcw } from 'lucide-react';
+import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCircle, ChevronLeft, ChevronRight, Snowflake, Building2, Recycle, PackageCheck, Bike, HeartHandshake, HeartPulse, Search, Bot, RotateCcw, Clock, Trash2 } from 'lucide-react';
 import { db, isQuotaError, useAuth } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useSettings } from '../store/useSettings';
@@ -10,6 +10,7 @@ import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { getCategoryImage } from '../lib/constants';
 import { useProducts } from '../store/useProducts';
 import { useCart, Product } from '../store/useCart';
+import { useRecentlyViewed } from '../store/useRecentlyViewed';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { SectionDivider } from '../components/SectionDivider';
@@ -238,6 +239,67 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
   );
 }
 
+function RecentlyViewedCarousel({ products, handleAddToCart, onQuickView }: { products: Product[]; handleAddToCart: (product: Product) => void, onQuickView: (product: Product) => void }) {
+  const { clearRecentlyViewed } = useRecentlyViewed();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div 
+      className="w-full relative group py-2 transition-all duration-300"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex justify-between items-end mb-4 sm:mb-6 px-1">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+            <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">
+                RECENTLY VIEWED
+              </h2>
+            </div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-semibold">Products you have explored recently</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            clearRecentlyViewed();
+            toast.success('Recently viewed history cleared');
+          }}
+          className="text-[10px] sm:text-xs font-bold text-muted-foreground hover:text-red-500 flex items-center gap-1 uppercase tracking-wider shrink-0 transition-colors cursor-pointer"
+        >
+          <Trash2 className="w-3.5 h-3.5" /> Clear History
+        </button>
+      </div>
+      
+      <div 
+        ref={scrollContainerRef}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={() => setIsHovered(true)}
+        onTouchEnd={() => setIsHovered(false)}
+        className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1"
+      >
+        {products.map(product => (
+          <div key={`recent-${product.id}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+            <div className="w-full">
+              <ProductCard 
+                product={product}
+                onAddToCart={handleAddToCart}
+                onQuickView={onQuickView}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CategoryImage({ src, alt }: { src?: string; alt: string }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   
@@ -293,6 +355,7 @@ export function Home() {
   const [spotlightsLoading, setSpotlightsLoading] = useState(true);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [reorderProducts, setReorderProducts] = useState<Product[]>([]);
+  const { items: recentlyViewedProducts } = useRecentlyViewed();
 
   const activeCategories: { id: string; name: string; tagline: string; discount: string; originalId?: string }[] = React.useMemo(() => {
     if (!productCategories || productCategories.length === 0) return CATEGORIES;
@@ -616,15 +679,28 @@ export function Home() {
                 {heroBanners.map((banner, idx) => (
                   <div key={idx} className="w-full h-full shrink-0 relative">
                     {banner.link ? (
-                      banner.link.startsWith('http') ? (
-                        <a href={banner.link} target="_blank" rel="noopener noreferrer" className="w-full h-full block relative">
-                          <HeroImage src={banner.imageUrl} alt="Hero Banner" />
-                        </a>
-                      ) : (
-                        <Link to={banner.link} className="w-full h-full block relative">
-                          <HeroImage src={banner.imageUrl} alt="Hero Banner" />
-                        </Link>
-                      )
+                      (() => {
+                        const isExternal = banner.link.startsWith('http') && !banner.link.includes('freshnlocal.co');
+                        let internalPath = banner.link;
+                        if (banner.link.includes('freshnlocal.co')) {
+                          try {
+                            const urlObj = new URL(banner.link);
+                            internalPath = urlObj.pathname + urlObj.search + urlObj.hash;
+                          } catch (e) {
+                            internalPath = banner.link;
+                          }
+                        }
+
+                        return isExternal ? (
+                          <a href={banner.link} target="_blank" rel="noopener noreferrer" className="w-full h-full block relative">
+                            <HeroImage src={banner.imageUrl} alt="Hero Banner" />
+                          </a>
+                        ) : (
+                          <Link to={internalPath} className="w-full h-full block relative">
+                            <HeroImage src={banner.imageUrl} alt="Hero Banner" />
+                          </Link>
+                        );
+                      })()
                     ) : (
                       <div className="w-full h-full relative">
                         <HeroImage src={banner.imageUrl} alt="Hero Banner" />
@@ -772,6 +848,15 @@ export function Home() {
                 transform: translateZ(0);
               }
             `}} />
+
+            {/* RECENTLY VIEWED SECTION */}
+            {recentlyViewedProducts.length > 0 && (
+              <RecentlyViewedCarousel 
+                products={recentlyViewedProducts}
+                handleAddToCart={handleAddToCart}
+                onQuickView={setQuickViewProduct}
+              />
+            )}
 
             {/* REORDER SECTION - Displayed on top of 1st category showcase line for existing customers with past orders */}
             {reorderProducts.length > 0 && (
