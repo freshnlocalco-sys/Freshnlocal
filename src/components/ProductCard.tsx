@@ -136,7 +136,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border"
+      className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border/80 shadow-md hover:shadow-2xl transition-shadow duration-300"
     >
       
       <div className="w-full aspect-[4/3] overflow-hidden relative bg-white dark:bg-white border-b border-border shrink-0" style={{ borderRadius: 'inherit', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
