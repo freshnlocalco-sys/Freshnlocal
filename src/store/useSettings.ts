@@ -164,7 +164,9 @@ export const useSettings = create<SettingsState>((set, get) => ({
             prodCats = catData.productCategories;
           }
           if (catData.horecaCategoryOrder) {
-            horecaOrder = catData.horecaCategoryOrder;
+            // Keep only categories that are present in prodCats
+            const validSet = new Set(prodCats.map(c => c.toLowerCase().trim()));
+            horecaOrder = catData.horecaCategoryOrder.filter((c: string) => c && validSet.has(c.toLowerCase().trim()));
           }
           if (catData.juiceCategories || catData.juiceData) {
             juiceCats = catData.juiceData || catData.juiceCategories;
@@ -320,10 +322,20 @@ export const useSettings = create<SettingsState>((set, get) => ({
       } else {
          updated = current.map(c => c === oldCategoryName ? normalizedNew : c);
       }
+
+      // Also update horecaCategoryOrder
+      const currentHoreca = get().horecaCategoryOrder || [];
+      const updatedHoreca = currentHoreca.map(c => 
+        c && c.toLowerCase().trim() === normalizedOld.toLowerCase() ? normalizedNew : c
+      ).filter((c, idx, arr) => c && arr.indexOf(c) === idx);
       
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDoc(docRef, { productCategories: updated }, { merge: true });
+      await setDoc(docRef, { 
+        productCategories: updated,
+        horecaCategoryOrder: updatedHoreca
+      }, { merge: true });
       cacheManager.set('productCategories', updated);
+      cacheManager.set('horecaCategoryOrder', updatedHoreca);
       
       // We also update categoryImages to copy over the old image to the new key
       const oldKey = normalizedOld.toLowerCase().replace(/ font-bold/gi, '').trim();
@@ -354,7 +366,10 @@ export const useSettings = create<SettingsState>((set, get) => ({
         set({ categoryImages: newImages });
       }
 
-      set({ productCategories: updated });
+      set({ 
+        productCategories: updated,
+        horecaCategoryOrder: updatedHoreca
+      });
     } catch (error: any) {
       handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
       throw error;
@@ -422,8 +437,23 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const normalizedName = categoryName.trim();
       const updated = current.filter(c => c && c.toLowerCase().trim() !== normalizedName.toLowerCase());
       
+      // Also remove from horecaCategoryOrder
+      const currentHoreca = get().horecaCategoryOrder || [];
+      const updatedHoreca = currentHoreca.filter(c => c && c.toLowerCase().trim() !== normalizedName.toLowerCase());
+
+      // Also clean up categoryVisibility
+      const currentVisibility = get().categoryVisibility || {};
+      const updatedVisibility = { ...currentVisibility };
+      delete updatedVisibility[categoryName];
+      delete updatedVisibility[normalizedName];
+      delete updatedVisibility[normalizedName.toLowerCase()];
+
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDoc(docRef, { productCategories: updated }, { merge: true });
+      await setDoc(docRef, { 
+        productCategories: updated,
+        horecaCategoryOrder: updatedHoreca,
+        categoryVisibility: updatedVisibility
+      }, { merge: true });
       
       // Clean up image references from state and database
       const normalizedImgKey = normalizedName.toLowerCase().replace(/ font-bold/gi, '').trim();
@@ -440,10 +470,14 @@ export const useSettings = create<SettingsState>((set, get) => ({
       await setDoc(imgRef, newImages);
 
       cacheManager.set('productCategories', updated);
+      cacheManager.set('horecaCategoryOrder', updatedHoreca);
+      cacheManager.set('categoryVisibility', updatedVisibility);
       cacheManager.set('categoryImages', newImages);
 
       set({ 
         productCategories: updated,
+        horecaCategoryOrder: updatedHoreca,
+        categoryVisibility: updatedVisibility,
         categoryImages: newImages
       });
       toast.success(`Category "${categoryName}" deleted successfully`);

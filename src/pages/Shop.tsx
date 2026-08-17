@@ -25,8 +25,15 @@ export function Shop() {
     let baseCategories = productCategories;
 
     if (isHorecaUser && horecaCategoryOrder && horecaCategoryOrder.length > 0) {
-      // Order based on horecaCategoryOrder, then append any remaining productCategories
-      const ordered = [...horecaCategoryOrder];
+      // Order based on horecaCategoryOrder, strictly limited to existing productCategories
+      const validProdCatMap = new Map(productCategories.map(c => [c.toLowerCase().trim(), c]));
+      const ordered: string[] = [];
+      horecaCategoryOrder.forEach(cat => {
+        const match = validProdCatMap.get((cat || '').toLowerCase().trim());
+        if (match && !ordered.includes(match)) {
+          ordered.push(match);
+        }
+      });
       productCategories.forEach(cat => {
         if (!ordered.some(c => c.toLowerCase().trim() === cat.toLowerCase().trim())) {
           ordered.push(cat);

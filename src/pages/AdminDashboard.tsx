@@ -3206,7 +3206,26 @@ export function AdminDashboard() {
 
   const handleExportCatalogForBulkEdit = () => {
     try {
-      const data = products
+      const catOrder = new Map();
+      productCategories.forEach((c, i) => { if (c) catOrder.set(c.toLowerCase().trim(), i) });
+
+      const sortedProducts = [...products].sort((a, b) => {
+        let catA = (a.category || '').toLowerCase().trim();
+        let catB = (b.category || '').toLowerCase().trim();
+        if (catA === 'exotic vegetables') catA = 'exotic vegetable';
+        if (catA === 'imported vegetables') catA = 'imported vegetable';
+        if (catA === 'mushrooms') catA = 'mushroom';
+        if (catB === 'exotic vegetables') catB = 'exotic vegetable';
+        if (catB === 'imported vegetables') catB = 'imported vegetable';
+        if (catB === 'mushrooms') catB = 'mushroom';
+
+        const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
+        const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
+        if (idxA !== idxB) return idxA - idxB;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      const data = sortedProducts
         .filter(p => p.category !== 'fnl juices' && p.category !== 'fnl juice')
         .map(p => {
           const parsedUnit = parseQuantityAndUnit(p.unit);
@@ -3242,14 +3261,6 @@ export function AdminDashboard() {
             'Base Price': finalBasePrice,
             'Base MRP': finalBaseMRP,
             'Base HoReCa Price': finalBaseHorecaPrice,
-            'Unit': p.unit || (qVal ? `${qVal} ${qUnit}` : '1 Kg'),
-            'This Unit Price': p.price !== undefined && p.price !== null ? p.price : '',
-            'Second Unit': v1 ? v1.unit || '' : '',
-            'Second Unit Price': v1 && v1.price !== undefined && v1.price !== null ? v1.price : '',
-            'Horeca Unit': p.horecaUnit || (v1 && v1.horecaPrice ? v1.unit : ''),
-            'Horeca Price': p.horecaPrice !== undefined && p.horecaPrice !== null ? p.horecaPrice : (v1 ? v1.horecaPrice || '' : ''),
-            'Second Horeca Unit': v2 ? v2.unit || '' : '',
-            'Second Horeca Unit Price': v2 && v2.price !== undefined && v2.price !== null ? (v2.horecaPrice || v2.price) : '',
             'Stock': p.stock !== undefined && p.stock !== null ? p.stock : '',
             'In Stock': p.inStock ? 'TRUE' : 'FALSE'
           };
@@ -3649,17 +3660,89 @@ export function AdminDashboard() {
         }
 
         if (match) {
+          // If match exists, only update fields that were explicitly provided and changed in the spreadsheet
+          const dbBasePrice = match.basePrice !== undefined && match.basePrice !== null && String(match.basePrice) !== '' ? Number(match.basePrice) : null;
+          const fallbackBasePrice = match.price ? Number(calculateBaseFromPrice(match.price, updated.baseUnit, match.quantityValue || 1, match.quantityUnit || 'Kg')) : null;
+          const effectiveDbBasePrice = dbBasePrice !== null ? dbBasePrice : fallbackBasePrice;
+          const hasBasePriceChange = effectiveBasePrice !== undefined && effectiveBasePrice !== null && String(effectiveBasePrice) !== '' && effectiveDbBasePrice !== null && Number(effectiveBasePrice) !== Number(effectiveDbBasePrice);
+
+          const dbBaseOrig = match.baseOriginalPrice !== undefined && match.baseOriginalPrice !== null && String(match.baseOriginalPrice) !== '' ? Number(match.baseOriginalPrice) : null;
+          const fallbackBaseOrig = match.originalPrice ? Number(calculateBaseFromPrice(match.originalPrice, updated.baseUnit, match.quantityValue || 1, match.quantityUnit || 'Kg')) : null;
+          const effectiveDbBaseOrig = dbBaseOrig !== null ? dbBaseOrig : fallbackBaseOrig;
+          const hasBaseOriginalChange = parsed.baseOriginalPrice !== undefined && parsed.baseOriginalPrice !== null && String(parsed.baseOriginalPrice) !== '' && effectiveDbBaseOrig !== null && Number(parsed.baseOriginalPrice) !== Number(effectiveDbBaseOrig);
+
+          const dbBaseHoreca = match.baseHorecaPrice !== undefined && match.baseHorecaPrice !== null && String(match.baseHorecaPrice) !== '' ? Number(match.baseHorecaPrice) : null;
+          const fallbackBaseHoreca = match.horecaPrice ? Number(calculateBaseFromPrice(match.horecaPrice, updated.baseUnit, match.quantityValue || 1, match.quantityUnit || 'Kg')) : null;
+          const effectiveDbBaseHoreca = dbBaseHoreca !== null ? dbBaseHoreca : fallbackBaseHoreca;
+          const hasBaseHorecaChange = parsed.baseHorecaPrice !== undefined && parsed.baseHorecaPrice !== null && String(parsed.baseHorecaPrice) !== '' && effectiveDbBaseHoreca !== null && Number(parsed.baseHorecaPrice) !== Number(effectiveDbBaseHoreca);
+
+          const hasStockChange = parsed.stock !== undefined && parsed.stock !== null && String(parsed.stock) !== '' && Number(parsed.stock) !== Number(match.stock);
+          const hasInStockChange = parsed.inStock !== undefined && Boolean(parsed.inStock) !== Boolean(match.inStock);
+          const hasNameChange = parsed.name && parsed.name.toLowerCase().trim() !== match.name.toLowerCase().trim();
+          const hasCategoryChange = parsed.category && parsed.category.toLowerCase().trim() !== match.category.toLowerCase().trim();
+
+          if (!hasBasePriceChange && !hasBaseOriginalChange && !hasBaseHorecaChange && !hasStockChange && !hasInStockChange && !hasNameChange && !hasCategoryChange) {
+            continue; // Skip unchanged products entirely
+          }
+
+          updated.useBasePricing = true;
+          if (hasNameChange) updated.name = parsed.name;
+          if (hasCategoryChange) updated.category = parsed.category;
+          
+          if (hasBasePriceChange) {
+            updated.basePrice = effectiveBasePrice;
+            const qVal = updated.quantityValue !== undefined && updated.quantityValue !== null ? updated.quantityValue : 1;
+            const qUnit = updated.quantityUnit || updated.baseUnit || 'Kg';
+            const calcP = calculatePriceFromBase(updated.basePrice, updated.baseUnit, qVal, qUnit);
+            if (calcP) updated.price = Number(calcP);
+            else updated.price = Number(updated.basePrice);
+
+            // Recalculate variants if base price changed
+            if (match.variants && match.variants.length > 0) {
+              updated.variants = match.variants.map((v: any) => {
+                let vQtyValue = v.quantityValue !== undefined && v.quantityValue !== null ? String(v.quantityValue) : '';
+                let vQtyUnit = v.quantityUnit || 'Kg';
+                if (!vQtyValue) {
+                  const parsedV = parseQuantityAndUnit(v.unit);
+                  vQtyValue = parsedV.qVal || '1';
+                  vQtyUnit = parsedV.qUnit || 'Kg';
+                }
+                return {
+                  ...v,
+                  price: Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.price)
+                };
+              });
+            }
+          }
+
+          if (hasBaseOriginalChange) {
+            updated.baseOriginalPrice = parsed.baseOriginalPrice;
+            const qVal = updated.quantityValue !== undefined && updated.quantityValue !== null ? updated.quantityValue : 1;
+            const qUnit = updated.quantityUnit || updated.baseUnit || 'Kg';
+            const calcMRP = calculatePriceFromBase(updated.baseOriginalPrice, updated.baseUnit, qVal, qUnit);
+            if (calcMRP) updated.originalPrice = Number(calcMRP);
+          }
+
+          if (hasBaseHorecaChange) {
+            updated.baseHorecaPrice = parsed.baseHorecaPrice;
+            const qVal = updated.quantityValue !== undefined && updated.quantityValue !== null ? updated.quantityValue : 1;
+            const qUnit = updated.quantityUnit || updated.baseUnit || 'Kg';
+            const calcHoreca = calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, qVal, qUnit);
+            if (calcHoreca) updated.horecaPrice = Number(calcHoreca);
+          }
+
+          if (hasStockChange) updated.stock = parsed.stock;
+          if (hasInStockChange) updated.inStock = parsed.inStock;
+
           // Check for differences
           const diffs: string[] = [];
-          if (updated.name !== match.name) diffs.push(`Name: "${match.name}" ➜ "${updated.name}"`);
-          if (updated.category !== match.category) diffs.push(`Category: "${match.category}" ➜ "${updated.category}"`);
-          if (updated.baseUnit !== (match.baseUnit || 'Kg')) diffs.push(`Base Unit: "${match.baseUnit || 'Kg'}" ➜ "${updated.baseUnit}"`);
-          if (updated.basePrice !== match.basePrice) diffs.push(`Base Price: ₹${match.basePrice || 'None'} ➜ ₹${updated.basePrice || 'None'}`);
-          if (updated.baseOriginalPrice !== match.baseOriginalPrice) diffs.push(`Base MRP: ₹${match.baseOriginalPrice || 'None'} ➜ ₹${updated.baseOriginalPrice || 'None'}`);
-          if (updated.baseHorecaPrice !== match.baseHorecaPrice) diffs.push(`Base HoReCa Price: ₹${match.baseHorecaPrice || 'None'} ➜ ₹${updated.baseHorecaPrice || 'None'}`);
-          if (Number(updated.price) !== Number(match.price)) diffs.push(`Calculated Price: ₹${match.price} ➜ ₹${updated.price}`);
-          if (Number(updated.stock) !== Number(match.stock)) diffs.push(`Stock: ${match.stock} ➜ ${updated.stock}`);
-          if (updated.inStock !== match.inStock) diffs.push(`In Stock: ${match.inStock ? 'Yes' : 'No'} ➜ ${updated.inStock ? 'Yes' : 'No'}`);
+          if (hasNameChange) diffs.push(`Name: "${match.name}" ➜ "${updated.name}"`);
+          if (hasCategoryChange) diffs.push(`Category: "${match.category}" ➜ "${updated.category}"`);
+          if (hasBasePriceChange) diffs.push(`Base Price: ₹${match.basePrice || 'None'} ➜ ₹${updated.basePrice || 'None'}`);
+          if (hasBaseOriginalChange) diffs.push(`Base MRP: ₹${match.baseOriginalPrice || 'None'} ➜ ₹${updated.baseOriginalPrice || 'None'}`);
+          if (hasBaseHorecaChange) diffs.push(`Base HoReCa Price: ₹${match.baseHorecaPrice || 'None'} ➜ ₹${updated.baseHorecaPrice || 'None'}`);
+          if (hasStockChange) diffs.push(`Stock: ${match.stock} ➜ ${updated.stock}`);
+          if (hasInStockChange) diffs.push(`In Stock: ${match.inStock ? 'Yes' : 'No'} ➜ ${updated.inStock ? 'Yes' : 'No'}`);
 
           if (diffs.length > 0) {
             changesList.push({
@@ -3673,6 +3756,21 @@ export function AdminDashboard() {
           }
         } else {
           // Brand new product
+          updated.useBasePricing = true;
+          if (effectiveBasePrice !== undefined) updated.basePrice = effectiveBasePrice;
+          if (parsed.baseOriginalPrice !== undefined) updated.baseOriginalPrice = parsed.baseOriginalPrice;
+          if (parsed.baseHorecaPrice !== undefined) updated.baseHorecaPrice = parsed.baseHorecaPrice;
+          if (parsed.stock !== undefined) updated.stock = parsed.stock;
+          if (parsed.inStock !== undefined) updated.inStock = parsed.inStock;
+          updated.baseUnit = normalizeBaseUnit(parsed.baseUnit || 'Kg', 'Kg');
+          
+          const qVal = updated.quantityValue || 1;
+          const qUnit = updated.quantityUnit || updated.baseUnit || 'Kg';
+          if (updated.basePrice !== undefined) {
+            const calcP = calculatePriceFromBase(updated.basePrice, updated.baseUnit, qVal, qUnit);
+            updated.price = calcP ? Number(calcP) : Number(updated.basePrice);
+          }
+
           changesList.push({
             id: updated.id,
             name: updated.name,
@@ -5297,7 +5395,14 @@ export function AdminDashboard() {
                   ? productCategories
                   : (horecaCategoryOrder && horecaCategoryOrder.length > 0
                       ? (() => {
-                          const list = [...horecaCategoryOrder];
+                          const validProdCatMap = new Map(productCategories.map(c => [c.toLowerCase().trim(), c]));
+                          const list: string[] = [];
+                          horecaCategoryOrder.forEach(cat => {
+                            const match = validProdCatMap.get((cat || '').toLowerCase().trim());
+                            if (match && !list.includes(match)) {
+                              list.push(match);
+                            }
+                          });
                           productCategories.forEach(cat => {
                             if (!list.some(c => c.toLowerCase().trim() === cat.toLowerCase().trim())) {
                               list.push(cat);
