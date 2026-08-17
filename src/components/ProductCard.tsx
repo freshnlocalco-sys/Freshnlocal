@@ -326,6 +326,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                   initialQuantity={displayQuantity}
                   isHoreca={isHoreca}
                   minQuantity={minQty}
+                  isDiscrete={isDiscrete}
                   className="font-bold text-[10px] sm:text-[11px] flex-1 text-center bg-transparent outline-none w-full border-b border-dashed border-primary/30 focus:border-primary mx-1"
                   onUpdate={(val) => {
                     if (quantity > 0) {

@@ -620,6 +620,7 @@ export function Cart() {
                           initialQuantity={item.quantity}
                           isHoreca={isHoreca}
                           minQuantity={minQty}
+                          isDiscrete={isDiscrete}
                           className="w-14 text-center font-bold text-xs text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
                           onUpdate={(val) => {
                             if (val >= minQty) {

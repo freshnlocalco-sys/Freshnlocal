@@ -117,7 +117,11 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
 }
 
 export function getUnitQuantityConfig(unitStr: string | undefined): { initialQty: number; step: number; isDiscrete: boolean } {
-  // Treat every pack/variant size (like 250g, 500g, 1Kg, 1 Litre, etc.) as 1 Unit
+  if (!unitStr) return { initialQty: 1, step: 1, isDiscrete: true };
+  const lower = unitStr.trim().toLowerCase();
+  if (['kg', 'kilogram', 'kilograms', 'l', 'ltr', 'litre', 'litres'].includes(lower)) {
+    return { initialQty: 1, step: 0.5, isDiscrete: false };
+  }
   return { initialQty: 1, step: 1, isDiscrete: true };
 }
 

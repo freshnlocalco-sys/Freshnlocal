@@ -414,6 +414,7 @@ export function ProductDetail() {
                           initialQuantity={quantity}
                           isHoreca={isHoreca}
                           minQuantity={minQty}
+                          isDiscrete={isDiscrete}
                           className="w-12 text-center text-xs font-black text-foreground bg-transparent outline-none border-b border-dashed border-foreground/30 focus:border-primary mx-1 py-1"
                           onUpdate={(val) => setQuantity(val)}
                           onRemove={() => setQuantity(isHoreca ? 0.01 : initialQty)}
