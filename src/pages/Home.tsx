@@ -424,7 +424,38 @@ export function Home() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isLoadingHeroBanners, setIsLoadingHeroBanners] = useState(true);
   const [homeSearchQuery, setHomeSearchQuery] = useState('');
+  const [recipeIndex, setRecipeIndex] = useState(0);
+  const [isRecipeFading, setIsRecipeFading] = useState(true);
   const navigate = useNavigate();
+
+  const RECIPE_SUGGESTIONS = [
+    'Surat Locho',
+    'Undhiyu',
+    'Surat Khaman',
+    'Ghari',
+    'Paneer Tikka Masala',
+    'Butter Chicken',
+    'Pav Bhaji',
+    'Creamy Mushroom Risotto',
+    'Avocado Toast',
+    'Dal Makhani',
+    'Chole Bhature',
+    'Truffle Pasta'
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIsRecipeFading(false);
+      setTimeout(() => {
+        setRecipeIndex(prev => (prev + 1) % RECIPE_SUGGESTIONS.length);
+        setIsRecipeFading(true);
+      }, 300);
+    }, 2500);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentRecipe = RECIPE_SUGGESTIONS[recipeIndex];
 
   const handleHomeSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -638,9 +669,14 @@ export function Home() {
             
             {/* Custom Placeholder */}
             {!homeSearchQuery && (
-              <div className="absolute left-[4.75rem] sm:left-[5.75rem] top-1/2 -translate-y-1/2 pointer-events-none flex flex-col justify-center">
-                <span className="text-lg sm:text-xl font-semibold text-muted-foreground/70 leading-tight">Ask Freshi</span>
-                <span className="text-[11px] sm:text-xs text-muted-foreground/50 font-medium">Your Ai Recipe Assistant By FNL</span>
+              <div className="absolute left-[3.75rem] sm:left-[5.75rem] right-20 sm:right-36 top-1/2 -translate-y-1/2 pointer-events-none flex flex-col justify-center pr-1">
+                <div className="flex items-center gap-1 text-[11px] sm:text-xl font-bold text-foreground overflow-hidden">
+                  <span className="text-foreground shrink-0">Ask Freshi</span>
+                  <span className={`text-muted-foreground transition-opacity duration-300 font-normal truncate max-w-[110px] sm:max-w-none ${isRecipeFading ? 'opacity-100' : 'opacity-0'}`}>
+                    "{currentRecipe}"
+                  </span>
+                </div>
+                <span className="text-[9px] sm:text-xs text-muted-foreground/60 font-medium truncate">Your AI Recipe Assistant By FNL</span>
               </div>
             )}
             
@@ -648,7 +684,7 @@ export function Home() {
               type="text"
               value={homeSearchQuery}
               onChange={(e) => setHomeSearchQuery(e.target.value)}
-              className="w-full h-16 sm:h-20 pl-[4.75rem] sm:pl-[5.75rem] pr-28 sm:pr-36 bg-transparent border-none outline-none text-lg sm:text-xl font-medium relative z-10"
+              className="w-full h-16 sm:h-20 pl-[3.75rem] sm:pl-[5.75rem] pr-20 sm:pr-36 bg-transparent border-none outline-none text-xs sm:text-xl font-medium relative z-10"
             />
             <button 
               type="submit"
