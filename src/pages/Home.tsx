@@ -457,7 +457,7 @@ export function Home() {
         setRecipeIndex(prev => (prev + 1) % RECIPE_SUGGESTIONS.length);
         setIsRecipeFading(true);
       }, 300);
-    }, 2500);
+    }, 3000);
 
     return () => clearInterval(timer);
   }, []);
