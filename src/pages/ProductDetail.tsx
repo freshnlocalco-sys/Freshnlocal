@@ -389,7 +389,7 @@ export function ProductDetail() {
           </div>
           
           {product.description && (
-            <div className="prose prose-sm font-sans text-xs text-muted-foreground leading-relaxed font-semibold border-t border-b border-border py-6">
+            <div className="hidden md:block prose prose-sm font-sans text-xs text-muted-foreground leading-relaxed font-semibold border-t border-b border-border py-6">
               <p>{product.description}</p>
             </div>
           )}
@@ -478,6 +478,13 @@ export function ProductDetail() {
                 <span>No-Ask Refund</span>
               </div>
             </div>
+
+            {/* Mobile description placed below Checkout & trust metrics */}
+            {product.description && (
+              <div className="md:hidden prose prose-sm font-sans text-xs text-muted-foreground leading-relaxed font-semibold border-t border-border pt-6 mt-6">
+                <p>{product.description}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
