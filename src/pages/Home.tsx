@@ -38,11 +38,13 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const displayProducts = products.slice(0, 13);
-  const duplicatedProducts = [...displayProducts, ...displayProducts];
+  const shouldLoop = displayProducts.length > 4;
+  const displayList = shouldLoop ? [...displayProducts, ...displayProducts] : displayProducts;
   const [isHovered, setIsHovered] = useState(false);
 
   // Buttery-smooth delta-based auto-scroll loop (gentle, comfortable pace)
   useEffect(() => {
+    if (!shouldLoop) return;
     let animationFrameId: number;
     let lastTimestamp: number | null = null;
     const scrollSpeed = 18; // Pixels per second (gentle drifting pace)
@@ -71,7 +73,7 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isHovered]);
+  }, [isHovered, shouldLoop]);
 
 
   return (
@@ -98,7 +100,7 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
         onTouchEnd={() => setIsHovered(false)}
         className="w-full pb-6 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-2 will-change-scroll-position"
       >
-        {duplicatedProducts.map((product, idx) => (
+        {displayList.map((product, idx) => (
           <div key={`${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 flex">
             <div className="w-full">
               <ProductCard 
@@ -119,7 +121,8 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
   const [isHovered, setIsHovered] = useState(false);
   const { addItem } = useCart();
   const navigate = useNavigate();
-  const duplicatedProducts = [...products, ...products];
+  const shouldLoop = products.length > 4;
+  const displayList = shouldLoop ? [...products, ...products] : products;
 
   const handleReorderAll = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -144,6 +147,7 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
   };
 
   useEffect(() => {
+    if (!shouldLoop) return;
     let animationFrameId: number;
     let lastTimestamp: number | null = null;
     const scrollSpeed = 18; // Pixels per second (gentle drifting pace)
@@ -172,7 +176,7 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isHovered]);
+  }, [isHovered, shouldLoop]);
 
   return (
     <div 
@@ -221,7 +225,7 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
         onTouchEnd={() => setIsHovered(false)}
         className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1 will-change-scroll-position"
       >
-        {duplicatedProducts.map((product, idx) => (
+        {displayList.map((product, idx) => (
           <div key={`reorder-${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 flex">
             <div className="w-full">
               <ProductCard 
@@ -242,9 +246,11 @@ function RecentlyViewedCarousel({ products, handleAddToCart, onQuickView }: { pr
   const { clearRecentlyViewed } = useRecentlyViewed();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const duplicatedProducts = [...products, ...products];
+  const shouldLoop = products.length > 4;
+  const displayList = shouldLoop ? [...products, ...products] : products;
 
   useEffect(() => {
+    if (!shouldLoop) return;
     let animationFrameId: number;
     let lastTimestamp: number | null = null;
     const scrollSpeed = 18; // Pixels per second (gentle drifting pace)
@@ -273,7 +279,7 @@ function RecentlyViewedCarousel({ products, handleAddToCart, onQuickView }: { pr
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isHovered]);
+  }, [isHovered, shouldLoop]);
 
   return (
     <div 
@@ -316,7 +322,7 @@ function RecentlyViewedCarousel({ products, handleAddToCart, onQuickView }: { pr
         onTouchEnd={() => setIsHovered(false)}
         className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1 will-change-scroll-position"
       >
-        {duplicatedProducts.map((product, idx) => (
+        {displayList.map((product, idx) => (
           <div key={`recent-${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 flex">
             <div className="w-full">
               <ProductCard 
