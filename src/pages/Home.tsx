@@ -38,18 +38,19 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const displayProducts = products.slice(0, 13);
+  const duplicatedProducts = [...displayProducts, ...displayProducts];
   const [isHovered, setIsHovered] = useState(false);
 
-  // Auto-scroll loop
+  // Auto-scroll loop in one continuous direction
   useEffect(() => {
     let animationFrameId: number;
     let accumulatedScroll = 0;
-    const pixelsPerFrame = 0.5; // Adjust this value for speed
+    const pixelsPerFrame = 0.5; // Adjust speed
     
     const smoothScroll = () => {
       if (!isHovered && scrollContainerRef.current) {
         const container = scrollContainerRef.current;
-        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        const halfWidth = container.scrollWidth / 2;
         
         accumulatedScroll += pixelsPerFrame;
         
@@ -57,9 +58,8 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
           const scrollPixels = Math.floor(accumulatedScroll);
           accumulatedScroll -= scrollPixels;
           
-          if (container.scrollLeft >= maxScrollLeft - 1) {
-            // Reached the end, scroll back to start seamlessly
-            container.scrollLeft = 0;
+          if (container.scrollLeft >= halfWidth) {
+            container.scrollLeft -= halfWidth;
           } else {
             container.scrollLeft += scrollPixels;
           }
@@ -99,8 +99,8 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
         onTouchEnd={() => setIsHovered(false)}
         className="w-full pb-6 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-2"
       >
-        {displayProducts.map(product => (
-          <div key={product.id} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+        {duplicatedProducts.map((product, idx) => (
+          <div key={`${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
             <div className="w-full">
               <ProductCard 
                 product={product}
@@ -120,6 +120,7 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
   const [isHovered, setIsHovered] = useState(false);
   const { addItem } = useCart();
   const navigate = useNavigate();
+  const duplicatedProducts = [...products, ...products];
 
   const handleReorderAll = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -151,7 +152,7 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
     const smoothScroll = () => {
       if (!isHovered && scrollContainerRef.current) {
         const container = scrollContainerRef.current;
-        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        const halfWidth = container.scrollWidth / 2;
         
         accumulatedScroll += pixelsPerFrame;
         
@@ -159,8 +160,8 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
           const scrollPixels = Math.floor(accumulatedScroll);
           accumulatedScroll -= scrollPixels;
           
-          if (container.scrollLeft >= maxScrollLeft - 1) {
-            container.scrollLeft = 0;
+          if (container.scrollLeft >= halfWidth) {
+            container.scrollLeft -= halfWidth;
           } else {
             container.scrollLeft += scrollPixels;
           }
@@ -222,8 +223,8 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
         onTouchEnd={() => setIsHovered(false)}
         className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1"
       >
-        {products.map(product => (
-          <div key={`reorder-${product.id}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+        {duplicatedProducts.map((product, idx) => (
+          <div key={`reorder-${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
             <div className="w-full">
               <ProductCard 
                 product={product}
@@ -243,6 +244,40 @@ function RecentlyViewedCarousel({ products, handleAddToCart, onQuickView }: { pr
   const { clearRecentlyViewed } = useRecentlyViewed();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const duplicatedProducts = [...products, ...products];
+
+  useEffect(() => {
+    let animationFrameId: number;
+    let accumulatedScroll = 0;
+    const pixelsPerFrame = 0.5;
+    
+    const smoothScroll = () => {
+      if (!isHovered && scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const halfWidth = container.scrollWidth / 2;
+        
+        accumulatedScroll += pixelsPerFrame;
+        
+        if (accumulatedScroll >= 1) {
+          const scrollPixels = Math.floor(accumulatedScroll);
+          accumulatedScroll -= scrollPixels;
+          
+          if (container.scrollLeft >= halfWidth) {
+            container.scrollLeft -= halfWidth;
+          } else {
+            container.scrollLeft += scrollPixels;
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(smoothScroll);
+    };
+
+    animationFrameId = requestAnimationFrame(smoothScroll);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isHovered]);
 
   return (
     <div 
@@ -284,8 +319,8 @@ function RecentlyViewedCarousel({ products, handleAddToCart, onQuickView }: { pr
         onTouchEnd={() => setIsHovered(false)}
         className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1"
       >
-        {products.map(product => (
-          <div key={`recent-${product.id}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+        {duplicatedProducts.map((product, idx) => (
+          <div key={`recent-${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
             <div className="w-full">
               <ProductCard 
                 product={product}

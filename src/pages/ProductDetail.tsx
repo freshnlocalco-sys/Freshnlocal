@@ -388,12 +388,6 @@ export function ProductDetail() {
             )}
           </div>
           
-          {product.description && (
-            <div className="hidden md:block prose prose-sm font-sans text-xs text-muted-foreground leading-relaxed font-semibold border-t border-b border-border py-6">
-              <p>{product.description}</p>
-            </div>
-          )}
-
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
@@ -479,9 +473,9 @@ export function ProductDetail() {
               </div>
             </div>
 
-            {/* Mobile description placed below Checkout & trust metrics */}
+            {/* Description placed below Checkout & trust metrics for all devices */}
             {product.description && (
-              <div className="md:hidden prose prose-sm font-sans text-xs text-muted-foreground leading-relaxed font-semibold border-t border-border pt-6 mt-6">
+              <div className="prose prose-sm font-sans text-xs text-muted-foreground leading-relaxed font-semibold border-t border-border pt-6 mt-6">
                 <p>{product.description}</p>
               </div>
             )}
