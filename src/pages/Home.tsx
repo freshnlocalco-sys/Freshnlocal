@@ -41,27 +41,25 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
   const duplicatedProducts = [...displayProducts, ...displayProducts];
   const [isHovered, setIsHovered] = useState(false);
 
-  // Auto-scroll loop in one continuous direction
+  // Buttery-smooth delta-based auto-scroll loop
   useEffect(() => {
     let animationFrameId: number;
-    let accumulatedScroll = 0;
-    const pixelsPerFrame = 0.5; // Adjust speed
+    let lastTimestamp: number | null = null;
+    const scrollSpeed = 40; // Pixels per second
     
-    const smoothScroll = () => {
+    const smoothScroll = (timestamp: number) => {
+      if (lastTimestamp === null) lastTimestamp = timestamp;
+      const elapsed = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
       if (!isHovered && scrollContainerRef.current) {
         const container = scrollContainerRef.current;
         const halfWidth = container.scrollWidth / 2;
         
-        accumulatedScroll += pixelsPerFrame;
-        
-        if (accumulatedScroll >= 1) {
-          const scrollPixels = Math.floor(accumulatedScroll);
-          accumulatedScroll -= scrollPixels;
-          
+        if (halfWidth > 0) {
+          container.scrollLeft += scrollSpeed * Math.min(elapsed, 0.1);
           if (container.scrollLeft >= halfWidth) {
             container.scrollLeft -= halfWidth;
-          } else {
-            container.scrollLeft += scrollPixels;
           }
         }
       }
@@ -93,14 +91,15 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
       
       <div 
         ref={scrollContainerRef}
+        style={{ scrollBehavior: 'auto' }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onTouchStart={() => setIsHovered(true)}
         onTouchEnd={() => setIsHovered(false)}
-        className="w-full pb-6 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-2"
+        className="w-full pb-6 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-2 will-change-scroll-position"
       >
         {duplicatedProducts.map((product, idx) => (
-          <div key={`${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+          <div key={`${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 flex">
             <div className="w-full">
               <ProductCard 
                 product={product}
@@ -146,24 +145,22 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
 
   useEffect(() => {
     let animationFrameId: number;
-    let accumulatedScroll = 0;
-    const pixelsPerFrame = 0.5;
+    let lastTimestamp: number | null = null;
+    const scrollSpeed = 40; // Pixels per second
     
-    const smoothScroll = () => {
+    const smoothScroll = (timestamp: number) => {
+      if (lastTimestamp === null) lastTimestamp = timestamp;
+      const elapsed = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
       if (!isHovered && scrollContainerRef.current) {
         const container = scrollContainerRef.current;
         const halfWidth = container.scrollWidth / 2;
         
-        accumulatedScroll += pixelsPerFrame;
-        
-        if (accumulatedScroll >= 1) {
-          const scrollPixels = Math.floor(accumulatedScroll);
-          accumulatedScroll -= scrollPixels;
-          
+        if (halfWidth > 0) {
+          container.scrollLeft += scrollSpeed * Math.min(elapsed, 0.1);
           if (container.scrollLeft >= halfWidth) {
             container.scrollLeft -= halfWidth;
-          } else {
-            container.scrollLeft += scrollPixels;
           }
         }
       }
@@ -217,14 +214,15 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
       
       <div 
         ref={scrollContainerRef}
+        style={{ scrollBehavior: 'auto' }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onTouchStart={() => setIsHovered(true)}
         onTouchEnd={() => setIsHovered(false)}
-        className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1"
+        className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1 will-change-scroll-position"
       >
         {duplicatedProducts.map((product, idx) => (
-          <div key={`reorder-${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+          <div key={`reorder-${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 flex">
             <div className="w-full">
               <ProductCard 
                 product={product}
@@ -248,24 +246,22 @@ function RecentlyViewedCarousel({ products, handleAddToCart, onQuickView }: { pr
 
   useEffect(() => {
     let animationFrameId: number;
-    let accumulatedScroll = 0;
-    const pixelsPerFrame = 0.5;
+    let lastTimestamp: number | null = null;
+    const scrollSpeed = 40; // Pixels per second
     
-    const smoothScroll = () => {
+    const smoothScroll = (timestamp: number) => {
+      if (lastTimestamp === null) lastTimestamp = timestamp;
+      const elapsed = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
       if (!isHovered && scrollContainerRef.current) {
         const container = scrollContainerRef.current;
         const halfWidth = container.scrollWidth / 2;
         
-        accumulatedScroll += pixelsPerFrame;
-        
-        if (accumulatedScroll >= 1) {
-          const scrollPixels = Math.floor(accumulatedScroll);
-          accumulatedScroll -= scrollPixels;
-          
+        if (halfWidth > 0) {
+          container.scrollLeft += scrollSpeed * Math.min(elapsed, 0.1);
           if (container.scrollLeft >= halfWidth) {
             container.scrollLeft -= halfWidth;
-          } else {
-            container.scrollLeft += scrollPixels;
           }
         }
       }
@@ -313,14 +309,15 @@ function RecentlyViewedCarousel({ products, handleAddToCart, onQuickView }: { pr
       
       <div 
         ref={scrollContainerRef}
+        style={{ scrollBehavior: 'auto' }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onTouchStart={() => setIsHovered(true)}
         onTouchEnd={() => setIsHovered(false)}
-        className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1"
+        className="w-full pb-2 overflow-x-auto no-scrollbar flex gap-3 sm:gap-4 lg:gap-6 px-1 will-change-scroll-position"
       >
         {duplicatedProducts.map((product, idx) => (
-          <div key={`recent-${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 snap-start flex">
+          <div key={`recent-${product.id}-${idx}`} className="w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-18px)] xl:w-[calc(25%-18px)] shrink-0 flex">
             <div className="w-full">
               <ProductCard 
                 product={product}
@@ -751,9 +748,9 @@ export function Home() {
           >
             <div className="relative w-full aspect-[4/3] md:aspect-auto md:rounded-[24px] overflow-hidden bg-secondary/30 md:shadow-xs">
               <motion.div
-                className="flex w-full h-full gap-0 md:gap-4"
+                className="flex w-full h-full gap-0 md:gap-4 will-change-transform transform-gpu"
                 animate={{ x: isDesktop ? `calc(-${currentBannerIndex * 50}% - ${currentBannerIndex * 8}px)` : `-${currentBannerIndex * 100}%` }}
-                transition={{ type: "tween", ease: [0.25, 1, 0.5, 1], duration: 0.6 }}
+                transition={{ type: "tween", ease: [0.16, 1, 0.3, 1], duration: 0.8 }}
               >
                 {Array(10).fill(heroBanners).flat().map((banner, idx) => (
                   <div key={idx} className="w-full md:w-[calc(50%-8px)] aspect-[4/3] shrink-0 relative rounded-xl md:rounded-[20px] overflow-hidden shadow-xs border border-border/10">
