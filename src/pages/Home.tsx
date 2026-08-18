@@ -423,6 +423,13 @@ export function Home() {
   const [heroBanners, setHeroBanners] = useState<{id: string, imageUrl: string, link: string}[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isLoadingHeroBanners, setIsLoadingHeroBanners] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [homeSearchQuery, setHomeSearchQuery] = useState('');
   const [recipeIndex, setRecipeIndex] = useState(0);
   const [isRecipeFading, setIsRecipeFading] = useState(true);
@@ -583,7 +590,7 @@ export function Home() {
     const interval = setInterval(() => {
       if (Date.now() - lastInteractionTimeRef.current >= 7000) {
         setDirection(1);
-        setCurrentBannerIndex(prev => (prev + 1) % heroBanners.length);
+        setCurrentBannerIndex(prev => prev + 1);
       }
     }, 3000);
     return () => clearInterval(interval);
@@ -592,19 +599,20 @@ export function Home() {
   const slideLeft = () => {
     lastInteractionTimeRef.current = Date.now();
     setDirection(-1);
-    setCurrentBannerIndex(prev => (prev - 1 + heroBanners.length) % heroBanners.length);
+    setCurrentBannerIndex(prev => Math.max(0, prev - 1));
   };
 
   const slideRight = () => {
     lastInteractionTimeRef.current = Date.now();
     setDirection(1);
-    setCurrentBannerIndex(prev => (prev + 1) % heroBanners.length);
+    setCurrentBannerIndex(prev => prev + 1);
   };
 
   const setBannerIndex = (idx: number) => {
     lastInteractionTimeRef.current = Date.now();
-    setDirection(idx > currentBannerIndex ? 1 : -1);
-    setCurrentBannerIndex(idx);
+    setDirection(1);
+    const currentCycle = Math.floor(currentBannerIndex / heroBanners.length);
+    setCurrentBannerIndex(currentCycle * heroBanners.length + idx);
   };
 
   const handleAddToCart = (product: Product, quantity: number = 1) => {
@@ -706,14 +714,14 @@ export function Home() {
             transition={{ duration: 0.8 }}
             className="w-full md:max-w-6xl md:mx-auto md:px-6 relative group"
           >
-            <div className="relative w-full aspect-[4/3] md:rounded-[32px] overflow-hidden bg-secondary/50 md:shadow-sm">
+            <div className="relative w-full aspect-[4/3] md:aspect-auto md:rounded-[24px] overflow-hidden bg-secondary/30 md:shadow-xs">
               <motion.div
-                className="flex w-full h-full"
-                animate={{ x: `-${currentBannerIndex * 100}%` }}
+                className="flex w-full h-full gap-0 md:gap-4"
+                animate={{ x: isDesktop ? `calc(-${currentBannerIndex * 50}% - ${currentBannerIndex * 8}px)` : `-${currentBannerIndex * 100}%` }}
                 transition={{ type: "tween", ease: [0.25, 1, 0.5, 1], duration: 0.6 }}
               >
-                {heroBanners.map((banner, idx) => (
-                  <div key={idx} className="w-full h-full shrink-0 relative">
+                {Array(10).fill(heroBanners).flat().map((banner, idx) => (
+                  <div key={idx} className="w-full md:w-[calc(50%-8px)] aspect-[4/3] shrink-0 relative rounded-xl md:rounded-[20px] overflow-hidden shadow-xs border border-border/10">
                     {banner.link ? (
                       (() => {
                         const isExternal = banner.link.startsWith('http') && !banner.link.includes('freshnlocal.co');
@@ -754,7 +762,7 @@ export function Home() {
                       key={idx}
                       onClick={() => setBannerIndex(idx)}
                       className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
-                        idx === currentBannerIndex 
+                        idx === (currentBannerIndex % heroBanners.length)
                           ? 'w-6 sm:w-8 bg-white' 
                           : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white/80'
                       }`}
