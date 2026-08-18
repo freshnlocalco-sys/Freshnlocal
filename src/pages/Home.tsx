@@ -41,11 +41,11 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
   const duplicatedProducts = [...displayProducts, ...displayProducts];
   const [isHovered, setIsHovered] = useState(false);
 
-  // Buttery-smooth delta-based auto-scroll loop
+  // Buttery-smooth delta-based auto-scroll loop (gentle, comfortable pace)
   useEffect(() => {
     let animationFrameId: number;
     let lastTimestamp: number | null = null;
-    const scrollSpeed = 40; // Pixels per second
+    const scrollSpeed = 18; // Pixels per second (gentle drifting pace)
     
     const smoothScroll = (timestamp: number) => {
       if (lastTimestamp === null) lastTimestamp = timestamp;
@@ -146,7 +146,7 @@ function ReorderCarousel({ products, handleAddToCart, onQuickView }: { products:
   useEffect(() => {
     let animationFrameId: number;
     let lastTimestamp: number | null = null;
-    const scrollSpeed = 40; // Pixels per second
+    const scrollSpeed = 18; // Pixels per second (gentle drifting pace)
     
     const smoothScroll = (timestamp: number) => {
       if (lastTimestamp === null) lastTimestamp = timestamp;
@@ -247,7 +247,7 @@ function RecentlyViewedCarousel({ products, handleAddToCart, onQuickView }: { pr
   useEffect(() => {
     let animationFrameId: number;
     let lastTimestamp: number | null = null;
-    const scrollSpeed = 40; // Pixels per second
+    const scrollSpeed = 18; // Pixels per second (gentle drifting pace)
     
     const smoothScroll = (timestamp: number) => {
       if (lastTimestamp === null) lastTimestamp = timestamp;
