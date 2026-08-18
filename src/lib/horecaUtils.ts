@@ -52,7 +52,7 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
     if (weightInKg <= 0) return null;
     const basePrice = price / weightInKg;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
-    return `₹${formattedPrice}/1KG`;
+    return `₹${formattedPrice}/KG`;
   }
   
   // Volume units
@@ -61,7 +61,7 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
     if (volumeInLitre <= 0) return null;
     const basePrice = price / volumeInLitre;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
-    return `₹${formattedPrice}/1 Litre`;
+    return `₹${formattedPrice}/Litre`;
   }
   
   // Piece units (PC)
@@ -69,7 +69,7 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
     if (val <= 0) return null;
     const basePrice = price / val;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
-    return `₹${formattedPrice}/1 PC`;
+    return `₹${formattedPrice}/PC`;
   }
 
   // Pack units (PACK)
@@ -77,7 +77,7 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
     if (val <= 0) return null;
     const basePrice = price / val;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
-    return `₹${formattedPrice}/1 PACK`;
+    return `₹${formattedPrice}/PACK`;
   }
 
   // Box units
@@ -85,7 +85,7 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
     if (val <= 0) return null;
     const basePrice = price / val;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
-    return `₹${formattedPrice}/1 BOX`;
+    return `₹${formattedPrice}/BOX`;
   }
 
   // Bottle units
@@ -93,7 +93,7 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
     if (val <= 0) return null;
     const basePrice = price / val;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
-    return `₹${formattedPrice}/1 BOTTLE`;
+    return `₹${formattedPrice}/BOTTLE`;
   }
 
   // Bunch units
@@ -101,7 +101,7 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
     if (val <= 0) return null;
     const basePrice = price / val;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
-    return `₹${formattedPrice}/1 BUNCH`;
+    return `₹${formattedPrice}/BUNCH`;
   }
 
   // Fallback for custom/other units
@@ -110,10 +110,18 @@ export function calculateBaseUnitPrice(price: number, unitStr: string | undefine
     const basePrice = price / val;
     const formattedPrice = basePrice % 1 === 0 ? basePrice.toFixed(0) : basePrice.toFixed(1);
     const unitLabel = unit.toUpperCase();
-    return `₹${formattedPrice}/1 ${unitLabel}`;
+    return `₹${formattedPrice}/${unitLabel}`;
   }
   
   return null;
+}
+
+export function formatDisplayUnit(unitStr: string | undefined): string {
+  if (!unitStr) return '';
+  const trimmed = unitStr.trim();
+  // Remove leading '1 ' (case insensitive) if followed by unit
+  const cleaned = trimmed.replace(/^1\s+/i, '');
+  return cleaned;
 }
 
 export function getUnitQuantityConfig(unitStr: string | undefined): { initialQty: number; step: number; isDiscrete: boolean } {

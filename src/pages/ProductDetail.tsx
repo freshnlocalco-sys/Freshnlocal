@@ -14,7 +14,7 @@ import { useRecentlyViewed } from '../store/useRecentlyViewed';
 import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { ProductCard } from '../components/ProductCard';
 import { ProductReviews } from '../components/ProductReviews';
-import { calculateHorecaPrice, getBaseUnit, parseUnitScale, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
+import { calculateHorecaPrice, getBaseUnit, parseUnitScale, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity, formatDisplayUnit } from '../lib/horecaUtils';
 import toast from 'react-hot-toast';
 
 import { QuantityInput } from '../components/QuantityInput';
@@ -309,7 +309,7 @@ export function ProductDetail() {
             {allVariants.length > 1 ? (
               <div className="flex flex-wrap gap-2">
                 {allVariants.map((v, idx) => {
-                  const vDisplayUnit = isHoreca ? (v.horecaUnit || v.unit || '1KG') : v.unit;
+                  const vDisplayUnit = formatDisplayUnit(isHoreca ? (v.horecaUnit || v.unit || 'KG') : v.unit);
                   const vProductId = vDisplayUnit ? `${product.id}-${vDisplayUnit.trim()}` : product.id;
                   const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === vDisplayUnit);
                   const vQty = vCartItem ? vCartItem.quantity : 0;
@@ -336,7 +336,7 @@ export function ProductDetail() {
               </div>
             ) : currentUnit && (
               <div className="text-xs uppercase tracking-wider font-extrabold text-muted-foreground bg-white border border-border/80 px-4 py-2 rounded-xl inline-block shadow-xs">
-                Pack / Unit Size: <span className="text-primary font-black ml-1 font-sans">{currentUnit}</span>
+                Pack / Unit Size: <span className="text-primary font-black ml-1 font-sans">{formatDisplayUnit(currentUnit)}</span>
               </div>
             )}
             

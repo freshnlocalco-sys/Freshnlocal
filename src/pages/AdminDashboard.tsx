@@ -1336,7 +1336,7 @@ export function AdminDashboard() {
           `"${(product.category || '').replace(/"/g, '""')}"`,
           `"${(product.baseUnit || product.quantityUnit || 'Kg').replace(/"/g, '""')}"`,
           `"${product.basePrice !== undefined && product.basePrice !== null ? product.basePrice : ''}"`,
-          `"${(product.unit || (product.quantityValue ? `${product.quantityValue} ${product.quantityUnit || 'Kg'}` : '1 Kg')).replace(/"/g, '""')}"`,
+          `"${(product.unit || (product.quantityValue ? `${product.quantityValue} ${product.quantityUnit || 'Kg'}` : 'Kg')).replace(/"/g, '""')}"`,
           `"${product.price !== undefined && product.price !== null ? product.price : ''}"`,
           `"${(v1 ? v1.unit || '' : '').replace(/"/g, '""')}"`,
           `"${v1 && v1.price !== undefined && v1.price !== null ? v1.price : ''}"`,
@@ -3261,6 +3261,10 @@ export function AdminDashboard() {
             'Base Price': finalBasePrice,
             'Base MRP': finalBaseMRP,
             'Base HoReCa Price': finalBaseHorecaPrice,
+            'Variant 1 Unit': v1 ? (v1.unit || `${v1.quantityValue || ''}${v1.quantityUnit || ''}`) : '',
+            'Variant 1 Price': v1 ? (v1.price !== undefined ? v1.price : '') : '',
+            'Variant 2 Unit': v2 ? (v2.unit || `${v2.quantityValue || ''}${v2.quantityUnit || ''}`) : '',
+            'Variant 2 Price': v2 ? (v2.price !== undefined ? v2.price : '') : '',
             'Stock': p.stock !== undefined && p.stock !== null ? p.stock : '',
             'In Stock': p.inStock ? 'TRUE' : 'FALSE'
           };
@@ -3639,24 +3643,27 @@ export function AdminDashboard() {
 
         if (newVariants.length > 0) {
           updated.variants = newVariants;
-        } else if (match && match.variants && match.variants.length > 0 && !parsed.secondUnit) {
-          // Keep existing variants recalculated if base price changed
-          updated.variants = match.variants.map((v: any) => {
-            let vQtyValue = v.quantityValue !== undefined && v.quantityValue !== null ? String(v.quantityValue) : '';
-            let vQtyUnit = v.quantityUnit || 'Kg';
-            if (!vQtyValue) {
-              const parsedV = parseQuantityAndUnit(v.unit);
-              vQtyValue = parsedV.qVal || '1';
-              vQtyUnit = parsedV.qUnit || 'Kg';
-            }
-            
-            return {
-              ...v,
-              price: Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.price),
-              originalPrice: updated.baseOriginalPrice ? Number(calculatePriceFromBase(updated.baseOriginalPrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.originalPrice) : v.originalPrice,
-              horecaPrice: updated.baseHorecaPrice ? Number(calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.horecaPrice) : v.horecaPrice
-            };
-          });
+        } else {
+          const existingMatch = match || products.find(p => p.name.toLowerCase().trim() === parsed.name.toLowerCase().trim());
+          if (existingMatch && existingMatch.variants && existingMatch.variants.length > 0) {
+            // Keep existing variants and recalculate prices against the new base price
+            updated.variants = existingMatch.variants.map((v: any) => {
+              let vQtyValue = v.quantityValue !== undefined && v.quantityValue !== null ? String(v.quantityValue) : '';
+              let vQtyUnit = v.quantityUnit || 'Kg';
+              if (!vQtyValue) {
+                const parsedV = parseQuantityAndUnit(v.unit);
+                vQtyValue = parsedV.qVal || '1';
+                vQtyUnit = parsedV.qUnit || 'Kg';
+              }
+              
+              return {
+                ...v,
+                price: Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.price),
+                originalPrice: updated.baseOriginalPrice ? Number(calculatePriceFromBase(updated.baseOriginalPrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.originalPrice) : v.originalPrice,
+                horecaPrice: updated.baseHorecaPrice ? Number(calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.horecaPrice) : v.horecaPrice
+              };
+            });
+          }
         }
 
         if (match) {
@@ -3807,7 +3814,7 @@ export function AdminDashboard() {
     ];
     const sampleData = [
       ['', 'Pear Babugosha', 'exotic fruits', 'Kg', '250', '250 g', '62.5', '500 g', '125', '250 g', '150', '', '', '100', 'TRUE'],
-      ['', 'Gourmet Red Apples', 'exotic fruits', 'Kg', '180', '1 Kg', '180', '500 g', '90', '1 Kg', '150', '', '', '80', 'TRUE']
+      ['', 'Gourmet Red Apples', 'exotic fruits', 'Kg', '180', 'Kg', '180', '500 g', '90', 'Kg', '150', '', '', '80', 'TRUE']
     ];
 
     const csvRows = [

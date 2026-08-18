@@ -7,7 +7,7 @@ import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
 import { useRecentlyViewed } from '../store/useRecentlyViewed';
-import { calculateHorecaPrice, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
+import { calculateHorecaPrice, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity, formatDisplayUnit } from '../lib/horecaUtils';
 import { useHorecaPrices } from '../store/useHorecaPrices';
 import { QuantityInput } from './QuantityInput';
 import { motion } from 'motion/react';
@@ -208,7 +208,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
           {allVariants.length > 1 ? (
             <div className="flex flex-wrap gap-1 mt-1 mb-1">
               {allVariants.map((v, idx) => {
-                const vDisplayUnit = isHoreca ? (v.horecaUnit || v.unit || '1KG') : v.unit;
+                const vDisplayUnit = formatDisplayUnit(isHoreca ? (v.horecaUnit || v.unit || 'KG') : v.unit);
                 const vProductId = vDisplayUnit ? `${product.id}-${vDisplayUnit.trim()}` : product.id;
                 const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === vDisplayUnit);
                 const vQty = vCartItem ? vCartItem.quantity : 0;
@@ -231,7 +231,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             </div>
           ) : currentUnit && (
             <span className="inline-block bg-secondary text-secondary-foreground text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded font-medium self-start mt-0.5">
-              {currentUnit}
+              {formatDisplayUnit(currentUnit)}
             </span>
           )}
 
@@ -245,7 +245,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                     </div>
                     <div className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-[8px] sm:text-[9px] font-bold self-start">
                       <Building2 className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
-                      <span>Last Price ({currentUnit || '1KG'})</span>
+                      <span>Last Price ({formatDisplayUnit(currentUnit) || 'KG'})</span>
                     </div>
                   </div>
                 ) : (
@@ -255,7 +255,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
                     </div>
                     <div className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[8px] sm:text-[9px] font-bold self-start">
                       <Building2 className="w-2.5 h-2.5 text-primary shrink-0" />
-                      <span>B2B Contract ({currentUnit || '1KG'})</span>
+                      <span>B2B Contract ({formatDisplayUnit(currentUnit) || 'KG'})</span>
                     </div>
                   </div>
                 )}

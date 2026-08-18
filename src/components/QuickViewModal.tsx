@@ -5,7 +5,7 @@ import { useWishlist } from '../store/useWishlist';
 import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
-import { calculateHorecaPrice, getBaseUnit, parseUnitScale, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
+import { calculateHorecaPrice, getBaseUnit, parseUnitScale, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity, formatDisplayUnit } from '../lib/horecaUtils';
 import { useHorecaPrices } from '../store/useHorecaPrices';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
@@ -191,7 +191,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
             {allVariants.length > 1 ? (
               <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
                 {allVariants.map((v, idx) => {
-                  const vDisplayUnit = isHoreca ? (v.horecaUnit || v.unit || '1KG') : v.unit;
+                  const vDisplayUnit = formatDisplayUnit(isHoreca ? (v.horecaUnit || v.unit || 'KG') : v.unit);
                   return (
                     <button
                       key={idx}
@@ -209,7 +209,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
               </div>
             ) : currentUnit && (
               <div className="mb-4 md:mb-6 text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground border border-border px-3 py-1.5 rounded-lg inline-block">
-                Pack / Unit Size: <span className="text-foreground ml-1">{currentUnit}</span>
+                Pack / Unit Size: <span className="text-foreground ml-1">{formatDisplayUnit(currentUnit)}</span>
               </div>
             )}
 
