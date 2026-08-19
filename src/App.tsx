@@ -100,17 +100,6 @@ function CanonicalLink() {
   return null;
 }
 
-function ProductDumper() {
-  const { products, fetchProducts } = useProducts();
-  useEffect(() => { fetchProducts(false) }, [fetchProducts]);
-  useEffect(() => {
-    if (products && products.length > 0) {
-      fetch('/dump-products', { method: 'POST', body: JSON.stringify(products) }).catch(e=>e);
-    }
-  }, [products]);
-  return null;
-}
-
 function GlobalLoader() {
   const { fetchCategoryImages, fetchFavicon, faviconUrl } = useSettings();
   const { setDeferredPrompt } = usePWA();
@@ -160,7 +149,6 @@ export default function App() {
     <BrowserRouter>
       <ScrollToTop />
       <CanonicalLink />
-      <ProductDumper />
       <GlobalLoader />
       <Toaster position="bottom-right" toastOptions={{
         style: {

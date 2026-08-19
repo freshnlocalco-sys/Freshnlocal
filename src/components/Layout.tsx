@@ -5,6 +5,7 @@ import { useAuth, signOut } from '../lib/firebase';
 import { useCart } from '../store/useCart';
 import { useSettings } from '../store/useSettings';
 import { useProducts } from '../store/useProducts';
+import { useHorecaPrices } from '../store/useHorecaPrices';
 import { AuthModal } from './AuthModal';
 import { AdminNotifier } from './AdminNotifier';
 import { motion, AnimatePresence } from 'motion/react';
@@ -14,6 +15,7 @@ export function Layout() {
   const isHorecaUser = user?.role === 'horeca' || user?.role === 'horeca_admin';
   const { faviconUrl, productCategories, categoryVisibility, fetchCategoryImages } = useSettings();
   const { products } = useProducts();
+  const { loadPrices } = useHorecaPrices();
   const [logoError, setLogoError] = useState(false);
   const cartItemsCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -28,6 +30,13 @@ export function Layout() {
   React.useEffect(() => {
     fetchCategoryImages();
   }, [fetchCategoryImages]);
+
+  // Load HoReCa pricing globally once when user is logged in
+  React.useEffect(() => {
+    if (isHorecaUser && (user?.uid || user?.email)) {
+      loadPrices(user.uid, user.email || undefined);
+    }
+  }, [isHorecaUser, user?.uid, user?.email, loadPrices]);
 
   // Sync local search when URL changes
   React.useEffect(() => {

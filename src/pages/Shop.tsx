@@ -7,6 +7,7 @@ import { Search, ShoppingBag, ArrowRight, Zap, Sparkles, History, TrendingUp, X,
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
+import { optimizeProductImageUrl } from '../lib/imageUtils';
 import { ProductSkeleton } from '../components/ProductSkeleton';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
@@ -544,7 +545,13 @@ export function Shop() {
                       {cat === 'All Products' ? (
                         <ShoppingBag className={`w-5 h-5 md:w-4 md:h-4 text-primary ${isActive ? 'opacity-100 scale-110' : 'opacity-70'}`} />
                       ) : (
-                        <img src={getCategoryImage(cat, categoryImages) || null} alt={cat} className={`w-full h-full object-cover ${isActive ? 'opacity-100 scale-110' : 'opacity-85 group-hover:opacity-100'} transition-all`} />
+                        <img 
+                          src={optimizeProductImageUrl(getCategoryImage(cat, categoryImages), 100) || undefined} 
+                          alt={cat} 
+                          loading="lazy"
+                          decoding="async"
+                          className={`w-full h-full object-cover ${isActive ? 'opacity-100 scale-110' : 'opacity-85 group-hover:opacity-100'} transition-all`} 
+                        />
                       )}
                     </div>
                     <span className={`text-[9px] md:text-sm text-center md:text-left leading-tight mt-1 md:mt-0 md:normal-case md:font-bold ${isActive ? 'font-black uppercase tracking-widest text-primary md:text-foreground' : 'font-semibold tracking-wide md:tracking-normal'} break-words w-full`}>

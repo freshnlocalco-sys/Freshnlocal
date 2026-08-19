@@ -7,6 +7,7 @@ import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { calculateHorecaPrice, getBaseUnit, parseUnitScale, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity, formatDisplayUnit } from '../lib/horecaUtils';
 import { useHorecaPrices } from '../store/useHorecaPrices';
+import { optimizeProductImageUrl } from '../lib/imageUtils';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
@@ -40,13 +41,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
 
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
-  const { prices: rememberedPrices, loadPrices } = useHorecaPrices();
-
-  useEffect(() => {
-    if ((user?.uid || user?.email) && isHoreca) {
-      loadPrices(user.uid, user.email || undefined);
-    }
-  }, [user?.uid, user?.email, isHoreca, loadPrices]);
+  const rememberedPrices = useHorecaPrices((state) => state.prices);
 
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
@@ -91,7 +86,8 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
     }
   }, [isHoreca, currentUnit, initialQty]);
   const inWishlist = isInWishlist(product.id!);
-  const productImgSrc = product.imageUrl || getCategoryImage(product.category, categoryImages) || undefined;
+  const rawProductImgSrc = product.imageUrl || getCategoryImage(product.category, categoryImages) || undefined;
+  const productImgSrc = optimizeProductImageUrl(rawProductImgSrc, 600);
 
   const handleAddToCart = () => {
     if (product) {
@@ -122,7 +118,16 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
           <img 
             src={productImgSrc} 
             alt={product.name}
+            loading="eager"
+            decoding="async"
+            onError={(e) => {
+              const catImg = getCategoryImage(product.category, categoryImages);
+              if (catImg && e.currentTarget.src !== catImg) {
+                e.currentTarget.src = catImg;
+              }
+            }}
             className="w-full h-full object-contain object-center"
+            referrerPolicy="no-referrer"
           />
           <button
             onClick={() => {

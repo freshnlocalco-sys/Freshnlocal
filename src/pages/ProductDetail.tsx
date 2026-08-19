@@ -292,8 +292,14 @@ export function ProductDetail() {
           <img 
             src={productImgSrc} 
             alt={product.name}
-            loading="lazy"
+            loading="eager"
             decoding="async"
+            onError={(e) => {
+              const catImg = getCategoryImage(product.category, categoryImages);
+              if (catImg && e.currentTarget.src !== catImg) {
+                e.currentTarget.src = catImg;
+              }
+            }}
             className="absolute inset-0 w-full h-full object-contain object-center"
             referrerPolicy="no-referrer"
           />

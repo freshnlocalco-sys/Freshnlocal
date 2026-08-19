@@ -138,10 +138,35 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
 }
 
+const getInitialAuthUser = (): AppUser | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('cached_auth_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const initialCachedUser = getInitialAuthUser();
+
 export const useAuth = create<AuthState>((set) => ({
-  user: null,
-  loading: true,
-  setUser: (user) => set({ user }),
+  user: initialCachedUser,
+  loading: !initialCachedUser,
+  setUser: (user) => {
+    if (typeof window !== 'undefined') {
+      if (user) {
+        try {
+          localStorage.setItem('cached_auth_user', JSON.stringify(user));
+        } catch {
+          // ignore
+        }
+      } else {
+        localStorage.removeItem('cached_auth_user');
+      }
+    }
+    set({ user });
+  },
   setLoading: (loading) => set({ loading }),
 }));
 

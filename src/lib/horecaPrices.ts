@@ -43,20 +43,24 @@ function processHorecaDocs(docs: any[]): Record<string, number> {
 export async function getCustomerHorecaPrices(userId: string, userEmail?: string): Promise<Record<string, number>> {
   if (!userId && !userEmail) return {};
   try {
-    const allDocs: any[] = [];
+    const promises: Promise<any>[] = [];
 
     if (userId) {
       const q1 = query(collection(db, 'horecaPrices'), where('userId', '==', userId));
-      const snap1 = await getDocs(q1);
-      snap1.forEach(d => allDocs.push(d.data()));
+      promises.push(getDocs(q1));
     }
 
     if (userEmail) {
       const cleanEmail = userEmail.toLowerCase().trim();
       const q2 = query(collection(db, 'horecaPrices'), where('userEmail', '==', cleanEmail));
-      const snap2 = await getDocs(q2);
-      snap2.forEach(d => allDocs.push(d.data()));
+      promises.push(getDocs(q2));
     }
+
+    const snapshots = await Promise.all(promises);
+    const allDocs: any[] = [];
+    snapshots.forEach(snap => {
+      snap.forEach((d: any) => allDocs.push(d.data()));
+    });
 
     return processHorecaDocs(allDocs);
   } catch (err) {

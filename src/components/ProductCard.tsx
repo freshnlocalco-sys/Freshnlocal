@@ -11,6 +11,7 @@ import { calculateHorecaPrice, calculateBaseUnitPrice, getUnitQuantityConfig, sa
 import { useHorecaPrices } from '../store/useHorecaPrices';
 import { QuantityInput } from './QuantityInput';
 import { motion } from 'motion/react';
+import { optimizeProductImageUrl } from '../lib/imageUtils';
 import toast from 'react-hot-toast';
 
 interface ProductCardProps {
@@ -51,13 +52,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const currentVariant = allVariants[selectedVariantIdx] || allVariants[0];
   
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
-  const { prices: rememberedPrices, loadPrices } = useHorecaPrices();
-
-  useEffect(() => {
-    if ((user?.uid || user?.email) && isHoreca) {
-      loadPrices(user.uid, user.email || undefined);
-    }
-  }, [user?.uid, user?.email, isHoreca, loadPrices]);
+  const rememberedPrices = useHorecaPrices((state) => state.prices);
 
   const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
   
@@ -121,15 +116,19 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   }, [isHoreca, quantity, initialQty]);
   
   const catImage = getCategoryImage(displayCategory, categoryImages) || undefined;
-  const productImgSrc = product.imageUrl || catImage || undefined;
+  const rawProductImgSrc = product.imageUrl || catImage || undefined;
+  const productImgSrc = optimizeProductImageUrl(rawProductImgSrc, 400);
 
-  const [imageLoaded, setImageLoaded] = useState(() => productImgSrc ? loadedProductImages.has(productImgSrc) : false);
+  const [imageLoaded, setImageLoaded] = useState(() => Boolean(productImgSrc && loadedProductImages.has(productImgSrc)));
+  const [imgSrc, setImgSrc] = useState(productImgSrc);
 
   useEffect(() => {
-    if (productImgSrc && loadedProductImages.has(productImgSrc)) {
+    const nextSrc = optimizeProductImageUrl(rawProductImgSrc, 400);
+    setImgSrc(nextSrc);
+    if (nextSrc && loadedProductImages.has(nextSrc)) {
       setImageLoaded(true);
     }
-  }, [productImgSrc]);
+  }, [rawProductImgSrc]);
 
   return (
     <motion.div 
@@ -145,17 +144,23 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
         )}
         <Link to={`/product/${product.id}`} onClick={() => addProduct(product)} className="block w-full h-full relative">
           <img 
-            src={productImgSrc} 
+            src={imgSrc} 
             alt={product.name}
             loading="lazy"
             decoding="async"
             onLoad={() => {
-              if (productImgSrc) {
-                loadedProductImages.add(productImgSrc);
+              if (imgSrc) {
+                loadedProductImages.add(imgSrc);
               }
               setImageLoaded(true);
             }}
-            className={`absolute inset-0 w-full h-full object-contain object-center ${!imageLoaded ? 'opacity-0' : 'opacity-100 transition-opacity duration-300'}`}
+            onError={() => {
+              if (catImage && imgSrc !== catImage) {
+                setImgSrc(catImage);
+              }
+              setImageLoaded(true);
+            }}
+            className={`absolute inset-0 w-full h-full object-contain object-center transition-opacity duration-300 ${!imageLoaded ? 'opacity-0' : 'opacity-100'}`}
             referrerPolicy="no-referrer"
           />
         </Link>
