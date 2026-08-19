@@ -3,10 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FreshNLocal.CO</title>
-    <link rel="manifest" href="/manifest.json" />
+    <title>Fresh N Local Co.</title>
+    
+    <script>
+      (function() {
+        try {
+          var faviconUrl = localStorage.getItem('fnl_favicon_url');
+          var manifestUrl = '/manifest.json';
+          if (faviconUrl) {
+            manifestUrl += '?icon=' + encodeURIComponent(faviconUrl);
+            
+            // Inject apple touch icon
+            var appleLink = document.createElement('link');
+            appleLink.rel = 'apple-touch-icon';
+            appleLink.href = faviconUrl;
+            document.head.appendChild(appleLink);
+            
+            // Inject favicon
+            var iconLink = document.createElement('link');
+            iconLink.rel = 'icon';
+            iconLink.href = faviconUrl;
+            document.head.appendChild(iconLink);
+          } else {
+            var iconLink = document.createElement('link');
+            iconLink.rel = 'icon';
+            iconLink.href = '/favicon.ico';
+            document.head.appendChild(iconLink);
+          }
+          
+          var manifestLink = document.createElement('link');
+          manifestLink.rel = 'manifest';
+          manifestLink.href = manifestUrl;
+          document.head.appendChild(manifestLink);
+        } catch (e) {
+          console.error(e);
+          var defaultManifest = document.createElement('link');
+          defaultManifest.rel = 'manifest';
+          defaultManifest.href = '/manifest.json';
+          document.head.appendChild(defaultManifest);
+        }
+      })();
+    </script>
     <link rel="canonical" href="https://www.freshnlocal.co/" />
-
   </head>
   <body>
     <div id="root"></div>

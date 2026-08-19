@@ -63,16 +63,22 @@ self.addEventListener('fetch', (event) => {
               "purpose": "any"
             },
             {
-              "src": "/icon-192.svg",
-              "type": mimeType || "image/svg+xml",
+              "src": "/icon-192.png",
+              "type": mimeType || "image/png",
               "sizes": "192x192",
               "purpose": "any"
             },
             {
-              "src": "/icon-512.svg",
-              "type": mimeType || "image/svg+xml",
+              "src": "/icon-512.png",
+              "type": mimeType || "image/png",
               "sizes": "512x512",
               "purpose": "any"
+            },
+            {
+              "src": "/icon-512.png",
+              "type": mimeType || "image/png",
+              "sizes": "512x512",
+              "purpose": "maskable"
             }
           ]
         };
@@ -89,7 +95,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2. Handle branding icons & favicon
-  if (url.pathname === '/icon-192.svg' || url.pathname === '/icon-512.svg' || url.pathname === '/favicon.ico') {
+  if (url.pathname === '/icon-192.png' || url.pathname === '/icon-512.png' || url.pathname === '/favicon.ico') {
     event.respondWith(
       (async () => {
         try {
