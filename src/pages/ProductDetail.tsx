@@ -56,7 +56,7 @@ export function ProductDetail() {
     }
   }, [user?.uid, user?.email, isHoreca, loadPrices]);
 
-  const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
+  const currentUnit = currentVariant.unit;
   const cartProductId = currentUnit ? `${product?.id}-${currentUnit.trim()}` : product?.id;
 
   const pNameRaw = product?.name?.trim();
@@ -305,7 +305,7 @@ export function ProductDetail() {
             {allVariants.length > 1 ? (
               <div className="flex flex-wrap gap-2">
                 {allVariants.map((v, idx) => {
-                  const vDisplayUnit = formatDisplayUnit(isHoreca ? (v.horecaUnit || v.unit || 'KG') : v.unit);
+                  const vDisplayUnit = formatDisplayUnit(v.unit);
                   const vProductId = vDisplayUnit ? `${product.id}-${vDisplayUnit.trim()}` : product.id;
                   const vCartItem = items.find((item) => item?.product?.id === vProductId && item?.product?.unit === vDisplayUnit);
                   const vQty = vCartItem ? vCartItem.quantity : 0;

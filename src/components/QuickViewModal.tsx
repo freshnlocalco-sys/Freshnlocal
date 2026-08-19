@@ -43,7 +43,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
   const rememberedPrices = useHorecaPrices((state) => state.prices);
 
-  const currentUnit = isHoreca ? (currentVariant.horecaUnit || currentVariant.unit || '1KG') : currentVariant.unit;
+  const currentUnit = currentVariant.unit;
   const cartProductId = currentUnit ? `${product.id}-${currentUnit.trim()}` : product.id;
 
   const pNameRaw = product.name?.trim();
@@ -186,7 +186,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
             {allVariants.length > 1 ? (
               <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
                 {allVariants.map((v, idx) => {
-                  const vDisplayUnit = formatDisplayUnit(isHoreca ? (v.horecaUnit || v.unit || 'KG') : v.unit);
+                  const vDisplayUnit = formatDisplayUnit(v.unit);
                   return (
                     <button
                       key={idx}
