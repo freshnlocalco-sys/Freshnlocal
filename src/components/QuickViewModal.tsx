@@ -5,7 +5,7 @@ import { useWishlist } from '../store/useWishlist';
 import { useAuth } from '../lib/firebase';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
-import { calculateHorecaPrice, getBaseUnit, parseUnitScale, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity, formatDisplayUnit } from '../lib/horecaUtils';
+import { calculateHorecaPrice, getBaseUnit, parseUnitScale, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity, formatDisplayUnit, resolveHorecaSubunitPrice } from '../lib/horecaUtils';
 import { useHorecaPrices } from '../store/useHorecaPrices';
 import { optimizeProductImageUrl } from '../lib/imageUtils';
 import toast from 'react-hot-toast';
@@ -53,21 +53,11 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
   const cartPidLower = cartProductId ? cartProductId.toLowerCase().trim() : '';
   const baseIdLower = baseIdKey ? baseIdKey.toLowerCase().trim() : '';
 
-  const rememberedPrice = isHoreca ? (
-    (product.id ? rememberedPrices[product.id] : undefined) ??
-    (pidLower ? rememberedPrices[pidLower] : undefined) ??
-    (cartProductId ? rememberedPrices[cartProductId] : undefined) ??
-    (cartPidLower ? rememberedPrices[cartPidLower] : undefined) ??
-    (baseIdKey ? rememberedPrices[baseIdKey] : undefined) ??
-    (baseIdLower ? rememberedPrices[baseIdLower] : undefined) ??
-    (pNameRaw ? rememberedPrices[pNameRaw] : undefined) ??
-    (pNameKey ? rememberedPrices[pNameKey] : undefined)
-  ) : undefined;
-
-  const hasRememberedPrice = isHoreca && typeof rememberedPrice === 'number' && rememberedPrice > 0;
+  const resolvedHorecaPrice = isHoreca ? resolveHorecaSubunitPrice(product, currentUnit, rememberedPrices) : 0;
+  const hasRememberedPrice = isHoreca && resolvedHorecaPrice > 0;
 
   const currentPrice = isHoreca 
-    ? (hasRememberedPrice ? rememberedPrice : 0)
+    ? (hasRememberedPrice ? resolvedHorecaPrice : 0)
     : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
 

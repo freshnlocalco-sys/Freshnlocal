@@ -3,20 +3,20 @@ import { getCustomerHorecaPrices, saveCustomerHorecaPrice } from '../lib/horecaP
 import { cacheManager } from '../lib/cacheManager';
 
 interface HorecaPricesState {
-  prices: Record<string, number>;
+  prices: Record<string, any>;
   loading: boolean;
   lastFetchedUserId: string | null;
   lastFetchedTime: number;
   loadPrices: (userId: string, userEmail?: string, force?: boolean) => Promise<void>;
-  updatePrice: (userId: string, productId: string, price: number, productName?: string, userEmail?: string) => Promise<void>;
+  updatePrice: (userId: string, productId: string, price: number, productName?: string, userEmail?: string, unit?: string) => Promise<void>;
 }
 
 // In-flight promise to prevent concurrent duplicate network queries
-let inFlightFetch: Promise<Record<string, number>> | null = null;
+let inFlightFetch: Promise<Record<string, any>> | null = null;
 
-const getCachedPrices = (key: string): Record<string, number> => {
+const getCachedPrices = (key: string): Record<string, any> => {
   if (!key) return {};
-  return cacheManager.get<Record<string, number>>(`horeca_prices_${key}`, true) || {};
+  return cacheManager.get<Record<string, any>>(`horeca_prices_${key}`, true) || {};
 };
 
 export const useHorecaPrices = create<HorecaPricesState>((set, get) => ({
@@ -77,17 +77,23 @@ export const useHorecaPrices = create<HorecaPricesState>((set, get) => ({
     }
   },
 
-  updatePrice: async (userId: string, productId: string, price: number, productName?: string, userEmail?: string) => {
+  updatePrice: async (userId: string, productId: string, price: number, productName?: string, userEmail?: string, unit?: string) => {
     const userKey = (userId || userEmail || '').toLowerCase().trim();
     const updatedPrices = { ...get().prices, [productId]: price };
     if (productName) {
       updatedPrices[productName.trim()] = price;
       updatedPrices[productName.toLowerCase().trim()] = price;
     }
+    if (unit) {
+      updatedPrices[`${productId}-${unit}`] = price;
+      if (productName) {
+        updatedPrices[`${productName.trim()}-${unit}`] = price;
+      }
+    }
     set({ prices: updatedPrices });
     if (userKey) {
       cacheManager.set(`horeca_prices_${userKey}`, updatedPrices);
     }
-    await saveCustomerHorecaPrice(userId, productId, price, productName, userEmail);
+    await saveCustomerHorecaPrice(userId, productId, price, productName, userEmail, unit);
   }
 }));

@@ -7,7 +7,7 @@ import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
 import { useWishlist } from '../store/useWishlist';
 import { useRecentlyViewed } from '../store/useRecentlyViewed';
-import { calculateHorecaPrice, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity, formatDisplayUnit } from '../lib/horecaUtils';
+import { calculateHorecaPrice, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity, formatDisplayUnit, resolveHorecaSubunitPrice } from '../lib/horecaUtils';
 import { useHorecaPrices } from '../store/useHorecaPrices';
 import { QuantityInput } from './QuantityInput';
 import { motion } from 'motion/react';
@@ -66,21 +66,11 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
   const cartPidLower = cartProductId ? cartProductId.toLowerCase().trim() : '';
   const baseIdLower = baseIdKey ? baseIdKey.toLowerCase().trim() : '';
 
-  const rememberedPrice = isHoreca ? (
-    (product.id ? rememberedPrices[product.id] : undefined) ??
-    (pidLower ? rememberedPrices[pidLower] : undefined) ??
-    (cartProductId ? rememberedPrices[cartProductId] : undefined) ??
-    (cartPidLower ? rememberedPrices[cartPidLower] : undefined) ??
-    (baseIdKey ? rememberedPrices[baseIdKey] : undefined) ??
-    (baseIdLower ? rememberedPrices[baseIdLower] : undefined) ??
-    (pNameRaw ? rememberedPrices[pNameRaw] : undefined) ??
-    (pNameKey ? rememberedPrices[pNameKey] : undefined)
-  ) : undefined;
-
-  const hasRememberedPrice = isHoreca && typeof rememberedPrice === 'number' && rememberedPrice > 0;
+  const resolvedHorecaPrice = isHoreca ? resolveHorecaSubunitPrice(product, currentUnit, rememberedPrices) : 0;
+  const hasRememberedPrice = isHoreca && resolvedHorecaPrice > 0;
 
   const currentPrice = isHoreca 
-    ? (hasRememberedPrice ? rememberedPrice : 0)
+    ? (hasRememberedPrice ? resolvedHorecaPrice : 0)
     : currentVariant.price;
   const currentOriginalPrice = currentVariant.originalPrice;
   const baseUnitPrice = calculateBaseUnitPrice(currentPrice, currentUnit);

@@ -1937,7 +1937,8 @@ export function AdminDashboard() {
       if ((customerUserId || customerEmail) && prod) {
         const pId = prod.id || prod.productId || '';
         const pName = prod.name || prod.productName || '';
-        await saveCustomerHorecaPrice(customerUserId, pId, newPrice, pName, customerEmail);
+        const pUnit = prod.unit || (itemToUpdate as any).unit || '';
+        await saveCustomerHorecaPrice(customerUserId, pId, newPrice, pName, customerEmail, pUnit);
       }
       
       const updatedOrder = { 
