@@ -18,7 +18,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Sync mode if defaultMode changes
   React.useEffect(() => {
@@ -29,8 +29,9 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
   React.useEffect(() => {
     if (isOpen) {
       setError(null);
-      setSuccessMessage(null);
+      setIsSuccess(false);
       setLoading(false);
+      setShowPassword(false);
     }
   }, [isOpen]);
 
@@ -39,7 +40,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
   const handleModeToggle = (loginMode: boolean) => {
     setIsLogin(loginMode);
     setError(null);
-    setSuccessMessage(null);
+    setShowPassword(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,11 +54,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
       if (isLogin) {
         const userCred = await signInWithEmail(cleanEmail, password);
         const displayName = userCred.user?.displayName || cleanEmail.split('@')[0];
-        setSuccessMessage(`Welcome back, ${displayName}!`);
+        setIsSuccess(true);
         notifySignInSuccess(displayName, cleanEmail);
         setTimeout(() => {
           onClose();
-        }, 900);
+        }, 800);
       } else {
         if (!name.trim()) {
           setError('Please enter your full name.');
@@ -71,11 +72,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
         }
         const userCred = await signUpWithEmail(cleanEmail, password, name.trim());
         const displayName = name.trim() || userCred.user?.displayName || cleanEmail.split('@')[0];
-        setSuccessMessage(`Account created! Welcome to FreshNLocal.`);
+        setIsSuccess(true);
         notifySignUpSuccess(displayName);
         setTimeout(() => {
           onClose();
-        }, 900);
+        }, 800);
       }
     } catch (err: any) {
       const friendlyMsg = getHumanAuthErrorMessage(err);
@@ -104,218 +105,225 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
   };
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="bg-white border border-border/80 w-full max-w-md p-6 sm:p-8 relative rounded-3xl shadow-2xl overflow-hidden"
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      {/* Backdrop */}
+      <div 
+        onClick={onClose}
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+      />
+
+      {/* Modal Container */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        className="relative bg-white border border-border w-full max-w-[420px] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] p-6 sm:p-7 z-10 my-auto text-left"
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+          aria-label="Close"
         >
-          {/* Top Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all cursor-pointer"
-            aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <X className="w-4 h-4" />
+        </button>
 
-          {/* Success Overlay Animation */}
-          {successMessage && (
+        {/* Success Screen Overlay */}
+        <AnimatePresence>
+          {isSuccess && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="absolute inset-0 bg-white/95 backdrop-blur-xs z-20 flex flex-col items-center justify-center p-6 text-center"
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-white rounded-2xl z-20 flex flex-col items-center justify-center p-6 text-center"
             >
-              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4 shadow-inner">
-                <CheckCircle2 className="w-9 h-9 animate-bounce" />
+              <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mb-3.5 shadow-xs">
+                <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h3 className="font-serif text-2xl font-bold text-foreground mb-1">
-                {isLogin ? 'Signed In!' : 'Welcome to FreshNLocal!'}
+              <h3 className="text-xl font-bold text-foreground">
+                {isLogin ? 'Signed In Successfully' : 'Welcome to FreshNLocal!'}
               </h3>
-              <p className="text-sm text-muted-foreground max-w-xs">{successMessage}</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xs leading-relaxed">
+                {isLogin ? 'Redirecting you to your account...' : 'Your account has been created. Happy shopping!'}
+              </p>
             </motion.div>
           )}
+        </AnimatePresence>
 
-          {/* Header Brand & Title */}
-          <div className="text-center sm:text-left mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] uppercase font-bold tracking-widest mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> FreshNLocal Account
-            </div>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {isLogin ? 'Welcome Back' : 'Create Your Account'}
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              {isLogin
-                ? 'Sign in to access your orders, saved recipes, and farm-fresh produce.'
-                : 'Join today to enjoy farm-to-table deliveries and partner benefits.'}
-            </p>
-          </div>
+        {/* Modal Header */}
+        <div className="mb-5 pr-6">
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">
+            {isLogin ? 'Welcome Back' : 'Create Account'}
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            {isLogin
+              ? 'Sign in to access your orders, saved items, and local deliveries.'
+              : 'Join FreshNLocal to get fresh farm produce delivered to your doorstep.'}
+          </p>
+        </div>
 
-          {/* Tab Switcher */}
-          <div className="grid grid-cols-2 p-1 bg-secondary/80 rounded-2xl mb-6 border border-border/50">
-            <button
-              type="button"
-              onClick={() => handleModeToggle(true)}
-              className={`py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
-                isLogin
-                  ? 'bg-white text-foreground shadow-xs font-black'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => handleModeToggle(false)}
-              className={`py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
-                !isLogin
-                  ? 'bg-white text-foreground shadow-xs font-black'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          {/* Professional Error Message */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50/90 border border-red-200/80 text-red-700 px-4 py-3 rounded-2xl mb-5 flex items-start gap-2.5 text-xs leading-relaxed"
-            >
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-              <div className="flex-1 font-medium">{error}</div>
-            </motion.div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {!isLogin && (
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-foreground/80 mb-1.5">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <input
-                    required
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full border border-border/80 rounded-2xl px-4 py-3 pl-10 bg-secondary/40 outline-none text-sm focus:border-primary focus:bg-white transition-all text-foreground placeholder:text-muted-foreground/60"
-                    placeholder="e.g. Rahul Sharma"
-                    autoComplete="name"
-                  />
-                  <UserIcon className="w-4 h-4 absolute left-3.5 top-3.5 text-muted-foreground" />
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-foreground/80 mb-1.5">
-                Email Address
-              </label>
-              <div className="relative">
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border border-border/80 rounded-2xl px-4 py-3 pl-10 bg-secondary/40 outline-none text-sm focus:border-primary focus:bg-white transition-all text-foreground placeholder:text-muted-foreground/60"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                />
-                <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-muted-foreground" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-foreground/80 mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  required
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border border-border/80 rounded-2xl px-4 py-3 pl-10 pr-10 bg-secondary/40 outline-none text-sm focus:border-primary focus:bg-white transition-all text-foreground placeholder:text-muted-foreground/60"
-                  placeholder="••••••••"
-                  autoComplete={isLogin ? 'current-password' : 'new-password'}
-                />
-                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-muted-foreground" />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {!isLogin && (
-                <p className="text-[10px] text-muted-foreground mt-1 ml-1">Must be at least 6 characters</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 bg-primary text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-[#009e45] active:scale-[0.99] transition-all shadow-md shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>{isLogin ? 'Signing In...' : 'Creating Account...'}</span>
-                </>
-              ) : isLogin ? (
-                'Sign In to Account'
-              ) : (
-                'Create Account'
-              )}
-            </button>
-          </form>
-
-          {/* Subtle Divider */}
-          <div className="flex items-center gap-4 my-5">
-            <div className="flex-1 border-t border-border/60" />
-            <span className="text-[9px] uppercase font-black tracking-widest text-muted-foreground/80">
-              OR
-            </span>
-            <div className="flex-1 border-t border-border/60" />
-          </div>
-
-          {/* Google Sign-in */}
+        {/* Segmented Tab Bar */}
+        <div className="flex bg-secondary/80 p-1 rounded-xl border border-border/70 mb-5">
           <button
             type="button"
-            disabled={loading}
-            onClick={handleGoogleSignIn}
-            className="w-full py-3 bg-white text-foreground text-xs font-bold uppercase tracking-wider border border-border/80 rounded-2xl hover:bg-secondary/60 active:scale-[0.99] transition-all flex justify-center items-center gap-2.5 shadow-xs disabled:opacity-50 cursor-pointer"
+            onClick={() => handleModeToggle(true)}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              isLogin
+                ? 'bg-white text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
           >
-            <img
-              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-              alt="Google"
-              className="w-4 h-4"
-            />
-            <span>Continue with Google</span>
+            Sign In
           </button>
+          <button
+            type="button"
+            onClick={() => handleModeToggle(false)}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              !isLogin
+                ? 'bg-white text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Sign Up
+          </button>
+        </div>
 
-          {/* Footer toggle */}
-          <div className="text-center text-xs text-muted-foreground mt-5">
-            {isLogin ? "Don't have an account yet? " : 'Already registered? '}
-            <button
-              type="button"
-              onClick={() => handleModeToggle(!isLogin)}
-              className="text-primary font-bold hover:underline cursor-pointer ml-1"
-            >
-              {isLogin ? 'Create one now' : 'Sign in here'}
-            </button>
+        {/* Error Alert Box */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200/80 text-red-700 flex items-start gap-2.5 text-xs leading-snug"
+          >
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <span className="font-medium">{error}</span>
+          </motion.div>
+        )}
+
+        {/* Form Fields */}
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          {!isLogin && (
+            <div>
+              <label className="block text-xs font-semibold text-foreground/85 mb-1.5">
+                Full Name
+              </label>
+              <div className="relative">
+                <input
+                  required
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your Name"
+                  className="w-full h-11 px-3.5 pl-10 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
+                  autoComplete="name"
+                />
+                <UserIcon className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground/85 mb-1.5">
+              Email Address
+            </label>
+            <div className="relative">
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                className="w-full h-11 px-3.5 pl-10 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
+                autoComplete="email"
+              />
+              <Mail className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground/85 mb-1.5">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                required
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full h-11 px-3.5 pl-10 pr-11 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
+                autoComplete={isLogin ? 'current-password' : 'new-password'}
+              />
+              <Lock className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg transition-colors cursor-pointer"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {!isLogin && (
+              <p className="text-[11px] text-muted-foreground mt-1 ml-0.5">
+                Must be at least 6 characters
+              </p>
+            )}
+          </div>
+
+          {/* Primary Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-11 mt-1 bg-primary hover:bg-[#009e45] active:scale-[0.99] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>{isLogin ? 'Signing In...' : 'Creating Account...'}</span>
+              </>
+            ) : (
+              <span>{isLogin ? 'Sign In to Account' : 'Create Account'}</span>
+            )}
+          </button>
+        </form>
+
+        {/* Clean Line Divider */}
+        <div className="relative flex items-center justify-center my-4.5">
+          <div className="w-full border-t border-border/80" />
+          <span className="absolute bg-white px-2.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            or
+          </span>
+        </div>
+
+        {/* Google Sign-in Button */}
+        <button
+          type="button"
+          disabled={loading}
+          onClick={handleGoogleSignIn}
+          className="w-full h-11 bg-white hover:bg-secondary/70 border border-border rounded-xl text-xs font-bold text-foreground flex items-center justify-center gap-2.5 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+        >
+          <img
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+            alt="Google"
+            className="w-4 h-4"
+          />
+          <span>Continue with Google</span>
+        </button>
+
+        {/* Bottom Toggle */}
+        <div className="text-center text-xs text-muted-foreground mt-4.5">
+          {isLogin ? "Don't have an account?" : 'Already registered?'}
+          <button
+            type="button"
+            onClick={() => handleModeToggle(!isLogin)}
+            className="text-primary font-bold hover:underline cursor-pointer ml-1.5"
+          >
+            {isLogin ? 'Create one now' : 'Sign in here'}
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 }
