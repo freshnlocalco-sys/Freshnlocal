@@ -57,25 +57,19 @@ self.addEventListener('fetch', (event) => {
           "theme_color": "#2c3e30",
           "icons": [
             {
-              "src": "/favicon.ico",
-              "type": "image/x-icon",
-              "sizes": "64x64 32x32 24x24 16x16",
-              "purpose": "any"
-            },
-            {
-              "src": "/icon-192.png",
+              "src": iconUrl || "/icon-192.png",
               "type": mimeType || "image/png",
               "sizes": "192x192",
               "purpose": "any"
             },
             {
-              "src": "/icon-512.png",
+              "src": iconUrl || "/icon-512.png",
               "type": mimeType || "image/png",
               "sizes": "512x512",
               "purpose": "any"
             },
             {
-              "src": "/icon-512.png",
+              "src": iconUrl || "/icon-512.png",
               "type": mimeType || "image/png",
               "sizes": "512x512",
               "purpose": "maskable"

@@ -26,6 +26,11 @@ export function Layout() {
   const [searchParams] = useSearchParams();
   const [localSearch, setLocalSearch] = useState('');
 
+  // Reset logoError when faviconUrl changes (e.g. when loaded asynchronously from Firestore)
+  React.useEffect(() => {
+    setLogoError(false);
+  }, [faviconUrl]);
+
   // Fetch settings / categories on mount
   React.useEffect(() => {
     fetchCategoryImages();
@@ -116,6 +121,7 @@ export function Layout() {
                   src={faviconUrl} 
                   alt="Logo" 
                   onError={() => setLogoError(true)}
+                  referrerPolicy="no-referrer"
                   className="w-6 h-6 sm:w-10 sm:h-10 object-contain rounded-lg shrink-0" 
                 />
               )}
@@ -407,6 +413,7 @@ export function Layout() {
                   src={faviconUrl} 
                   alt="Logo" 
                   onError={() => setLogoError(true)}
+                  referrerPolicy="no-referrer"
                   className="w-10 h-10 object-contain rounded-lg shadow-xs" 
                 />
               )}
