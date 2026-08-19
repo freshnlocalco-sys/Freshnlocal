@@ -6,6 +6,7 @@ import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } 
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
+import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
 import { useSettings } from '../store/useSettings';
 import { BrandingSettings } from '../components/BrandingSettings';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
@@ -1901,18 +1902,28 @@ export function AdminDashboard() {
     }
   };
 
-  const handleUpdateItemPriceFromOrder = async (orderId: string, itemIndex: number, newPrice: number) => {
-    if (newPrice < 0) return;
+  const handleUpdateItemPriceFromOrder = async (orderId: string, itemIndex: number, enteredRate: number) => {
+    if (enteredRate < 0) return;
     try {
       const order = orders.find(o => o.id === orderId);
       if (!order || !order.items) return;
       
+      const isHorecaOrder = order.customerType === 'horeca' || order.customerType === 'horeca_admin';
       const newItems = [...order.items];
       const itemToUpdate = { ...newItems[itemIndex] };
+      const prod = itemToUpdate.product || itemToUpdate;
+      const pUnit = prod.unit || itemToUpdate.unit || '';
+      
+      let finalPrice = enteredRate;
+      if (isHorecaOrder && pUnit) {
+        const scale = parseUnitScale(pUnit);
+        finalPrice = Number((enteredRate * scale).toFixed(2));
+      }
+
       if (itemToUpdate.product) {
-        itemToUpdate.product = { ...itemToUpdate.product, price: newPrice };
+        itemToUpdate.product = { ...itemToUpdate.product, price: finalPrice };
       } else {
-        itemToUpdate.price = newPrice;
+        itemToUpdate.price = finalPrice;
       }
       newItems[itemIndex] = itemToUpdate;
       
@@ -1920,8 +1931,6 @@ export function AdminDashboard() {
         const p = item.product || item;
         return sum + (p.price || 0) * (item.quantity || 1);
       }, 0);
-
-      const prod = itemToUpdate.product || itemToUpdate;
 
       await updateDoc(doc(db, 'orders', orderId), { 
         items: newItems, 
@@ -1937,8 +1946,7 @@ export function AdminDashboard() {
       if ((customerUserId || customerEmail) && prod) {
         const pId = prod.id || prod.productId || '';
         const pName = prod.name || prod.productName || '';
-        const pUnit = prod.unit || (itemToUpdate as any).unit || '';
-        await saveCustomerHorecaPrice(customerUserId, pId, newPrice, pName, customerEmail, pUnit);
+        await saveCustomerHorecaPrice(customerUserId, pId, finalPrice, pName, customerEmail, pUnit);
       }
       
       const updatedOrder = { 
@@ -6208,37 +6216,47 @@ export function AdminDashboard() {
                             </button>
                           </div>
                           {selectedOrder.customerType === 'horeca' || selectedOrder.customerType === 'horeca_admin' ? (
-                            <div className="flex flex-col items-end gap-1 font-mono min-w-[100px] sm:min-w-[110px]">
-                              <div className="flex items-center gap-1">
-                                <span className="text-[9px] text-muted-foreground font-black uppercase tracking-wider">Price: ₹</span>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="any"
-                                  key={`${selectedOrder.id}-${idx}-${prod.price}`}
-                                  defaultValue={prod.price || 0}
-                                  onBlur={(e) => {
-                                    const val = parseFloat(e.target.value);
-                                    if (!isNaN(val) && val >= 0 && val !== (prod.price || 0)) {
-                                      handleUpdateItemPriceFromOrder(selectedOrder.id, idx, val);
-                                    }
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      const val = parseFloat((e.target as HTMLInputElement).value);
-                                      if (!isNaN(val) && val >= 0 && val !== (prod.price || 0)) {
-                                        handleUpdateItemPriceFromOrder(selectedOrder.id, idx, val);
-                                        (e.target as HTMLInputElement).blur();
-                                      }
-                                    }
-                                  }}
-                                  className="w-16 sm:w-20 px-2 py-1 text-xs font-black text-right border border-border rounded-xl focus:border-primary outline-none focus:ring-2 focus:ring-primary/10 bg-white shadow-xs"
-                                />
-                              </div>
-                              <div className="text-right text-[10px] text-muted-foreground font-extrabold whitespace-nowrap">
-                                Total: <span className="font-black text-primary text-xs">₹{((prod.price || 0) * (item.quantity || 1)).toFixed(2).replace(/\.00$/, '')}</span>
-                              </div>
-                            </div>
+                            (() => {
+                              const itemScale = parseUnitScale(prod.unit || item.unit);
+                              const baseRateVal = itemScale > 0 ? Number(((prod.price || 0) / itemScale).toFixed(2)) : (prod.price || 0);
+                              const baseRateLabel = getBaseUnit(prod.unit || item.unit);
+                              return (
+                                <div className="flex flex-col items-end gap-1 font-mono min-w-[140px] sm:min-w-[160px]">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[9px] text-muted-foreground font-black uppercase tracking-wider">Rate / {baseRateLabel}: ₹</span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      key={`${selectedOrder.id}-${idx}-${baseRateVal}`}
+                                      defaultValue={baseRateVal}
+                                      onBlur={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        if (!isNaN(val) && val >= 0 && val !== baseRateVal) {
+                                          handleUpdateItemPriceFromOrder(selectedOrder.id, idx, val);
+                                        }
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          const val = parseFloat((e.target as HTMLInputElement).value);
+                                          if (!isNaN(val) && val >= 0 && val !== baseRateVal) {
+                                            handleUpdateItemPriceFromOrder(selectedOrder.id, idx, val);
+                                            (e.target as HTMLInputElement).blur();
+                                          }
+                                        }
+                                      }}
+                                      className="w-16 sm:w-20 px-2 py-1 text-xs font-black text-right border border-border rounded-xl focus:border-primary outline-none focus:ring-2 focus:ring-primary/10 bg-white shadow-xs"
+                                    />
+                                  </div>
+                                  <div className="text-right text-[10px] text-muted-foreground font-extrabold whitespace-nowrap">
+                                    Unit Price: <span className="font-bold text-foreground">₹{(prod.price || 0).toFixed(2).replace(/\.00$/, '')}</span>
+                                  </div>
+                                  <div className="text-right text-[10px] text-muted-foreground font-extrabold whitespace-nowrap">
+                                    Total: <span className="font-black text-primary text-xs">₹{((prod.price || 0) * (item.quantity || 1)).toFixed(2).replace(/\.00$/, '')}</span>
+                                  </div>
+                                </div>
+                              );
+                            })()
                           ) : (
                             <div className="text-right whitespace-nowrap font-mono min-w-[55px] sm:min-w-[60px]">
                               <p className="text-xs font-black text-foreground">₹{((prod.price || 0) * (item.quantity || 1)).toFixed(2).replace(/\.00$/, '')}</p>
