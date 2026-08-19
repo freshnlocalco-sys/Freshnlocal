@@ -150,18 +150,41 @@ export default function App() {
       <ScrollToTop />
       <CanonicalLink />
       <GlobalLoader />
-      <Toaster position="bottom-right" toastOptions={{
-        style: {
-          background: '#fff',
-          color: '#000',
-          border: '1px solid #e5e5e5',
-          borderRadius: '0px',
-          fontWeight: 'bold',
-          textTransform: 'uppercase',
-          fontSize: '10px',
-          letterSpacing: '0.1em'
-        }
-      }} />
+      <Toaster 
+        position="top-right" 
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#ffffff',
+            color: '#1a2e1d',
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            borderRadius: '16px',
+            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)',
+            padding: '12px 18px',
+            fontSize: '13px',
+            fontWeight: '600',
+            maxWidth: '380px',
+            lineHeight: '1.4',
+          },
+          success: {
+            iconTheme: {
+              primary: '#00b853',
+              secondary: '#ffffff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#e11d48',
+              secondary: '#ffffff',
+            },
+            style: {
+              background: '#fff',
+              color: '#9f1239',
+              border: '1px solid rgba(225, 29, 72, 0.2)',
+            }
+          }
+        }} 
+      />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />

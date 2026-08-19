@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError } from '../lib/firebase';
+import { notifySignOutSuccess } from '../lib/authNotifications';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2, RotateCcw } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
@@ -226,9 +227,10 @@ export function Profile() {
             <button 
               onClick={async () => {
                 await signOut();
+                notifySignOutSuccess();
                 navigate('/');
               }} 
-              className="w-full mt-4 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 py-3 rounded-xl border border-red-500/20 transition-all font-black"
+              className="w-full mt-4 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 py-3 rounded-xl border border-red-500/20 transition-all font-black cursor-pointer"
             >
               <LogOut className="w-4 h-4" /> SIGN OUT NOW
             </button>

@@ -8,6 +8,7 @@ import { useProducts } from '../store/useProducts';
 import { useHorecaPrices } from '../store/useHorecaPrices';
 import { AuthModal } from './AuthModal';
 import { AdminNotifier } from './AdminNotifier';
+import { notifySignOutSuccess } from '../lib/authNotifications';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function Layout() {
@@ -207,7 +208,7 @@ export function Layout() {
                           </Link>
                         )}
                         <hr className="my-2 border-border" />
-                        <button onClick={signOut} className="w-full text-left px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-red-600/10 hover:text-red-500 text-red-500 transition-all flex items-center gap-2">
+                        <button onClick={async () => { await signOut(); notifySignOutSuccess(); }} className="w-full text-left px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-red-600/10 hover:text-red-500 text-red-500 transition-all flex items-center gap-2 cursor-pointer">
                           <LogOut className="w-3.5 h-3.5" /> Sign Out
                         </button>
                       </div>
@@ -367,8 +368,9 @@ export function Layout() {
                       </p>
                     </div>
                     <button 
-                      onClick={() => {
-                        signOut();
+                      onClick={async () => {
+                        await signOut();
+                        notifySignOutSuccess();
                         setIsMobileNavOpen(false);
                       }} 
                       className="w-full py-4 bg-red-600 text-white rounded-[18px] text-[10px] uppercase tracking-widest font-extrabold text-center hover:bg-red-700 transition-colors cursor-pointer flex items-center justify-center gap-2"
