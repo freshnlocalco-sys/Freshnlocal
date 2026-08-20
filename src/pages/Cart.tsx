@@ -116,6 +116,53 @@ function YouMightAlsoLikeSection({
   );
 }
 
+function calculateTotalUnitString(unitStr: string | undefined, qty: number): string {
+  if (!unitStr) return '';
+  const trimmed = unitStr.trim();
+  const match = trimmed.match(/^([\d.]+)\s*(.*)$/);
+
+  let val = 1;
+  let unitName = trimmed;
+
+  if (match) {
+    val = parseFloat(match[1]) || 1;
+    unitName = match[2].trim();
+  } else {
+    val = 1;
+    unitName = trimmed;
+  }
+
+  const totalVal = val * qty;
+  const unitLower = unitName.toLowerCase();
+
+  // If the unit is "g" or "gm" or "grams" or "gram" and totalVal >= 1000, convert to "Kg"
+  if (['g', 'gm', 'gram', 'grams'].includes(unitLower) && totalVal >= 1000) {
+    const kgVal = totalVal / 1000;
+    const formattedKg = kgVal % 1 === 0 ? kgVal.toFixed(0) : kgVal.toFixed(1);
+    return `${formattedKg} Kg`;
+  }
+
+  const formattedTotalVal = totalVal % 1 === 0 ? totalVal.toFixed(0) : totalVal.toFixed(1);
+
+  // Simple pluralization
+  let displayUnit = unitName;
+  if (qty > 1) {
+    if (unitLower === 'pc') {
+      displayUnit = 'Pcs';
+    } else if (unitLower === 'piece') {
+      displayUnit = 'Pieces';
+    } else if (unitLower === 'packet') {
+      displayUnit = 'Packets';
+    } else if (unitLower === 'box') {
+      displayUnit = 'Boxes';
+    } else if (unitLower === 'bottle') {
+      displayUnit = 'Bottles';
+    }
+  }
+
+  return `${formattedTotalVal} ${displayUnit}`;
+}
+
 export function Cart() {
   const { categoryImages, faviconUrl } = useSettings();
   const { items, removeItem, updateQuantity, total, clearCart, addItem } = useCart();
@@ -580,8 +627,13 @@ export function Cart() {
                     <h3 className="font-black text-foreground text-[11px] sm:text-xs uppercase tracking-tight line-clamp-2 leading-tight">
                       {item.product.name}
                     </h3>
-                    <div className="text-[10px] text-muted-foreground font-semibold mt-0.5">
-                      {item.product.unit || '1 Unit'}
+                    <div className="text-[10px] text-muted-foreground font-semibold mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <span>{item.product.unit || '1 Unit'}</span>
+                      {item.quantity > 1 && (
+                        <span className="text-primary font-bold bg-primary/10 px-1.5 py-0.5 rounded-full text-[9px] uppercase tracking-wide">
+                          (Total in Cart: {calculateTotalUnitString(item.product.unit || '1 Unit', item.quantity)})
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 mt-1.5">
