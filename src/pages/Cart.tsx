@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2 } from 'lucide-react';
 import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
@@ -609,7 +609,7 @@ export function Cart() {
               {cartItems.map((item) => (
                 <div key={item.product.id} className="flex items-center gap-4 py-3 border-b border-border/40 last:border-0">
                   {/* Thumbnail */}
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white border border-border rounded-xl overflow-hidden shrink-0 relative shadow-2xs">
+                  <div className="w-20 h-[60px] sm:w-24 sm:h-[72px] bg-white border border-border rounded-xl overflow-hidden shrink-0 relative shadow-2xs">
                     <img 
                       src={item.product.imageUrl || getCategoryImage(item.product.category, categoryImages) || undefined} 
                       alt={item.product.name} 
@@ -937,9 +937,16 @@ export function Cart() {
                 <button 
                   type="submit" 
                   disabled={loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity}
-                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm ${loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
+                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
                 >
-                  {loading ? 'Processing Order...' : (isHoreca ? 'Submit HoReCa Order Requirement' : 'Proceed with Order')}
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Processing Order...</span>
+                    </>
+                  ) : (
+                    <span>{isHoreca ? 'Submit HoReCa Order Requirement' : 'Proceed with Order'}</span>
+                  )}
                 </button>
               ) : (
                 <button 

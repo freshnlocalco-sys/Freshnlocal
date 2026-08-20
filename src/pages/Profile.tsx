@@ -149,6 +149,12 @@ export function Profile() {
     );
   }
 
+  const displayLabel = user?.displayName || (
+    user?.role === 'admin' ? 'FNL Admin' : 
+    user?.role === 'horeca_admin' ? 'HoReCa Admin' : 
+    user?.role === 'horeca' ? 'HoReCa Partner' : 'Customer'
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 pt-6 pb-16 w-full grid lg:grid-cols-12 gap-8 bg-background text-foreground">
       <SEO 
@@ -157,16 +163,16 @@ export function Profile() {
       />
       {/* Left Sidebar Member Profile Card */}
       <div className="lg:col-span-4">
-        <div className="slice-card p-8 space-y-8 sticky top-24 bg-secondary border border-border shadow-sm">
-          <div className="space-y-4 text-center">
+        <div className="slice-card p-5 sm:p-8 space-y-6 sm:space-y-8 lg:sticky lg:top-24 bg-secondary border border-border shadow-sm">
+          <div className="space-y-3 sm:space-y-4 text-center">
             {/* User Icon resembling slice credit details */}
-            <div className="mx-auto w-24 h-24 bg-gradient-to-tr from-primary/20 to-secondary border border-primary/30 text-primary rounded-[24px] flex items-center justify-center text-3xl font-black shadow-none">
-              {user?.displayName ? user.displayName[0].toUpperCase() : 'U'}
+            <div className="mx-auto w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-tr from-primary/20 to-secondary border border-primary/30 text-primary rounded-2xl sm:rounded-[24px] flex items-center justify-center text-xl sm:text-3xl font-black shadow-none">
+              {displayLabel ? displayLabel[0].toUpperCase() : 'U'}
             </div>
             
             <div className="space-y-1 mt-2 flex flex-col items-center">
-              <h2 className="text-xl font-black uppercase text-foreground tracking-tight mt-2 flex items-center justify-center gap-2">
-                {user?.displayName || 'Customer'}
+              <h2 className="text-lg sm:text-xl font-black uppercase text-foreground tracking-tight mt-1 sm:mt-2 flex items-center justify-center gap-2">
+                {displayLabel}
                 {(user?.role === 'horeca' || user?.role === 'horeca_admin') && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full text-primary shadow-2xs" title="Verified HoReCa B2B Partner">
                     <Building2 className="w-3.5 h-3.5 text-primary" />
@@ -178,18 +184,18 @@ export function Profile() {
             </div>
           </div>
 
-          <div className="space-y-4.5 border-t border-border pt-6 text-[10px] uppercase font-bold tracking-wider text-muted-foreground font-sans">
-            <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-border">
+          <div className="space-y-3 sm:space-y-4 border-t border-border pt-5 sm:pt-6 text-[10px] uppercase font-bold tracking-wider text-muted-foreground font-sans">
+            <div className="flex justify-between items-center bg-background p-2.5 sm:p-3 rounded-xl border border-border">
               <span className="flex items-center gap-2"><Key className="w-4 h-4 text-primary" /> Authority level</span>
               <span className="text-primary font-black uppercase tracking-widest">{user?.role}</span>
             </div>
             {user?.points !== undefined && (
-              <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-border">
+              <div className="flex justify-between items-center bg-background p-2.5 sm:p-3 rounded-xl border border-border">
                 <span className="flex items-center gap-2"><Award className="w-4 h-4 text-primary" /> FNL Points</span>
                 <span className="text-primary font-black uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded-md">{user.points} PTS</span>
               </div>
             )}
-            <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-border">
+            <div className="flex justify-between items-center bg-background p-2.5 sm:p-3 rounded-xl border border-border">
               <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> Member Since</span>
               <span className="text-foreground font-mono">{new Date(user?.createdAt || Date.now()).toLocaleDateString()}</span>
             </div>
