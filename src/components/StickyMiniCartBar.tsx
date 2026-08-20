@@ -111,19 +111,13 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
                   </motion.span>
                 </div>
 
-                <div className="min-w-0">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-xs font-black text-foreground uppercase tracking-wider">
-                      {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
-                    </span>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
-                    <span className="text-base font-black text-primary tracking-tight">
-                      ₹{totalAmount.toFixed(0)}
-                    </span>
-                  </div>
-                  <p className="text-[10.5px] text-muted-foreground font-medium truncate">
-                    Tap to review & checkout
-                  </p>
+                <div className="min-w-0 flex flex-col justify-center">
+                  <span className="text-base font-black text-foreground tracking-tight leading-none">
+                    ₹{totalAmount.toFixed(0)}
+                  </span>
+                  <span className="text-[11px] font-bold text-primary uppercase tracking-wider mt-0.5 leading-none">
+                    {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
+                  </span>
                 </div>
               </div>
 
