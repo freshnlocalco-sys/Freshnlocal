@@ -3231,7 +3231,14 @@ export function AdminDashboard() {
         const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
         const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
         if (idxA !== idxB) return idxA - idxB;
-        return (a.name || '').localeCompare(b.name || '');
+
+        const isOutA = a.inStock === false;
+        const isOutB = b.inStock === false;
+        if (isOutA !== isOutB) {
+          return isOutA ? 1 : -1;
+        }
+
+        return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
       });
 
       const data = sortedProducts
