@@ -8,6 +8,7 @@ import { useProducts } from '../store/useProducts';
 import { useHorecaPrices } from '../store/useHorecaPrices';
 import { AuthModal } from './AuthModal';
 import { AdminNotifier } from './AdminNotifier';
+import { StickyMiniCartBar } from './StickyMiniCartBar';
 import { notifySignOutSuccess } from '../lib/authNotifications';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -502,6 +503,7 @@ export function Layout() {
 
       <AdminNotifier />
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <StickyMiniCartBar />
     </div>
   );
 }
