@@ -236,81 +236,85 @@ export function Layout() {
       <AnimatePresence>
         {isMobileNavOpen && (
           <>
-            {/* Backdrop */}
+            {/* Backdrop with subtle blur */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileNavOpen(false)}
-              className="fixed inset-0 bg-black z-40 md:hidden"
+              className="fixed inset-0 bg-black/35 backdrop-blur-xs z-40 md:hidden"
               style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
             />
-            {/* Drawer */}
+            {/* Frosted Glass Drawer */}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-background border-l border-border z-50 md:hidden p-8 flex flex-col justify-between shadow-[0_0_80px_rgba(0,0,0,0.08)]"
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white/80 backdrop-blur-2xl border-l border-white/50 z-50 md:hidden p-7 flex flex-col justify-between shadow-[0_20px_60px_rgba(0,0,0,0.12)]"
               style={{ position: 'fixed', top: 0, bottom: 0, right: 0 }}
             >
               <div>
-                <div className="flex items-center justify-between pb-6 border-b border-border/40 mb-6">
-                  <span className="font-sans font-black uppercase text-sm tracking-[0.15em] text-foreground flex items-center gap-2">Navigation</span>
+                <div className="flex items-center justify-between pb-5 border-b border-black/5 mb-6">
+                  <span className="font-sans font-black uppercase text-xs tracking-[0.2em] text-foreground flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    Navigation
+                  </span>
                   <button 
                     onClick={() => setIsMobileNavOpen(false)}
-                    className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-secondary text-foreground"
+                    className="w-9 h-9 rounded-full bg-white/80 border border-black/5 backdrop-blur-md flex items-center justify-center hover:bg-white text-foreground shadow-2xs transition-colors cursor-pointer"
+                    aria-label="Close navigation"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                <nav className="flex flex-col gap-6 text-[13px] uppercase tracking-[0.2em] font-black text-foreground">
+                <nav className="flex flex-col gap-4 text-[13px] uppercase tracking-[0.18em] font-extrabold text-foreground">
                   <Link 
                     to="/" 
                     onClick={() => setIsMobileNavOpen(false)} 
-                    className="py-2 hover:text-primary transition-colors flex justify-between items-center"
+                    className="px-3 py-2.5 rounded-xl hover:bg-white/70 hover:text-primary transition-all flex justify-between items-center"
                   >
-                    <span>Home</span> <span className="opacity-30">→</span>
+                    <span>Home</span> <span className="text-muted-foreground/50">→</span>
                   </Link>
                   <Link 
                     to="/shop" 
                     onClick={() => setIsMobileNavOpen(false)} 
-                    className="py-2 hover:text-primary transition-colors flex justify-between items-center"
+                    className="px-3 py-2.5 rounded-xl hover:bg-white/70 hover:text-primary transition-all flex justify-between items-center"
                   >
-                    <span>Shop All</span> <span className="opacity-30">→</span>
+                    <span>Shop All</span> <span className="text-muted-foreground/50">→</span>
                   </Link>
                   <Link 
                     to="/fnl-recipes" 
                     onClick={() => setIsMobileNavOpen(false)} 
-                    className="py-2 text-primary hover:text-primary transition-colors flex justify-between items-center font-black"
+                    className="px-3 py-2.5 rounded-xl hover:bg-white/70 text-primary transition-all flex justify-between items-center font-black"
                   >
                     <span className="flex items-center gap-2">
                       FNL Recipes
-                      <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                      <div className="w-6 h-6 bg-primary/15 backdrop-blur-xs rounded-full flex items-center justify-center shrink-0">
                         <ChefHat className="w-3.5 h-3.5 text-primary" />
                       </div>
                     </span> 
-                    <span className="opacity-30">→</span>
+                    <span className="text-primary/50">→</span>
                   </Link>
                   <Link 
                     to="/juice" 
                     onClick={() => setIsMobileNavOpen(false)} 
-                    className="py-2 text-orange-600 hover:text-primary transition-colors flex justify-between items-center font-black"
+                    className="px-3 py-2.5 rounded-xl hover:bg-white/70 text-orange-600 hover:text-orange-700 transition-all flex justify-between items-center font-black"
                   >
-                    <span>FNL Juice 🍹</span> <span className="opacity-30">→</span>
+                    <span>FNL Juice 🍹</span> <span className="text-orange-400">→</span>
                   </Link>
                   <Link 
                     to="/about" 
                     onClick={() => setIsMobileNavOpen(false)} 
-                    className="py-2 hover:text-primary transition-colors flex justify-between items-center"
+                    className="px-3 py-2.5 rounded-xl hover:bg-white/70 hover:text-primary transition-all flex justify-between items-center"
                   >
-                    <span>Our story</span> <span className="opacity-30">→</span>
+                    <span>Our story</span> <span className="text-muted-foreground/50">→</span>
                   </Link>
                   <Link 
                     to="/wishlist" 
                     onClick={() => setIsMobileNavOpen(false)} 
-                    className="py-2 hover:text-red-500 transition-colors flex justify-between items-center text-red-500 font-extrabold uppercase tracking-widest"
+                    className="px-3 py-2.5 rounded-xl hover:bg-white/70 hover:text-red-500 transition-all flex justify-between items-center text-red-500 font-extrabold"
                   >
                     <span>Wishlist</span>
                     <Heart className="w-4 h-4 fill-red-500" />
@@ -321,31 +325,31 @@ export function Layout() {
                       <Link 
                         to="/profile" 
                         onClick={() => setIsMobileNavOpen(false)} 
-                        className="py-2 hover:text-primary transition-colors flex justify-between items-center"
+                        className="px-3 py-2.5 rounded-xl hover:bg-white/70 hover:text-primary transition-all flex justify-between items-center"
                       >
-                        <span>My Profile</span> <span className="opacity-30">→</span>
+                        <span>My Profile</span> <span className="text-muted-foreground/50">→</span>
                       </Link>
                       <Link 
                         to="/orders" 
                         onClick={() => setIsMobileNavOpen(false)} 
-                        className="py-2 hover:text-primary transition-colors flex justify-between items-center"
+                        className="px-3 py-2.5 rounded-xl hover:bg-white/70 hover:text-primary transition-all flex justify-between items-center"
                       >
-                        <span>My Orders</span> <span className="opacity-30">→</span>
+                        <span>My Orders</span> <span className="text-muted-foreground/50">→</span>
                       </Link>
                       <Link 
                         to="/profile?tab=recipes" 
                         onClick={() => setIsMobileNavOpen(false)} 
-                        className="py-2 hover:text-primary transition-colors flex justify-between items-center"
+                        className="px-3 py-2.5 rounded-xl hover:bg-white/70 hover:text-primary transition-all flex justify-between items-center"
                       >
-                        <span>Saved Recipes</span> <span className="opacity-30">→</span>
+                        <span>Saved Recipes</span> <span className="text-muted-foreground/50">→</span>
                       </Link>
-                      {user.role === 'admin' && (
+                      {(user.role === 'admin' || user.role === 'horeca_admin') && (
                         <Link 
                           to="/admin" 
                           onClick={() => setIsMobileNavOpen(false)} 
-                          className="py-2 text-primary hover:text-primary transition-colors flex justify-between items-center"
+                          className="px-3 py-2.5 rounded-xl hover:bg-white/70 text-primary transition-all flex justify-between items-center font-black"
                         >
-                          <span>Admin Portal</span> <span className="text-primary/40">★</span>
+                          <span>{user.role === 'horeca_admin' ? 'HoReCa Desk' : 'Admin Portal'}</span> <span className="text-primary/60">★</span>
                         </Link>
                       )}
                     </>
@@ -353,12 +357,13 @@ export function Layout() {
                 </nav>
               </div>
 
-              <div className="pt-6 border-t border-border/45 mt-auto">
+              <div className="pt-5 border-t border-black/5 mt-auto">
                 {user ? (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-start">
+                  <div className="space-y-3">
+                    <div className="p-3 bg-white/70 backdrop-blur-md rounded-2xl border border-black/5">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold">
-                        Active Session: <span className="text-primary block font-mono text-sm mt-1">{user.displayName || user.email}</span>
+                        Signed In As:
+                        <span className="text-foreground block font-bold text-xs mt-0.5 truncate">{user.displayName || user.email}</span>
                         {(user.role === 'horeca' || user.role === 'horeca_admin') && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-2 bg-orange-500/10 border border-orange-500/20 rounded-md">
                             <ChefHat className="w-3.5 h-3.5 text-orange-600" />
@@ -373,7 +378,7 @@ export function Layout() {
                         notifySignOutSuccess();
                         setIsMobileNavOpen(false);
                       }} 
-                      className="w-full py-4 bg-red-600 text-white rounded-[18px] text-[10px] uppercase tracking-widest font-extrabold text-center hover:bg-red-700 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-3.5 bg-red-600/90 hover:bg-red-600 text-white rounded-2xl text-[10px] uppercase tracking-widest font-extrabold text-center transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
                     >
                       <LogOut className="w-3.5 h-3.5" /> Sign Out
                     </button>
@@ -384,7 +389,7 @@ export function Layout() {
                       setIsMobileNavOpen(false);
                       setIsAuthModalOpen(true);
                     }} 
-                    className="slice-btn-primary w-full py-4.5"
+                    className="slice-btn-primary w-full py-4 rounded-2xl shadow-md cursor-pointer"
                   >
                     <LogIn className="w-4 h-4" /> Access Accounts
                   </button>

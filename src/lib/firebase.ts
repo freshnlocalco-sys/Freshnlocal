@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { initializeFirestore, doc, getDoc, setDoc, serverTimestamp, enableMultiTabIndexedDbPersistence, getDocFromServer } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { create } from 'zustand';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -17,36 +17,22 @@ if (primaryBucket.endsWith('.appspot.com')) {
   fallbackBucketUrl = `gs://${primaryBucket.replace('.appspot.com', '.firebasestorage.app')}`;
 }
 export const fallbackStorage = getStorage(app, fallbackBucketUrl);
-export const db = initializeFirestore(app, {
-  ignoreUndefinedProperties: true,
-  experimentalAutoDetectLongPolling: true,
-}, "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
 
-// Test Firestore connection on boot to catch potential offline/transient stream issues
+// Standard Firestore initialization with custom database ID from config
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
+
+// Safe connection validation to catch potential offline/transient stream transitions gracefully
 async function testFirestoreConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn("Firestore connection check: Client offline or transient stream reconnecting.");
+  } catch (error: any) {
+    // Gracefully handle offline or transient network states without throwing unhandled exceptions
+    if (error?.message?.includes('the client is offline') || error?.code === 'unavailable') {
+      // Client operates seamlessly in offline/cached mode
     }
   }
 }
 testFirestoreConnection();
-
-if (typeof window !== 'undefined') {
-  enableMultiTabIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      // Multiple tabs open, persistence can only be enabled in one tab at a time.
-      console.warn('Firestore multi-tab persistence failed-precondition (multiple tabs)');
-    } else if (err.code === 'unimplemented') {
-      // The current browser does not support all of the features required to enable persistence
-      console.warn('Firestore persistence unimplemented in this browser');
-    } else {
-      console.warn('Firestore persistence error:', err);
-    }
-  });
-}
 
 export enum OperationType {
   CREATE = 'create',
