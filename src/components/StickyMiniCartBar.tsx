@@ -89,7 +89,7 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
                   </>
                 )}
               </div>
-              <span className="text-[10px] font-mono font-bold text-muted-foreground">{progressPercent}%</span>
+              <span className="text-[10px] font-bold text-muted-foreground">{progressPercent}%</span>
             </div>
 
             {/* Main Bar Content */}
@@ -117,7 +117,7 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
                       {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
                     </span>
                     <span className="text-muted-foreground/40 text-xs">·</span>
-                    <span className="text-base font-black text-primary font-mono tracking-tight">
+                    <span className="text-base font-black text-primary tracking-tight">
                       ₹{totalAmount.toFixed(0)}
                     </span>
                   </div>
