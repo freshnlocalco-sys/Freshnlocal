@@ -98,10 +98,10 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
               userSelect: 'none',
             }}
           >
-            {/* Pill Container - Frosted dark glassmorphism with high contrast readable elements */}
+            {/* Pill Container - High-Density Premium Obsidian Emerald Glass with high-contrast readable white/neon elements */}
             <Link
               to="/cart"
-              className="relative flex items-center bg-[#061109]/85 hover:bg-[#0c1e11]/90 backdrop-blur-xl border-2 border-emerald-500/40 text-white rounded-full shadow-[0_16px_40px_rgba(0,0,0,0.65),0_0_24px_rgba(16,185,129,0.15)] active:scale-[0.98] transition-all overflow-hidden h-[56px] min-w-[300px] sm:min-w-[340px] max-w-[94vw]"
+              className="relative flex items-center bg-[#07170D]/95 hover:bg-[#0c2415]/95 backdrop-blur-xl border-2 border-emerald-500/50 text-white rounded-full shadow-[0_18px_48px_rgba(0,0,0,0.7),0_0_24px_rgba(34,197,94,0.15)] active:scale-[0.98] transition-all overflow-hidden h-[56px] min-w-[300px] sm:min-w-[340px] max-w-[94vw]"
             >
               {/* Product Thumbnails Stack */}
               <div className="flex items-center -space-x-3 shrink-0 pl-3 pr-2.5">
@@ -127,15 +127,15 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
                 </AnimatePresence>
               </div>
 
-              {/* Text & Price Info - High Contrast */}
+              {/* Text & Price Info - Premium High Contrast */}
               <div className="flex flex-col justify-center flex-1 min-w-0 pr-3 pl-1">
                 {/* Main Row: CART · ₹Price */}
                 <div className="flex items-baseline gap-1.5 leading-none">
-                  <span className="font-black text-sm tracking-wider uppercase text-[#06180C] drop-shadow-sm">
+                  <span className="font-black text-sm tracking-wider uppercase text-white drop-shadow-sm">
                     Cart
                   </span>
-                  <span className="text-[#06180C]/60 text-xs font-bold">·</span>
-                  <span className="font-black text-[15px] text-[#0A622A] tracking-tight drop-shadow-sm">
+                  <span className="text-white/40 text-xs font-bold">·</span>
+                  <span className="font-black text-[15px] text-[#22C55E] tracking-tight drop-shadow-sm">
                     ₹{totalAmount.toFixed(0)}
                   </span>
                 </div>
@@ -149,7 +149,7 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -3, opacity: 0 }}
                       transition={{ duration: 0.12 }}
-                      className="font-black text-[11px] text-[#06180C]/90 uppercase tracking-wider"
+                      className="font-black text-[11px] text-white/90 uppercase tracking-wider"
                     >
                       {itemCount} {itemCount === 1 ? 'ITEM' : 'ITEMS'}
                     </motion.span>
