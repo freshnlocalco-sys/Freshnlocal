@@ -78,14 +78,28 @@ export function FreeDeliveryProgressBar({
         ) : null}
       </div>
 
-      {/* Slim Modern Progress Track */}
-      <div className="w-full h-1.5 rounded-full bg-emerald-950/5 overflow-hidden">
-        <motion.div 
-          className="h-full rounded-full bg-primary"
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
+      {/* Slim Modern Progress Track with moving delivery truck */}
+      <div className="relative w-full pt-1 pb-1">
+        <div className="w-full h-1.5 rounded-full bg-emerald-950/5 overflow-hidden">
+          <motion.div 
+            className="h-full rounded-full bg-primary"
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          />
+        </div>
+
+        {/* Animated Moving Delivery Truck Icon on the line */}
+        <motion.div
+          className="absolute top-1/2 -translate-y-1/2 -ml-2.5 z-10 flex items-center justify-center pointer-events-none"
+          initial={{ left: '0%' }}
+          animate={{ left: `${percentage}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-        />
+        >
+          <div className="w-5 h-5 rounded-full bg-white border border-primary/30 shadow-xs flex items-center justify-center">
+            <Truck className="w-3 h-3 text-primary stroke-[2.5]" />
+          </div>
+        </motion.div>
       </div>
     </div>
   );
