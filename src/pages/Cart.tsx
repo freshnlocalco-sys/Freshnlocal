@@ -809,11 +809,11 @@ export function Cart() {
                         <input 
                           placeholder="Pincode (6 digits)"
                           required 
-                          type="text"
+                          type="text" 
                           maxLength={6}
                           value={addressLines.pincode}
                           onChange={(e) => setAddressLines(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '') }))}
-                          className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-mono font-semibold"
+                          className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
                         />
                         <input 
                           placeholder="Phone number"
@@ -821,7 +821,7 @@ export function Cart() {
                           type="tel" 
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-mono font-semibold"
+                          className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
                         />
                       </div>
                     </div>
@@ -839,7 +839,7 @@ export function Cart() {
                     type="tel" 
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-mono font-semibold"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
                   />
                 </div>
               )}
