@@ -246,25 +246,27 @@ export function Profile() {
 
       {/* Right Column Orders History */}
       <div className="lg:col-span-8 space-y-8">
-        <div className="flex items-end justify-between border-b border-border pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-border pb-4 gap-4">
           <div className="space-y-4 bg-transparent w-full">
-            <span className="glass-pill">{activeTab === 'orders' ? 'Purchase Desk' : 'Culinary Desk'}</span>
-            <div className="flex gap-4">
+            <div>
+              <span className="glass-pill inline-block">{activeTab === 'orders' ? 'Purchase Desk' : 'Culinary Desk'}</span>
+            </div>
+            <div className="flex gap-6">
               <button 
                 onClick={() => navigate('/profile?tab=orders')}
-                className={`text-xl md:text-3xl font-sans font-black uppercase tracking-tight transition-all ${activeTab === 'orders' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'}`}
+                className={`text-lg sm:text-xl md:text-3xl font-sans font-black uppercase tracking-tight pb-2 transition-all relative ${activeTab === 'orders' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground/80 border-b-2 border-transparent'}`}
               >
                 Orders
               </button>
               <button 
                 onClick={() => navigate('/profile?tab=recipes')}
-                className={`text-xl md:text-3xl font-sans font-black uppercase tracking-tight transition-all ${activeTab === 'recipes' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'}`}
+                className={`text-lg sm:text-xl md:text-3xl font-sans font-black uppercase tracking-tight pb-2 transition-all relative ${activeTab === 'recipes' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground/80 border-b-2 border-transparent'}`}
               >
                 Saved Recipes
               </button>
             </div>
           </div>
-          <p className="hidden md:flex items-center gap-1.5 text-xxs font-mono font-bold tracking-widest text-[#506053]">
+          <p className="hidden md:flex items-center gap-1.5 text-xxs font-mono font-bold tracking-widest text-[#506053] shrink-0 pb-2">
             <Activity className="w-4 h-4 text-primary animate-pulse" /> {activeTab === 'orders' ? 'TRANSACTION SECURE' : 'RECIPES SECURE'}
           </p>
         </div>
