@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles, Check, Truck } from 'lucide-react';
 import { useCart } from '../store/useCart';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -12,124 +13,197 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
   const location = useLocation();
   const { items, total } = useCart();
   const [pulse, setPulse] = useState(false);
+  const [showCelebrationBanner, setShowCelebrationBanner] = useState(false);
   const prevCountRef = useRef(0);
+  const prevUnlockedRef = useRef(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Total number of items
-  const itemCount = items.reduce((acc, item) => acc + (item.quantity > 0 ? 1 : 0), 0);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Active non-zero items
+  const validItems = items.filter((item) => item && item.product && item.quantity > 0);
+  const itemCount = validItems.reduce((acc, item) => acc + (item.quantity > 0 ? 1 : 0), 0);
   const totalAmount = total();
+  const isUnlocked = totalAmount >= freeDeliveryThreshold;
 
-  // Trigger pulse animation when item count or total increases
+  // Extract up to 3 most recently added product thumbnails
+  const recentThumbnails = validItems
+    .map((it) => it.product)
+    .filter((p) => Boolean(p && p.imageUrl))
+    .slice(-3)
+    .reverse();
+
+  // Detect item addition pulse
   useEffect(() => {
     if (itemCount > prevCountRef.current && prevCountRef.current !== 0) {
       setPulse(true);
-      const timer = setTimeout(() => setPulse(false), 500);
+      const timer = setTimeout(() => setPulse(false), 400);
       return () => clearTimeout(timer);
     }
     prevCountRef.current = itemCount;
-  }, [itemCount, totalAmount]);
+  }, [itemCount]);
+
+  // Detect when Free Delivery is freshly unlocked and trigger celebratory slide
+  useEffect(() => {
+    if (isUnlocked && !prevUnlockedRef.current && prevCountRef.current > 0) {
+      setShowCelebrationBanner(true);
+      const timer = setTimeout(() => setShowCelebrationBanner(false), 3200);
+      return () => clearTimeout(timer);
+    }
+    prevUnlockedRef.current = isUnlocked;
+  }, [isUnlocked]);
 
   // Hide on cart or checkout pages or when empty
   const isHiddenRoute = location.pathname === '/cart' || location.pathname === '/checkout' || location.pathname.startsWith('/admin');
-  const isVisible = itemCount > 0 && !isHiddenRoute;
+  const isVisible = mounted && itemCount > 0 && !isHiddenRoute;
 
-  const isUnlocked = totalAmount >= freeDeliveryThreshold;
-  const remaining = Math.max(0, freeDeliveryThreshold - totalAmount);
-  const progressPercent = Math.min(100, Math.max(0, Math.round((totalAmount / freeDeliveryThreshold) * 100)));
+  if (!mounted) return null;
 
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          key="sticky-mini-cart"
-          initial={{ y: 90, opacity: 0, scale: 0.96 }}
-          animate={{ 
-            y: 0, 
-            opacity: 1, 
-            scale: pulse ? 1.02 : 1,
-          }}
-          exit={{ y: 90, opacity: 0, scale: 0.96 }}
-          transition={{ 
-            type: 'spring', 
-            damping: 24, 
-            stiffness: 280,
-            scale: { duration: 0.2 }
-          }}
-          className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[420px] z-50 pointer-events-auto"
-        >
-          {/* Frosted Glass Container with luminous border */}
-          <div className="relative overflow-hidden rounded-3xl bg-white/75 backdrop-blur-2xl border border-white/80 shadow-[0_20px_50px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.05)] text-foreground">
-            
-            {/* Free Delivery Micro-Progress Bar on top edge */}
-            <div className="w-full bg-black/5 h-1.5 relative overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                className={`h-full ${isUnlocked ? 'bg-primary' : 'bg-primary/80'}`}
-              />
-            </div>
-
-            {/* Micro-Progress Sub-header / Status Pill */}
-            <div className="px-4 pt-2.5 pb-1 flex items-center justify-between text-[11px] font-bold tracking-wider uppercase">
-              <div className="flex items-center gap-1.5">
-                {isUnlocked ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-primary font-black flex items-center gap-1">
-                      Free Delivery in Surat Unlocked!
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary/70" />
-                    <span className="text-primary font-black">
-                      Add ₹{remaining.toFixed(0)} more
-                    </span>
-                    <span className="text-muted-foreground font-semibold">for Free Delivery</span>
-                  </>
-                )}
-              </div>
-              <span className="text-[10px] font-bold text-muted-foreground">{progressPercent}%</span>
-            </div>
-
-            {/* Main Bar Content */}
+  const content = (
+    <div
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        left: '0',
+        right: '0',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 999999,
+        pointerEvents: 'none',
+        paddingLeft: '16px',
+        paddingRight: '16px',
+      }}
+    >
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div
+            key="instamart-floating-cart"
+            initial={{ y: 60, opacity: 0, scale: 0.92 }}
+            animate={{
+              y: 0,
+              opacity: 1,
+              scale: pulse ? 1.035 : 1,
+            }}
+            exit={{ y: 60, opacity: 0, scale: 0.92 }}
+            transition={{
+              type: 'spring',
+              damping: 26,
+              stiffness: 360,
+            }}
+            style={{
+              pointerEvents: 'auto',
+              userSelect: 'none',
+            }}
+          >
+            {/* Pill Container - Frosted dark glassmorphism with high contrast readable elements */}
             <Link
               to="/cart"
-              className="flex items-center justify-between px-4 py-2.5 gap-3 hover:bg-white/60 active:scale-[0.99] transition-all cursor-pointer group"
+              className="relative flex items-center bg-[#061109]/85 hover:bg-[#0c1e11]/90 backdrop-blur-xl border-2 border-emerald-500/40 text-white rounded-full shadow-[0_16px_40px_rgba(0,0,0,0.65),0_0_24px_rgba(16,185,129,0.15)] active:scale-[0.98] transition-all overflow-hidden h-[56px] min-w-[300px] sm:min-w-[340px] max-w-[94vw]"
             >
-              {/* Left: Cart Icon & Item Count / Price */}
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="relative w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 backdrop-blur-md flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
-                  <ShoppingBag className="w-4 h-4 text-primary stroke-[2.2]" />
-                  <motion.span
-                    key={itemCount}
-                    initial={{ scale: 0.6 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 bg-primary text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-xs"
-                  >
-                    {itemCount}
-                  </motion.span>
-                </div>
+              {/* Product Thumbnails Stack */}
+              <div className="flex items-center -space-x-3 shrink-0 pl-3 pr-2.5">
+                <AnimatePresence initial={false}>
+                  {recentThumbnails.map((prod, idx) => (
+                    <motion.div
+                      key={prod.id || idx}
+                      initial={{ scale: 0.2, x: -12, opacity: 0 }}
+                      animate={{ scale: 1, x: 0, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: 'spring', damping: 20, stiffness: 380 }}
+                      className="relative w-9 h-9 rounded-full border-2 border-emerald-400 bg-white shadow-md overflow-hidden shrink-0 ring-2 ring-black/60"
+                      style={{ zIndex: 10 - idx }}
+                    >
+                      <img
+                        src={prod.imageUrl}
+                        alt={prod.name}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
 
-                <div className="min-w-0 flex flex-col justify-center">
-                  <span className="text-base font-black text-foreground tracking-tight leading-none">
+              {/* Text & Price Info - High Contrast */}
+              <div className="flex flex-col justify-center flex-1 min-w-0 pr-3 pl-1">
+                {/* Main Row: CART · ₹Price */}
+                <div className="flex items-baseline gap-1.5 leading-none">
+                  <span className="font-black text-sm tracking-wider uppercase text-[#06180C] drop-shadow-sm">
+                    Cart
+                  </span>
+                  <span className="text-[#06180C]/60 text-xs font-bold">·</span>
+                  <span className="font-black text-[15px] text-[#0A622A] tracking-tight drop-shadow-sm">
                     ₹{totalAmount.toFixed(0)}
                   </span>
-                  <span className="text-[11px] font-bold text-primary uppercase tracking-wider mt-0.5 leading-none">
-                    {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
-                  </span>
+                </div>
+
+                {/* Sub Row: Item count badge + status */}
+                <div className="flex items-center gap-2 mt-1 leading-none">
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={itemCount}
+                      initial={{ y: 3, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -3, opacity: 0 }}
+                      transition={{ duration: 0.12 }}
+                      className="font-black text-[11px] text-[#06180C]/90 uppercase tracking-wider"
+                    >
+                      {itemCount} {itemCount === 1 ? 'ITEM' : 'ITEMS'}
+                    </motion.span>
+                  </AnimatePresence>
+
+                  {isUnlocked && (
+                    <span className="inline-flex items-center text-[10px] font-black text-white bg-[#0A622A] px-2 py-0.5 rounded-full shadow-sm">
+                      FREE DELIVERY
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Right: CTA Button */}
-              <div className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-primary hover:bg-[#009e45] text-white font-sans text-xs font-black tracking-wider uppercase shadow-[0_4px_16px_rgba(0,186,81,0.3)] group-hover:shadow-[0_6px_20px_rgba(0,186,81,0.4)] transition-all">
-                <span>View Cart</span>
-                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5] group-hover:translate-x-0.5 transition-transform" />
+              {/* Right Action Button */}
+              <div className="mr-2.5 w-8 h-8 rounded-full bg-[#22C55E] hover:bg-[#16a34a] active:bg-[#15803d] flex items-center justify-center shrink-0 shadow-md transition-colors">
+                <ArrowRight className="w-4 h-4 text-black stroke-[3]" />
               </div>
+
+              {/* Celebratory Slide-Over Banner */}
+              <AnimatePresence>
+                {showCelebrationBanner && (
+                  <motion.div
+                    initial={{ x: '100%' }}
+                    animate={{ x: 0 }}
+                    exit={{ x: '-100%' }}
+                    transition={{ type: 'spring', damping: 26, stiffness: 280 }}
+                    className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 flex items-center justify-between px-4 z-20 shadow-inner"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                        <Truck className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-extrabold text-[12.5px] text-white tracking-tight leading-tight">
+                          Free Delivery Unlocked!
+                        </span>
+                        <span className="text-[10px] font-medium text-emerald-100 leading-tight">
+                          Eligible for fast delivery in Surat
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center shrink-0 ml-2">
+                      <Check className="w-4 h-4 text-white stroke-[3]" />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </Link>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
+
+  return createPortal(content, document.body);
 }
