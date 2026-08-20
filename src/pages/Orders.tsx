@@ -246,9 +246,6 @@ export function Orders() {
             Order Board Logs
           </h1>
         </div>
-        <div className="flex items-center gap-2 p-2 bg-secondary border border-border rounded-2xl text-[9px] font-mono tracking-wider text-muted-foreground">
-          <Activity className="w-4.5 h-4.5 text-primary animate-pulse" /> SYSTEM SECURE
-        </div>
       </div>
 
       {loading ? (

@@ -199,6 +199,7 @@ export function Profile() {
               <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> Member Since</span>
               <span className="text-foreground font-mono">{new Date(user?.createdAt || Date.now()).toLocaleDateString()}</span>
             </div>
+
             {user?.addresses && user.addresses.length > 0 ? (
               <div className="bg-background p-4 rounded-xl border border-border space-y-3">
                 <div className="flex items-center justify-between mb-2">
