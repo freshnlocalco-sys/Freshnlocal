@@ -4,7 +4,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import crypto from "crypto";
-import { setupOrderEmailTriggers, sendCancellationEmailDirect } from "./emailTriggers";
+import { setupOrderEmailTriggers, sendCancellationEmailDirect, sendStatusUpdateEmailDirect } from "./emailTriggers";
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
@@ -476,6 +476,22 @@ Format your output exactly as a JSON object with these keys:
     } catch (error: any) {
       console.error(`[EMAIL-API] Failed to send cancellation email:`, error);
       res.status(500).json({ error: error?.message || "Failed to send cancellation email" });
+    }
+  });
+
+  // API route for direct, real-time status email sending on update
+  app.post("/api/emails/send-status-email", async (req, res) => {
+    try {
+      const { order, id, status } = req.body;
+      if (!order || !id || !status) {
+        return res.status(400).json({ error: "Missing order, id, or status" });
+      }
+      
+      await sendStatusUpdateEmailDirect(order, id, status);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error(`[EMAIL-API] Failed to send status update email:`, error);
+      res.status(500).json({ error: error?.message || "Failed to send status update email" });
     }
   });
 

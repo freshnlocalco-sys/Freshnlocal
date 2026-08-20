@@ -125,13 +125,13 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
 
   const headerTitle = isHorecaOrder
     ? "HoReCa Quote Received"
-    : (isPickup ? "Pickup Confirmed" : "Harvest Confirmed");
+    : (isPickup ? "Pickup Order Placed" : "Order Placed Successfully");
   
   const introMessage = isHorecaOrder
     ? "Thank you for submitting your HoReCa harvest request! Our team in Surat, Gujarat is reviewing your item quantities and custom rates. We will update your order with confirmed pricing and notify you as soon as your custom quote is finalized."
     : (isPickup 
-      ? "Thank you for your order! Your organic selections are being reserved and freshly prepared. Our partner farmers in Surat, Gujarat are harvesting them fresh, and we will have your custom bundle ready for pickup at our Bhatar store soon!"
-      : "Thank you for supporting 100% natural, regional farming! Our partner farmers in Surat, Gujarat have reserved your selections and are preparing to deliver them fresh.");
+      ? "Thank you for your order! Your store pickup order has been placed successfully and is currently pending review. We will notify you as soon as your order is confirmed and when it is ready for collection at our Bhatar store."
+      : "Thank you for your order! Your delivery order has been placed successfully and is currently pending review. Our partner farmers in Surat, Gujarat will harvest your selections fresh, and we will notify you once your order is confirmed.");
 
   const destinationRow = isPickup ? `
     <tr class="meta-row" style="border-bottom: 1px solid #f1f5f9;">
@@ -289,69 +289,97 @@ function renderOrderConfirmationHtml(order: any, id: string): string {
  */
 function renderShippingUpdateHtml(order: any, id: string): string {
   const isPickup = order.deliveryMethod === 'pickup' || (order.shippingDetails?.address || '').toLowerCase().includes('pickup');
-  const isDelivered = order.status === 'delivered';
-  const isCancelled = order.status === 'cancelled';
-  const isShipped = order.status === 'shipped';
-  
-  let statusText = "Shipped";
+  const status = order.status;
+  const isDelivered = ['delivered', 'takeaway'].includes(status);
+
+  let statusText = "Updated";
   let statusColor = "#1d4ed8"; // Premium blue
   let statusBgColor = "#eff6ff"; // Soft blue
-  let statusMessage = "Your fresh crops are harvested, packaged with love, and are currently in transit to your kitchen!";
+  let statusMessage = "Your order status has been updated. Please find the details below.";
   let statusIconColor = "#3b82f6";
-  
+
   if (isPickup) {
-    if (isDelivered) {
-      statusText = "Picked Up";
-      statusColor = "#15803d"; // Premium green
-      statusBgColor = "#f0fdf4"; // Soft green
-      statusMessage = "Your order has been successfully picked up! Thank you for choosing FreshNLocal. We hope you love your farm-fresh local produce.";
-      statusIconColor = "#10b981";
-    } else if (isShipped) {
+    if (status === 'confirmed') {
+      statusText = "Order Confirmed";
+      statusColor = "#2563eb"; // Premium blue
+      statusBgColor = "#eff6ff";
+      statusMessage = "Your store pickup order is confirmed! Our regional partner farmers are harvesting your selections, and we are preparing everything for your store pickup.";
+      statusIconColor = "#3b82f6";
+    } else if (status === 'ready') {
       statusText = "Ready for Pickup";
       statusColor = "#16a34a"; // Vibrant green
-      statusBgColor = "#f0fdf4"; // Soft green
-      statusMessage = "Good news! Your fresh farm selections have been harvested, sorted, and have arrived at our Bhatar store. Your package is ready for collection at your convenience during store hours (9 AM - 9 PM).";
+      statusBgColor = "#f0fdf4";
+      statusMessage = "Excellent news! Your fresh farm selections have been harvested, sorted, and have arrived at our Bhatar store. Your package is ready for collection at your convenience during store hours (9:00 AM - 9:00 PM daily).";
       statusIconColor = "#22c55e";
-    } else if (isCancelled) {
-      statusText = "Cancelled";
-      statusColor = "#b91c1c"; // Premium red
-      statusBgColor = "#fef2f2"; // Soft red
+    } else if (status === 'takeaway') {
+      statusText = "Picked Up (Take Away)";
+      statusColor = "#15803d"; // Rich emerald
+      statusBgColor = "#f0fdf4";
+      statusMessage = "Your store pickup order has been successfully picked up and handed over! Thank you for choosing FreshNLocal. We hope you love your farm-fresh local produce.";
+      statusIconColor = "#10b981";
+    } else if (status === 'cancelled') {
+      statusText = "Order Cancelled";
+      statusColor = "#dc2626"; // Premium red
+      statusBgColor = "#fef2f2";
       statusMessage = "Your store pickup order has been cancelled. If this was an error, please reach out to our team or place a new order.";
       statusIconColor = "#f43f5e";
     } else {
-      statusText = "Confirmed";
-      statusColor = "#d97706"; // Warm amber
-      statusBgColor = "#fffbeb"; // Soft amber
-      statusMessage = "Your order is confirmed! Our regional partner farmers are harvesting your items, and we are preparing everything for your store pickup.";
+      statusText = "Order Placed (Pending)";
+      statusColor = "#f59e0b"; // Warm amber
+      statusBgColor = "#fffbeb";
+      statusMessage = "Your store pickup order has been placed successfully and is currently pending review.";
       statusIconColor = "#f59e0b";
     }
   } else {
-    if (isDelivered) {
-      statusText = "Delivered";
-      statusColor = "#15803d"; // Premium green
-      statusBgColor = "#f0fdf4"; // Soft green
-      statusMessage = "Your farm-fresh produce has been safely delivered! We hope you love the taste of raw, local harvests.";
+    // Delivery Flow
+    if (status === 'confirmed') {
+      statusText = "Order Confirmed";
+      statusColor = "#2563eb"; // Premium blue
+      statusBgColor = "#eff6ff";
+      statusMessage = "Great news! Your order is confirmed. Our partner farmers in Surat are harvesting your items fresh, and we are preparing everything for dispatch.";
+      statusIconColor = "#3b82f6";
+    } else if (status === 'shipped') {
+      statusText = "Order Shipped";
+      statusColor = "#6366f1"; // Vibrant indigo
+      statusBgColor = "#eef2ff";
+      statusMessage = "Your fresh crops are harvested, packaged with love, and are currently in transit to your kitchen!";
+      statusIconColor = "#6366f1";
+    } else if (status === 'delivered') {
+      statusText = "Order Safely Delivered";
+      statusColor = "#15803d"; // Rich emerald
+      statusBgColor = "#f0fdf4";
+      statusMessage = "Your farm-fresh produce has been safely delivered to your doorstep! We hope you love the taste of raw, local harvests.";
       statusIconColor = "#10b981";
-    } else if (isCancelled) {
-      statusText = "Cancelled";
-      statusColor = "#b91c1c"; // Premium red
-      statusBgColor = "#fef2f2"; // Soft red
+    } else if (status === 'cancelled') {
+      statusText = "Order Cancelled";
+      statusColor = "#dc2626"; // Premium red
+      statusBgColor = "#fef2f2";
       statusMessage = "Your order has been cancelled. If this was an error, please reach out to our team or place a new order.";
       statusIconColor = "#f43f5e";
+    } else {
+      statusText = "Order Placed (Pending)";
+      statusColor = "#f59e0b"; // Warm amber
+      statusBgColor = "#fffbeb";
+      statusMessage = "Your order has been placed successfully and is currently pending review.";
+      statusIconColor = "#f59e0b";
     }
   }
 
-  const trackerConnector1Color = order.status !== 'pending' ? '#15803d' : '#cbd5e1';
-  const trackerConnector2Color = order.status === 'delivered' ? '#15803d' : '#cbd5e1';
+  const hasStep1 = ['confirmed', 'shipped', 'ready', 'delivered', 'takeaway'].includes(order.status);
+  const hasStep2 = ['shipped', 'ready', 'delivered', 'takeaway'].includes(order.status);
+  const hasStep3 = ['delivered', 'takeaway'].includes(order.status);
 
-  const step2Active = ['shipped', 'delivered'].includes(order.status);
+  const trackerConnector1Color = hasStep1 ? '#15803d' : '#cbd5e1';
+  const trackerConnector2Color = hasStep3 ? '#15803d' : '#cbd5e1';
+
+  const step2Active = hasStep2;
   const step2Bg = step2Active ? '#15803d' : '#cbd5e1';
   const step2Color = step2Active ? '#ffffff' : '#64748b';
   const step2Border = step2Active ? 'none' : '2px solid #cbd5e1';
-  const step2FontWeight = order.status === 'shipped' ? '700' : '600';
+  const step2FontWeight = ['shipped', 'ready'].includes(order.status) ? '700' : '600';
   const step2LabelColor = step2Active ? '#1e293b' : '#94a3b8';
 
-  const step3Active = order.status === 'delivered';
+  const step3Active = hasStep3;
   const step3Bg = step3Active ? '#15803d' : '#cbd5e1';
   const step3Color = step3Active ? '#ffffff' : '#64748b';
   const step3Border = step3Active ? 'none' : '2px solid #cbd5e1';
@@ -890,9 +918,34 @@ export function setupOrderEmailTriggers() {
         const needsEmailUpdate = (order.status !== 'pending' && order.shippingEmailStatus !== order.status) || order.priceUpdatedEmailPending;
         if (needsEmailUpdate) {
           const isHorecaOrder = order.isHoreca || order.customerType === 'horeca' || order.customerType === 'horeca_admin' || order.paymentMethod === 'B2B Invoice';
-          const emailSubject = isHorecaOrder && order.status === 'confirmed'
-            ? `🌾 FreshNLocal Co. — Order Pricing Confirmed (#${orderNum})`
-            : `🚚 FreshNLocal Co. — Order Update: ${order.status.toUpperCase()} (#${orderNum})`;
+          
+          let emailSubject = `🚚 FreshNLocal Co. — Order Update: ${order.status.toUpperCase()} (#${orderNum})`;
+          if (isHorecaOrder && order.status === 'confirmed') {
+            emailSubject = `🌾 FreshNLocal Co. — Order Pricing Confirmed (#${orderNum})`;
+          } else {
+            const isPickup = order.deliveryMethod === 'pickup' || (order.shippingDetails?.address || '').toLowerCase().includes('pickup');
+            if (isPickup) {
+              if (order.status === 'confirmed') {
+                emailSubject = `🌾 FreshNLocal Co. — Pickup Order Confirmed (#${orderNum})`;
+              } else if (order.status === 'ready') {
+                emailSubject = `🏪 FreshNLocal Co. — Order Ready for Pickup! (#${orderNum})`;
+              } else if (order.status === 'takeaway') {
+                emailSubject = `🏪 FreshNLocal Co. — Order Successfully Picked Up (#${orderNum})`;
+              } else if (order.status === 'cancelled') {
+                emailSubject = `❌ FreshNLocal Co. — Pickup Order Cancelled (#${orderNum})`;
+              }
+            } else {
+              if (order.status === 'confirmed') {
+                emailSubject = `🌾 FreshNLocal Co. — Order Confirmed & Preparing (#${orderNum})`;
+              } else if (order.status === 'shipped') {
+                emailSubject = `🚚 FreshNLocal Co. — Order Dispatched & Shipped! (#${orderNum})`;
+              } else if (order.status === 'delivered') {
+                emailSubject = `🎉 FreshNLocal Co. — Order Safely Delivered! (#${orderNum})`;
+              } else if (order.status === 'cancelled') {
+                emailSubject = `❌ FreshNLocal Co. — Order Cancelled (#${orderNum})`;
+              }
+            }
+          }
 
           console.log(`[EMAIL TRIGGERS] Triggering Order Update email for ${orderNum} (Status: "${order.status}", PriceUpdated: ${!!order.priceUpdatedEmailPending}) to ${email}`);
 
@@ -941,45 +994,81 @@ export function setupOrderEmailTriggers() {
 }
 
 /**
- * Directly sends a cancellation email without relying on the polling mechanism.
- * Useful when an order is being permanently deleted from the database.
+ * Directly sends a status update email instantly without waiting for the background poll.
  */
-export async function sendCancellationEmailDirect(order: any, id: string) {
+export async function sendStatusUpdateEmailDirect(order: any, id: string, status: string) {
   const mailTransporter = await getTransporter();
   const senderFrom = process.env.SMTP_FROM || `"FreshNLocal Co." <freshnlocalco@gmail.com>`;
   const email = order.shippingDetails?.email;
 
   if (!email) {
-    console.log(`[EMAIL TRIGGERS] No email address found for order ${id}, skipping cancellation email.`);
+    console.log(`[EMAIL TRIGGERS] No email address found for order ${id}, skipping direct email.`);
     return;
   }
 
   const orderNum = order.orderNumber || id;
-  // Ensure the status is set to 'cancelled' so the HTML template renders the cancellation variant
-  const cancelledOrder = { ...order, status: 'cancelled' };
+  const isHorecaOrder = order.isHoreca || order.customerType === 'horeca' || order.customerType === 'horeca_admin' || order.paymentMethod === 'B2B Invoice';
 
-  console.log(`[EMAIL TRIGGERS] Preparing direct Cancellation email to ${email} for order #${orderNum}`);
+  let emailSubject = `🚚 FreshNLocal Co. — Order Update: ${status.toUpperCase()} (#${orderNum})`;
+  if (isHorecaOrder && status === 'confirmed') {
+    emailSubject = `🌾 FreshNLocal Co. — Order Pricing Confirmed (#${orderNum})`;
+  } else {
+    const isPickup = order.deliveryMethod === 'pickup' || (order.shippingDetails?.address || '').toLowerCase().includes('pickup');
+    if (isPickup) {
+      if (status === 'confirmed') {
+        emailSubject = `🌾 FreshNLocal Co. — Pickup Order Confirmed (#${orderNum})`;
+      } else if (status === 'ready') {
+        emailSubject = `🏪 FreshNLocal Co. — Order Ready for Pickup! (#${orderNum})`;
+      } else if (status === 'takeaway') {
+        emailSubject = `🏪 FreshNLocal Co. — Order Successfully Picked Up (#${orderNum})`;
+      } else if (status === 'cancelled') {
+        emailSubject = `❌ FreshNLocal Co. — Pickup Order Cancelled (#${orderNum})`;
+      }
+    } else {
+      if (status === 'confirmed') {
+        emailSubject = `🌾 FreshNLocal Co. — Order Confirmed & Preparing (#${orderNum})`;
+      } else if (status === 'shipped') {
+        emailSubject = `🚚 FreshNLocal Co. — Order Dispatched & Shipped! (#${orderNum})`;
+      } else if (status === 'delivered') {
+        emailSubject = `🎉 FreshNLocal Co. — Order Safely Delivered! (#${orderNum})`;
+      } else if (status === 'cancelled') {
+        emailSubject = `❌ FreshNLocal Co. — Order Cancelled (#${orderNum})`;
+      }
+    }
+  }
+
+  const updatedOrder = { ...order, status };
+
+  console.log(`[EMAIL TRIGGERS] Preparing direct ${status.toUpperCase()} email to ${email} for order #${orderNum}`);
 
   const mailOptions = {
     from: senderFrom,
     to: email,
-    subject: `🚚 FreshNLocal Co. — Order Update: CANCELLED (#${orderNum})`,
-    html: renderShippingUpdateHtml(cancelledOrder, id)
+    subject: emailSubject,
+    html: renderShippingUpdateHtml(updatedOrder, id)
   };
 
   try {
     const info = await mailTransporter.sendMail(mailOptions);
-    console.log(`[EMAIL TRIGGERS] Cancellation email sent to ${email}. MessageID: ${info.messageId}`);
+    console.log(`[EMAIL TRIGGERS] Direct ${status} email sent to ${email}. MessageID: ${info.messageId}`);
     
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) {
       console.log(`\n=============================================================`);
-      console.log(`[ETHEREAL MAIL PREVIEW] View Cancellation email online:`);
+      console.log(`[ETHEREAL MAIL PREVIEW] View Direct ${status} email online:`);
       console.log(`${previewUrl}`);
       console.log(`=============================================================\n`);
     }
   } catch (err) {
-    console.error(`[EMAIL TRIGGERS] Error sending Cancellation email to ${email}:`, err);
+    console.error(`[EMAIL TRIGGERS] Error sending direct ${status} email to ${email}:`, err);
     throw err;
   }
+}
+
+/**
+ * Directly sends a cancellation email without relying on the polling mechanism.
+ * Useful when an order is being permanently deleted from the database.
+ */
+export async function sendCancellationEmailDirect(order: any, id: string) {
+  return sendStatusUpdateEmailDirect(order, id, 'cancelled');
 }

@@ -2038,9 +2038,24 @@ export function AdminDashboard() {
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
       const order = orders.find(o => o.id === orderId);
+      
+      let initialEmailStatus: string | null = null;
+      if (order && order.shippingDetails?.email) {
+        try {
+          await fetch('/api/emails/send-status-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order, id: orderId, status }),
+          });
+          initialEmailStatus = status;
+        } catch (emailErr) {
+          console.error("Failed to send direct status update email, will let background trigger poll retry:", emailErr);
+        }
+      }
+
       await updateDoc(doc(db, 'orders', orderId), { 
         status, 
-        shippingEmailStatus: null,
+        shippingEmailStatus: initialEmailStatus,
         updatedAt: Date.now() 
       });
 
@@ -2060,11 +2075,11 @@ export function AdminDashboard() {
         }
       }
 
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status, shippingEmailStatus: null } : o));
+      setOrders(orders.map(o => o.id === orderId ? { ...o, status, shippingEmailStatus: initialEmailStatus } : o));
       if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder(prev => prev ? { ...prev, status, shippingEmailStatus: null } : null);
+        setSelectedOrder(prev => prev ? { ...prev, status, shippingEmailStatus: initialEmailStatus } : null);
       }
-      toast.success(`Order ${orderId.slice(0, 6)} changed to ${status} & confirmation queued`);
+      toast.success(`Order ${orderId.slice(0, 6)} changed to ${status}${initialEmailStatus ? ' & email notification sent' : ' & notification queued'}`);
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
       toast.error('Failed to update status.');
