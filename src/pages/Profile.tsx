@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError } from '../lib/firebase';
+import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError, deleteUserAddress, setDefaultUserAddress, deleteUserLegacyAddress } from '../lib/firebase';
 import { notifySignOutSuccess } from '../lib/authNotifications';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2, RotateCcw } from 'lucide-react';
@@ -203,33 +203,73 @@ export function Profile() {
             {user?.addresses && user.addresses.length > 0 ? (
               <div className="bg-background p-4 rounded-xl border border-border space-y-3">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="flex items-center gap-2"><Package className="w-4 h-4 text-primary" /> Saved Addresses ({user.addresses.length})</span>
+                  <span className="flex items-center gap-2 font-bold text-xs uppercase text-foreground"><Package className="w-4 h-4 text-primary" /> Saved Addresses ({user.addresses.length})</span>
                 </div>
-                <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                   {user.addresses.map((addr, i) => (
-                    <div key={addr.id} className={`${i !== 0 ? 'border-t border-border pt-3' : ''}`}>
+                    <div key={addr.id} className={`p-2.5 rounded-lg border border-border/70 bg-secondary/20 relative ${i !== 0 ? 'mt-2' : ''}`}>
                       <div className="flex justify-between items-center mb-1">
-                        <span className="font-bold text-xs uppercase text-foreground flex items-center gap-2">
+                        <span className="font-bold text-xs uppercase text-foreground flex items-center gap-1.5">
                           {addr.label}
-                          {addr.isDefault && <span className="text-[8px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full tracking-widest hidden sm:inline-block">Default</span>}
+                          {addr.isDefault && <span className="text-[8px] bg-primary/10 text-primary font-extrabold px-1.5 py-0.5 rounded-full tracking-wider">Default</span>}
                         </span>
+                        <div className="flex items-center gap-2">
+                          {!addr.isDefault && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDefaultUserAddress(addr.id);
+                                toast.success("Set as default address!");
+                              }}
+                              className="text-[9px] uppercase tracking-wider font-extrabold text-primary hover:underline cursor-pointer"
+                              title="Set as Default Address"
+                            >
+                              Set Default
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              deleteUserAddress(addr.id);
+                              toast.success(`Deleted "${addr.label}" address`);
+                            }}
+                            className="p-1 rounded-md text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                            title="Delete this address"
+                            aria-label="Delete address"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-muted-foreground text-[10px] leading-relaxed capitalize">
                         {addr.line1}, {addr.line2}
                         {addr.landmark ? `, ${addr.landmark}` : ''}
                         <br/> {addr.city}, {addr.state} - {addr.pincode}
                       </p>
-                      {addr.phone && <p className="text-muted-foreground font-mono mt-1 tracking-wider">{addr.phone}</p>}
+                      {addr.phone && <p className="text-muted-foreground font-mono mt-1 text-[9px] tracking-wider">{addr.phone}</p>}
                     </div>
                   ))}
                 </div>
               </div>
-            ) : user?.address && (
+            ) : user?.address ? (
               <div className="bg-background p-4 rounded-xl border border-border space-y-2">
-                <span className="flex items-center gap-2 mb-2"><Package className="w-4 h-4 text-primary" /> Saved Delivery Address</span>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="flex items-center gap-2 font-bold text-xs uppercase text-foreground"><Package className="w-4 h-4 text-primary" /> Saved Delivery Address</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      deleteUserLegacyAddress();
+                      toast.success("Saved address deleted");
+                    }}
+                    className="p-1 rounded-md text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                    title="Delete saved address"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 <p className="text-foreground text-[11px] leading-relaxed capitalize">{user.address}</p>
               </div>
-            )}
+            ) : null}
             
             <button 
               onClick={async () => {

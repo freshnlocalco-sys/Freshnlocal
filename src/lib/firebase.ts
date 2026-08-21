@@ -273,3 +273,81 @@ export const signOut = async () => {
     console.error('Sign-out error', error);
   }
 };
+
+export const deleteUserAddress = async (addressId: string) => {
+  const currentUser = useAuth.getState().user;
+  if (!currentUser) return;
+
+  const currentAddresses = currentUser.addresses || [];
+  let updatedAddresses = currentAddresses.filter(a => a.id !== addressId);
+
+  // If deleted address was default and there are remaining addresses, set the first as default
+  const deletedAddress = currentAddresses.find(a => a.id === addressId);
+  if (deletedAddress?.isDefault && updatedAddresses.length > 0) {
+    if (!updatedAddresses.some(a => a.isDefault)) {
+      updatedAddresses = updatedAddresses.map((a, idx) => ({
+        ...a,
+        isDefault: idx === 0,
+      }));
+    }
+  }
+
+  const updatedUser: AppUser = {
+    ...currentUser,
+    addresses: updatedAddresses,
+  };
+
+  useAuth.getState().setUser(updatedUser);
+
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, { addresses: updatedAddresses }, { merge: true });
+  } catch (err) {
+    console.warn("Could not delete address from Firestore:", err);
+  }
+};
+
+export const setDefaultUserAddress = async (addressId: string) => {
+  const currentUser = useAuth.getState().user;
+  if (!currentUser || !currentUser.addresses) return;
+
+  const updatedAddresses = currentUser.addresses.map(a => ({
+    ...a,
+    isDefault: a.id === addressId
+  }));
+
+  const updatedUser: AppUser = {
+    ...currentUser,
+    addresses: updatedAddresses,
+  };
+
+  useAuth.getState().setUser(updatedUser);
+
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, { addresses: updatedAddresses }, { merge: true });
+  } catch (err) {
+    console.warn("Could not set default address in Firestore:", err);
+  }
+};
+
+export const deleteUserLegacyAddress = async () => {
+  const currentUser = useAuth.getState().user;
+  if (!currentUser) return;
+
+  const { address, ...rest } = currentUser;
+  const updatedUser: AppUser = {
+    ...rest,
+    address: undefined,
+  };
+
+  useAuth.getState().setUser(updatedUser);
+
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, { address: '' }, { merge: true });
+  } catch (err) {
+    console.warn("Could not delete legacy address from Firestore:", err);
+  }
+};
+

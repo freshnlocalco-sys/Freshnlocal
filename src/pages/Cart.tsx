@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
-import { signIn, db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { signIn, db, handleFirestoreError, OperationType, deleteUserAddress } from '../lib/firebase';
 import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2 } from 'lucide-react';
 import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
@@ -925,6 +925,23 @@ export function Cart() {
                                     <span className="text-[9px] font-semibold text-amber-700 bg-amber-500/15 px-1.5 py-0.5 rounded">Out of Zone</span>
                                   )}
                                   {addr.isDefault && <span className="text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Default</span>}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      deleteUserAddress(addr.id);
+                                      if (selectedAddressId === addr.id) {
+                                        setSelectedAddressId('new');
+                                      }
+                                      toast.success(`Deleted "${addr.label}" address`);
+                                    }}
+                                    className="p-1 rounded text-red-500 hover:bg-red-500/15 transition-colors cursor-pointer"
+                                    title="Delete address"
+                                    aria-label="Delete address"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               </div>
                               <p className="text-muted-foreground text-[11px] leading-relaxed">
