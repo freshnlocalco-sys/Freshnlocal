@@ -17,6 +17,7 @@ import { getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '..
 import { SERVICEABLE_ZONES, isPincodeServiceable, getZoneByPincode } from '../lib/deliveryZones';
 import { useDeliveryLocation } from '../store/useDeliveryLocation';
 import { SEO } from '../components/SEO';
+import { CustomZoneSelect } from '../components/CustomZoneSelect';
 import { MapPin, AlertCircle, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -944,32 +945,18 @@ export function Cart() {
                         ))}
                       </div>
 
-                      {/* Quick Zone Picker Dropdown */}
-                      <div className="space-y-1">
-                        <label className="block text-[9px] font-black uppercase text-muted-foreground">
-                          Quick Select Surat Zone
-                        </label>
-                        <select
-                          value={addressLines.pincode}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const zone = getZoneByPincode(val);
-                            setAddressLines(prev => ({
-                              ...prev,
-                              pincode: val,
-                              line2: zone ? zone.mainArea : prev.line2
-                            }));
-                          }}
-                          className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
-                        >
-                          <option value="">-- Choose Surat Delivery Area --</option>
-                          {SERVICEABLE_ZONES.map(z => (
-                            <option key={z.pincode} value={z.pincode}>
-                              {z.pincode} — {z.mainArea} ({z.areas.slice(0, 3).join(', ')})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      {/* Quick Zone Picker Dropdown - Web Theme Custom Component */}
+                      <CustomZoneSelect
+                        value={addressLines.pincode}
+                        onChange={(val) => {
+                          const zone = getZoneByPincode(val);
+                          setAddressLines(prev => ({
+                            ...prev,
+                            pincode: val,
+                            line2: zone ? zone.mainArea : prev.line2
+                          }));
+                        }}
+                      />
 
                       <input 
                         required 
@@ -1014,23 +1001,25 @@ export function Cart() {
                       {/* Real-time Pincode Verification Feedback */}
                       {addressLines.pincode.length === 6 && (
                         isPincodeServiceable(addressLines.pincode) ? (
-                          <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-xs text-green-800 dark:text-green-300 flex items-start gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-                            <div>
-                              <p className="font-bold">✓ Verified Surat Delivery Zone</p>
-                              <p className="text-[11px] text-green-700 dark:text-green-300/80">
-                                {currentMatchedZone?.mainArea} — {currentMatchedZone?.description}
+                          <div className="p-3.5 bg-emerald-50/90 border border-emerald-300 rounded-xl text-xs text-zinc-900 flex items-start gap-2.5 shadow-xs">
+                            <CheckCircle2 className="w-4.5 h-4.5 text-[#00c853] shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <p className="font-extrabold text-[#008537] text-xs tracking-wide">
+                                Verified Surat Delivery Zone
+                              </p>
+                              <p className="text-[11px] font-semibold text-zinc-700 mt-0.5 leading-relaxed break-words">
+                                <strong className="text-zinc-900 font-bold">{currentMatchedZone?.mainArea}</strong> ({currentMatchedZone?.pincode}) — {currentMatchedZone?.description}
                               </p>
                             </div>
                           </div>
                         ) : (
-                          <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-800 dark:text-amber-300 space-y-1">
-                            <div className="flex items-center gap-1.5 font-bold">
-                              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                          <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-950 space-y-1.5 shadow-xs">
+                            <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                              <AlertCircle className="w-4.5 h-4.5 text-amber-600 shrink-0" />
                               <span>Pincode {addressLines.pincode} is not in our delivery zone</span>
                             </div>
-                            <p className="text-[11px] leading-relaxed">
-                              FreshNLocal delivers fresh crops only to 15 key Surat zones (Adajan, Vesu, Althan, Katargam, Rander, Varachha, Dumas, Udhna, etc.). Please switch to <strong>Store Pickup</strong> or select a serviceable address.
+                            <p className="text-[11px] leading-relaxed text-amber-800 font-medium">
+                              FreshNLocal delivers fresh crops only to key Surat zones (Adajan, Vesu, Althan, Katargam, Rander, Varachha, Dumas, Udhna, etc.). Please switch to <strong>Store Pickup</strong> or select a serviceable address.
                             </p>
                           </div>
                         )
