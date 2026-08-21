@@ -226,18 +226,30 @@ export function Cart() {
   });
 
   const { usePoints: canUsePointsBool } = { usePoints: true };
-  const { selectedLocation, openLocationModal } = useDeliveryLocation();
+  const { selectedLocation, openLocationModal, setLocation } = useDeliveryLocation();
 
-  // If user has a selected location in store and address lines pincode is empty, populate it
+  // Keep checkout location in sync with selectedLocation whenever it changes
   useEffect(() => {
-    if (selectedLocation && !addressLines.pincode) {
+    if (selectedLocation?.pincode) {
       setAddressLines(prev => ({
         ...prev,
         pincode: selectedLocation.pincode,
-        line2: prev.line2 ? prev.line2 : selectedLocation.areaName,
+        line2: selectedLocation.areaName || selectedLocation.mainArea || prev.line2,
       }));
+
+      // If user has saved addresses, check if one matches the selected location pincode
+      if (user?.addresses && user.addresses.length > 0) {
+        const matchingAddr = user.addresses.find(a => a.pincode === selectedLocation.pincode);
+        if (matchingAddr) {
+          setSelectedAddressId(matchingAddr.id);
+        } else {
+          setSelectedAddressId('new');
+        }
+      } else {
+        setSelectedAddressId('new');
+      }
     }
-  }, [selectedLocation]);
+  }, [selectedLocation, user?.addresses]);
 
   const selectedAddressObj = useMemo(() => {
     if (selectedAddressId !== 'new' && user?.addresses) {
@@ -894,7 +906,13 @@ export function Cart() {
                               name="selectedAddress" 
                               value={addr.id} 
                               checked={selectedAddressId === addr.id}
-                              onChange={() => setSelectedAddressId(addr.id)}
+                              onChange={() => {
+                          setSelectedAddressId(addr.id);
+                          if (addr.pincode) {
+                            const zone = getZoneByPincode(addr.pincode);
+                            setLocation(addr.pincode, zone?.mainArea || addr.line2 || 'Surat Area');
+                          }
+                        }}
                               className="mt-0.5 accent-primary" 
                             />
                             <div className="space-y-0.5 w-full">
@@ -950,11 +968,15 @@ export function Cart() {
                         value={addressLines.pincode}
                         onChange={(val) => {
                           const zone = getZoneByPincode(val);
+                          const mainArea = zone ? zone.mainArea : '';
                           setAddressLines(prev => ({
                             ...prev,
                             pincode: val,
-                            line2: zone ? zone.mainArea : prev.line2
+                            line2: mainArea || prev.line2
                           }));
+                          if (val && mainArea) {
+                            setLocation(val, mainArea);
+                          }
                         }}
                       />
 
