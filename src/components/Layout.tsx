@@ -121,8 +121,9 @@ export function Layout() {
       </div>
 
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl shadow-xs border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-2.5 sm:px-4 md:px-8 h-14 sm:h-18 flex items-center justify-between gap-1.5 w-full box-border">
-          <div className="flex items-center gap-1.5 sm:gap-3 z-10 min-w-0">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-4 md:px-8 h-14 sm:h-18 flex items-center justify-between gap-2 w-full box-border">
+          {/* Left Section: Brand Logo & Location Selector */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 z-10">
             <Link to="/" className="flex items-center gap-1 sm:gap-2 group shrink-0">
               {faviconUrl && !logoError && (
                 <motion.img 
@@ -142,24 +143,26 @@ export function Layout() {
             </Link>
 
             {/* Vertical separator & Location Badge */}
-            <div className="pl-1.5 sm:pl-3 border-l border-border/80 flex items-center h-6 min-w-0 shrink-0">
+            <div className="pl-1.5 sm:pl-3 border-l border-border/80 flex items-center h-6 shrink-0">
               <DeliveryLocationBadge />
             </div>
-            
-            <nav className="hidden lg:flex items-center gap-4 xl:gap-6 ml-3 xl:ml-6 text-[10px] xl:text-[11px] uppercase tracking-wider font-extrabold text-[#506053] shrink-0">
-              <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150 shrink-0 whitespace-nowrap">Home</Link>
-              <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150 shrink-0 whitespace-nowrap">Catalog</Link>
-              <Link to="/fnl-recipes" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150 flex items-center gap-1.5 shrink-0 whitespace-nowrap">
-                FNL Recipes
-                <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                  <ChefHat className="w-3 h-3 text-primary" />
-                </div>
-              </Link>
-              <Link to="/juice" className="nav-link-underline hover:text-orange-500 transition-colors hover:scale-105 transform duration-150 text-orange-600 font-black shrink-0 whitespace-nowrap">FNL Juice 🍹</Link>
-              <Link to="/about" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150 shrink-0 whitespace-nowrap">Story</Link>
-            </nav>
           </div>
 
+          {/* Center Section: Navigation Links (Centered on Desktop) */}
+          <nav className="hidden lg:flex items-center justify-center gap-4 xl:gap-7 flex-1 mx-2 xl:mx-6 text-[10px] xl:text-[11px] uppercase tracking-wider font-extrabold text-[#506053]">
+            <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150 shrink-0 whitespace-nowrap">Home</Link>
+            <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150 shrink-0 whitespace-nowrap">Catalog</Link>
+            <Link to="/fnl-recipes" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150 flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+              FNL Recipes
+              <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                <ChefHat className="w-3 h-3 text-primary" />
+              </div>
+            </Link>
+            <Link to="/juice" className="nav-link-underline hover:text-orange-500 transition-colors hover:scale-105 transform duration-150 text-orange-600 font-black shrink-0 whitespace-nowrap">FNL Juice 🍹</Link>
+            <Link to="/about" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150 shrink-0 whitespace-nowrap">Story</Link>
+          </nav>
+
+          {/* Right Section: Action Buttons & User Menu */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-3 shrink-0">
             {/* Wishlist Button (Desktop/Laptop only) */}
             <Link to="/wishlist" title="Wishlist" className="hidden md:flex relative items-center justify-center w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-full border border-border hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all group">
