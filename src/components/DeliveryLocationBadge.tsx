@@ -19,11 +19,11 @@ export const DeliveryLocationBadge: React.FC<DeliveryLocationBadgeProps> = ({
       title="Click to select delivery area in Surat"
       aria-label="Select delivery area in Surat"
     >
-      <div className="flex items-center gap-1 font-bold text-xs min-[360px]:text-sm sm:text-base text-foreground max-w-[90px] min-[360px]:max-w-[120px] md:max-w-[200px] lg:max-w-[280px]">
+      <div className="flex items-center gap-1 font-bold text-xs sm:text-sm text-foreground max-w-[85px] min-[360px]:max-w-[110px] md:max-w-[140px] lg:max-w-[160px] xl:max-w-[200px]">
         <span className="truncate border-b border-foreground group-hover:border-primary group-hover:text-primary transition-colors pb-0.5">
           {selectedLocation ? selectedLocation.areaName : 'Select Area'}
         </span>
-        <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0 transition-transform group-hover:translate-y-0.5" />
+        <ChevronDown className="w-3.5 h-3.5 text-primary shrink-0 transition-transform group-hover:translate-y-0.5" />
       </div>
     </button>
   );

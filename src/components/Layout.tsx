@@ -142,11 +142,11 @@ export function Layout() {
             </Link>
 
             {/* Vertical separator & Location Badge */}
-            <div className="pl-1.5 sm:pl-3 border-l border-border/80 flex items-center h-6 min-w-0">
+            <div className="pl-1.5 sm:pl-3 border-l border-border/80 flex items-center h-6 min-w-0 shrink-0">
               <DeliveryLocationBadge />
             </div>
             
-            <nav className="hidden lg:flex items-center gap-8 ml-6 text-[10px] uppercase tracking-[0.25em] font-extrabold text-[#506053]">
+            <nav className="hidden lg:flex items-center gap-5 xl:gap-7 ml-4 xl:ml-8 text-[10px] uppercase tracking-[0.2em] font-extrabold text-[#506053]">
               <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Home</Link>
               <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Catalog</Link>
               <Link to="/fnl-recipes" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150 flex items-center gap-1.5">
