@@ -145,13 +145,13 @@ export function Layout() {
               <DeliveryLocationBadge />
             </div>
             
-            <nav className="hidden lg:flex items-center gap-4 xl:gap-8 ml-3 xl:ml-6 text-[10px] uppercase tracking-[0.12em] xl:tracking-[0.25em] font-extrabold text-[#506053]">
+            <nav className="hidden lg:flex items-center gap-3 xl:gap-8 ml-2 xl:ml-6 text-[10px] uppercase tracking-[0.1em] xl:tracking-[0.25em] font-extrabold text-[#506053]">
               <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Home</Link>
               <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Catalog</Link>
-              <Link to="/fnl-recipes" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150 flex items-center gap-1.5">
+              <Link to="/fnl-recipes" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150 flex items-center gap-1">
                 FNL Recipes
-                <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                  <ChefHat className="w-3 h-3 text-primary" />
+                <div className="w-4 h-4 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                  <ChefHat className="w-2.5 h-2.5 text-primary" />
                 </div>
               </Link>
               <Link to="/juice" className="nav-link-underline hover:text-orange-500 transition-colors hover:scale-105 transform duration-150 text-orange-600 font-black">FNL Juice 🍹</Link>
@@ -159,9 +159,9 @@ export function Layout() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-3 md:gap-4 shrink-0">
-            {/* Wishlist Button (hidden on mobile to prevent layout squeezing) */}
-            <Link to="/wishlist" className="relative hidden sm:flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all duration-300 group">
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-4 shrink-0">
+            {/* Wishlist Button (hidden on tablet/laptop to prevent layout squeezing) */}
+            <Link to="/wishlist" className="relative hidden xl:flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all duration-300 group">
               <Heart className="w-4 h-4 sm:w-4 sm:h-4 text-foreground group-hover:text-red-500 transition-colors" />
             </Link>
 
@@ -180,24 +180,24 @@ export function Layout() {
                 {user ? (
                   <div className="flex items-center gap-1 sm:gap-4">
                     {(user.role === 'admin' || user.role === 'horeca_admin') && (
-                      <Link to="/admin" title="Admin Panel" className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-primary hidden lg:block border border-primary/25 hover:border-primary bg-primary/5 px-4 py-2 rounded-full transition-all">
+                      <Link to="/admin" title="Admin Panel" className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-primary hidden xl:block border border-primary/25 hover:border-primary bg-primary/5 px-4 py-2 rounded-full transition-all">
                         {user.role === 'horeca_admin' ? 'HoReCa Desk' : 'Admin Portal'}
                       </Link>
                     )}
                     <div className="relative group flex items-center gap-1 sm:gap-4">
                       {(user.role === 'horeca' || user.role === 'horeca_admin') && (
-                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full cursor-help shadow-2xs" title="Verified HoReCa B2B Wholesale Partner">
+                        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full cursor-help shadow-2xs" title="Verified HoReCa B2B Wholesale Partner">
                           <Building2 className="w-3.5 h-3.5 text-primary" />
                           <span className="text-[9px] uppercase font-black tracking-widest text-primary">B2B Partner</span>
                         </div>
                       )}
                       {user.points !== undefined && (
-                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full cursor-pointer hover:bg-primary/20 transition-colors">
+                        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full cursor-pointer hover:bg-primary/20 transition-colors">
                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
                            <span className="text-[10px] uppercase font-black tracking-widest text-primary">{user.points} PTS</span>
                         </div>
                       )}
-                      <span className="text-[10px] uppercase tracking-[0.2em] font-black hidden sm:block text-[#506053] group-hover:text-primary cursor-pointer transition-colors">
+                      <span className="text-[10px] uppercase tracking-[0.2em] font-black hidden xl:block text-[#506053] group-hover:text-primary cursor-pointer transition-colors">
                         {user.displayName?.split(' ')[0] || 'User'}
                       </span>
                       <Link to="/profile" className="relative flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all duration-300">
@@ -217,7 +217,7 @@ export function Layout() {
                         <Link to="/orders" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">My Orders</Link>
                         <Link to="/profile?tab=recipes" className="block px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-foreground transition-all">Saved Recipes</Link>
                         {(user.role === 'admin' || user.role === 'horeca_admin') && (
-                          <Link to="/admin" className="block lg:hidden px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-primary transition-all">
+                          <Link to="/admin" className="block xl:hidden px-4 py-3 text-[10px] uppercase tracking-widest font-extrabold rounded-xl hover:bg-primary hover:text-white text-primary transition-all">
                             {user.role === 'horeca_admin' ? 'HoReCa Desk' : 'Admin Portal'}
                           </Link>
                         )}
