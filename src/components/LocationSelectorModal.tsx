@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Search, X, AlertCircle, Check } from 'lucide-react';
 import { useDeliveryLocation } from '../store/useDeliveryLocation';
 import { SERVICEABLE_ZONES, isPincodeServiceable } from '../lib/deliveryZones';
-import { toast } from 'react-hot-toast';
+import { notifyLocationUpdated } from '../lib/locationNotifications';
 
 export const LocationSelectorModal: React.FC = () => {
   const { 
@@ -146,9 +146,10 @@ export const LocationSelectorModal: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setLocation(z.pincode, z.mainArea);
-                      toast.success(`Delivery location set: ${z.mainArea} (${z.pincode})`, {
-                        icon: '📍',
-                        duration: 3000,
+                      notifyLocationUpdated({
+                        pincode: z.pincode,
+                        mainArea: z.mainArea,
+                        subAreaText: z.areas?.slice(0, 3).join(', '),
                       });
                       closeLocationModal();
                     }}

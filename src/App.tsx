@@ -151,7 +151,12 @@ export default function App() {
       <CanonicalLink />
       <GlobalLoader />
       <Toaster 
-        position="top-right" 
+        position="bottom-right" 
+        containerStyle={{
+          bottom: 24,
+          right: 24,
+          zIndex: 9999999,
+        }}
         toastOptions={{
           duration: 4000,
           style: {
