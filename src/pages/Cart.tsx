@@ -14,7 +14,10 @@ import { QuickViewModal } from '../components/QuickViewModal';
 import { QuantityInput } from '../components/QuantityInput';
 import { FreeDeliveryProgressBar } from '../components/FreeDeliveryProgressBar';
 import { getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity } from '../lib/horecaUtils';
+import { SERVICEABLE_ZONES, isPincodeServiceable, getZoneByPincode } from '../lib/deliveryZones';
+import { useDeliveryLocation } from '../store/useDeliveryLocation';
 import { SEO } from '../components/SEO';
+import { MapPin, AlertCircle, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function YouMightAlsoLikeSection({ 
@@ -221,6 +224,45 @@ export function Cart() {
     return 'new';
   });
 
+  const { usePoints: canUsePointsBool } = { usePoints: true };
+  const { selectedLocation, openLocationModal } = useDeliveryLocation();
+
+  // If user has a selected location in store and address lines pincode is empty, populate it
+  useEffect(() => {
+    if (selectedLocation && !addressLines.pincode) {
+      setAddressLines(prev => ({
+        ...prev,
+        pincode: selectedLocation.pincode,
+        line2: prev.line2 ? prev.line2 : selectedLocation.areaName,
+      }));
+    }
+  }, [selectedLocation]);
+
+  const selectedAddressObj = useMemo(() => {
+    if (selectedAddressId !== 'new' && user?.addresses) {
+      return user.addresses.find(a => a.id === selectedAddressId);
+    }
+    return null;
+  }, [selectedAddressId, user?.addresses]);
+
+  const activePincode = useMemo(() => {
+    if (deliveryMethod === 'pickup') return '395017';
+    if (selectedAddressId !== 'new' && selectedAddressObj) {
+      return (selectedAddressObj.pincode || '').trim().replace(/\D/g, '');
+    }
+    return (addressLines.pincode || '').trim().replace(/\D/g, '');
+  }, [deliveryMethod, selectedAddressId, selectedAddressObj, addressLines.pincode]);
+
+  const isDeliveryPincodeServiceable = useMemo(() => {
+    if (deliveryMethod === 'pickup') return true;
+    if (!activePincode) return false;
+    return isPincodeServiceable(activePincode);
+  }, [deliveryMethod, activePincode]);
+
+  const currentMatchedZone = useMemo(() => {
+    return getZoneByPincode(activePincode);
+  }, [activePincode]);
+
   const [usePoints, setUsePoints] = useState(false);
   const userPoints = user?.points || 0;
   const canUsePoints = userPoints >= 100;
@@ -304,10 +346,23 @@ export function Cart() {
         return;
       }
     } else {
+      // Validate Home Delivery Pincode against allowed Surat zones
+      if (!isDeliveryPincodeServiceable) {
+        toast.error(
+          `Home delivery is not available for pincode "${activePincode || 'entered'}". We deliver to selected Surat zones only. Please switch to Store Pickup or enter a serviceable address.`,
+          { duration: 6000 }
+        );
+        return;
+      }
+
       if (selectedAddressId !== 'new') {
         const selectedObj = finalAddresses.find(a => a.id === selectedAddressId);
         if (!selectedObj) {
           toast.error("Selected address not found.");
+          return;
+        }
+        if (!isPincodeServiceable(selectedObj.pincode)) {
+          toast.error(`The selected address pincode (${selectedObj.pincode}) is outside our delivery zone. Please choose a serviceable address or select Store Pickup.`);
           return;
         }
         formattedAddress = [
@@ -322,6 +377,11 @@ export function Cart() {
       } else {
         if (!addressLines.line1.trim() || !addressLines.line2.trim() || !addressLines.pincode.trim() || !phone.trim()) {
           toast.error("Please provide complete delivery address and phone number.");
+          return;
+        }
+
+        if (!isPincodeServiceable(addressLines.pincode)) {
+          toast.error(`Pincode ${addressLines.pincode} is not in our delivery zones. Please check our supported Surat areas.`);
           return;
         }
         
@@ -787,32 +847,74 @@ export function Cart() {
               {/* Delivery Address or Store Info */}
               {deliveryMethod === 'delivery' ? (
                 <div className="space-y-3">
-                  <label className="block text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
-                    Delivery Address
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+                      Delivery Address
+                    </label>
+                    <button
+                      type="button"
+                      onClick={openLocationModal}
+                      className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <MapPin className="w-3 h-3" /> Select Area
+                    </button>
+                  </div>
+
+                  {/* Selected Delivery Area Indicator */}
+                  <div className="p-3 bg-secondary/50 border border-border/70 rounded-xl flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                        <MapPin className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-semibold text-muted-foreground block leading-tight">Delivery Zone</span>
+                        <span className="font-bold text-xs text-foreground truncate block leading-tight">
+                          {selectedLocation ? `${selectedLocation.areaName} (${selectedLocation.pincode})` : 'Surat Deliverable Clusters'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openLocationModal}
+                      className="text-[11px] font-bold text-primary hover:underline px-2 py-1 rounded-lg cursor-pointer shrink-0"
+                    >
+                      Change
+                    </button>
+                  </div>
+
                   {user?.addresses && user.addresses.length > 0 ? (
-                    <div className="space-y-2.5">
-                      {user.addresses.map(addr => (
-                        <label key={addr.id} className={`p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors text-xs ${selectedAddressId === addr.id ? 'bg-primary/5 border-primary/40' : 'bg-background border-border hover:border-primary/30'}`}>
-                          <input 
-                            type="radio" 
-                            name="selectedAddress" 
-                            value={addr.id} 
-                            checked={selectedAddressId === addr.id}
-                            onChange={() => setSelectedAddressId(addr.id)}
-                            className="mt-0.5 accent-primary" 
-                          />
-                          <div className="space-y-0.5 w-full">
-                            <div className="flex justify-between items-center">
-                              <span className="font-bold uppercase text-foreground">{addr.label}</span>
-                              {addr.isDefault && <span className="text-[8px] font-black text-primary bg-primary/10 px-1.5 py-0.2 rounded">Default</span>}
+                    <div className="space-y-2">
+                      {user.addresses.map(addr => {
+                        const isAddrServiceable = isPincodeServiceable(addr.pincode);
+                        return (
+                          <label key={addr.id} className={`p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors text-xs ${selectedAddressId === addr.id ? (isAddrServiceable ? 'bg-primary/5 border-primary/40' : 'bg-secondary border-amber-500/40') : 'bg-background border-border hover:border-primary/30'}`}>
+                            <input 
+                              type="radio" 
+                              name="selectedAddress" 
+                              value={addr.id} 
+                              checked={selectedAddressId === addr.id}
+                              onChange={() => setSelectedAddressId(addr.id)}
+                              className="mt-0.5 accent-primary" 
+                            />
+                            <div className="space-y-0.5 w-full">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-foreground">{addr.label}</span>
+                                <div className="flex items-center gap-1.5">
+                                  {isAddrServiceable ? (
+                                    <span className="text-[9px] font-semibold text-green-700 bg-green-500/10 px-1.5 py-0.5 rounded">Deliverable</span>
+                                  ) : (
+                                    <span className="text-[9px] font-semibold text-amber-700 bg-amber-500/15 px-1.5 py-0.5 rounded">Out of Zone</span>
+                                  )}
+                                  {addr.isDefault && <span className="text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Default</span>}
+                                </div>
+                              </div>
+                              <p className="text-muted-foreground text-[11px] leading-relaxed">
+                                {addr.line1}, {addr.line2}{addr.landmark ? `, ${addr.landmark}` : ''}, {addr.city} - {addr.pincode}
+                              </p>
                             </div>
-                            <p className="text-muted-foreground text-[11px] leading-relaxed">
-                              {addr.line1}, {addr.line2}{addr.landmark ? `, ${addr.landmark}` : ''}, {addr.city} - {addr.pincode}
-                            </p>
-                          </div>
-                        </label>
-                      ))}
+                          </label>
+                        );
+                      })}
                       <label className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-colors text-xs ${selectedAddressId === 'new' ? 'bg-primary/5 border-primary/40' : 'bg-background border-border hover:border-primary/30'}`}>
                         <input 
                           type="radio" 
@@ -822,25 +924,53 @@ export function Cart() {
                           onChange={() => setSelectedAddressId('new')}
                           className="accent-primary" 
                         />
-                        <span className="font-bold uppercase text-foreground">Add New Address</span>
+                        <span className="font-semibold text-foreground">Add New Address</span>
                       </label>
                     </div>
                   ) : null}
 
                   {(selectedAddressId === 'new' || !user?.addresses || user.addresses.length === 0) && (
-                    <div className="space-y-3 pt-2">
+                    <div className="space-y-2.5 pt-1">
                       <div className="flex gap-2">
                         {['Home', 'Work', 'Other'].map(label => (
                           <button
                             key={label}
                             type="button"
                             onClick={() => setAddressLabel(label)}
-                            className={`px-3 py-1.5 border rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors ${addressLabel === label ? 'bg-primary text-white border-primary' : 'bg-background text-muted-foreground border-border'}`}
+                            className={`px-3 py-1.5 border rounded-lg text-[10px] font-bold tracking-wider transition-colors ${addressLabel === label ? 'bg-primary text-white border-primary' : 'bg-secondary text-muted-foreground border-border'}`}
                           >
                             {label}
                           </button>
                         ))}
                       </div>
+
+                      {/* Quick Zone Picker Dropdown */}
+                      <div className="space-y-1">
+                        <label className="block text-[9px] font-black uppercase text-muted-foreground">
+                          Quick Select Surat Zone
+                        </label>
+                        <select
+                          value={addressLines.pincode}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const zone = getZoneByPincode(val);
+                            setAddressLines(prev => ({
+                              ...prev,
+                              pincode: val,
+                              line2: zone ? zone.mainArea : prev.line2
+                            }));
+                          }}
+                          className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
+                        >
+                          <option value="">-- Choose Surat Delivery Area --</option>
+                          {SERVICEABLE_ZONES.map(z => (
+                            <option key={z.pincode} value={z.pincode}>
+                              {z.pincode} — {z.mainArea} ({z.areas.slice(0, 3).join(', ')})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
                       <input 
                         required 
                         placeholder="Flat, House no., Building, Apartment"
@@ -851,7 +981,7 @@ export function Cart() {
                       />
                       <input 
                         required 
-                        placeholder="Area, Street, Sector"
+                        placeholder="Area, Street, Sector (e.g. Adajan, Vesu, Althan)"
                         type="text"
                         value={addressLines.line2}
                         onChange={(e) => setAddressLines(prev => ({ ...prev, line2: e.target.value }))}
@@ -865,7 +995,11 @@ export function Cart() {
                           maxLength={6}
                           value={addressLines.pincode}
                           onChange={(e) => setAddressLines(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '') }))}
-                          className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
+                          className={`w-full border rounded-xl px-3.5 py-2.5 bg-background outline-none text-xs font-semibold ${
+                            addressLines.pincode.length === 6
+                              ? (isPincodeServiceable(addressLines.pincode) ? 'border-green-500 focus:ring-1 focus:ring-green-500' : 'border-amber-500 focus:ring-1 focus:ring-amber-500')
+                              : 'border-border focus:border-primary'
+                          }`}
                         />
                         <input 
                           placeholder="Phone number"
@@ -876,6 +1010,31 @@ export function Cart() {
                           className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
                         />
                       </div>
+
+                      {/* Real-time Pincode Verification Feedback */}
+                      {addressLines.pincode.length === 6 && (
+                        isPincodeServiceable(addressLines.pincode) ? (
+                          <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-xs text-green-800 dark:text-green-300 flex items-start gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-bold">✓ Verified Surat Delivery Zone</p>
+                              <p className="text-[11px] text-green-700 dark:text-green-300/80">
+                                {currentMatchedZone?.mainArea} — {currentMatchedZone?.description}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                            <div className="flex items-center gap-1.5 font-bold">
+                              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>Pincode {addressLines.pincode} is not in our delivery zone</span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed">
+                              FreshNLocal delivers fresh crops only to 15 key Surat zones (Adajan, Vesu, Althan, Katargam, Rander, Varachha, Dumas, Udhna, etc.). Please switch to <strong>Store Pickup</strong> or select a serviceable address.
+                            </p>
+                          </div>
+                        )
+                      )}
                     </div>
                   )}
                 </div>
@@ -931,13 +1090,18 @@ export function Cart() {
                   Minimum order for delivery is ₹1000
                 </div>
               )}
+              {deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable && activePincode.length > 0 && (
+                <div className="bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 p-3 rounded-xl text-center text-[11px] font-bold">
+                  ⚠️ Pincode {activePincode} is outside our delivery zone. Please switch to Store Pickup or enter a serviceable Surat address.
+                </div>
+              )}
 
               {/* Checkout CTA */}
               {user ? (
                 <button 
                   type="submit" 
-                  disabled={loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity}
-                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
+                  disabled={loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity}
+                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
                 >
                   {loading ? (
                     <>
@@ -945,15 +1109,15 @@ export function Cart() {
                       <span>Processing Order...</span>
                     </>
                   ) : (
-                    <span>{isHoreca ? 'Submit HoReCa Order Requirement' : 'Proceed with Order'}</span>
+                    <span>{isHoreca ? 'Submit HoReCa Order Requirement' : (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable ? 'Select Serviceable Area to Deliver' : 'Proceed with Order')}</span>
                   )}
                 </button>
               ) : (
                 <button 
                   type="button" 
                   onClick={signIn} 
-                  disabled={(!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity} 
-                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm ${(!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
+                  disabled={(!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity} 
+                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm ${(!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
                 >
                   Proceed with phone number / Login
                 </button>

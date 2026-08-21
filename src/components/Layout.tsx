@@ -9,6 +9,8 @@ import { useHorecaPrices } from '../store/useHorecaPrices';
 import { AuthModal } from './AuthModal';
 import { AdminNotifier } from './AdminNotifier';
 import { StickyMiniCartBar } from './StickyMiniCartBar';
+import { DeliveryLocationBadge } from './DeliveryLocationBadge';
+import { LocationSelectorModal } from './LocationSelectorModal';
 import { notifySignOutSuccess } from '../lib/authNotifications';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -22,6 +24,12 @@ export function Layout() {
   const cartItemsCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  
+  React.useEffect(() => {
+    const handleOpenAuth = () => setIsAuthModalOpen(true);
+    window.addEventListener('open-auth-modal', handleOpenAuth);
+    return () => window.removeEventListener('open-auth-modal', handleOpenAuth);
+  }, []);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -112,9 +120,9 @@ export function Layout() {
       </div>
 
       <header className="sticky top-0 z-50 bg-background/70 backdrop-blur-xl shadow-sm border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-1 sm:px-4 md:px-8 h-16 sm:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-1 sm:gap-6 shrink-0 z-10 min-w-0 pr-1">
-            <Link to="/" className="flex items-center gap-1 sm:gap-2 group truncate">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 h-16 sm:h-20 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 z-10 pr-1">
+            <Link to="/" className="flex items-center gap-1 sm:gap-2 group truncate shrink-0">
               {faviconUrl && !logoError && (
                 <motion.img 
                   initial={{ opacity: 0 }}
@@ -127,12 +135,17 @@ export function Layout() {
                   className="w-6 h-6 sm:w-10 sm:h-10 object-contain rounded-lg shrink-0" 
                 />
               )}
-              <span className="font-sans font-black text-sm min-[360px]:text-base min-[400px]:text-lg sm:text-xl md:text-2xl tracking-tighter uppercase transition-colors hover:text-primary duration-300 text-foreground flex items-center gap-0.5 sm:gap-1 truncate">
-                FreshNLocal<span className="text-primary hidden min-[320px]:inline">.CO</span>
+              <span className="font-sans font-black text-xs min-[360px]:text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl tracking-tighter uppercase transition-colors hover:text-primary duration-300 text-foreground flex items-center gap-0.5 sm:gap-1 truncate">
+                FreshNLocal<span className="text-primary inline">.CO</span>
               </span>
             </Link>
+
+            {/* Seamless Instamart Location Selector integrated directly beside the logo */}
+            <div className="pl-1.5 sm:pl-3 border-l border-border/70 shrink-0">
+              <DeliveryLocationBadge />
+            </div>
             
-            <nav className="hidden md:flex items-center gap-8 ml-10 text-[10px] uppercase tracking-[0.25em] font-extrabold text-[#506053]">
+            <nav className="hidden lg:flex items-center gap-4 xl:gap-8 ml-3 xl:ml-6 text-[10px] uppercase tracking-[0.12em] xl:tracking-[0.25em] font-extrabold text-[#506053]">
               <Link to="/" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Home</Link>
               <Link to="/shop" className="nav-link-underline hover:text-primary transition-colors hover:scale-105 transform duration-150">Catalog</Link>
               <Link to="/fnl-recipes" className="nav-link-underline text-primary hover:text-primary transition-colors hover:scale-105 transform duration-150 flex items-center gap-1.5">
@@ -146,9 +159,9 @@ export function Layout() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-4 md:gap-6 shrink-0">
-            {/* Wishlist Button */}
-            <Link to="/wishlist" className="relative flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all duration-300 group">
+          <div className="flex items-center gap-1 sm:gap-3 md:gap-4 shrink-0">
+            {/* Wishlist Button (hidden on mobile to prevent layout squeezing) */}
+            <Link to="/wishlist" className="relative hidden sm:flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all duration-300 group">
               <Heart className="w-4 h-4 sm:w-4 sm:h-4 text-foreground group-hover:text-red-500 transition-colors" />
             </Link>
 
@@ -225,7 +238,7 @@ export function Layout() {
             )}
             <button 
               onClick={() => setIsMobileNavOpen(!isMobileNavOpen)} 
-              className="md:hidden flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
+              className="lg:hidden flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
               aria-label="Toggle Menu"
             >
               {isMobileNavOpen ? <X className="w-4 h-4 sm:w-4 sm:h-4" /> : <Menu className="w-4 h-4 sm:w-4 sm:h-4" />}
@@ -243,7 +256,7 @@ export function Layout() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileNavOpen(false)}
-              className="fixed inset-0 bg-black/35 backdrop-blur-xs z-40 md:hidden"
+              className="fixed inset-0 bg-black/35 backdrop-blur-xs z-40 lg:hidden"
               style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
             />
             {/* Frosted Glass Drawer */}
@@ -252,7 +265,7 @@ export function Layout() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white/80 backdrop-blur-2xl border-l border-white/50 z-50 md:hidden p-7 flex flex-col justify-between shadow-[0_20px_60px_rgba(0,0,0,0.12)]"
+              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white/80 backdrop-blur-2xl border-l border-white/50 z-50 lg:hidden p-7 flex flex-col justify-between shadow-[0_20px_60px_rgba(0,0,0,0.12)]"
               style={{ position: 'fixed', top: 0, bottom: 0, right: 0 }}
             >
               <div>
@@ -503,6 +516,7 @@ export function Layout() {
 
       <AdminNotifier />
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <LocationSelectorModal />
       <StickyMiniCartBar />
     </div>
   );
