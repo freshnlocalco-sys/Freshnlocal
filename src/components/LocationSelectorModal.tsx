@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, X, AlertCircle, Check } from 'lucide-react';
 import { useDeliveryLocation } from '../store/useDeliveryLocation';
-import { SERVICEABLE_ZONES, isPincodeServiceable } from '../lib/deliveryZones';
+import { SERVICEABLE_ZONES, isPincodeServiceable, searchPlaces } from '../lib/deliveryZones';
 import { notifyLocationUpdated } from '../lib/locationNotifications';
 
 export const LocationSelectorModal: React.FC = () => {
@@ -39,6 +39,12 @@ export const LocationSelectorModal: React.FC = () => {
         z.areas.some((a) => a.toLowerCase().includes(q))
       );
     });
+  }, [searchQuery]);
+
+  // Specific search result items matching the query
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return searchPlaces(searchQuery);
   }, [searchQuery]);
 
   // Check if searched query looks like a 6-digit pin outside service zone
@@ -131,14 +137,65 @@ export const LocationSelectorModal: React.FC = () => {
 
           {/* Scrollable Area List */}
           <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
-            {filteredZones.length === 0 ? (
+            {searchQuery.trim() ? (
+              searchResults.length === 0 ? (
+                <div className="p-8 text-center text-zinc-500">
+                  <p className="text-sm font-semibold text-zinc-800">No matching Surat area found</p>
+                  <p className="text-xs mt-1 text-zinc-500">Try searching for "Palanpur", "Adajan", "Vesu", "Katargam", or "395009"</p>
+                </div>
+              ) : (
+                searchResults.map((item) => {
+                  const isSelected = selectedLocation?.pincode === item.pincode && selectedLocation?.areaName === item.title;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setLocation(item.pincode, item.title);
+                        notifyLocationUpdated({
+                          pincode: item.pincode,
+                          mainArea: item.mainArea,
+                          subAreaText: item.title,
+                        });
+                        closeLocationModal();
+                      }}
+                      className={`w-full px-5 py-3.5 text-left transition-colors cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? 'bg-[#00c853] text-white font-bold'
+                          : 'bg-white hover:bg-emerald-50/70 text-zinc-900 font-medium'
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={isSelected ? 'text-white font-black text-sm sm:text-base' : 'text-[#00c853] font-bold text-sm sm:text-base'}>
+                            {item.pincode}
+                          </span>
+                          <span className={isSelected ? 'text-white/80' : 'text-zinc-400'}>—</span>
+                          <span className={isSelected ? 'text-white font-bold text-sm sm:text-base' : 'text-zinc-900 font-bold text-sm sm:text-base'}>
+                            {item.title}
+                          </span>
+                        </div>
+                        <p className={`text-[11px] sm:text-xs leading-relaxed break-words mt-1 ${isSelected ? 'text-white/90' : 'text-zinc-500'}`}>
+                          Part of {item.mainArea} delivery zone
+                        </p>
+                      </div>
+
+                      {isSelected && (
+                        <Check className="w-5 h-5 text-white shrink-0 ml-2" />
+                      )}
+                    </button>
+                  );
+                })
+              )
+            ) : filteredZones.length === 0 ? (
               <div className="p-8 text-center text-zinc-500">
                 <p className="text-sm font-semibold text-zinc-800">No matching Surat area found</p>
                 <p className="text-xs mt-1 text-zinc-500">Try searching for "Palanpur", "Adajan", "Vesu", "Katargam", or "395009"</p>
               </div>
             ) : (
               filteredZones.map((z) => {
-                const isSelected = selectedLocation?.pincode === z.pincode || selectedLocation?.areaName === z.mainArea;
+                const isSelected = selectedLocation?.pincode === z.pincode;
 
                 return (
                   <button
