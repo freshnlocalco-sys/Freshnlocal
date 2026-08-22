@@ -141,7 +141,7 @@ export const LocationSelectorModal: React.FC = () => {
               searchResults.length === 0 ? (
                 <div className="p-8 text-center text-zinc-500">
                   <p className="text-sm font-semibold text-zinc-800">No matching Surat area found</p>
-                  <p className="text-xs mt-1 text-zinc-500">Try searching for "Palanpur", "Adajan", "Vesu", "Katargam", or "395009"</p>
+                  <p className="text-xs mt-1 text-zinc-500">Try searching for "Nanpura", "Palanpur", "Adajan", "Vesu", "Katargam", or "395001"</p>
                 </div>
               ) : (
                 searchResults.map((item) => {
@@ -191,7 +191,7 @@ export const LocationSelectorModal: React.FC = () => {
             ) : filteredZones.length === 0 ? (
               <div className="p-8 text-center text-zinc-500">
                 <p className="text-sm font-semibold text-zinc-800">No matching Surat area found</p>
-                <p className="text-xs mt-1 text-zinc-500">Try searching for "Palanpur", "Adajan", "Vesu", "Katargam", or "395009"</p>
+                <p className="text-xs mt-1 text-zinc-500">Try searching for "Nanpura", "Palanpur", "Adajan", "Vesu", "Katargam", or "395001"</p>
               </div>
             ) : (
               filteredZones.map((z) => {

@@ -16,6 +16,22 @@ export interface SearchResultItem {
 
 export const SERVICEABLE_ZONES: DeliveryZone[] = [
   {
+    pincode: '395001',
+    mainArea: 'Nanpura / Athwalines',
+    areas: [
+      'Nanpura',
+      'Athwalines',
+      'Athwa Gate',
+      'Gopipura',
+      'Majura Gate',
+      'Government Medical College area',
+      'Bhatar Road',
+      'Timaliyawad'
+    ],
+    description: 'Nanpura, Athwalines, Athwa Gate, Gopipura, Majura Gate, Bhatar Road',
+    isPopular: true,
+  },
+  {
     pincode: '395009',
     mainArea: 'Adajan',
     areas: ['Adajan', 'Adajan Gam', 'Palanpur', 'Palanpur Jakatnaka', 'Palanpur Patia', 'Palanpur Bus Station', 'Honey Park', 'LP Savani Road', 'Anand Mahal Road', 'Prime Arcade'],
