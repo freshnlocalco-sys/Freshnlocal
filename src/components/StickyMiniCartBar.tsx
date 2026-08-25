@@ -98,11 +98,14 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
               userSelect: 'none',
             }}
           >
-            {/* Pill Container - High-Density Premium Obsidian Emerald Glass with high-contrast readable white/neon elements */}
+            {/* Pill Container - Frosted Dark Glass with Cool Electric Green Accents */}
             <Link
               to="/cart"
-              className="relative flex items-center bg-[#07170D]/95 hover:bg-[#0c2415]/95 backdrop-blur-xl border-2 border-emerald-500/50 text-white rounded-full shadow-[0_18px_48px_rgba(0,0,0,0.7),0_0_24px_rgba(34,197,94,0.15)] active:scale-[0.98] transition-all overflow-hidden h-[56px] min-w-[300px] sm:min-w-[340px] max-w-[94vw]"
+              className="relative flex items-center bg-[#061c0f]/80 hover:bg-[#092716]/85 backdrop-blur-xl border border-emerald-500/40 text-white rounded-full shadow-[0_16px_40px_rgba(0,0,0,0.6),0_0_24px_rgba(16,185,129,0.2)] active:scale-[0.98] transition-all overflow-hidden h-[58px] min-w-[300px] sm:min-w-[340px] max-w-[94vw]"
             >
+              {/* Glass Top Specular Highlight */}
+              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent pointer-events-none" />
+
               {/* Product Thumbnails Stack */}
               <div className="flex items-center -space-x-3 shrink-0 pl-3 pr-2.5">
                 <AnimatePresence initial={false}>
@@ -113,7 +116,7 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
                       animate={{ scale: 1, x: 0, opacity: 1 }}
                       exit={{ scale: 0, opacity: 0 }}
                       transition={{ type: 'spring', damping: 20, stiffness: 380 }}
-                      className="relative w-9 h-9 rounded-full border-2 border-emerald-400 bg-white shadow-md overflow-hidden shrink-0 ring-2 ring-black/60"
+                      className="relative w-9 h-9 rounded-full border border-white bg-emerald-950 shadow-md overflow-hidden shrink-0 ring-2 ring-[#00FF87] shadow-[0_0_10px_rgba(0,255,135,0.7)]"
                       style={{ zIndex: 10 - idx }}
                     >
                       <img
@@ -127,21 +130,21 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
                 </AnimatePresence>
               </div>
 
-              {/* Text & Price Info - Premium High Contrast */}
+              {/* Text & Price Info - Frosted Dark Glass & Cool Green Styling */}
               <div className="flex flex-col justify-center flex-1 min-w-0 pr-3 pl-1">
                 {/* Main Row: CART · ₹Price */}
                 <div className="flex items-baseline gap-1.5 leading-none">
-                  <span className="font-black text-sm tracking-wider uppercase text-white drop-shadow-sm">
+                  <span className="font-extrabold text-xs tracking-widest uppercase text-emerald-100/90">
                     Cart
                   </span>
-                  <span className="text-white/40 text-xs font-bold">·</span>
-                  <span className="font-black text-[15px] text-[#22C55E] tracking-tight drop-shadow-sm">
+                  <span className="text-emerald-500/50 text-xs font-bold">·</span>
+                  <span className="font-black text-[16px] text-[#00FF87] tracking-tight drop-shadow-[0_0_12px_rgba(0,255,135,0.45)]">
                     ₹{totalAmount.toFixed(0)}
                   </span>
                 </div>
 
                 {/* Sub Row: Item count badge + status */}
-                <div className="flex items-center gap-2 mt-1 leading-none">
+                <div className="flex items-center gap-1.5 mt-1 leading-none">
                   <AnimatePresence mode="wait">
                     <motion.span
                       key={itemCount}
@@ -149,23 +152,23 @@ export function StickyMiniCartBar({ freeDeliveryThreshold = 1000 }: StickyMiniCa
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -3, opacity: 0 }}
                       transition={{ duration: 0.12 }}
-                      className="font-black text-[11px] text-white/90 uppercase tracking-wider"
+                      className="font-bold text-[10px] text-emerald-200/90 uppercase tracking-wider bg-emerald-950/70 border border-emerald-500/30 px-2 py-0.5 rounded-full"
                     >
                       {itemCount} {itemCount === 1 ? 'ITEM' : 'ITEMS'}
                     </motion.span>
                   </AnimatePresence>
 
                   {isUnlocked && (
-                    <span className="inline-flex items-center text-[10px] font-black text-white bg-[#0A622A] px-2 py-0.5 rounded-full shadow-sm">
+                    <span className="inline-flex items-center text-[10px] font-extrabold text-emerald-950 bg-[#00FF87] px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(0,255,135,0.3)]">
                       FREE DELIVERY
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Right Action Button */}
-              <div className="mr-2.5 w-8 h-8 rounded-full bg-[#22C55E] hover:bg-[#16a34a] active:bg-[#15803d] flex items-center justify-center shrink-0 shadow-md transition-colors">
-                <ArrowRight className="w-4 h-4 text-black stroke-[3]" />
+              {/* Right Action Button - Glowing Cool Emerald */}
+              <div className="mr-2.5 w-9 h-9 rounded-full bg-[#00FF87] hover:bg-[#20ff96] active:scale-95 flex items-center justify-center shrink-0 shadow-[0_0_16px_rgba(0,255,135,0.35)] transition-all">
+                <ArrowRight className="w-4 h-4 text-emerald-950 stroke-[3]" />
               </div>
 
               {/* Celebratory Slide-Over Banner */}
