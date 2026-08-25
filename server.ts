@@ -78,6 +78,11 @@ async function startServer() {
 
   app.use(express.json({ limit: '5mb' }));
 
+  // Health check endpoint for Cloud Run
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
+
   // API routes FIRST
   app.post("/api/gemini/recipe", async (req, res) => {
     const requestId = crypto.randomUUID();
@@ -505,7 +510,7 @@ Format your output exactly as a JSON object with these keys:
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
+    app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

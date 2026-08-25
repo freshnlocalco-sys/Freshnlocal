@@ -1847,10 +1847,12 @@ export function AdminDashboard() {
       const newItems = [...order.items];
       newItems.splice(itemIndex, 1);
       
-      const newTotal = newItems.reduce((sum, item) => {
+      const itemsSubtotal = newItems.reduce((sum, item) => {
         const p = item.product || item;
         return sum + (p.price || 0) * (item.quantity || 1);
       }, 0);
+      const orderDiscount = order.discount || (order.pointsRedeemed ? 100 : 0);
+      const newTotal = Math.max(0, itemsSubtotal - orderDiscount);
 
       await updateDoc(doc(db, 'orders', orderId), { 
         items: newItems, 
@@ -1879,10 +1881,12 @@ export function AdminDashboard() {
       const newItems = [...order.items];
       newItems[itemIndex] = { ...newItems[itemIndex], quantity: newQuantity };
       
-      const newTotal = newItems.reduce((sum, item) => {
+      const itemsSubtotal = newItems.reduce((sum, item) => {
         const p = item.product || item;
         return sum + (p.price || 0) * (item.quantity || 1);
       }, 0);
+      const orderDiscount = order.discount || (order.pointsRedeemed ? 100 : 0);
+      const newTotal = Math.max(0, itemsSubtotal - orderDiscount);
 
       await updateDoc(doc(db, 'orders', orderId), { 
         items: newItems, 
@@ -1927,10 +1931,12 @@ export function AdminDashboard() {
       }
       newItems[itemIndex] = itemToUpdate;
       
-      const newTotal = newItems.reduce((sum, item) => {
+      const itemsSubtotal = newItems.reduce((sum, item) => {
         const p = item.product || item;
         return sum + (p.price || 0) * (item.quantity || 1);
       }, 0);
+      const orderDiscount = order.discount || (order.pointsRedeemed ? 100 : 0);
+      const newTotal = Math.max(0, itemsSubtotal - orderDiscount);
 
       await updateDoc(doc(db, 'orders', orderId), { 
         items: newItems, 
@@ -1993,10 +1999,12 @@ export function AdminDashboard() {
         });
       }
       
-      const newTotal = newItems.reduce((sum, item) => {
+      const itemsSubtotal = newItems.reduce((sum, item) => {
         const p = item.product || item;
         return sum + (p.price || 0) * (item.quantity || 1);
       }, 0);
+      const orderDiscount = order.discount || (order.pointsRedeemed ? 100 : 0);
+      const newTotal = Math.max(0, itemsSubtotal - orderDiscount);
       
       // JSON clone to strictly strip undefined nested fields
       const cleanItems = JSON.parse(JSON.stringify(newItems));
@@ -3507,7 +3515,6 @@ export function AdminDashboard() {
         const id = String(row.id || row.iddonotedit || row.productid || '').trim();
         const name = String(row.productname || row.name || row.title || '').trim();
         const category = String(row.category || 'indian fruits').toLowerCase().trim();
-        
         const rowUnitStr = row.baseunit || row.quantityunit;
         const primaryUnitStr = row.unit || row.thisunit || '1 Kg';
         const parsedPrimaryUnit = parseQuantityAndUnit(primaryUnitStr);
@@ -3526,6 +3533,8 @@ export function AdminDashboard() {
         const thisUnitPrice = parseNum(row.thisunitprice) ?? parseNum(row.rateprice) ?? parseNum(row.price);
         const secondUnit = String(row.secondunit || row.variant1unit || '').trim();
         const secondUnitPrice = parseNum(row.secondunitprice) ?? parseNum(row.variant1price);
+        const thirdUnit = String(row.thirdunit || row.variant2unit || '').trim();
+        const thirdUnitPrice = parseNum(row.thirdunitprice) ?? parseNum(row.variant2price);
         const horecaUnit = String(row.horecaunit || '').trim();
         const horecaPrice = parseNum(row.horecaprice);
         const secondHorecaUnit = String(row.secondhorecaunit || '').trim();
@@ -3548,6 +3557,8 @@ export function AdminDashboard() {
           thisUnitPrice,
           secondUnit,
           secondUnitPrice,
+          thirdUnit,
+          thirdUnitPrice,
           horecaUnit,
           horecaPrice,
           secondHorecaUnit,
@@ -3581,10 +3592,7 @@ export function AdminDashboard() {
           category: parsed.category,
           description: '',
           imageUrl: '',
-          variants: [],
-          quantityValue: parsed.quantityValue,
-          quantityUnit: parsed.quantityUnit,
-          unit: parsed.unit
+          variants: []
         };
 
         updated.useBasePricing = true;
@@ -3655,30 +3663,44 @@ export function AdminDashboard() {
           });
         }
 
+        if (parsed.thirdUnit) {
+          const parsedV3 = parseQuantityAndUnit(parsed.thirdUnit);
+          const v3Price = parsed.thirdUnitPrice !== undefined 
+            ? parsed.thirdUnitPrice 
+            : Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, parsedV3.qVal || 1, parsedV3.qUnit || 'Kg') || 0);
+          
+          newVariants.push({
+            id: `v_${Date.now()}_2`,
+            unit: parsed.thirdUnit,
+            quantityValue: parsedV3.qVal || 1,
+            quantityUnit: parsedV3.qUnit || 'Kg',
+            price: v3Price,
+            originalPrice: updated.baseOriginalPrice ? Number(calculatePriceFromBase(updated.baseOriginalPrice, updated.baseUnit, parsedV3.qVal || 1, parsedV3.qUnit || 'Kg') || 0) : undefined,
+            horecaPrice: updated.baseHorecaPrice ? Number(calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, parsedV3.qVal || 1, parsedV3.qUnit || 'Kg') || 0) : undefined
+          });
+        }
+
         if (parsed.secondHorecaUnit) {
           const parsedV2 = parseQuantityAndUnit(parsed.secondHorecaUnit);
           const v2Price = parsed.secondHorecaUnitPrice !== undefined
             ? parsed.secondHorecaUnitPrice
-            : Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, parsedV2.qVal || 1, parsedV2.qUnit || 'Kg') || 0);
+            : Number(calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, parsedV2.qVal || 1, parsedV2.qUnit || 'Kg') || 0);
 
           newVariants.push({
-            id: `v_${Date.now()}_2`,
+            id: `v_${Date.now()}_3`,
             unit: parsed.secondHorecaUnit,
             quantityValue: parsedV2.qVal || 1,
             quantityUnit: parsedV2.qUnit || 'Kg',
-            price: v2Price,
+            price: undefined,
             originalPrice: undefined,
             horecaPrice: v2Price
           });
         }
 
-        if (newVariants.length > 0) {
-          updated.variants = newVariants;
-        } else {
-          const existingMatch = match || products.find(p => p.name.toLowerCase().trim() === parsed.name.toLowerCase().trim());
-          if (existingMatch && existingMatch.variants && existingMatch.variants.length > 0) {
-            // Keep existing variants and recalculate prices against the new base price
-            updated.variants = existingMatch.variants.map((v: any) => {
+        if (match) {
+          // If match exists, we STRICTLY preserve existing variants! We do not replace them with incomplete/default ones.
+          if (match.variants && match.variants.length > 0) {
+            updated.variants = match.variants.map((v: any, index: number) => {
               let vQtyValue = v.quantityValue !== undefined && v.quantityValue !== null ? String(v.quantityValue) : '';
               let vQtyUnit = v.quantityUnit || 'Kg';
               if (!vQtyValue) {
@@ -3686,15 +3708,43 @@ export function AdminDashboard() {
                 vQtyValue = parsedV.qVal || '1';
                 vQtyUnit = parsedV.qUnit || 'Kg';
               }
-              
+
+              let targetPrice = v.price;
+              let targetOriginalPrice = v.originalPrice;
+              let targetHorecaPrice = v.horecaPrice;
+
+              if (index === 0 && parsed.secondUnitPrice !== undefined) {
+                targetPrice = parsed.secondUnitPrice;
+              } else if (index === 1 && parsed.thirdUnitPrice !== undefined) {
+                targetPrice = parsed.thirdUnitPrice;
+              } else if (updated.basePrice !== undefined) {
+                const calculated = calculatePriceFromBase(updated.basePrice, updated.baseUnit, vQtyValue, vQtyUnit);
+                if (calculated) targetPrice = Number(calculated);
+              }
+
+              if (updated.baseOriginalPrice !== undefined && updated.baseOriginalPrice !== null) {
+                const calculatedOriginal = calculatePriceFromBase(updated.baseOriginalPrice, updated.baseUnit, vQtyValue, vQtyUnit);
+                if (calculatedOriginal) targetOriginalPrice = Number(calculatedOriginal);
+              }
+
+              if (updated.baseHorecaPrice !== undefined && updated.baseHorecaPrice !== null) {
+                const calculatedHoreca = calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, vQtyValue, vQtyUnit);
+                if (calculatedHoreca) targetHorecaPrice = Number(calculatedHoreca);
+              }
+
               return {
                 ...v,
-                price: Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.price),
-                originalPrice: updated.baseOriginalPrice ? Number(calculatePriceFromBase(updated.baseOriginalPrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.originalPrice) : v.originalPrice,
-                horecaPrice: updated.baseHorecaPrice ? Number(calculatePriceFromBase(updated.baseHorecaPrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.horecaPrice) : v.horecaPrice
+                price: targetPrice,
+                originalPrice: targetOriginalPrice,
+                horecaPrice: targetHorecaPrice
               };
             });
+          } else {
+            updated.variants = [];
           }
+        } else {
+          // Brand new product - use the spreadsheet's variants if provided
+          updated.variants = newVariants;
         }
 
         if (match) {
@@ -3735,22 +3785,7 @@ export function AdminDashboard() {
             if (calcP) updated.price = Number(calcP);
             else updated.price = Number(updated.basePrice);
 
-            // Recalculate variants if base price changed
-            if (match.variants && match.variants.length > 0) {
-              updated.variants = match.variants.map((v: any) => {
-                let vQtyValue = v.quantityValue !== undefined && v.quantityValue !== null ? String(v.quantityValue) : '';
-                let vQtyUnit = v.quantityUnit || 'Kg';
-                if (!vQtyValue) {
-                  const parsedV = parseQuantityAndUnit(v.unit);
-                  vQtyValue = parsedV.qVal || '1';
-                  vQtyUnit = parsedV.qUnit || 'Kg';
-                }
-                return {
-                  ...v,
-                  price: Number(calculatePriceFromBase(updated.basePrice, updated.baseUnit, vQtyValue, vQtyUnit) || v.price)
-                };
-              });
-            }
+            // Keep the already computed and preserved updated.variants
           }
 
           if (hasBaseOriginalChange) {
@@ -6352,28 +6387,39 @@ export function AdminDashboard() {
             </div>
 
             {/* Bottom summary and totals */}
-            <div className="border-t border-border mt-6 pt-5 space-y-3.5">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground font-bold uppercase tracking-wider">Subtotal Value</span>
-                <span className="font-mono font-bold text-foreground">₹{selectedOrder.totalAmount + (selectedOrder.discount || (selectedOrder.pointsRedeemed ? 100 : 0))}</span>
-              </div>
-              {(selectedOrder.discount > 0 || selectedOrder.pointsRedeemed > 0) && (
-                <div className="flex justify-between items-center text-xs text-red-500 font-extrabold bg-red-50 px-3 py-2 rounded-xl border border-red-100/50">
-                  <span className="uppercase tracking-wider flex items-center gap-1.5">
-                    🪙 FNL Points Discount (100 PTS)
-                  </span>
-                  <span className="font-mono">-₹{selectedOrder.discount || 100}</span>
+            {(() => {
+              const itemsSubtotal = selectedOrder.items?.reduce((sum: number, item: any) => {
+                const p = item.product || item;
+                return sum + (p.price || 0) * (item.quantity || 1);
+              }, 0) || 0;
+              const discountVal = selectedOrder.discount || (selectedOrder.pointsRedeemed ? 100 : 0);
+              const finalPayable = Math.max(0, itemsSubtotal - discountVal);
+
+              return (
+                <div className="border-t border-border mt-6 pt-5 space-y-3.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground font-bold uppercase tracking-wider">Subtotal Value</span>
+                    <span className="font-mono font-bold text-foreground">₹{itemsSubtotal.toFixed(2).replace(/\.00$/, '')}</span>
+                  </div>
+                  {discountVal > 0 && (
+                    <div className="flex justify-between items-center text-xs text-red-500 font-extrabold bg-red-50 px-3 py-2 rounded-xl border border-red-100/50">
+                      <span className="uppercase tracking-wider flex items-center gap-1.5">
+                        🪙 FNL Points Discount ({selectedOrder.pointsRedeemed || 100} PTS)
+                      </span>
+                      <span className="font-mono">-₹{discountVal.toFixed(2).replace(/\.00$/, '')}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground font-bold uppercase tracking-wider">Delivery Fee</span>
+                    <span className="font-mono font-extrabold text-[#10b981] uppercase tracking-widest text-[10px]">FREE SHIPPING</span>
+                  </div>
+                  <div className="flex justify-between items-center border-t border-dashed border-border pt-3.5 mt-2">
+                    <span className="text-foreground text-sm font-black uppercase tracking-wider">Total Value Payable</span>
+                    <span className="text-primary font-mono text-xl font-black">₹{finalPayable.toFixed(2).replace(/\.00$/, '')}</span>
+                  </div>
                 </div>
-              )}
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground font-bold uppercase tracking-wider">Delivery Fee</span>
-                <span className="font-mono font-extrabold text-[#10b981] uppercase tracking-widest text-[10px]">FREE SHIPPING</span>
-              </div>
-              <div className="flex justify-between items-center border-t border-dashed border-border pt-3.5 mt-2">
-                <span className="text-foreground text-sm font-black uppercase tracking-wider">Total Value Payable</span>
-                <span className="text-primary font-mono text-xl font-black">₹{selectedOrder.totalAmount}</span>
-              </div>
-            </div>
+              );
+            })()}
           </div>
         </div>
       )}
