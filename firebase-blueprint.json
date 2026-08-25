@@ -59,6 +59,25 @@
       "properties": {
         "faviconUrl": { "type": "string", "description": "URL of the website favicon/tab icon" }
       }
+    },
+    "PromotionsSettings": {
+      "title": "PromotionsSettings",
+      "description": "Promotional campaigns, minimum cart value thresholds, and free gift rules",
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "minOrderAmount": { "type": "number" },
+        "deliveryMethodRequired": { "type": "string", "enum": ["delivery", "pickup", "any"] },
+        "giftItemName": { "type": "string" },
+        "giftItemUnit": { "type": "string" },
+        "giftItemImageUrl": { "type": "string" },
+        "giftItemOriginalPrice": { "type": "number" },
+        "bannerText": { "type": "string" },
+        "showTopBanner": { "type": "boolean" },
+        "updatedAt": { "type": "number" }
+      }
     }
   },
   "firestore": {
@@ -102,8 +121,8 @@
       "description": "All submitted orders"
     },
     "/settings/{settingId}": {
-      "schema": { "$ref": "#/entities/BrandingSettings" },
-      "description": "Global website settings, categories config, category images and branding"
+      "schema": { "$ref": "#/entities/PromotionsSettings" },
+      "description": "Global website settings, categories config, category images, branding, and promotional free gift offers"
     }
   }
 }

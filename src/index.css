@@ -171,3 +171,12 @@
   }
 }
 
+/* Ensure toast never wraps and remains on one single line */
+.single-line-toast,
+.single-line-toast * {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  text-overflow: clip !important;
+}
+
+

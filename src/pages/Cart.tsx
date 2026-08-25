@@ -2,11 +2,12 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType, deleteUserAddress } from '../lib/firebase';
-import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2, Gift, Sparkles } from 'lucide-react';
 import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
+import { useOffers } from '../store/useOffers';
 import { usePWA } from '../store/usePWA';
 import { useProducts } from '../store/useProducts';
 import { ProductCard } from '../components/ProductCard';
@@ -281,6 +282,8 @@ export function Cart() {
   const canUsePoints = userPoints >= 100;
   const discount = usePoints && canUsePoints ? 100 : 0;
   const finalTotal = total() - discount;
+
+
 
   const hasOutOfStockItems = !isHoreca && cartItems.some(item => !item.product.inStock);
   const hasInvalidRetailQuantity = !isHoreca && cartItems.some(item => item.quantity <= 0);
@@ -786,6 +789,8 @@ export function Cart() {
                   </div>
                 </div>
               ))}
+
+
             </div>
 
             {/* Add More Items Button */}
@@ -821,6 +826,7 @@ export function Cart() {
                 <span>Delivery Partner Fee</span>
                 <span className="text-primary font-bold uppercase text-[10px]">FREE</span>
               </div>
+
               {discount > 0 && (
                 <div className="flex justify-between items-center text-primary">
                   <span>FNL Points Discount</span>
@@ -832,6 +838,8 @@ export function Cart() {
                 <span className="font-sans font-black text-xl text-foreground">₹{finalTotal.toFixed(2)}</span>
               </div>
             </div>
+
+
 
             <form onSubmit={handleCheckout} className="space-y-6 pt-2">
               {/* Delivery Method Selection */}

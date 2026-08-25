@@ -3,12 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
 import { useSettings } from '../store/useSettings';
 import { BrandingSettings } from '../components/BrandingSettings';
+import { OffersSettings } from '../components/OffersSettings';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
 import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
@@ -158,7 +159,7 @@ export function AdminDashboard() {
   
   const activeTab = useMemo(() => {
     if (user?.role === 'horeca_admin') {
-      if (location.pathname.includes('/admin/inventory') || location.pathname.includes('/admin/customers') || location.pathname.includes('/admin/branding')) {
+      if (location.pathname.includes('/admin/inventory') || location.pathname.includes('/admin/customers') || location.pathname.includes('/admin/branding') || location.pathname.includes('/admin/offers')) {
         return 'orders';
       }
     }
@@ -168,13 +169,14 @@ export function AdminDashboard() {
     if (location.pathname.includes('/admin/categories')) return 'categories';
     if (location.pathname.includes('/admin/reviews')) return 'reviews';
     if (location.pathname.includes('/admin/hero')) return 'hero';
+    if (location.pathname.includes('/admin/offers')) return 'offers';
     if (location.pathname.includes('/admin/branding')) return 'branding';
     return 'orders'; // corresponds to consignments
   }, [location.pathname, user?.role]);
 
   useEffect(() => {
     if (user?.role === 'horeca_admin') {
-      const restrictedPaths = ['/admin/inventory', '/admin/customers', '/admin/branding'];
+      const restrictedPaths = ['/admin/inventory', '/admin/customers', '/admin/branding', '/admin/offers'];
       if (restrictedPaths.some(path => location.pathname.includes(path))) {
         navigate('/admin/consignments', { replace: true });
         toast.error("Access restricted: This section is reserved for super administrators.");
@@ -4029,6 +4031,14 @@ export function AdminDashboard() {
           </button>
           {user?.role !== 'horeca_admin' && (
             <button 
+              onClick={() => navigate('/admin/offers')}
+              className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'offers' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
+            >
+              <Gift className="w-4 h-4" /> Offers & Free Gifts
+            </button>
+          )}
+          {user?.role !== 'horeca_admin' && (
+            <button 
               onClick={() => navigate('/admin/branding')}
               className={`shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'branding' ? 'bg-primary text-white shadow-[0_4px_15px_rgba(0,184,83,0.25)]' : 'text-muted-foreground hover:bg-black/5 hover:text-foreground'}`}
             >
@@ -5994,6 +6004,8 @@ export function AdminDashboard() {
               </div>
             )}
           </div>
+        ) : activeTab === 'offers' ? (
+          <OffersSettings />
         ) : activeTab === 'branding' ? (
           <BrandingErrorBoundary>
             <BrandingSettings />
