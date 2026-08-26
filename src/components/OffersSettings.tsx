@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOffers, FreeGiftOffer, OFFER_PRESETS } from '../store/useOffers';
 import { useProducts } from '../store/useProducts';
+import { useSettings } from '../store/useSettings';
 import { 
   Gift, 
   CheckCircle2, 
@@ -20,6 +21,7 @@ import toast from 'react-hot-toast';
 export function OffersSettings() {
   const { offer, loading, fetchOffer, updateOffer } = useOffers();
   const { products, fetchProducts, hydrateFromIDB } = useProducts();
+  const { fetchCategoryImages } = useSettings();
   const [formData, setFormData] = useState<FreeGiftOffer>(offer);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,10 +31,11 @@ export function OffersSettings() {
     async function init() {
       await hydrateFromIDB();
       fetchProducts();
+      await fetchCategoryImages();
     }
     init();
     fetchOffer();
-  }, [fetchProducts, hydrateFromIDB, fetchOffer]);
+  }, [fetchProducts, hydrateFromIDB, fetchOffer, fetchCategoryImages]);
 
   useEffect(() => {
     if (offer) {
@@ -40,26 +43,35 @@ export function OffersSettings() {
     }
   }, [offer]);
 
+  const activeCartCategories = React.useMemo(() => {
+    if (!products) return [];
+    const cats = new Set<string>();
+    products.forEach(p => {
+      if (p.category) {
+        const catLower = p.category.toLowerCase();
+        if (!catLower.includes('juice')) {
+          cats.add(p.category);
+        }
+      }
+    });
+    return Array.from(cats);
+  }, [products]);
+
   const filteredProducts = React.useMemo(() => {
     if (!products) return [];
     return products.filter(p => {
       const name = p.name || '';
       const cat = p.category || '';
+      
+      // Exclude juice categories or general juice naming
+      if (cat.toLowerCase().includes('juice')) return false;
+
       const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             cat.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || cat === selectedCategory;
       return matchesSearch && matchesCategory;
     });
   }, [products, searchQuery, selectedCategory]);
-
-  const productCategories = React.useMemo(() => {
-    if (!products) return [];
-    const cats = new Set<string>();
-    products.forEach(p => {
-      if (p.category) cats.add(p.category);
-    });
-    return Array.from(cats);
-  }, [products]);
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -152,52 +164,6 @@ export function OffersSettings() {
               <div className="w-12 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-neutral-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
             </label>
           </div>
-        </div>
-      </div>
-
-      {/* Quick 1-Click Offer Templates */}
-      <div className="bg-white border border-border rounded-2xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-emerald-600" />
-            <h3 className="text-xs font-black uppercase tracking-wider text-foreground">
-              1-Click Future Offer Presets
-            </h3>
-          </div>
-          <span className="text-[10px] text-muted-foreground font-semibold">Switch campaigns instantly anytime</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {OFFER_PRESETS.map((preset) => {
-            const isCurrent = formData.giftItemName.toLowerCase().includes(preset.offer.giftItemName?.toLowerCase() || '') && formData.minOrderAmount === preset.offer.minOrderAmount;
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => handlePresetSelect(preset.id)}
-                className={`p-3.5 rounded-xl border text-left transition-all flex flex-col gap-2 cursor-pointer ${
-                  isCurrent 
-                    ? 'border-emerald-600 bg-emerald-500/[0.04] text-emerald-950 shadow-xs' 
-                    : 'border-border bg-neutral-50/50 hover:bg-neutral-100/80 hover:border-neutral-300 text-foreground'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="p-1.5 bg-white border border-border/80 rounded-lg text-sm shadow-2xs">
-                    {preset.icon}
-                  </div>
-                  {isCurrent && (
-                    <span className="text-[8px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-md">
-                      Active
-                    </span>
-                  )}
-                </div>
-                <div className="space-y-0.5">
-                  <span className="text-[11px] font-black tracking-tight leading-snug block uppercase text-neutral-800">{preset.label.split('(')[0].trim()}</span>
-                  <span className="text-[9px] text-muted-foreground font-extrabold block">Min Order: ₹{preset.offer.minOrderAmount}</span>
-                </div>
-              </button>
-            );
-          })}
         </div>
       </div>
 
@@ -314,7 +280,7 @@ export function OffersSettings() {
                   className="border border-border rounded-xl px-3 py-2.5 text-xs bg-white text-foreground focus:border-emerald-600 outline-none font-semibold cursor-pointer min-w-[140px]"
                 >
                   <option value="all">All Categories</option>
-                  {productCategories.map(cat => (
+                  {activeCartCategories.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
