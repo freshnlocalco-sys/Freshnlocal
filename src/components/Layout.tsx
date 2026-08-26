@@ -4,6 +4,7 @@ import { ShoppingBag, User, LogIn, Menu, LogOut, ShieldCheck, X, Sparkles, Navig
 import { useAuth, signOut } from '../lib/firebase';
 import { useCart } from '../store/useCart';
 import { useSettings } from '../store/useSettings';
+import { useOffers } from '../store/useOffers';
 import { useProducts } from '../store/useProducts';
 import { useHorecaPrices } from '../store/useHorecaPrices';
 import { AuthModal } from './AuthModal';
@@ -18,12 +19,17 @@ export function Layout() {
   const { user, loading } = useAuth();
   const isHorecaUser = user?.role === 'horeca' || user?.role === 'horeca_admin';
   const { faviconUrl, productCategories, categoryVisibility, fetchCategoryImages } = useSettings();
+  const { offer, fetchOffer } = useOffers();
   const { products } = useProducts();
   const { loadPrices } = useHorecaPrices();
   const [logoError, setLogoError] = useState(false);
   const cartItemsCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  
+  React.useEffect(() => {
+    fetchOffer();
+  }, [fetchOffer]);
   
   React.useEffect(() => {
     const handleOpenAuth = () => setIsAuthModalOpen(true);
@@ -116,7 +122,9 @@ export function Layout() {
       <div className="bg-primary text-white text-[9px] min-[360px]:text-[10px] sm:text-[11px] tracking-wider uppercase font-black py-2 px-2 text-center select-none flex items-center justify-center gap-1.5 relative z-50">
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0"></span>
         <span className="leading-tight">
-          SURAT'S PREMIUM FRESH DELIVERY ENGINE - FREE DELIVERY ABOVE ₹1000/-
+          {offer && offer.enabled && offer.showTopBanner && offer.bannerText 
+            ? offer.bannerText 
+            : "SURAT'S PREMIUM FRESH DELIVERY ENGINE - FREE DELIVERY ABOVE ₹1000/-"}
         </span>
       </div>
 

@@ -172,6 +172,7 @@ export function Cart() {
   const { categoryImages, faviconUrl } = useSettings();
   const { items, removeItem, updateQuantity, total, clearCart, addItem } = useCart();
   const { products, fetchProducts, hydrateFromIDB } = useProducts();
+  const { offer, fetchOffer } = useOffers();
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const cartItems = items.filter(item => item && item.product && item.product.id);
   const { user, setUser } = useAuth();
@@ -283,7 +284,14 @@ export function Cart() {
   const discount = usePoints && canUsePoints ? 100 : 0;
   const finalTotal = total() - discount;
 
-
+  const isOfferEligible = useMemo(() => {
+    if (!offer || !offer.enabled || isHoreca) return false;
+    const meetsSubtotal = total() >= (offer.minOrderAmount || 1000);
+    const meetsDelivery = 
+      offer.deliveryMethodRequired === 'any' || 
+      offer.deliveryMethodRequired === deliveryMethod;
+    return meetsSubtotal && meetsDelivery;
+  }, [offer, total, deliveryMethod, isHoreca]);
 
   const hasOutOfStockItems = !isHoreca && cartItems.some(item => !item.product.inStock);
   const hasInvalidRetailQuantity = !isHoreca && cartItems.some(item => item.quantity <= 0);
@@ -294,7 +302,8 @@ export function Cart() {
       fetchProducts();
     }
     init();
-  }, [fetchProducts, hydrateFromIDB]);
+    fetchOffer();
+  }, [fetchProducts, hydrateFromIDB, fetchOffer]);
 
   const recommendedProducts = useMemo(() => {
     if (!products || products.length === 0) return [];
@@ -437,20 +446,41 @@ export function Cart() {
         userId: user.uid,
         customerType: user.role || 'customer',
         isHoreca: isHoreca,
-        items: cartItems.map(i => {
-          const p: any = {
-            id: i.product.id,
-            name: typeof i.product.name === 'string' ? i.product.name.substring(0, 100) : i.product.name,
-            price: typeof i.product.price === 'number' && i.product.price > 0 ? i.product.price : (isHoreca ? 0 : (i.product.price || 0)),
-            unit: i.product.unit,
-          };
-          if (i.product.imageUrl && typeof i.product.imageUrl === 'string' && i.product.imageUrl.length < 500 && i.product.imageUrl.startsWith('http')) {
-            p.imageUrl = i.product.imageUrl;
+        items: (() => {
+          const mapped = cartItems.map(i => {
+            const p: any = {
+              id: i.product.id,
+              name: typeof i.product.name === 'string' ? i.product.name.substring(0, 100) : i.product.name,
+              price: typeof i.product.price === 'number' && i.product.price > 0 ? i.product.price : (isHoreca ? 0 : (i.product.price || 0)),
+              unit: i.product.unit,
+            };
+            if (i.product.imageUrl && typeof i.product.imageUrl === 'string' && i.product.imageUrl.length < 500 && i.product.imageUrl.startsWith('http')) {
+              p.imageUrl = i.product.imageUrl;
+            }
+            // Remove keys with undefined directly just in case this is top level
+            Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
+            return { product: p, quantity: i.quantity };
+          });
+
+          if (isOfferEligible && offer) {
+            mapped.push({
+              product: {
+                id: offer.giftProductId || 'promo-free-gift',
+                name: `[FREE PROMO GIFT] ${offer.giftItemName}`,
+                price: 0,
+                unit: offer.giftItemUnit || '1 Pc',
+                imageUrl: offer.giftItemImageUrl || '',
+              },
+              quantity: 1,
+            });
           }
-          // Remove keys with undefined directly just in case this is top level
-          Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
-          return { product: p, quantity: i.quantity };
-        }),
+          return mapped;
+        })(),
+        freeGiftAwarded: isOfferEligible && offer ? {
+          name: offer.giftItemName,
+          unit: offer.giftItemUnit || '1 Pc',
+          originalPrice: offer.giftItemOriginalPrice || 0,
+        } : null,
         totalAmount: isHoreca ? (finalTotal > 0 ? finalTotal : 0) : finalTotal,
         discount: isHoreca ? 0 : discount,
         pointsEarned: isHoreca ? 0 : Math.floor(finalTotal / 100) * 2,
@@ -657,14 +687,105 @@ export function Cart() {
         </button>
       </div>
 
-      {/* Free Delivery / Savings Banner */}
-      <div className="mb-6">
+      {/* Free Delivery / Savings Banner & Free Gift Offer */}
+      <div className="mb-6 space-y-3">
         <FreeDeliveryProgressBar 
           currentTotal={total()} 
           threshold={1000} 
           isHoreca={isHoreca} 
           showShopLink={false}
         />
+
+        {/* Free Gift Promo Status */}
+        {offer && offer.enabled && !isHoreca && (
+          isOfferEligible ? (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                <div className="w-12 h-12 rounded-xl bg-white border border-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                  {offer.giftItemImageUrl ? (
+                    <img 
+                      src={offer.giftItemImageUrl} 
+                      alt={offer.giftItemName} 
+                      className="w-full h-full object-contain p-1"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <Gift className="w-6 h-6 text-emerald-600" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                    <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-600 text-white px-1.5 py-0.5 rounded">
+                      🎉 FREE GIFT UNLOCKED
+                    </span>
+                    <span className="text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded uppercase">
+                      Home Delivery Reward
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm font-bold text-emerald-950 leading-snug">
+                    <strong>1 Free {offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</strong> added to your cart for ₹0.00!
+                  </p>
+                </div>
+              </div>
+              <div className="self-end sm:self-center shrink-0">
+                <span className="text-xs font-black text-emerald-700 bg-emerald-100/90 border border-emerald-500/20 px-3 py-1 rounded-xl shadow-2xs">
+                  FREE (₹0.00)
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-emerald-500/[0.07] border border-emerald-500/20 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                <div className="w-12 h-12 rounded-xl bg-white border border-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                  {offer.giftItemImageUrl ? (
+                    <img 
+                      src={offer.giftItemImageUrl} 
+                      alt={offer.giftItemName} 
+                      className="w-full h-full object-contain p-1"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <Gift className="w-6 h-6 text-emerald-600" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                    <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-600 text-white px-1.5 py-0.5 rounded">
+                      FREE GIFT OFFER
+                    </span>
+                    {offer.deliveryMethodRequired === 'delivery' && (
+                      <span className="text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded uppercase">
+                        Home Delivery Only
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs sm:text-sm font-bold text-foreground leading-snug">
+                    {total() < (offer.minOrderAmount || 1000) ? (
+                      <>
+                        Add <span className="text-emerald-600 font-black">₹{((offer.minOrderAmount || 1000) - total()).toFixed(0)}</span> more to unlock <span className="text-emerald-700 font-extrabold">{offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</span> 100% FREE!
+                      </>
+                    ) : (
+                      <>
+                        Select <span className="text-emerald-700 font-black">Home Delivery</span> at checkout to claim your <span className="text-emerald-700 font-extrabold">{offer.giftItemName}</span> FREE!
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {total() < (offer.minOrderAmount || 1000) && (
+                <div className="self-end sm:self-center shrink-0">
+                  <button 
+                    type="button"
+                    onClick={() => navigate('/shop')} 
+                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-wider rounded-xl transition-all shadow-xs"
+                  >
+                    Add Items
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -677,7 +798,9 @@ export function Cart() {
                 <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
                 <span className="text-xs font-black uppercase tracking-wider text-foreground">24 Hrs Delivery</span>
               </div>
-              <span className="text-xs font-bold text-muted-foreground">{cartItems.length} items</span>
+              <span className="text-xs font-bold text-muted-foreground">
+                {cartItems.length + (isOfferEligible && offer ? 1 : 0)} items
+              </span>
             </div>
 
             {/* Cart Items List */}
@@ -790,6 +913,60 @@ export function Cart() {
                 </div>
               ))}
 
+              {/* Free Unlocked Promotional Gift Item in Cart */}
+              {isOfferEligible && offer && (
+                <div className="flex items-center gap-4 py-3.5 px-3 bg-emerald-500/[0.08] border border-emerald-500/30 rounded-xl relative overflow-hidden shadow-2xs animate-in fade-in duration-300">
+                  {/* Thumbnail */}
+                  <div className="w-20 h-[60px] sm:w-24 sm:h-[72px] bg-white border border-emerald-500/30 rounded-xl overflow-hidden shrink-0 relative shadow-2xs flex items-center justify-center">
+                    {offer.giftItemImageUrl ? (
+                      <img 
+                        src={offer.giftItemImageUrl} 
+                        alt={offer.giftItemName} 
+                        loading="lazy"
+                        className="w-full h-full object-contain object-center p-1"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <Gift className="w-7 h-7 text-emerald-600" />
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[7.5px] font-mono tracking-widest text-emerald-700 uppercase truncate block font-black">
+                      PROMOTIONAL GIFT REWARD
+                    </span>
+                    <h3 className="font-black text-foreground text-[11px] sm:text-xs uppercase tracking-tight line-clamp-2 leading-tight">
+                      {offer.giftItemName}
+                    </h3>
+                    <div className="text-[10px] text-muted-foreground font-semibold mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <span className="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded text-[9px]">
+                        Qty: {offer.giftItemUnit || '1 Pc'}
+                      </span>
+                      <span className="text-emerald-600 font-bold text-[9px] uppercase">
+                        ✓ Included in delivery
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs font-black text-emerald-600">FREE (₹0.00)</span>
+                      {offer.giftItemOriginalPrice > 0 && (
+                        <span className="text-[10px] text-muted-foreground line-through font-mono">
+                          ₹{offer.giftItemOriginalPrice.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Free Tag Pill */}
+                  <div className="shrink-0 flex flex-col items-end">
+                    <span className="px-2.5 py-1 bg-emerald-600 text-white font-black text-[9px] uppercase tracking-wider rounded-lg shadow-2xs">
+                      100% FREE
+                    </span>
+                  </div>
+                </div>
+              )}
+
 
             </div>
 
@@ -826,6 +1003,16 @@ export function Cart() {
                 <span>Delivery Partner Fee</span>
                 <span className="text-primary font-bold uppercase text-[10px]">FREE</span>
               </div>
+
+              {isOfferEligible && offer && (
+                <div className="flex justify-between items-center text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg text-[11px] font-bold">
+                  <span className="flex items-center gap-1.5">
+                    <Gift className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Free Gift: {offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</span>
+                  </span>
+                  <span className="font-black text-emerald-700">₹0.00</span>
+                </div>
+              )}
 
               {discount > 0 && (
                 <div className="flex justify-between items-center text-primary">
