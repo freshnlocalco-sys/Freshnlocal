@@ -37,7 +37,7 @@ function CategoryCarousel({ category, products, handleAddToCart, onQuickView }: 
   const linkDest = isJuice ? '/juice' : `/shop?category=${encodeURIComponent(category.id)}`;
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const displayProducts = products.slice(0, 13);
+  const displayProducts = products;
   const shouldLoop = displayProducts.length > 4;
   const displayList = shouldLoop ? [...displayProducts, ...displayProducts] : displayProducts;
   const [isHovered, setIsHovered] = useState(false);
@@ -990,14 +990,29 @@ export function Home() {
 
                 return true;
               });
+              // Sort products matching the Admin arrangement & in-stock priority
+              const sortedCategoryProducts = [...categoryProducts].sort((a, b) => {
+                const isOutA = a.inStock === false;
+                const isOutB = b.inStock === false;
+                if (isOutA !== isOutB) {
+                  return isOutA ? 1 : -1;
+                }
+                const idxA = a.orderIndex ?? 999;
+                const idxB = b.orderIndex ?? 999;
+                if (idxA !== idxB) {
+                  return idxA - idxB;
+                }
+                return (a.name || '').localeCompare(b.name || '');
+              });
+
               // Only show category if it has products
-              if (categoryProducts.length === 0) return null;
+              if (sortedCategoryProducts.length === 0) return null;
               
               return (
                 <CategoryCarousel 
                   key={category.id}
                   category={category}
-                  products={categoryProducts.slice(0, 13)}
+                  products={sortedCategoryProducts.slice(0, 16)}
                   handleAddToCart={handleAddToCart}
                   onQuickView={setQuickViewProduct}
                 />
@@ -1008,6 +1023,18 @@ export function Home() {
               const juiceProducts = products.filter(p => {
                 const pCat = (p.category || '').toLowerCase();
                 return pCat === 'fnl juices' || pCat === 'fnl juice';
+              }).sort((a, b) => {
+                const isOutA = a.inStock === false;
+                const isOutB = b.inStock === false;
+                if (isOutA !== isOutB) {
+                  return isOutA ? 1 : -1;
+                }
+                const idxA = a.orderIndex ?? 999;
+                const idxB = b.orderIndex ?? 999;
+                if (idxA !== idxB) {
+                  return idxA - idxB;
+                }
+                return (a.name || '').localeCompare(b.name || '');
               });
               
               if (juiceProducts.length === 0) return null;
