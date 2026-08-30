@@ -104,7 +104,14 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
         </button>
 
         {/* Image Section */}
-        <div className="w-full md:w-1/2 h-40 sm:h-56 md:h-auto shrink-0 bg-white border-b md:border-b-0 md:border-r border-border relative">
+        <div className={`w-full md:w-1/2 h-40 sm:h-56 md:h-auto shrink-0 bg-white border-b md:border-b-0 md:border-r border-border relative flex items-center justify-center ${product.inStock === false ? 'bg-zinc-100 dark:bg-zinc-100' : ''}`}>
+          {product.inStock === false && (
+            <div className="absolute top-4 left-4 z-20">
+              <span className="bg-black/85 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md shadow-md border border-white/20">
+                Out of Stock
+              </span>
+            </div>
+          )}
           <img 
             src={productImgSrc} 
             alt={product.name}
@@ -116,7 +123,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
                 e.currentTarget.src = catImg;
               }
             }}
-            className="w-full h-full object-contain object-center"
+            className={`w-full h-full object-contain object-center transition-all duration-300 ${product.inStock === false ? 'opacity-40 grayscale contrast-75' : ''}`}
             referrerPolicy="no-referrer"
           />
           <button

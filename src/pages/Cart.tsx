@@ -808,14 +808,21 @@ export function Cart() {
               {cartItems.map((item) => (
                 <div key={item.product.id} className="flex items-center gap-4 py-3 border-b border-border/40 last:border-0">
                   {/* Thumbnail */}
-                  <div className="w-20 h-[60px] sm:w-24 sm:h-[72px] bg-white border border-border rounded-xl overflow-hidden shrink-0 relative shadow-2xs">
+                  <div className={`w-20 h-[60px] sm:w-24 sm:h-[72px] bg-white border border-border rounded-xl overflow-hidden shrink-0 relative shadow-2xs ${item.product.inStock === false ? 'bg-zinc-100 dark:bg-zinc-100' : ''}`}>
                     <img 
                       src={item.product.imageUrl || getCategoryImage(item.product.category, categoryImages) || undefined} 
                       alt={item.product.name} 
                       loading="lazy"
-                      className="w-full h-full object-contain object-center"
+                      className={`w-full h-full object-contain object-center transition-all duration-300 ${item.product.inStock === false ? 'opacity-40 grayscale contrast-75' : ''}`}
                       referrerPolicy="no-referrer"
                     />
+                    {item.product.inStock === false && (
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                        <span className="text-[7.5px] font-black text-white bg-red-600 px-1 py-0.5 rounded leading-none shadow-xs uppercase tracking-wider">
+                          Out of Stock
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Info */}
