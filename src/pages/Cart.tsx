@@ -818,7 +818,7 @@ export function Cart() {
                     />
                     {item.product.inStock === false && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className="text-[7.5px] font-black text-white bg-black px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wider">
+                        <span className="text-[7.5px] font-black text-neutral-900 dark:text-neutral-100 bg-white/85 dark:bg-black/75 backdrop-blur-xs border-none px-2 py-0.5 rounded-full shadow-sm uppercase tracking-wider select-none">
                           OUT OF STOCK
                         </span>
                       </div>

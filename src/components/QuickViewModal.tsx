@@ -107,7 +107,7 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
         <div className="w-full md:w-1/2 h-40 sm:h-56 md:h-auto shrink-0 bg-white border-b md:border-b-0 md:border-r border-border relative flex items-center justify-center">
           {product.inStock === false && (
             <div className="absolute top-4 left-4 z-20">
-              <span className="bg-black text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-md shadow-md">
+              <span className="bg-white/85 dark:bg-black/70 backdrop-blur-md text-neutral-900 dark:text-neutral-100 border-none text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.12)] select-none">
                 OUT OF STOCK
               </span>
             </div>
