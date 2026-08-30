@@ -254,18 +254,18 @@ export function ProductDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Product Image Panel */}
         <div className="lg:col-span-7 rounded-xl overflow-hidden bg-white dark:bg-white border border-border relative aspect-[4/3] w-full items-center justify-center flex">
-          <div className="absolute top-5 left-5 z-20 flex flex-wrap gap-2 leading-none">
-            <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-border shadow-sm">
-              {(product.category || '').replace(/ font-bold/gi, '')}
-            </span>
-          </div>
-          {product.inStock === false && (
-            <div className="absolute top-5 right-16 z-20">
-              <span className="bg-white/85 dark:bg-black/70 backdrop-blur-md text-neutral-900 dark:text-neutral-100 border-none text-[10px] sm:text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.12)] select-none">
+          <div className="absolute top-5 left-5 z-20 flex flex-col items-start gap-2 leading-none">
+            {product.category && (
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-border shadow-sm">
+                {(product.category || '').replace(/ font-bold/gi, '')}
+              </span>
+            )}
+            {product.inStock === false && (
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-border shadow-sm">
                 OUT OF STOCK
               </span>
-            </div>
-          )}
+            )}
+          </div>
           <button
             onClick={() => {
               if (inWishlist) {
