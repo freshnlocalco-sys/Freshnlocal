@@ -128,7 +128,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
       className="slice-card h-full flex flex-col justify-between group overflow-hidden bg-background rounded-xl border border-border/80 shadow-md hover:shadow-2xl transition-shadow duration-300"
     >
       
-      <div className={`w-full aspect-[4/3] overflow-hidden relative bg-white dark:bg-white border-b border-border shrink-0 ${product.inStock === false ? 'bg-zinc-100 dark:bg-zinc-100' : ''}`} style={{ borderRadius: 'inherit', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
+      <div className="w-full aspect-[4/3] overflow-hidden relative bg-white dark:bg-white border-b border-border shrink-0" style={{ borderRadius: 'inherit', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
         {!imageLoaded && (
           <div className="absolute inset-0 bg-secondary/20 animate-pulse" />
         )}
@@ -150,13 +150,13 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
               }
               setImageLoaded(true);
             }}
-            className={`absolute inset-0 w-full h-full object-contain object-center transition-all duration-300 ${!imageLoaded ? 'opacity-0' : (product.inStock === false ? 'opacity-40 grayscale contrast-75' : 'opacity-100')}`}
+            className={`absolute inset-0 w-full h-full object-contain object-center transition-all duration-300 ${!imageLoaded ? 'opacity-0' : (product.inStock === false ? 'grayscale opacity-75' : 'opacity-100')}`}
             referrerPolicy="no-referrer"
           />
           {product.inStock === false && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/15 backdrop-blur-[0.5px] pointer-events-none z-10">
-              <span className="bg-black/85 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md shadow-lg border border-white/20">
-                Out of Stock
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <span className="bg-black text-white text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-md shadow-md">
+                OUT OF STOCK
               </span>
             </div>
           )}

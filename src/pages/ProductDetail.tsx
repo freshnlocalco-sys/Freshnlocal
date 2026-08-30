@@ -253,7 +253,7 @@ export function ProductDetail() {
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Product Image Panel */}
-        <div className={`lg:col-span-7 rounded-xl overflow-hidden bg-white dark:bg-white border border-border relative aspect-[4/3] w-full items-center justify-center flex ${product.inStock === false ? 'bg-zinc-100 dark:bg-zinc-100' : ''}`}>
+        <div className="lg:col-span-7 rounded-xl overflow-hidden bg-white dark:bg-white border border-border relative aspect-[4/3] w-full items-center justify-center flex">
           <div className="absolute top-5 left-5 z-20 flex flex-wrap gap-2 leading-none">
             <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-border shadow-sm">
               {(product.category || '').replace(/ font-bold/gi, '')}
@@ -261,8 +261,8 @@ export function ProductDetail() {
           </div>
           {product.inStock === false && (
             <div className="absolute top-5 right-16 z-20">
-              <span className="bg-black/85 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-md border border-white/20">
-                Out of Stock
+              <span className="bg-black text-white text-[10px] sm:text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-md shadow-md">
+                OUT OF STOCK
               </span>
             </div>
           )}
@@ -297,7 +297,7 @@ export function ProductDetail() {
                 e.currentTarget.src = catImg;
               }
             }}
-            className={`absolute inset-0 w-full h-full object-contain object-center transition-all duration-300 ${product.inStock === false ? 'opacity-40 grayscale contrast-75' : ''}`}
+            className={`absolute inset-0 w-full h-full object-contain object-center transition-all duration-300 ${product.inStock === false ? 'grayscale opacity-75' : ''}`}
             referrerPolicy="no-referrer"
           />
         </div>
