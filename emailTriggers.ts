@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, updateDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, doc, updateDoc, getDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import nodemailer from 'nodemailer';
 import firebaseConfig from './firebase-applet-config.json';
@@ -905,12 +905,21 @@ export function setupOrderEmailTriggers() {
           // Transactionally mark confirmationEmailSent: true so we don't duplicate
           try {
             const orderDocRef = doc(db, 'orders', id);
-            await updateDoc(orderDocRef, { 
-              confirmationEmailSent: true,
-              updatedAt: Date.now()
-            });
-          } catch (dbErr) {
-            console.error(`[EMAIL TRIGGERS] Error updating confirmationEmailSent flag in Firestore for order ${id}:`, dbErr);
+            const currentSnap = await getDoc(orderDocRef);
+            if (currentSnap.exists()) {
+              await updateDoc(orderDocRef, { 
+                confirmationEmailSent: true,
+                updatedAt: Date.now()
+              });
+            } else {
+              console.log(`[EMAIL TRIGGERS] Order ${id} no longer exists in Firestore (deleted concurrently, skipping confirmation update).`);
+            }
+          } catch (dbErr: any) {
+            if (dbErr?.code === 5 || dbErr?.code === 'not-found' || String(dbErr).includes('NOT_FOUND') || String(dbErr).includes('No document to update')) {
+              console.log(`[EMAIL TRIGGERS] Order ${id} was deleted before confirmation flag could be updated.`);
+            } else {
+              console.error(`[EMAIL TRIGGERS] Error updating confirmationEmailSent flag in Firestore for order ${id}:`, dbErr);
+            }
           }
         }
 
@@ -970,12 +979,25 @@ export function setupOrderEmailTriggers() {
             }
 
             // Transactionally update shippingEmailStatus to match current status and clear priceUpdatedEmailPending
-            const orderDocRef = doc(db, 'orders', id);
-            await updateDoc(orderDocRef, { 
-              shippingEmailStatus: order.status,
-              priceUpdatedEmailPending: false,
-              updatedAt: Date.now()
-            });
+            try {
+              const orderDocRef = doc(db, 'orders', id);
+              const currentSnap = await getDoc(orderDocRef);
+              if (currentSnap.exists()) {
+                await updateDoc(orderDocRef, { 
+                  shippingEmailStatus: order.status,
+                  priceUpdatedEmailPending: false,
+                  updatedAt: Date.now()
+                });
+              } else {
+                console.log(`[EMAIL TRIGGERS] Order ${id} no longer exists in Firestore (deleted concurrently, skipping status update).`);
+              }
+            } catch (dbErr: any) {
+              if (dbErr?.code === 5 || dbErr?.code === 'not-found' || String(dbErr).includes('NOT_FOUND') || String(dbErr).includes('No document to update')) {
+                console.log(`[EMAIL TRIGGERS] Order ${id} was deleted before shippingEmailStatus could be updated.`);
+              } else {
+                console.error(`[EMAIL TRIGGERS] Error updating shippingEmailStatus in Firestore for order ${id}:`, dbErr);
+              }
+            }
           } catch (sendErr) {
             console.error(`[EMAIL TRIGGERS] Error sending Order Update to ${email}:`, sendErr);
           }

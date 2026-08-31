@@ -447,20 +447,30 @@ export function Cart() {
         customerType: user.role || 'customer',
         isHoreca: isHoreca,
         items: (() => {
-          const mapped = cartItems.map(i => {
-            const p: any = {
-              id: i.product.id,
-              name: typeof i.product.name === 'string' ? i.product.name.substring(0, 100) : i.product.name,
-              price: typeof i.product.price === 'number' && i.product.price > 0 ? i.product.price : (isHoreca ? 0 : (i.product.price || 0)),
-              unit: i.product.unit,
-            };
-            if (i.product.imageUrl && typeof i.product.imageUrl === 'string' && i.product.imageUrl.length < 500 && i.product.imageUrl.startsWith('http')) {
-              p.imageUrl = i.product.imageUrl;
-            }
-            // Remove keys with undefined directly just in case this is top level
-            Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
-            return { product: p, quantity: i.quantity };
-          });
+          const mapped = cartItems
+            .filter(i => {
+              const name = typeof i.product?.name === 'string' ? i.product.name : '';
+              const id = i.product?.id || '';
+              // Filter out duplicate or legacy promo gifts from cart items
+              if (id === 'promo-free-gift' || name.includes('[FREE PROMO GIFT]') || (i.product?.price === 0 && name.toLowerCase().includes('free promo'))) {
+                return false;
+              }
+              return true;
+            })
+            .map(i => {
+              const p: any = {
+                id: i.product.id,
+                name: typeof i.product.name === 'string' ? i.product.name.substring(0, 100) : i.product.name,
+                price: typeof i.product.price === 'number' && i.product.price > 0 ? i.product.price : (isHoreca ? 0 : (i.product.price || 0)),
+                unit: i.product.unit,
+              };
+              if (i.product.imageUrl && typeof i.product.imageUrl === 'string' && i.product.imageUrl.length < 500 && i.product.imageUrl.startsWith('http')) {
+                p.imageUrl = i.product.imageUrl;
+              }
+              // Remove keys with undefined directly just in case this is top level
+              Object.keys(p).forEach(k => p[k] === undefined && delete p[k]);
+              return { product: p, quantity: i.quantity };
+            });
 
           if (isOfferEligible && offer) {
             mapped.push({

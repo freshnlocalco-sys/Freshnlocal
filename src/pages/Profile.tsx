@@ -33,6 +33,15 @@ export function Profile() {
         const product = item.product || item;
         const qty = item.quantity || 1;
 
+        // Skip promo free gifts from historical orders
+        if (
+          product.id === 'promo-free-gift' ||
+          (typeof product.name === 'string' && product.name.includes('[FREE PROMO GIFT]')) ||
+          (product.price === 0 && typeof product.name === 'string' && product.name.toLowerCase().includes('free'))
+        ) {
+          continue;
+        }
+
         if (product.id) {
           try {
             const docRef = doc(db, 'products', product.id);
