@@ -1,9 +1,9 @@
 export function parseUnitScale(unitStr: string | undefined): number {
   if (!unitStr) return 1;
-  const match = unitStr.match(/^([\d.]+)\s*(kg|g|gm|gram|grams|kilogram|kilograms|l|ml|ltr|litre|litres|liter|liters|pc|pcs|piece|pieces|pack|packs|pkt|packet|packets|box|boxes|bottle|bottles|bunch|bunches|tray|trays|dozen)$/i);
+  const match = unitStr.match(/^([\d.]+)\s*(kg|g|gm|gram|grams|kilogram|kilograms|l|ml|ltr|litre|litres|liter|liters|pc|pcs|piece|pieces|pack|packs|pkt|packet|packets|box|boxes|bottle|bottles|bunch|bunches|tray|trays|dozen|ft|foot|feet)$/i);
   if (!match) {
     // If string is just e.g. "Kg" or "Ltr" or "G"
-    const simpleMatch = unitStr.match(/^(kg|g|gm|l|ml|ltr|pc|pcs|pack|box|bottle|bunch)$/i);
+    const simpleMatch = unitStr.match(/^(kg|g|gm|l|ml|ltr|pc|pcs|pack|box|bottle|bunch|ft|foot|feet)$/i);
     if (simpleMatch) {
       const u = simpleMatch[1].toLowerCase();
       if (u === 'g' || u === 'gm') return 0.001;
@@ -24,7 +24,7 @@ export function parseUnitScale(unitStr: string | undefined): number {
 
 export function getBaseUnit(unitStr: string | undefined): string {
   if (!unitStr) return 'Units';
-  const match = unitStr.match(/^([\d.]+)?\s*(kg|g|gm|gram|grams|l|ml|ltr|pc|pcs|pack|pkt|packet|box|bottle|bunch)$/i);
+  const match = unitStr.match(/^([\d.]+)?\s*(kg|g|gm|gram|grams|l|ml|ltr|pc|pcs|pack|pkt|packet|box|bottle|bunch|ft|foot|feet)$/i);
   if (!match) return 'Units';
   const unit = (match[2] || match[1] || '').toLowerCase();
   
@@ -35,6 +35,7 @@ export function getBaseUnit(unitStr: string | undefined): string {
   if (['box', 'boxes'].includes(unit)) return 'Boxes';
   if (['bottle', 'bottles'].includes(unit)) return 'Bottles';
   if (['bunch', 'bunches'].includes(unit)) return 'Bunches';
+  if (['ft', 'foot', 'feet'].includes(unit)) return 'ft';
   return 'Units';
 }
 
@@ -261,7 +262,7 @@ export function formatDisplayUnit(unitStr: string | undefined): string {
 export function getUnitQuantityConfig(unitStr: string | undefined): { initialQty: number; step: number; isDiscrete: boolean } {
   if (!unitStr) return { initialQty: 1, step: 1, isDiscrete: true };
   const lower = unitStr.trim().toLowerCase();
-  if (['kg', 'kilogram', 'kilograms', 'l', 'ltr', 'litre', 'litres'].includes(lower)) {
+  if (['kg', 'kilogram', 'kilograms', 'l', 'ltr', 'litre', 'litres', 'ft', 'foot', 'feet'].includes(lower)) {
     return { initialQty: 1, step: 0.5, isDiscrete: false };
   }
   return { initialQty: 1, step: 1, isDiscrete: true };

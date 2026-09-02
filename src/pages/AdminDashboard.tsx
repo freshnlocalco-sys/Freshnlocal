@@ -2331,6 +2331,7 @@ export function AdminDashboard() {
     if (['jar', 'jars'].includes(low)) return 'Jar';
     if (['carton', 'cartons'].includes(low)) return 'Carton';
     if (['crate', 'crates'].includes(low)) return 'Crate';
+    if (['ft', 'foot', 'feet'].includes(low)) return 'ft';
     return low.charAt(0).toUpperCase() + low.slice(1);
   };
 
@@ -2404,6 +2405,9 @@ export function AdminDashboard() {
 
     // Crates
     if (['crate', 'crates'].includes(lower)) return 'Crate';
+
+    // Feet
+    if (['ft', 'foot', 'feet'].includes(lower)) return 'ft';
 
     const trimmed = String(bu).trim();
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
@@ -4417,7 +4421,7 @@ export function AdminDashboard() {
                                 value={normalizeBaseUnit(newProduct.baseUnit, 'Kg')}
                                 onChange={e => handleBasePriceChange('baseUnit', e.target.value)}
                               >
-                                {['Kg', 'Ltr', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray', 'Pouch', 'Jar', 'Carton', 'Crate'].map(u => (
+                                {['Kg', 'Ltr', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray', 'Pouch', 'Jar', 'Carton', 'Crate', 'ft'].map(u => (
                                   <option key={u} value={u}>Per {u}</option>
                                 ))}
                               </select>
@@ -4532,7 +4536,7 @@ export function AdminDashboard() {
                               updateProductWithBaseRecalc({ quantityUnit: qUnit, unit: uStr });
                             }}
                           >
-                            {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
+                            {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray', 'ft'].map(u => (
                               <option key={u} value={u}>{u}</option>
                             ))}
                           </select>
@@ -4579,7 +4583,7 @@ export function AdminDashboard() {
                             value={newProduct.horecaQuantityUnit || 'Kg'}
                             onChange={e => setNewProduct({...newProduct, horecaQuantityUnit: e.target.value, horecaUnit: newProduct.horecaQuantityValue ? `${newProduct.horecaQuantityValue} ${e.target.value}` : ''})}
                           >
-                            {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
+                            {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray', 'ft'].map(u => (
                               <option key={u} value={u}>{u}</option>
                             ))}
                           </select>
@@ -4703,7 +4707,7 @@ export function AdminDashboard() {
                                         updateProductWithBaseRecalc({ variants: newVariants });
                                       }}
                                     >
-                                      {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
+                                      {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray', 'ft'].map(u => (
                                         <option key={u} value={u}>{u}</option>
                                       ))}
                                     </select>
@@ -4751,7 +4755,7 @@ export function AdminDashboard() {
                                         setNewProduct({...newProduct, variants: newVariants});
                                       }}
                                     >
-                                      {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray'].map(u => (
+                                      {['Kg', 'g', 'L', 'ml', 'Pc', 'Pack', 'Box', 'Bottle', 'Can', 'Dozen', 'Bunch', 'Tray', 'ft'].map(u => (
                                         <option key={u} value={u}>{u}</option>
                                       ))}
                                     </select>
