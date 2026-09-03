@@ -815,15 +815,17 @@ export function Home() {
                 <>
                   <button 
                     onClick={slideLeft}
-                    className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 z-20"
+                    className="absolute left-4 sm:left-6 bottom-4 sm:bottom-5 w-8 h-8 sm:w-9 sm:h-9 bg-white/15 hover:bg-white/25 active:bg-white/35 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 transition-all duration-300 z-20 hover:scale-105 active:scale-95 shadow-sm"
+                    aria-label="Previous slide"
                   >
-                    <ChevronLeft className="w-6 h-6" />
+                    <ChevronLeft className="w-4 h-4 sm:w-5 h-5" />
                   </button>
                   <button 
                     onClick={slideRight}
-                    className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 z-20"
+                    className="absolute right-4 sm:right-6 bottom-4 sm:bottom-5 w-8 h-8 sm:w-9 sm:h-9 bg-white/15 hover:bg-white/25 active:bg-white/35 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 transition-all duration-300 z-20 hover:scale-105 active:scale-95 shadow-sm"
+                    aria-label="Next slide"
                   >
-                    <ChevronRight className="w-6 h-6" />
+                    <ChevronRight className="w-4 h-4 sm:w-5 h-5" />
                   </button>
                 </>
               )}
