@@ -71,7 +71,7 @@ function generateCacheKey(body: any): string {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Add trust proxy so req.ip works correctly behind Vercel/Nginx
   app.set('trust proxy', 1);

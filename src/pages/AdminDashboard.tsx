@@ -1011,7 +1011,7 @@ export function AdminDashboard() {
     // Always load orders and customers on mount so export modal and dropdowns have all parties
     const loadInitialAdminData = async () => {
       try {
-        const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(150)));
+        const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
         setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         fetchCustomers();
       } catch (e) {
@@ -1024,7 +1024,7 @@ export function AdminDashboard() {
       try {
         setLoading(true);
         if (activeTab === 'orders') {
-          const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(100)));
+          const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
           const mCache = await import('../lib/cacheManager');
           mCache.trackFirestoreRead('orders', ordersSnap.size);
           setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
