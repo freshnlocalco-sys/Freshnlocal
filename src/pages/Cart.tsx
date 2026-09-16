@@ -862,11 +862,6 @@ export function Cart() {
                           return (
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-black text-foreground">₹{itemSubtotal.toFixed(2)}</span>
-                              {item.product.originalPrice && item.product.originalPrice > item.product.price && (
-                                <span className="text-[10px] text-muted-foreground line-through font-mono">
-                                  ₹{((item.product.originalPrice * item.quantity) / (config.initialQty || 1)).toFixed(2)}
-                                </span>
-                              )}
                             </div>
                           );
                         })()

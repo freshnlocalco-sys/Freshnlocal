@@ -264,14 +264,6 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
               </div>
             ) : (
               <div className="flex flex-col gap-0.5">
-                {currentOriginalPrice && currentOriginalPrice > currentPrice && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] sm:text-[10px] text-muted-foreground line-through font-medium">₹{currentOriginalPrice}</span>
-                    <span className="text-[8px] font-bold text-red-500 bg-red-50 px-1 py-0.5 rounded leading-none">
-                      {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
-                    </span>
-                  </div>
-                )}
                 <div className="text-xs sm:text-sm font-bold text-foreground leading-none flex items-center gap-0.5">
                   <span className="text-[9px] sm:text-[10px] text-muted-foreground">₹</span>{currentPrice}
                 </div>

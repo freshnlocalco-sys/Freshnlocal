@@ -371,16 +371,6 @@ export function ProductDetail() {
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-end gap-3 tracking-tighter">
                   <div className="text-4xl font-black text-primary font-sans">₹{currentPrice}</div>
-                  {currentOriginalPrice && currentOriginalPrice > currentPrice && (
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50">
-                        MRP ₹{currentOriginalPrice}
-                      </div>
-                      <span className="text-sm font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded">
-                        {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
-                      </span>
-                    </div>
-                  )}
                 </div>
                 {baseUnitPrice && (
                   <div className="text-xs uppercase font-extrabold text-muted-foreground/80">

@@ -182,11 +182,6 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
             ) : (
               <div className="flex items-end gap-2 md:gap-3 mb-4 md:mb-6">
                 <div className="text-2xl md:text-3xl font-black text-primary">₹{currentPrice}</div>
-                {currentOriginalPrice && currentOriginalPrice > currentPrice && (
-                  <div className="text-base md:text-lg font-bold text-muted-foreground line-through mb-1">
-                    ₹{currentOriginalPrice}
-                  </div>
-                )}
               </div>
             )}
 

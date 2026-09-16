@@ -547,11 +547,6 @@ export function OffersSettings() {
                       <span className="text-xs font-black text-emerald-600">
                         ₹0.00 (100% FREE)
                       </span>
-                      {formData.giftItemOriginalPrice > 0 && (
-                        <span className="text-[10px] line-through text-muted-foreground/70 font-mono">
-                          ₹{formData.giftItemOriginalPrice}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>

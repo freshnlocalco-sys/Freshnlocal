@@ -4428,28 +4428,15 @@ export function AdminDashboard() {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="space-y-1">
-                              <label className="block text-[8px] font-black uppercase tracking-wider text-muted-foreground">Base MRP (Optional ₹)</label>
-                              <input 
-                                type="number" 
-                                placeholder="e.g. 300" 
-                                className="w-full border border-border rounded-xl px-2.5 py-2 bg-white outline-none focus:border-primary text-foreground text-[10px] sm:text-xs font-mono" 
-                                value={newProduct.baseOriginalPrice || ''} 
-                                onChange={e => handleBasePriceChange('baseOriginalPrice', e.target.value)} 
-                              />
-                            </div>
-
-                            <div className="space-y-1">
-                              <label className="block text-[8px] font-black uppercase tracking-wider text-muted-foreground">Base HoReCa (Optional ₹)</label>
-                              <input 
-                                type="number" 
-                                placeholder="e.g. 200" 
-                                className="w-full border border-border rounded-xl px-2.5 py-2 bg-white outline-none focus:border-primary text-foreground text-[10px] sm:text-xs font-mono" 
-                                value={newProduct.baseHorecaPrice || ''} 
-                                onChange={e => handleBasePriceChange('baseHorecaPrice', e.target.value)} 
-                              />
-                            </div>
+                          <div className="space-y-1">
+                            <label className="block text-[8px] font-black uppercase tracking-wider text-muted-foreground">Base HoReCa (Optional ₹)</label>
+                            <input 
+                              type="number" 
+                              placeholder="e.g. 200" 
+                              className="w-full border border-border rounded-xl px-2.5 py-2 bg-white outline-none focus:border-primary text-foreground text-[10px] sm:text-xs font-mono" 
+                              value={newProduct.baseHorecaPrice || ''} 
+                              onChange={e => handleBasePriceChange('baseHorecaPrice', e.target.value)} 
+                            />
                           </div>
 
                           {newProduct.basePrice && newProduct.quantityValue && (
@@ -4478,20 +4465,6 @@ export function AdminDashboard() {
                           className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`} 
                           value={newProduct.price} 
                           onChange={e => setNewProduct({...newProduct, price: e.target.value})} 
-                        />
-                      </div>
-
-                      <div className="space-y-1.5 sm:space-y-2">
-                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                          MRP (Optional ₹) {newProduct.useBasePricing && <span className="text-emerald-600 font-bold">(Calculated)</span>}
-                        </label>
-                        <input 
-                          type="number" 
-                          placeholder="250" 
-                          readOnly={!!newProduct.useBasePricing}
-                          className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`} 
-                          value={newProduct.originalPrice} 
-                          onChange={e => setNewProduct({...newProduct, originalPrice: e.target.value})} 
                         />
                       </div>
 
@@ -4636,24 +4609,6 @@ export function AdminDashboard() {
                                     onChange={(e) => {
                                       const newVariants = [...newProduct.variants];
                                       newVariants[vIdx].price = e.target.value;
-                                      setNewProduct({...newProduct, variants: newVariants});
-                                    }}
-                                    className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`}
-                                  />
-                                </div>
-                                
-                                <div className="space-y-1.5 sm:space-y-2">
-                                  <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                                    MRP (Optional ₹) {newProduct.useBasePricing && <span className="text-emerald-600 font-bold">(Calculated)</span>}
-                                  </label>
-                                  <input 
-                                    placeholder="250" 
-                                    type="number"
-                                    value={variant.originalPrice}
-                                    readOnly={!!newProduct.useBasePricing}
-                                    onChange={(e) => {
-                                      const newVariants = [...newProduct.variants];
-                                      newVariants[vIdx].originalPrice = e.target.value;
                                       setNewProduct({...newProduct, variants: newVariants});
                                     }}
                                     className={`w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono ${newProduct.useBasePricing ? 'bg-neutral-100 cursor-not-allowed opacity-85 font-semibold' : ''}`}
