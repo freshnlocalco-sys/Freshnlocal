@@ -296,6 +296,29 @@ export function Cart() {
   const hasOutOfStockItems = !isHoreca && cartItems.some(item => !item.product.inStock);
   const hasInvalidRetailQuantity = !isHoreca && cartItems.some(item => item.quantity <= 0);
 
+  const [minOrderAlert, setMinOrderAlert] = useState<string | null>(null);
+  const minOrderAlertTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (minOrderAlertTimerRef.current) {
+        clearTimeout(minOrderAlertTimerRef.current);
+      }
+    };
+  }, []);
+
+  const triggerMinOrderWarning = () => {
+    const remainingForDelivery = Math.max(0, Math.ceil(1000 - total()));
+    const msg = `Add ₹${remainingForDelivery} more for place order Or select Store Pickup delivery method.`;
+    setMinOrderAlert(msg);
+    if (minOrderAlertTimerRef.current) {
+      clearTimeout(minOrderAlertTimerRef.current);
+    }
+    minOrderAlertTimerRef.current = setTimeout(() => {
+      setMinOrderAlert(null);
+    }, 5000);
+  };
+
   useEffect(() => {
     async function init() {
       await hydrateFromIDB();
@@ -343,7 +366,10 @@ export function Cart() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) return;
+    if (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) {
+      triggerMinOrderWarning();
+      return;
+    }
     if (hasOutOfStockItems) {
       toast.error("Please remove out of stock items from your cart before checking out.");
       return;
@@ -697,108 +723,376 @@ export function Cart() {
         </button>
       </div>
 
-      {/* Free Delivery / Savings Banner & Free Gift Offer */}
-      <div className="mb-6 space-y-3">
-        <FreeDeliveryProgressBar 
-          currentTotal={total()} 
-          threshold={1000} 
-          isHoreca={isHoreca} 
-          showShopLink={false}
-        />
-
-        {/* Free Gift Promo Status */}
-        {offer && offer.enabled && !isHoreca && (
-          isOfferEligible ? (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-              <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-                <div className="w-12 h-12 rounded-xl bg-white border border-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                  {offer.giftItemImageUrl ? (
-                    <img 
-                      src={offer.giftItemImageUrl} 
-                      alt={offer.giftItemName} 
-                      className="w-full h-full object-contain p-1"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <Gift className="w-6 h-6 text-emerald-600" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                    <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-600 text-white px-1.5 py-0.5 rounded">
-                      🎉 FREE GIFT UNLOCKED
-                    </span>
-                    <span className="text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded uppercase">
-                      Home Delivery Reward
-                    </span>
-                  </div>
-                  <p className="text-xs sm:text-sm font-bold text-emerald-950 leading-snug">
-                    <strong>1 Free {offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</strong> added to your cart for ₹0.00!
-                  </p>
-                </div>
+      <form onSubmit={handleCheckout} className="space-y-8">
+        {/* 1. Fulfillment & Delivery Details (At Top) */}
+        <div className="bg-secondary/40 border border-border rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3.5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Truck className="w-4 h-4" />
               </div>
-              <div className="self-end sm:self-center shrink-0">
-                <span className="text-xs font-black text-emerald-700 bg-emerald-100/90 border border-emerald-500/20 px-3 py-1 rounded-xl shadow-2xs">
-                  FREE (₹0.00)
-                </span>
+              <div>
+                <h2 className="text-sm font-sans font-black uppercase text-foreground tracking-wide flex items-center gap-2">
+                  Delivery Details & Address
+                </h2>
+                <p className="text-[11px] text-muted-foreground font-semibold">
+                  Choose fulfillment method and deliverable Surat location
+                </p>
               </div>
             </div>
-          ) : (
-            <div className="bg-emerald-500/[0.07] border border-emerald-500/20 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-              <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-                <div className="w-12 h-12 rounded-xl bg-white border border-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                  {offer.giftItemImageUrl ? (
-                    <img 
-                      src={offer.giftItemImageUrl} 
-                      alt={offer.giftItemName} 
-                      className="w-full h-full object-contain p-1"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <Gift className="w-6 h-6 text-emerald-600" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                    <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-600 text-white px-1.5 py-0.5 rounded">
-                      FREE GIFT OFFER
-                    </span>
-                    {offer.deliveryMethodRequired === 'delivery' && (
-                      <span className="text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded uppercase">
-                        Home Delivery Only
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs sm:text-sm font-bold text-foreground leading-snug">
-                    {total() < (offer.minOrderAmount || 1000) ? (
-                      <>
-                        Add <span className="text-emerald-600 font-black">₹{((offer.minOrderAmount || 1000) - total()).toFixed(0)}</span> more to unlock <span className="text-emerald-700 font-extrabold">{offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</span> 100% FREE!
-                      </>
-                    ) : (
-                      <>
-                        Select <span className="text-emerald-700 font-black">Home Delivery</span> at checkout to claim your <span className="text-emerald-700 font-extrabold">{offer.giftItemName}</span> FREE!
-                      </>
-                    )}
-                  </p>
-                </div>
+            <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full uppercase tracking-wider">
+              Surat Zone
+            </span>
+          </div>
+
+          {/* Delivery Method Selection */}
+          <div className="space-y-3">
+            <label className="block text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+              Delivery Method
+            </label>
+            <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+              <button
+                type="button"
+                onClick={() => setDeliveryMethod('delivery')}
+                className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-colors cursor-pointer ${deliveryMethod === 'delivery' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-background text-foreground border-border hover:border-primary/50'}`}
+              >
+                <Truck className="w-4 h-4" /> Home Delivery
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeliveryMethod('pickup')}
+                className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-colors cursor-pointer ${deliveryMethod === 'pickup' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-background text-foreground border-border hover:border-primary/50'}`}
+              >
+                <ShoppingBag className="w-4 h-4" /> Store Pickup
+              </button>
+            </div>
+          </div>
+
+          {/* Delivery Address or Store Info */}
+          {deliveryMethod === 'delivery' ? (
+            <div className="space-y-4 pt-1">
+              <div className="flex items-center justify-between">
+                <label className="block text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+                  Delivery Destination & Surat Zone
+                </label>
+                <button
+                  type="button"
+                  onClick={openLocationModal}
+                  className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <MapPin className="w-3 h-3" /> Select Area
+                </button>
               </div>
-              {total() < (offer.minOrderAmount || 1000) && (
-                <div className="self-end sm:self-center shrink-0">
-                  <button 
-                    type="button"
-                    onClick={() => navigate('/shop')} 
-                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-wider rounded-xl transition-all shadow-xs"
-                  >
-                    Add Items
-                  </button>
+
+              {/* Selected Delivery Area Indicator */}
+              <div className="p-3.5 bg-background border border-border/80 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-semibold text-muted-foreground block leading-tight">Delivery Zone</span>
+                    <span className="font-bold text-xs text-foreground truncate block leading-tight">
+                      {selectedLocation ? `${selectedLocation.areaName} (${selectedLocation.pincode})` : 'Surat Deliverable Clusters'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={openLocationModal}
+                  className="text-[11px] font-bold text-primary hover:underline px-2.5 py-1 rounded-lg cursor-pointer shrink-0"
+                >
+                  Change
+                </button>
+              </div>
+
+              {user?.addresses && user.addresses.length > 0 ? (
+                <div className="space-y-2">
+                  {user.addresses.map(addr => {
+                    const isAddrServiceable = isPincodeServiceable(addr.pincode);
+                    return (
+                      <label key={addr.id} className={`p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors text-xs ${selectedAddressId === addr.id ? (isAddrServiceable ? 'bg-primary/5 border-primary/40' : 'bg-secondary border-amber-500/40') : 'bg-background border-border hover:border-primary/30'}`}>
+                        <input 
+                          type="radio" 
+                          name="selectedAddress" 
+                          value={addr.id} 
+                          checked={selectedAddressId === addr.id}
+                          onChange={() => {
+                            setSelectedAddressId(addr.id);
+                            if (addr.pincode) {
+                              const zone = getZoneByPincode(addr.pincode);
+                              setLocation(addr.pincode, zone?.mainArea || addr.line2 || 'Surat Area');
+                            }
+                          }}
+                          className="mt-0.5 accent-primary" 
+                        />
+                        <div className="space-y-0.5 w-full">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-foreground">{addr.label}</span>
+                            <div className="flex items-center gap-1.5">
+                              {isAddrServiceable ? (
+                                <span className="text-[9px] font-semibold text-green-700 bg-green-500/10 px-1.5 py-0.5 rounded">Deliverable</span>
+                              ) : (
+                                <span className="text-[9px] font-semibold text-amber-700 bg-amber-500/15 px-1.5 py-0.5 rounded">Out of Zone</span>
+                              )}
+                              {addr.isDefault && <span className="text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Default</span>}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  deleteUserAddress(addr.id);
+                                  if (selectedAddressId === addr.id) {
+                                    setSelectedAddressId('new');
+                                  }
+                                  toast.success(`Deleted "${addr.label}" address`);
+                                }}
+                                className="p-1 rounded text-red-500 hover:bg-red-500/15 transition-colors cursor-pointer"
+                                title="Delete address"
+                                aria-label="Delete address"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-muted-foreground text-[11px] leading-relaxed">
+                            {addr.line1}, {addr.line2}{addr.landmark ? `, ${addr.landmark}` : ''}, {addr.city} - {addr.pincode}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                  <label className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-colors text-xs ${selectedAddressId === 'new' ? 'bg-primary/5 border-primary/40' : 'bg-background border-border hover:border-primary/30'}`}>
+                    <input 
+                      type="radio" 
+                      name="selectedAddress" 
+                      value="new" 
+                      checked={selectedAddressId === 'new'}
+                      onChange={() => setSelectedAddressId('new')}
+                      className="accent-primary" 
+                    />
+                    <span className="font-semibold text-foreground">Add New Address</span>
+                  </label>
+                </div>
+              ) : null}
+
+              {(selectedAddressId === 'new' || !user?.addresses || user.addresses.length === 0) && (
+                <div className="space-y-3 pt-1">
+                  <div className="flex gap-2">
+                    {['Home', 'Work', 'Other'].map(label => (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => setAddressLabel(label)}
+                        className={`px-3 py-1.5 border rounded-lg text-[10px] font-bold tracking-wider transition-colors cursor-pointer ${addressLabel === label ? 'bg-primary text-white border-primary' : 'bg-secondary text-muted-foreground border-border'}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Quick Zone Picker Dropdown - Web Theme Custom Component */}
+                  <CustomZoneSelect
+                    value={addressLines.pincode}
+                    onChange={(val) => {
+                      const zone = getZoneByPincode(val);
+                      const mainArea = zone ? zone.mainArea : '';
+                      setAddressLines(prev => ({
+                        ...prev,
+                        pincode: val,
+                        line2: mainArea || prev.line2
+                      }));
+                      if (val && mainArea) {
+                        setLocation(val, mainArea);
+                      }
+                    }}
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input 
+                      required 
+                      placeholder="Flat, House no., Building, Apartment"
+                      type="text"
+                      value={addressLines.line1}
+                      onChange={(e) => setAddressLines(prev => ({ ...prev, line1: e.target.value }))}
+                      className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
+                    />
+                    <input 
+                      required 
+                      placeholder="Area, Street, Sector (e.g. Adajan, Vesu, Althan)"
+                      type="text"
+                      value={addressLines.line2}
+                      onChange={(e) => setAddressLines(prev => ({ ...prev, line2: e.target.value }))}
+                      className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input 
+                      placeholder="Pincode (6 digits)"
+                      required 
+                      type="text" 
+                      maxLength={6}
+                      value={addressLines.pincode}
+                      onChange={(e) => setAddressLines(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '') }))}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 bg-background outline-none text-xs font-semibold ${
+                        addressLines.pincode.length === 6
+                          ? (isPincodeServiceable(addressLines.pincode) ? 'border-green-500 focus:ring-1 focus:ring-green-500' : 'border-amber-500 focus:ring-1 focus:ring-amber-500')
+                          : 'border-border focus:border-primary'
+                      }`}
+                    />
+                    <input 
+                      placeholder="Phone number"
+                      required 
+                      type="tel" 
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
+                    />
+                  </div>
+
+                  {/* Real-time Pincode Verification Feedback */}
+                  {addressLines.pincode.length === 6 && (
+                    isPincodeServiceable(addressLines.pincode) ? (
+                      <div className="p-3.5 bg-emerald-50/90 border border-emerald-300 rounded-xl text-xs text-zinc-900 flex items-start gap-2.5 shadow-xs">
+                        <CheckCircle2 className="w-4.5 h-4.5 text-[#00c853] shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <p className="font-extrabold text-[#008537] text-xs tracking-wide">
+                            Verified Surat Delivery Zone
+                          </p>
+                          <p className="text-[11px] font-semibold text-zinc-700 mt-0.5 leading-relaxed break-words">
+                            <strong className="text-zinc-900 font-bold">{currentMatchedZone?.mainArea}</strong> ({currentMatchedZone?.pincode}) — {currentMatchedZone?.description}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-950 space-y-1.5 shadow-xs">
+                        <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                          <AlertCircle className="w-4.5 h-4.5 text-amber-600 shrink-0" />
+                          <span>Pincode {addressLines.pincode} is not in our delivery zone</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed text-amber-800 font-medium">
+                          FreshNLocal delivers fresh crops only to key Surat zones (Adajan, Vesu, Althan, Katargam, Rander, Varachha, Dumas, Udhna, etc.). Please switch to <strong>Store Pickup</strong> or select a serviceable address.
+                        </p>
+                      </div>
+                    )
+                  )}
                 </div>
               )}
             </div>
-          )
-        )}
-      </div>
+          ) : (
+            <div className="space-y-3 pt-1">
+              <div className="p-3.5 bg-background border border-border rounded-xl text-xs space-y-1">
+                <p className="font-bold">FreshNLocal.CO Store Pickup</p>
+                <p className="text-muted-foreground text-[11px]">Gr Floor Hall, Reva Dham, Bhatar, Surat</p>
+              </div>
+              <div className="sm:max-w-md">
+                <input 
+                  placeholder="Contact Phone Number"
+                  required 
+                  type="tel" 
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* 2. Free Gift Offer Banner */}
+        {offer && offer.enabled && !isHoreca && (
+          <div className="space-y-3">
+            {isOfferEligible ? (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                  <div className="w-12 h-12 rounded-xl bg-white border border-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                    {offer.giftItemImageUrl ? (
+                      <img 
+                        src={offer.giftItemImageUrl} 
+                        alt={offer.giftItemName} 
+                        className="w-full h-full object-contain p-1"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <Gift className="w-6 h-6 text-emerald-600" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                      <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-600 text-white px-1.5 py-0.5 rounded">
+                        🎉 FREE GIFT UNLOCKED
+                      </span>
+                      <span className="text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded uppercase">
+                        Home Delivery Reward
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-emerald-950 leading-snug">
+                      <strong>1 Free {offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</strong> added to your cart for ₹0.00!
+                    </p>
+                  </div>
+                </div>
+                <div className="self-end sm:self-center shrink-0">
+                  <span className="text-xs font-black text-emerald-700 bg-emerald-100/90 border border-emerald-500/20 px-3 py-1 rounded-xl shadow-2xs">
+                    FREE (₹0.00)
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-emerald-500/[0.07] border border-emerald-500/20 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                  <div className="w-12 h-12 rounded-xl bg-white border border-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                    {offer.giftItemImageUrl ? (
+                      <img 
+                        src={offer.giftItemImageUrl} 
+                        alt={offer.giftItemName} 
+                        className="w-full h-full object-contain p-1"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <Gift className="w-6 h-6 text-emerald-600" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                      <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-600 text-white px-1.5 py-0.5 rounded">
+                        FREE GIFT OFFER
+                      </span>
+                      {offer.deliveryMethodRequired === 'delivery' && (
+                        <span className="text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded uppercase">
+                          Home Delivery Only
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-foreground leading-snug">
+                      {total() < (offer.minOrderAmount || 1000) ? (
+                        <>
+                          Add <span className="text-emerald-600 font-black">₹{((offer.minOrderAmount || 1000) - total()).toFixed(0)}</span> more to unlock <span className="text-emerald-700 font-extrabold">{offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</span> 100% FREE!
+                        </>
+                      ) : (
+                        <>
+                          Select <span className="text-emerald-700 font-black">Home Delivery</span> at checkout to claim your <span className="text-emerald-700 font-extrabold">{offer.giftItemName}</span> FREE!
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                {total() < (offer.minOrderAmount || 1000) && (
+                  <div className="self-end sm:self-center shrink-0">
+                    <button 
+                      type="button"
+                      onClick={() => navigate('/shop')} 
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-wider rounded-xl transition-all shadow-xs"
+                    >
+                      Add Items
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Items & Delivery Column */}
         <div className="lg:col-span-7 space-y-6">
           {/* Delivery Time & Items Card */}
@@ -872,6 +1166,7 @@ export function Cart() {
                   {/* Quantity Stepper & Remove */}
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <button 
+                      type="button"
                       onClick={() => removeItem(item.product.id)} 
                       className="text-muted-foreground hover:text-red-500 transition-colors p-1"
                       title="Remove"
@@ -887,6 +1182,7 @@ export function Cart() {
                       return (
                         <div className="flex items-center bg-background border border-border rounded-lg overflow-hidden shadow-2xs">
                           <button 
+                            type="button"
                             onClick={() => {
                               if (item.quantity <= minQty + 0.001) {
                                 removeItem(item.product.id);
@@ -913,6 +1209,7 @@ export function Cart() {
                             onRemove={() => removeItem(item.product.id)}
                           />
                           <button 
+                            type="button"
                             onClick={() => updateQuantity(item.product.id, safeAddQuantity(item.quantity, step, isDiscrete))} 
                             className="w-7 h-7 flex items-center justify-center text-foreground hover:bg-primary hover:text-white transition-colors"
                           >
@@ -985,8 +1282,9 @@ export function Cart() {
             {/* Add More Items Button */}
             <div className="pt-2">
               <button 
+                type="button"
                 onClick={() => navigate('/shop')}
-                className="w-full py-3 bg-background border border-dashed border-border hover:border-primary text-primary font-bold text-xs uppercase rounded-xl transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 bg-background border border-dashed border-border hover:border-primary text-primary font-bold text-xs uppercase rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Plus className="w-4 h-4" /> Add more items
               </button>
@@ -1038,258 +1336,18 @@ export function Cart() {
               </div>
             </div>
 
+            {/* Order Threshold Container: Placed down below "To Pay" Amount */}
+            <div className="pt-1">
+              <FreeDeliveryProgressBar 
+                currentTotal={total()} 
+                threshold={1000} 
+                isHoreca={isHoreca} 
+                showShopLink={true}
+              />
+            </div>
 
-
-            <form onSubmit={handleCheckout} className="space-y-6 pt-2">
-              {/* Delivery Method Selection */}
-              <div className="space-y-3">
-                <label className="block text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
-                  Delivery Method
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryMethod('delivery')}
-                    className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-colors ${deliveryMethod === 'delivery' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-background text-foreground border-border hover:border-primary/50'}`}
-                  >
-                    <Truck className="w-4 h-4" /> Home Delivery
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryMethod('pickup')}
-                    className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-colors ${deliveryMethod === 'pickup' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-background text-foreground border-border hover:border-primary/50'}`}
-                  >
-                    <ShoppingBag className="w-4 h-4" /> Store Pickup
-                  </button>
-                </div>
-              </div>
-
-              {/* Delivery Address or Store Info */}
-              {deliveryMethod === 'delivery' ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
-                      Delivery Address
-                    </label>
-                    <button
-                      type="button"
-                      onClick={openLocationModal}
-                      className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <MapPin className="w-3 h-3" /> Select Area
-                    </button>
-                  </div>
-
-                  {/* Selected Delivery Area Indicator */}
-                  <div className="p-3 bg-secondary/50 border border-border/70 rounded-xl flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <MapPin className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-semibold text-muted-foreground block leading-tight">Delivery Zone</span>
-                        <span className="font-bold text-xs text-foreground truncate block leading-tight">
-                          {selectedLocation ? `${selectedLocation.areaName} (${selectedLocation.pincode})` : 'Surat Deliverable Clusters'}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={openLocationModal}
-                      className="text-[11px] font-bold text-primary hover:underline px-2 py-1 rounded-lg cursor-pointer shrink-0"
-                    >
-                      Change
-                    </button>
-                  </div>
-
-                  {user?.addresses && user.addresses.length > 0 ? (
-                    <div className="space-y-2">
-                      {user.addresses.map(addr => {
-                        const isAddrServiceable = isPincodeServiceable(addr.pincode);
-                        return (
-                          <label key={addr.id} className={`p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors text-xs ${selectedAddressId === addr.id ? (isAddrServiceable ? 'bg-primary/5 border-primary/40' : 'bg-secondary border-amber-500/40') : 'bg-background border-border hover:border-primary/30'}`}>
-                            <input 
-                              type="radio" 
-                              name="selectedAddress" 
-                              value={addr.id} 
-                              checked={selectedAddressId === addr.id}
-                              onChange={() => {
-                          setSelectedAddressId(addr.id);
-                          if (addr.pincode) {
-                            const zone = getZoneByPincode(addr.pincode);
-                            setLocation(addr.pincode, zone?.mainArea || addr.line2 || 'Surat Area');
-                          }
-                        }}
-                              className="mt-0.5 accent-primary" 
-                            />
-                            <div className="space-y-0.5 w-full">
-                              <div className="flex justify-between items-center">
-                                <span className="font-bold text-foreground">{addr.label}</span>
-                                <div className="flex items-center gap-1.5">
-                                  {isAddrServiceable ? (
-                                    <span className="text-[9px] font-semibold text-green-700 bg-green-500/10 px-1.5 py-0.5 rounded">Deliverable</span>
-                                  ) : (
-                                    <span className="text-[9px] font-semibold text-amber-700 bg-amber-500/15 px-1.5 py-0.5 rounded">Out of Zone</span>
-                                  )}
-                                  {addr.isDefault && <span className="text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Default</span>}
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      deleteUserAddress(addr.id);
-                                      if (selectedAddressId === addr.id) {
-                                        setSelectedAddressId('new');
-                                      }
-                                      toast.success(`Deleted "${addr.label}" address`);
-                                    }}
-                                    className="p-1 rounded text-red-500 hover:bg-red-500/15 transition-colors cursor-pointer"
-                                    title="Delete address"
-                                    aria-label="Delete address"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-                              <p className="text-muted-foreground text-[11px] leading-relaxed">
-                                {addr.line1}, {addr.line2}{addr.landmark ? `, ${addr.landmark}` : ''}, {addr.city} - {addr.pincode}
-                              </p>
-                            </div>
-                          </label>
-                        );
-                      })}
-                      <label className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-colors text-xs ${selectedAddressId === 'new' ? 'bg-primary/5 border-primary/40' : 'bg-background border-border hover:border-primary/30'}`}>
-                        <input 
-                          type="radio" 
-                          name="selectedAddress" 
-                          value="new" 
-                          checked={selectedAddressId === 'new'}
-                          onChange={() => setSelectedAddressId('new')}
-                          className="accent-primary" 
-                        />
-                        <span className="font-semibold text-foreground">Add New Address</span>
-                      </label>
-                    </div>
-                  ) : null}
-
-                  {(selectedAddressId === 'new' || !user?.addresses || user.addresses.length === 0) && (
-                    <div className="space-y-2.5 pt-1">
-                      <div className="flex gap-2">
-                        {['Home', 'Work', 'Other'].map(label => (
-                          <button
-                            key={label}
-                            type="button"
-                            onClick={() => setAddressLabel(label)}
-                            className={`px-3 py-1.5 border rounded-lg text-[10px] font-bold tracking-wider transition-colors ${addressLabel === label ? 'bg-primary text-white border-primary' : 'bg-secondary text-muted-foreground border-border'}`}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Quick Zone Picker Dropdown - Web Theme Custom Component */}
-                      <CustomZoneSelect
-                        value={addressLines.pincode}
-                        onChange={(val) => {
-                          const zone = getZoneByPincode(val);
-                          const mainArea = zone ? zone.mainArea : '';
-                          setAddressLines(prev => ({
-                            ...prev,
-                            pincode: val,
-                            line2: mainArea || prev.line2
-                          }));
-                          if (val && mainArea) {
-                            setLocation(val, mainArea);
-                          }
-                        }}
-                      />
-
-                      <input 
-                        required 
-                        placeholder="Flat, House no., Building, Apartment"
-                        type="text"
-                        value={addressLines.line1}
-                        onChange={(e) => setAddressLines(prev => ({ ...prev, line1: e.target.value }))}
-                        className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
-                      />
-                      <input 
-                        required 
-                        placeholder="Area, Street, Sector (e.g. Adajan, Vesu, Althan)"
-                        type="text"
-                        value={addressLines.line2}
-                        onChange={(e) => setAddressLines(prev => ({ ...prev, line2: e.target.value }))}
-                        className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <input 
-                          placeholder="Pincode (6 digits)"
-                          required 
-                          type="text" 
-                          maxLength={6}
-                          value={addressLines.pincode}
-                          onChange={(e) => setAddressLines(prev => ({ ...prev, pincode: e.target.value.replace(/\D/g, '') }))}
-                          className={`w-full border rounded-xl px-3.5 py-2.5 bg-background outline-none text-xs font-semibold ${
-                            addressLines.pincode.length === 6
-                              ? (isPincodeServiceable(addressLines.pincode) ? 'border-green-500 focus:ring-1 focus:ring-green-500' : 'border-amber-500 focus:ring-1 focus:ring-amber-500')
-                              : 'border-border focus:border-primary'
-                          }`}
-                        />
-                        <input 
-                          placeholder="Phone number"
-                          required 
-                          type="tel" 
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
-                        />
-                      </div>
-
-                      {/* Real-time Pincode Verification Feedback */}
-                      {addressLines.pincode.length === 6 && (
-                        isPincodeServiceable(addressLines.pincode) ? (
-                          <div className="p-3.5 bg-emerald-50/90 border border-emerald-300 rounded-xl text-xs text-zinc-900 flex items-start gap-2.5 shadow-xs">
-                            <CheckCircle2 className="w-4.5 h-4.5 text-[#00c853] shrink-0 mt-0.5" />
-                            <div className="min-w-0">
-                              <p className="font-extrabold text-[#008537] text-xs tracking-wide">
-                                Verified Surat Delivery Zone
-                              </p>
-                              <p className="text-[11px] font-semibold text-zinc-700 mt-0.5 leading-relaxed break-words">
-                                <strong className="text-zinc-900 font-bold">{currentMatchedZone?.mainArea}</strong> ({currentMatchedZone?.pincode}) — {currentMatchedZone?.description}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-950 space-y-1.5 shadow-xs">
-                            <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                              <AlertCircle className="w-4.5 h-4.5 text-amber-600 shrink-0" />
-                              <span>Pincode {addressLines.pincode} is not in our delivery zone</span>
-                            </div>
-                            <p className="text-[11px] leading-relaxed text-amber-800 font-medium">
-                              FreshNLocal delivers fresh crops only to key Surat zones (Adajan, Vesu, Althan, Katargam, Rander, Varachha, Dumas, Udhna, etc.). Please switch to <strong>Store Pickup</strong> or select a serviceable address.
-                            </p>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="p-3.5 bg-background border border-border rounded-xl text-xs space-y-1">
-                    <p className="font-bold">FreshNLocal.CO Store Pickup</p>
-                    <p className="text-muted-foreground text-[11px]">Gr Floor Hall, Reva Dham, Bhatar, Surat</p>
-                  </div>
-                  <input 
-                    placeholder="Contact Phone Number"
-                    required 
-                    type="tel" 
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-background outline-none focus:border-primary text-xs font-semibold"
-                  />
-                </div>
-              )}
-
+            {/* Checkout Form Actions & Policies */}
+            <div className="space-y-4 pt-1">
               {/* FNL Points Redemption */}
               {!isHoreca && user && canUsePoints && (
                 <div className="p-3.5 bg-background border border-border rounded-xl flex items-center justify-between text-xs">
@@ -1320,9 +1378,10 @@ export function Cart() {
                   Remove Out of Stock items to proceed
                 </div>
               )}
-              {!isHoreca && deliveryMethod === 'delivery' && total() < 1000 && !hasOutOfStockItems && (
-                <div className="bg-red-500/10 text-red-500 p-3 rounded-xl text-center text-[10px] font-black uppercase">
-                  Minimum order for delivery is ₹1000
+              {minOrderAlert && (
+                <div className="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600 text-red-600 dark:text-red-400 p-3.5 rounded-xl text-center text-xs sm:text-[13px] font-black leading-snug shadow-sm flex items-center justify-center gap-2">
+                  <span className="text-base shrink-0">⚠️</span>
+                  <span className="text-red-600 dark:text-red-400 font-black">{minOrderAlert}</span>
                 </div>
               )}
               {deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable && activePincode.length > 0 && (
@@ -1335,8 +1394,8 @@ export function Cart() {
               {user ? (
                 <button 
                   type="submit" 
-                  disabled={loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity}
-                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${loading || (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
+                  disabled={loading || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity}
+                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer ${loading || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
                 >
                   {loading ? (
                     <>
@@ -1350,17 +1409,24 @@ export function Cart() {
               ) : (
                 <button 
                   type="button" 
-                  onClick={signIn} 
-                  disabled={(!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity} 
-                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm ${(!isHoreca && deliveryMethod === 'delivery' && total() < 1000) || (deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
+                  onClick={() => {
+                    if (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) {
+                      triggerMinOrderWarning();
+                      return;
+                    }
+                    signIn();
+                  }} 
+                  disabled={(deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity} 
+                  className={`w-full py-3.5 text-xs uppercase font-black tracking-wider rounded-xl transition-all shadow-sm cursor-pointer ${(deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable) || hasOutOfStockItems || hasInvalidRetailQuantity ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
                 >
                   Proceed with phone number / Login
                 </button>
               )}
-            </form>
+            </div>
           </div>
         </div>
       </div>
+    </form>
 
       {/* You Might Also Like */}
       <div className="mt-12">

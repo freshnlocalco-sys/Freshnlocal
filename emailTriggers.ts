@@ -27,39 +27,57 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
   const senderEmail = process.env.SMTP_FROM || "freshnlocalco@gmail.com";
 
   if (host && user && pass) {
-    console.log(`[EMAIL SETUP] Configuring real SMTP Transporter (${host}:${port})`);
-    transporter = nodemailer.createTransport({
+    console.log(`[EMAIL SETUP] Configuring real SMTP Transporter (${host}:${port}) for ${user}`);
+    const tempTransporter = nodemailer.createTransport({
       host,
       port,
       secure: port === 465,
       auth: { user, pass }
     });
-  } else {
+
     try {
-      console.log("[EMAIL SETUP] No SMTP credentials in .env. Creating Ethereal Mail test account...");
-      const testAccount = await nodemailer.createTestAccount();
-      console.log(`[EMAIL SETUP] Ethereal test account created: user="${testAccount.user}"`);
-      transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass
-        }
-      });
-      // Store test credentials in environment for reference
-      process.env.SMTP_FROM = `"FreshNLocal Co. Test" <${testAccount.user}>`;
-    } catch (err) {
-      console.error("[EMAIL SETUP] Failed to create Ethereal account. Using a dry-run logging transporter.", err);
-      transporter = {
-        sendMail: async (options: any) => {
-          console.log("[EMAIL DRY-RUN] Logging sendMail request:", JSON.stringify(options, null, 2));
-          return { messageId: "dry-run-msg-id" };
-        }
-      } as any;
+      // Fast check to verify SMTP connection and credentials
+      await tempTransporter.verify();
+      console.log(`[EMAIL SETUP] Real SMTP Transporter verified successfully!`);
+      transporter = tempTransporter;
+      return transporter;
+    } catch (verifyErr: any) {
+      console.warn(`\n[EMAIL SETUP] ⚠️ SMTP LOGIN VERIFICATION FAILED!`);
+      console.warn(`[EMAIL SETUP] Destination: ${host}:${port}, User: ${user}`);
+      console.warn(`[EMAIL SETUP] Error details:`, verifyErr?.message || verifyErr);
+      if (String(user).includes('gmail.com')) {
+        console.warn(`[EMAIL SETUP] 💡 TIP: For Gmail accounts, you MUST use an "App Password" (16-letter code generated from Google Account Settings -> Security), not your normal account password. Gmail blocks normal passwords by default.\n`);
+      }
+      console.warn(`[EMAIL SETUP] Falling back to Ethereal Mail sandbox so checkout/polling flows don't crash/block...`);
     }
   }
+
+  // Fallback to Ethereal Mail
+  try {
+    console.log("[EMAIL SETUP] Creating Ethereal Mail test account...");
+    const testAccount = await nodemailer.createTestAccount();
+    console.log(`[EMAIL SETUP] Ethereal test account created: user="${testAccount.user}"`);
+    transporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass
+      }
+    });
+    // Store test credentials in environment for reference
+    process.env.SMTP_FROM = `"FreshNLocal Co. Test" <${testAccount.user}>`;
+  } catch (err) {
+    console.error("[EMAIL SETUP] Failed to create Ethereal account. Using a dry-run logging transporter.", err);
+    transporter = {
+      sendMail: async (options: any) => {
+        console.log("[EMAIL DRY-RUN] Logging sendMail request:", JSON.stringify(options, null, 2));
+        return { messageId: "dry-run-msg-id" };
+      }
+    } as any;
+  }
+
   return transporter!;
 }
 
