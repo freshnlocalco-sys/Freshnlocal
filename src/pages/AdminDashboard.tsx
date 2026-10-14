@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
-import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift } from 'lucide-react';
 import { Product } from '../store/useCart';
@@ -2063,11 +2063,47 @@ export function AdminDashboard() {
         }
       }
 
-      await updateDoc(doc(db, 'orders', orderId), { 
+      const isDeliveredOrTakeaway = status === 'delivered' || status === 'takeaway';
+      let pointsAwardedNow = false;
+      let pointsGivenCount = 0;
+
+      const orderUpdates: any = { 
         status, 
         shippingEmailStatus: initialEmailStatus,
         updatedAt: Date.now() 
-      });
+      };
+
+      // Award loyalty points ONLY on order delivery/takeaway and strictly ONCE (idempotent protection)
+      if (isDeliveredOrTakeaway && order && !order.pointsAwarded) {
+        const pointsToGive = typeof order.pointsEarned === 'number'
+          ? order.pointsEarned
+          : (order.isHoreca || order.customerType === 'horeca' ? 0 : Math.floor((order.totalAmount || 0) / 100) * 2);
+
+        if (order.pointsEarned === undefined) {
+          orderUpdates.pointsEarned = pointsToGive;
+        }
+
+        if (pointsToGive > 0 && order.userId) {
+          try {
+            const customerUserRef = doc(db, 'users', order.userId);
+            await setDoc(customerUserRef, {
+              points: increment(pointsToGive)
+            }, { merge: true });
+            pointsAwardedNow = true;
+            pointsGivenCount = pointsToGive;
+            orderUpdates.pointsAwarded = true;
+            orderUpdates.pointsAwardedAt = Date.now();
+          } catch (ptsErr) {
+            console.error("Failed to credit points to customer user document:", ptsErr);
+          }
+        } else {
+          // If pointsToGive is 0 or guest order without userId, mark awarded so it does not re-run
+          orderUpdates.pointsAwarded = true;
+          orderUpdates.pointsAwardedAt = Date.now();
+        }
+      }
+
+      await updateDoc(doc(db, 'orders', orderId), orderUpdates);
 
       if (status === 'confirmed' && order) {
         const customerUserId = order.userId || '';
@@ -2085,11 +2121,33 @@ export function AdminDashboard() {
         }
       }
 
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status, shippingEmailStatus: initialEmailStatus } : o));
+      setOrders(orders.map(o => o.id === orderId ? { ...o, ...orderUpdates } : o));
       if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder(prev => prev ? { ...prev, status, shippingEmailStatus: initialEmailStatus } : null);
+        setSelectedOrder(prev => prev ? { ...prev, ...orderUpdates } : null);
       }
-      toast.success(`Order ${orderId.slice(0, 6)} changed to ${status}${initialEmailStatus ? ' & email notification sent' : ' & notification queued'}`);
+      if (pointsAwardedNow && order?.userId) {
+        setCustomers(prev => prev.map(c => c.uid === order.userId ? { ...c, points: (c.points || 0) + pointsGivenCount } : c));
+        
+        // Immediately sync local logged-in user profile if order was placed by current admin
+        const currentUser = useAuth.getState().user;
+        if (currentUser && currentUser.uid === order.userId) {
+          useAuth.getState().setUser({
+            ...currentUser,
+            points: (currentUser.points || 0) + pointsGivenCount
+          });
+        }
+      }
+
+      let ptsMessage = '';
+      if (pointsAwardedNow) {
+        ptsMessage = ` & 🪙 ${pointsGivenCount} FNL points credited!`;
+      } else if (isDeliveredOrTakeaway && order?.pointsAwarded) {
+        ptsMessage = ' (Loyalty points already awarded)';
+      } else if (isDeliveredOrTakeaway && (order?.isHoreca || order?.customerType === 'horeca')) {
+        ptsMessage = ' (HoReCa B2B order - no loyalty points)';
+      }
+
+      toast.success(`Order ${orderId.slice(0, 6)} changed to ${status}${initialEmailStatus ? ' & email notification sent' : ''}${ptsMessage}`);
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `orders/${orderId}`);
       toast.error('Failed to update status.');
@@ -5292,17 +5350,18 @@ export function AdminDashboard() {
                       <th className="px-4 sm:px-6 py-4">Customer</th>
                       <th className="px-4 sm:px-6 py-4">Contact</th>
                       <th className="px-4 sm:px-6 py-4">Role</th>
+                      <th className="px-4 sm:px-6 py-4">FNL Points</th>
                       <th className="px-4 sm:px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loadingCustomers ? (
                       <tr>
-                        <td colSpan={4} className="px-4 sm:px-6 py-8 text-center text-xs text-muted-foreground">Loading customers...</td>
+                        <td colSpan={5} className="px-4 sm:px-6 py-8 text-center text-xs text-muted-foreground">Loading customers...</td>
                       </tr>
                     ) : customers.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-4 sm:px-6 py-8 text-center text-xs text-muted-foreground">No customers found.</td>
+                        <td colSpan={5} className="px-4 sm:px-6 py-8 text-center text-xs text-muted-foreground">No customers found.</td>
                       </tr>
                     ) : (
                       customers.filter(c => 
@@ -5323,6 +5382,11 @@ export function AdminDashboard() {
                           <td className="px-4 sm:px-6 py-4">
                             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${customer.role === 'admin' ? 'bg-red-500/10 text-red-600 border border-red-500/20' : customer.role === 'horeca' ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-blue-500/10 text-blue-600 border border-blue-500/20'}`}>
                               {customer.role === 'horeca' ? '🏢 HoReCa B2B' : (customer.role || 'customer')}
+                            </span>
+                          </td>
+                          <td className="px-4 sm:px-6 py-4">
+                            <span className="inline-flex items-center gap-1 font-black text-xs text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-lg shadow-2xs">
+                              🪙 {customer.points ?? 0} PTS
                             </span>
                           </td>
                           <td className="px-4 sm:px-6 py-4 text-right">
@@ -6378,6 +6442,20 @@ export function AdminDashboard() {
                         🪙 FNL Points Discount ({selectedOrder.pointsRedeemed || 100} PTS)
                       </span>
                       <span className="font-mono">-₹{discountVal.toFixed(2).replace(/\.00$/, '')}</span>
+                    </div>
+                  )}
+                  {!selectedOrder.isHoreca && ((selectedOrder.pointsEarned ?? Math.floor((selectedOrder.totalAmount || 0) / 100) * 2) > 0) && (
+                    <div className={`flex justify-between items-center text-xs px-3 py-2 rounded-xl border ${
+                      selectedOrder.pointsAwarded 
+                        ? 'text-emerald-700 bg-emerald-50 border-emerald-200/60' 
+                        : 'text-amber-700 bg-amber-50 border-amber-200/60'
+                    }`}>
+                      <span className="uppercase tracking-wider font-extrabold flex items-center gap-1.5 text-[11px]">
+                        ⭐ Loyalty Points {selectedOrder.pointsAwarded ? '(Delivered & Credited)' : '(Credits Upon Delivery)'}
+                      </span>
+                      <span className="font-mono font-black text-xs">
+                        +{selectedOrder.pointsEarned ?? Math.floor((selectedOrder.totalAmount || 0) / 100) * 2} PTS
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between items-center text-xs">

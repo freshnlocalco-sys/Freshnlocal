@@ -179,7 +179,12 @@ export function Cart() {
   const isHoreca = user?.role === 'horeca' || user?.role === 'horeca_admin';
   const navigate = useNavigate();
   const { deferredPrompt, showInstallPrompt } = usePWA();
-  const [showPwaModal, setShowPwaModal] = useState(false);
+  const [placedOrderSummary, setPlacedOrderSummary] = useState<{
+    orderNumber: string;
+    totalAmount: number;
+    pointsEarned: number;
+    deliveryMethod: 'delivery' | 'pickup';
+  } | null>(null);
   const [logoError, setLogoError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [addressLines, setAddressLines] = useState(() => {
@@ -521,6 +526,7 @@ export function Cart() {
         discount: isHoreca ? 0 : discount,
         pointsEarned: isHoreca ? 0 : Math.floor(finalTotal / 100) * 2,
         pointsRedeemed: isHoreca ? 0 : (discount > 0 ? 100 : 0),
+        pointsAwarded: false,
         status: 'pending',
         paymentMethod: isHoreca ? 'B2B Invoice' : 'COD',
         deliveryMethod,
@@ -555,11 +561,11 @@ export function Cart() {
       const ordersRef = collection(db, 'orders');
       await addDoc(ordersRef, orderData);
 
-      // Save address and points to user profile
+      // Save address and deduct redeemed discount points immediately from user profile
       try {
         const userRef = doc(db, 'users', user.uid);
-        const pointsEarned = Math.floor(finalTotal / 100) * 2;
-        const newPoints = userPoints + pointsEarned - (discount > 0 ? 100 : 0);
+        const pointsDeducted = discount > 0 ? 100 : 0;
+        const newPoints = Math.max(0, userPoints - pointsDeducted);
         await updateDoc(userRef, { 
           address: formattedAddress, 
           phone: orderPhone, 
@@ -580,7 +586,12 @@ export function Cart() {
       clearCart();
       toast.success(`Order Placed successfully! Order ID: ${orderNumber}`);
       
-      setShowPwaModal(true);
+      setPlacedOrderSummary({
+        orderNumber,
+        totalAmount: isHoreca ? (finalTotal > 0 ? finalTotal : 0) : finalTotal,
+        pointsEarned: isHoreca ? 0 : Math.floor(finalTotal / 100) * 2,
+        deliveryMethod,
+      });
     } catch (error: any) {
       console.error(error);
       const errorMsg = error?.message || error?.error || String(error);
@@ -590,7 +601,7 @@ export function Cart() {
     }
   };
 
-  if (cartItems.length === 0 && !showPwaModal) {
+  if (cartItems.length === 0 && !placedOrderSummary) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-36 px-4 text-center max-w-7xl mx-auto w-full bg-background text-foreground">
         <SEO title="Your Cart" description="Review your fresh organic crops, farm fruits, vegetables, and cold-pressed elixirs before proceeding to secure checkout." />
@@ -614,57 +625,66 @@ export function Cart() {
   return (
     <>
       <SEO title="Your Cart" description="Review your fresh organic crops, farm fruits, vegetables, and cold-pressed elixirs before proceeding to secure checkout." />
-      {showPwaModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
-            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden border border-border/60 shadow-[0_4px_16px_rgba(0,0,0,0.06)] p-3">
-              {faviconUrl && !logoError ? (
-                <img 
-                  src={faviconUrl} 
-                  alt="FreshNLocal.CO" 
-                  onError={() => setLogoError(true)}
-                  className="w-full h-full object-contain" 
-                  style={{ 
-                    imageRendering: '-webkit-optimize-contrast',
-                    willChange: 'transform'
-                  }}
-                  referrerPolicy="no-referrer" 
-                />
-              ) : (
-                <ShoppingBag className="w-10 h-10 text-primary" />
-              )}
+      
+      {/* Thank You Popup Menu */}
+      {placedOrderSummary && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-border rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 text-center transform transition-all">
+            
+            {/* Header Icon / Branding */}
+            <div className="relative mx-auto w-20 h-20">
+              <div className="w-20 h-20 bg-emerald-50 border border-emerald-200 rounded-full flex items-center justify-center shadow-inner">
+                <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary rounded-full flex items-center justify-center text-white border-2 border-white shadow">
+                <Sparkles className="w-3.5 h-3.5" />
+              </div>
             </div>
-            <h3 className="text-xl font-sans font-black uppercase tracking-tight text-foreground">
-              Add FreshNLocal.CO to Home Screen
-            </h3>
-            <p className="text-sm text-muted-foreground font-semibold">
-              Install our app for a faster, seamless shopping experience and easy access to your orders!
-            </p>
-            <div className="flex flex-col gap-3 pt-4">
-              {deferredPrompt ? (
-                <button
-                  onClick={() => {
-                    showInstallPrompt();
-                    setShowPwaModal(false);
-                    navigate('/profile');
-                  }}
-                  className="w-full slice-btn-primary px-6 py-4 text-xs font-black uppercase"
-                >
-                  Install App
-                </button>
-              ) : (
-                <div className="text-xs text-muted-foreground bg-secondary p-3 rounded-xl border border-border text-left">
-                  To install the app, tap your browser's menu (⋮ or ↗) and select <strong className="text-foreground">"Add to Home Screen"</strong> or <strong className="text-foreground">"Install App"</strong>.
+
+            {/* Thank you title & message */}
+            <div className="space-y-2">
+              <h3 className="text-2xl font-sans font-black uppercase tracking-tight text-foreground">
+                Thank You for Your Order!
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground font-semibold leading-relaxed">
+                Your order has been placed successfully. We are preparing your fresh farm products with care.
+              </p>
+            </div>
+
+            {/* Order Details Snippet */}
+            <div className="bg-secondary/50 rounded-2xl p-4 border border-border text-left space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground font-medium">Order Number:</span>
+                <span className="font-mono font-black text-foreground tracking-wide">{placedOrderSummary.orderNumber}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground font-medium">Payment Mode:</span>
+                <span className="font-bold text-foreground">{isHoreca ? 'B2B Invoice' : 'Cash on Delivery (COD)'}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground font-medium">Delivery Type:</span>
+                <span className="font-bold text-foreground capitalize">{placedOrderSummary.deliveryMethod === 'pickup' ? 'Store Pickup' : 'Home Delivery'}</span>
+              </div>
+              {placedOrderSummary.pointsEarned > 0 && (
+                <div className="flex items-center justify-between text-xs pt-1.5 border-t border-border/60">
+                  <span className="text-emerald-700 font-medium flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Points to Earn:
+                  </span>
+                  <span className="font-black text-emerald-700">+{placedOrderSummary.pointsEarned} FNL Points</span>
                 </div>
               )}
+            </div>
+
+            {/* OK Button - Navigates directly to Orders page */}
+            <div>
               <button
                 onClick={() => {
-                  setShowPwaModal(false);
-                  navigate('/profile');
+                  setPlacedOrderSummary(null);
+                  navigate('/orders');
                 }}
-                className="w-full px-6 py-4 text-xs font-black uppercase text-muted-foreground hover:text-foreground transition-colors"
+                className="w-full slice-btn-primary py-4 px-6 text-sm font-black uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
               >
-                {deferredPrompt ? 'Maybe Later' : 'Done'}
+                OK
               </button>
             </div>
           </div>

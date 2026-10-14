@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, getDocFromServer, onSnapshot } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { create } from 'zustand';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -156,8 +156,15 @@ export const useAuth = create<AuthState>((set) => ({
   setLoading: (loading) => set({ loading }),
 }));
 
-// Setup listener
+// Setup listener with real-time user document sync
+let unsubscribeUserSnapshot: (() => void) | null = null;
+
 onAuthStateChanged(auth, async (firebaseUser) => {
+  if (unsubscribeUserSnapshot) {
+    unsubscribeUserSnapshot();
+    unsubscribeUserSnapshot = null;
+  }
+
   if (firebaseUser) {
     const userEmail = firebaseUser.email?.toLowerCase().trim() || '';
     const isAdmin = userEmail === 'freshnlocalco@gmail.com' || userEmail === 'mohitswami855@gmail.com' || userEmail === 'freshnlocal2@gmail.com' || userEmail.startsWith('admin@');
@@ -167,8 +174,20 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     if (isAdmin) autoRole = 'admin';
     else if (isHorecaAdmin) autoRole = 'horeca_admin';
 
+    const userRef = doc(db, 'users', firebaseUser.uid);
+
+    // Real-time snapshot listener: any points award, deduction, or profile change immediately reflects in app UI
+    unsubscribeUserSnapshot = onSnapshot(userRef, (userSnap) => {
+      if (userSnap.exists()) {
+        const userData = userSnap.data() as Omit<AppUser, 'uid'>;
+        const finalRole = autoRole || userData.role || 'customer';
+        useAuth.getState().setUser({ uid: firebaseUser.uid, ...userData, role: finalRole } as AppUser);
+      }
+    }, (err) => {
+      console.warn("User profile snapshot listener error:", err);
+    });
+
     try {
-      const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
       import('./cacheManager').then(m => m.trackFirestoreRead('users', 1)).catch(() => {});
       
@@ -349,5 +368,39 @@ export const deleteUserLegacyAddress = async () => {
   } catch (err) {
     console.warn("Could not delete legacy address from Firestore:", err);
   }
+};
+
+export const updateUserDisplayName = async (newName: string): Promise<AppUser> => {
+  const currentUser = useAuth.getState().user;
+  if (!currentUser) throw new Error("No authenticated user");
+
+  const trimmed = newName.trim();
+  if (!trimmed) throw new Error("Name cannot be empty");
+
+  // 1. Update Firebase Auth currentUser displayName if available
+  if (auth.currentUser) {
+    try {
+      await updateProfile(auth.currentUser, { displayName: trimmed });
+    } catch (authErr) {
+      console.warn("Could not update auth profile displayName:", authErr);
+    }
+  }
+
+  // 2. Update local Zustand state immediately
+  const updatedUser: AppUser = {
+    ...currentUser,
+    displayName: trimmed,
+  };
+  useAuth.getState().setUser(updatedUser);
+
+  // 3. Persist to Firestore
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, { displayName: trimmed }, { merge: true });
+  } catch (err) {
+    console.warn("Could not save updated displayName to Firestore:", err);
+  }
+
+  return updatedUser;
 };
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError, deleteUserAddress, setDefaultUserAddress, deleteUserLegacyAddress } from '../lib/firebase';
+import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError, deleteUserAddress, setDefaultUserAddress, deleteUserLegacyAddress, updateUserDisplayName } from '../lib/firebase';
 import { notifySignOutSuccess } from '../lib/authNotifications';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
-import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2, RotateCcw } from 'lucide-react';
+import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2, RotateCcw, Pencil, Check, X, User } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { trackFirestoreRead } from '../lib/cacheManager';
 import { SEO } from '../components/SEO';
@@ -23,6 +23,31 @@ export function Profile() {
     return params.get('tab') === 'recipes' ? 'recipes' : 'orders';
   });
   const [fetching, setFetching] = useState(true);
+
+  // Customer Name Edit State
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  const handleSaveName = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
+      toast.error('Please enter a valid name');
+      return;
+    }
+    setIsSavingName(true);
+    try {
+      await updateUserDisplayName(trimmed);
+      toast.success('Customer name updated successfully!');
+      setIsEditingName(false);
+    } catch (error) {
+      console.error('Failed to update name:', error);
+      toast.error('Failed to update name. Please try again.');
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   const handleOrderAgain = async (order: any) => {
     if (reorderingId) return;
@@ -176,24 +201,117 @@ export function Profile() {
           <div className="space-y-3 sm:space-y-4 text-center">
             {/* User Icon resembling slice credit details */}
             <div className="mx-auto w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-tr from-primary/20 to-secondary border border-primary/30 text-primary rounded-2xl sm:rounded-[24px] flex items-center justify-center text-xl sm:text-3xl font-black shadow-none">
-              {displayLabel ? displayLabel[0].toUpperCase() : 'U'}
+              {(user?.displayName || displayLabel || 'U')[0].toUpperCase()}
             </div>
             
-            <div className="space-y-1 mt-2 flex flex-col items-center">
-              <h2 className="text-lg sm:text-xl font-black uppercase text-foreground tracking-tight mt-1 sm:mt-2 flex items-center justify-center gap-2">
-                {displayLabel}
-                {(user?.role === 'horeca' || user?.role === 'horeca_admin') && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full text-primary shadow-2xs" title="Verified HoReCa B2B Partner">
-                    <Building2 className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-[10px] uppercase font-black tracking-widest text-primary">HoReCa B2B Partner</span>
-                  </span>
-                )}
-              </h2>
-              <p className="text-xs text-muted-foreground font-mono tracking-wide">{user?.email}</p>
+            <div className="space-y-1 mt-2 flex flex-col items-center w-full">
+              {!isEditingName ? (
+                <>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    <h2 className="text-lg sm:text-xl font-black uppercase text-foreground tracking-tight flex items-center justify-center gap-2">
+                      {user?.displayName || displayLabel}
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNameInput(user?.displayName || '');
+                        setIsEditingName(true);
+                      }}
+                      className="p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer border border-transparent hover:border-primary/20"
+                      title="Edit customer name"
+                      aria-label="Edit customer name"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {(user?.role === 'horeca' || user?.role === 'horeca_admin') && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full text-primary shadow-2xs" title="Verified HoReCa B2B Partner">
+                      <Building2 className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-[10px] uppercase font-black tracking-widest text-primary">HoReCa B2B Partner</span>
+                    </span>
+                  )}
+                  <p className="text-xs text-muted-foreground font-mono tracking-wide">{user?.email}</p>
+                </>
+              ) : (
+                <form
+                  onSubmit={handleSaveName}
+                  className="w-full mt-2 p-3 bg-background rounded-xl border border-primary/30 shadow-xs space-y-2.5 text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="customer-name-edit" className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-primary" /> Update Customer Name
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingName(false)}
+                      className="text-muted-foreground hover:text-foreground p-0.5 rounded cursor-pointer"
+                      aria-label="Cancel editing"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <input
+                    id="customer-name-edit"
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    placeholder="Enter customer name"
+                    maxLength={50}
+                    autoFocus
+                    className="w-full px-3 py-1.5 bg-secondary/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-lg text-xs font-bold text-foreground outline-none transition-all placeholder:text-muted-foreground/60"
+                  />
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingName(false)}
+                      disabled={isSavingName}
+                      className="px-2.5 py-1 rounded-md text-xs font-bold text-muted-foreground hover:bg-muted/30 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSavingName || !nameInput.trim()}
+                      className="px-3 py-1 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 rounded-md text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                    >
+                      {isSavingName ? (
+                        <>
+                          <span className="w-3 h-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></span>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          Save Name
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
 
           <div className="space-y-3 sm:space-y-4 border-t border-border pt-5 sm:pt-6 text-[10px] uppercase font-bold tracking-wider text-muted-foreground font-sans">
+            <div className="flex justify-between items-center bg-background p-2.5 sm:p-3 rounded-xl border border-border">
+              <span className="flex items-center gap-2"><User className="w-4 h-4 text-primary" /> Customer Name</span>
+              <div className="flex items-center gap-2">
+                <span className="text-foreground font-bold tracking-tight truncate max-w-[120px] sm:max-w-[150px] text-right">
+                  {user?.displayName || 'Not Set'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNameInput(user?.displayName || '');
+                    setIsEditingName(true);
+                  }}
+                  className="text-[9px] uppercase tracking-wider font-extrabold text-primary hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <Pencil className="w-3 h-3" />
+                  {user?.displayName ? 'Edit' : 'Add'}
+                </button>
+              </div>
+            </div>
             <div className="flex justify-between items-center bg-background p-2.5 sm:p-3 rounded-xl border border-border">
               <span className="flex items-center gap-2"><Key className="w-4 h-4 text-primary" /> Authority level</span>
               <span className="text-primary font-black uppercase tracking-widest">{user?.role}</span>

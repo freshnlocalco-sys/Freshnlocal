@@ -313,6 +313,16 @@ export function Orders() {
                       )}
                     </span>
                   </div>
+                  {order.customerType !== 'horeca' && ((order.pointsEarned ?? Math.floor((order.totalAmount || 0) / 100) * 2) > 0) && (
+                    <div className="space-y-1 col-span-2 md:col-span-1">
+                      <span className="text-muted-foreground text-[8px] tracking-[0.15em] block font-black">
+                        FNL POINTS
+                      </span>
+                      <span className={`text-[11px] font-black flex items-center gap-1 ${order.pointsAwarded ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                        🪙 +{order.pointsEarned ?? Math.floor((order.totalAmount || 0) / 100) * 2} PTS {order.pointsAwarded ? '(Added)' : '(On Delivery)'}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div>

@@ -51,9 +51,15 @@ export interface Order {
   orderNumber?: string;
   userId: string;
   customerType?: string;
+  isHoreca?: boolean;
   createdAt: number;
   updatedAt?: number;
   totalAmount: number;
+  discount?: number;
+  pointsEarned?: number;
+  pointsRedeemed?: number;
+  pointsAwarded?: boolean;
+  pointsAwardedAt?: number;
   status: string;
   items: CartItem[];
   address?: string;
@@ -62,6 +68,7 @@ export interface Order {
     name?: string;
     phone?: string;
     address?: string;
+    email?: string;
   };
 }
 
