@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "Fresh N Local Co.",
   "short_name": "Fresh N Local",
   "description": "Pure Biotic Farm Fresh Produce - Growing Food For Souls",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#15803d",
@@ -28,7 +30,14 @@
     {
       "src": "/icon.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any"
     },
     {
       "src": "/favicon.ico",

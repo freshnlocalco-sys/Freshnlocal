@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fnl-cache-v2';
+const CACHE_NAME = 'fnl-cache-v3';
 const BRANDING_CACHE = 'fnl-branding';
 
 self.addEventListener('install', (e) => {
@@ -48,13 +48,15 @@ self.addEventListener('fetch', (event) => {
 
         const mimeType = iconUrl && iconUrl.endsWith('.svg') ? 'image/svg+xml' : (iconUrl && iconUrl.endsWith('.png') ? 'image/png' : 'image/jpeg');
         const manifest = {
-          "name": "Fresh N Local",
-          "short_name": "FNL",
-          "description": "Fresh N Local - Local delivery app",
+          "id": "/",
+          "name": "Fresh N Local Co.",
+          "short_name": "Fresh N Local",
+          "description": "Pure Biotic Farm Fresh Produce - Growing Food For Souls",
           "start_url": "/",
+          "scope": "/",
           "display": "standalone",
           "background_color": "#ffffff",
-          "theme_color": "#2c3e30",
+          "theme_color": "#15803d",
           "icons": [
             {
               "src": iconUrl || "/icon-192.png",
@@ -73,6 +75,23 @@ self.addEventListener('fetch', (event) => {
               "type": mimeType || "image/png",
               "sizes": "512x512",
               "purpose": "maskable"
+            },
+            {
+              "src": iconUrl || "/icon.png",
+              "type": mimeType || "image/png",
+              "sizes": "512x512",
+              "purpose": "any"
+            },
+            {
+              "src": iconUrl || "/apple-touch-icon.png",
+              "type": mimeType || "image/png",
+              "sizes": "180x180",
+              "purpose": "any"
+            },
+            {
+              "src": "/favicon.ico",
+              "sizes": "64x64 32x32 24x24 16x16",
+              "type": "image/x-icon"
             }
           ]
         };

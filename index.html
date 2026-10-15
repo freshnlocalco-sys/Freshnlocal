@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fresh N Local Co.</title>
     
+    <meta name="theme-color" content="#15803d" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Fresh N Local" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    
     <script>
       (function() {
         try {
@@ -13,21 +24,16 @@
           if (faviconUrl) {
             manifestUrl += '?icon=' + encodeURIComponent(faviconUrl);
             
-            // Inject apple touch icon
+            // Inject dynamic apple touch icon if custom favicon exists
             var appleLink = document.createElement('link');
             appleLink.rel = 'apple-touch-icon';
             appleLink.href = faviconUrl;
             document.head.appendChild(appleLink);
             
-            // Inject favicon
+            // Inject dynamic favicon
             var iconLink = document.createElement('link');
             iconLink.rel = 'icon';
             iconLink.href = faviconUrl;
-            document.head.appendChild(iconLink);
-          } else {
-            var iconLink = document.createElement('link');
-            iconLink.rel = 'icon';
-            iconLink.href = '/favicon.ico';
             document.head.appendChild(iconLink);
           }
           

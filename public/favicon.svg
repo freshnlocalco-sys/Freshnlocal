@@ -1,63 +1,118 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <path id="topCurve" d="M 75,250 A 175,175 0 0,1 425,250" fill="none" />
-    <path id="bottomCurve" d="M 425,250 A 175,175 0 0,1 75,250" fill="none" />
+    <clipPath id="circleClip">
+      <circle cx="512" cy="512" r="398" />
+    </clipPath>
   </defs>
-  <!-- Background Circle -->
-  <circle cx="250" cy="250" r="240" fill="#ffffff" stroke="#84cc16" stroke-width="10"/>
-  <circle cx="250" cy="250" r="226" fill="#ffffff" stroke="#15803d" stroke-width="16"/>
-  
-  <!-- Outer Arch Text -->
-  <text font-family="Arial, sans-serif" font-weight="900" font-size="28" fill="#15803d" letter-spacing="4">
-    <textPath href="#topCurve" startOffset="50%" text-anchor="middle">
-      GROWING FOOD FOR SOULS
-    </textPath>
-  </text>
-  <text font-family="Arial, sans-serif" font-weight="900" font-size="28" fill="#15803d" letter-spacing="5">
-    <textPath href="#bottomCurve" startOffset="50%" text-anchor="middle">
-      PURE BIOTIC FARM
-    </textPath>
-  </text>
 
-  <!-- Inner Foliage / Leaves Ring Top -->
-  <g transform="translate(250, 160)">
-    <!-- Center leaf -->
-    <path d="M0,-55 C20,-30 20,-10 0,0 C-20,-10 -20,-30 0,-55 Z" fill="#84cc16" stroke="#15803d" stroke-width="3"/>
-    <path d="M0,-55 L0,0" stroke="#15803d" stroke-width="3"/>
-    <!-- Left leaf -->
-    <path d="M-10,-10 C-45,-45 -65,-30 -50,5 C-30,5 -15,0 -10,-10 Z" fill="#15803d"/>
-    <path d="M-50,-20 L-20, -2" stroke="#84cc16" stroke-width="3"/>
-    <!-- Right leaf -->
-    <path d="M10,-10 C45,-45 65,-30 50,5 C30,5 15,0 10,-10 Z" fill="#15803d"/>
-    <path d="M50,-20 L20, -2" stroke="#84cc16" stroke-width="3"/>
-    <!-- Far Left leaf -->
-    <path d="M-45,5 C-85,-15 -95,5 -70,25 C-50,20 -40,15 -45,5 Z" fill="#15803d"/>
-    <!-- Far Right leaf -->
-    <path d="M45,5 C85,-15 95,5 70,25 C50,20 40,15 45,5 Z" fill="#15803d"/>
+  <!-- Pure White Background with padding for PWA icon safety and square edge protection -->
+  <rect width="1024" height="1024" fill="#ffffff"/>
+
+  <!-- Outer lime accent ring -->
+  <circle cx="512" cy="512" r="410" fill="none" stroke="#8dc63f" stroke-width="8"/>
+
+  <!-- Main dark green ring -->
+  <circle cx="512" cy="512" r="396" fill="#ffffff" stroke="#0f6834" stroke-width="18"/>
+
+  <!-- Inner dark green ring boundary -->
+  <circle cx="512" cy="512" r="320" fill="#ffffff" stroke="#0f6834" stroke-width="12"/>
+
+  <!-- Arched Text Top & Bottom -->
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-54, 512, 512)">G</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-48.85714285714286, 512, 512)">R</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-43.71428571428572, 512, 512)">O</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-38.571428571428555, 512, 512)">W</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-33.42857142857143, 512, 512)">I</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-28.285714285714278, 512, 512)">N</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-23.14285714285714, 512, 512)">G</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-12.857142857142861, 512, 512)">F</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-7.714285714285708, 512, 512)">O</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-2.5714285714285694, 512, 512)">O</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(2.5714285714285836, 512, 512)">D</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(12.857142857142861, 512, 512)">F</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(18, 512, 512)">O</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(23.142857142857153, 512, 512)">R</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(33.42857142857143, 512, 512)">S</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(38.571428571428584, 512, 512)">O</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(43.71428571428572, 512, 512)">U</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(48.85714285714286, 512, 512)">L</text>
+    <text x="512" y="166" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(54.000000000000014, 512, 512)">S</text>
+
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(41, 512, 512)">P</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(35.53333333333333, 512, 512)">U</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(30.066666666666663, 512, 512)">R</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(24.599999999999994, 512, 512)">E</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(13.666666666666657, 512, 512)">B</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(8.200000000000003, 512, 512)">I</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(2.7333333333333343, 512, 512)">O</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-2.7333333333333343, 512, 512)">T</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-8.200000000000003, 512, 512)">I</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-13.666666666666671, 512, 512)">C</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-24.599999999999994, 512, 512)">F</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-30.066666666666663, 512, 512)">A</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-35.53333333333333, 512, 512)">R</text>
+    <text x="512" y="882" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#0f6834" text-anchor="middle" transform="rotate(-41, 512, 512)">M</text>
+
+  <!-- Foliage Top (Leaves) -->
+  <g transform="translate(512, 392) scale(1.45)">
+    <!-- Center lime vertical leaf bud -->
+    <path d="M0,-95 C16,-65 16,-30 0,0 C-16,-30 -16,-65 0,-95 Z" fill="#8dc63f"/>
+    <path d="M0,-95 L0,0" stroke="#0f6834" stroke-width="3"/>
+
+    <!-- Two main V-angled dark green leaves -->
+    <path d="M-6,-15 C-45,-75 -85,-55 -45,-5 C-25,-5 -12,-10 -6,-15 Z" fill="#0f6834"/>
+    <path d="M-55,-40 L-18,-8" stroke="#8dc63f" stroke-width="4"/>
+
+    <path d="M6,-15 C45,-75 85,-55 45,-5 C25,-5 12,-10 6,-15 Z" fill="#0f6834"/>
+    <path d="M55,-40 L18,-8" stroke="#8dc63f" stroke-width="4"/>
+
+    <!-- Flanking horizontal dark green leaves -->
+    <path d="M-35,2 C-95,-25 -115,10 -75,32 C-50,28 -38,15 -35,2 Z" fill="#0f6834"/>
+    <path d="M-80,-2 L-42,12" stroke="#8dc63f" stroke-width="3.5"/>
+
+    <path d="M35,2 C95,-25 115,10 75,32 C50,28 38,15 35,2 Z" fill="#0f6834"/>
+    <path d="M80,-2 L42,12" stroke="#8dc63f" stroke-width="3.5"/>
+
+    <!-- Small lime accent leaf buds -->
+    <ellipse cx="-48" cy="-42" rx="10" ry="20" transform="rotate(-40, -48, -42)" fill="#8dc63f"/>
+    <ellipse cx="48" cy="-42" rx="10" ry="20" transform="rotate(40, 48, -42)" fill="#8dc63f"/>
   </g>
 
-  <!-- Inner Foliage / Leaves Ring Bottom -->
-  <g transform="translate(250, 340) scale(1, -1)">
-    <!-- Center leaf -->
-    <path d="M0,-55 C20,-30 20,-10 0,0 C-20,-10 -20,-30 0,-55 Z" fill="#84cc16" stroke="#15803d" stroke-width="3"/>
-    <path d="M0,-55 L0,0" stroke="#15803d" stroke-width="3"/>
-    <!-- Left leaf -->
-    <path d="M-10,-10 C-45,-45 -65,-30 -50,5 C-30,5 -15,0 -10,-10 Z" fill="#15803d"/>
-    <path d="M-50,-20 L-20, -2" stroke="#84cc16" stroke-width="3"/>
-    <!-- Right leaf -->
-    <path d="M10,-10 C45,-45 65,-30 50,5 C30,5 15,0 10,-10 Z" fill="#15803d"/>
-    <path d="M50,-20 L20, -2" stroke="#84cc16" stroke-width="3"/>
-    <!-- Far Left leaf -->
-    <path d="M-45,5 C-85,-15 -95,5 -70,25 C-50,20 -40,15 -45,5 Z" fill="#15803d"/>
-    <!-- Far Right leaf -->
-    <path d="M45,5 C85,-15 95,5 70,25 C50,20 40,15 45,5 Z" fill="#15803d"/>
+  <!-- Foliage Bottom (Leaves inverted) -->
+  <g transform="translate(512, 632) scale(1.45, -1.45)">
+    <!-- Center lime vertical leaf bud -->
+    <path d="M0,-95 C16,-65 16,-30 0,0 C-16,-30 -16,-65 0,-95 Z" fill="#8dc63f"/>
+    <path d="M0,-95 L0,0" stroke="#0f6834" stroke-width="3"/>
+
+    <!-- Two main V-angled dark green leaves -->
+    <path d="M-6,-15 C-45,-75 -85,-55 -45,-5 C-25,-5 -12,-10 -6,-15 Z" fill="#0f6834"/>
+    <path d="M-55,-40 L-18,-8" stroke="#8dc63f" stroke-width="4"/>
+
+    <path d="M6,-15 C45,-75 85,-55 45,-5 C25,-5 12,-10 6,-15 Z" fill="#0f6834"/>
+    <path d="M55,-40 L18,-8" stroke="#8dc63f" stroke-width="4"/>
+
+    <!-- Flanking horizontal dark green leaves -->
+    <path d="M-35,2 C-95,-25 -115,10 -75,32 C-50,28 -38,15 -35,2 Z" fill="#0f6834"/>
+    <path d="M-80,-2 L-42,12" stroke="#8dc63f" stroke-width="3.5"/>
+
+    <path d="M35,2 C95,-25 115,10 75,32 C50,28 38,15 35,2 Z" fill="#0f6834"/>
+    <path d="M80,-2 L42,12" stroke="#8dc63f" stroke-width="3.5"/>
+
+    <!-- Small lime accent leaf buds -->
+    <ellipse cx="-48" cy="-42" rx="10" ry="20" transform="rotate(-40, -48, -42)" fill="#8dc63f"/>
+    <ellipse cx="48" cy="-42" rx="10" ry="20" transform="rotate(40, 48, -42)" fill="#8dc63f"/>
   </g>
 
-  <!-- Central Banner -->
-  <rect x="25" y="180" width="450" height="140" fill="#d9f99d" stroke="#15803d" stroke-width="12" rx="6" />
-  
-  <!-- Central Text -->
-  <text x="250" y="275" font-family="Impact, Arial Black, sans-serif" font-weight="900" font-size="70" fill="#15803d" text-anchor="middle" letter-spacing="2">
-    FRESH N LOCAL CO.
-  </text>
+  <!-- Center Horizontal Banner Background -->
+  <!-- Clips inside the dark green circle so ends meet the ring flush -->
+  <g clip-path="url(#circleClip)">
+    <rect x="102" y="420" width="820" height="184" fill="#d3e8b4"/>
+    <line x1="102" y1="420" x2="922" y2="420" stroke="#0f6834" stroke-width="16"/>
+    <line x1="102" y1="604" x2="922" y2="604" stroke="#0f6834" stroke-width="16"/>
+  </g>
+
+  <!-- Center Banner Text: FRESH N LOCAL CO. -->
+  <g transform="translate(512, 512)">
+    <text x="0" y="32" font-family="'Arial Narrow', Arial, sans-serif" font-weight="900" font-size="96" fill="#0f6834" text-anchor="middle" letter-spacing="5" transform="scale(0.85, 1)">FRESH N LOCAL CO.</text>
+  </g>
 </svg>
