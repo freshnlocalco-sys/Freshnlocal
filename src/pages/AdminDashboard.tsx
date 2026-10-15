@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
@@ -14,6 +14,8 @@ import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
 import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
 import { SEO } from '../components/SEO';
+import { ThermalPackingSlipModal } from '../components/ThermalPackingSlipModal';
+import { printThermalSlip, printBatchThermalSlips } from '../lib/thermalPrinter';
 import toast from 'react-hot-toast';
 
 const STATUS_OPTIONS = [
@@ -988,6 +990,7 @@ export function AdminDashboard() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [orderForThermalPrint, setOrderForThermalPrint] = useState<any | null>(null);
 
   const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
 
@@ -4165,19 +4168,36 @@ export function AdminDashboard() {
                     className="border border-border/80 rounded-xl px-3 py-2.5 text-[10px] sm:text-xs bg-white focus:border-primary outline-none transition-colors w-full uppercase font-black tracking-wider text-foreground placeholder:text-muted-foreground/50 shadow-sm"
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setExportStatus(filterStatus === 'all' ? 'pending' : filterStatus);
-                    setExportStartDate(dateRange.start);
-                    setExportEndDate(dateRange.end);
-                    setExportParty('all');
-                    setIsExportModalOpen(true);
-                  }}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15 transition-all text-[10px] uppercase font-black tracking-widest cursor-pointer w-full md:w-auto shrink-0 shadow-xs h-[40px]"
-                >
-                  <FileText className="w-4 h-4" /> Export B2B/HoReCa Orders
-                </button>
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (filteredOrders.length === 0) {
+                        toast.error('No orders to print in current view');
+                        return;
+                      }
+                      printBatchThermalSlips(filteredOrders);
+                      toast.success(`Printing ${filteredOrders.length} thermal packing slips...`);
+                    }}
+                    className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-700 bg-neutral-900 text-white hover:bg-neutral-800 transition-all text-[10px] uppercase font-black tracking-widest cursor-pointer shadow-xs h-[40px] whitespace-nowrap"
+                    title="Print continuous thermal packing slips for all matching orders"
+                  >
+                    <Printer className="w-4 h-4 text-primary" /> Batch Print Slips ({filteredOrders.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportStatus(filterStatus === 'all' ? 'pending' : filterStatus);
+                      setExportStartDate(dateRange.start);
+                      setExportEndDate(dateRange.end);
+                      setExportParty('all');
+                      setIsExportModalOpen(true);
+                    }}
+                    className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15 transition-all text-[10px] uppercase font-black tracking-widest cursor-pointer shadow-xs h-[40px] whitespace-nowrap"
+                  >
+                    <FileText className="w-4 h-4" /> Export B2B/HoReCa Orders
+                  </button>
+                </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 items-end justify-between">
                 <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -4254,8 +4274,24 @@ export function AdminDashboard() {
                             className="text-primary hover:underline text-left flex flex-col gap-1 cursor-pointer focus:outline-none"
                           >
                             <span className="font-extrabold">{order.orderNumber || `FNL-${order.id.slice(0, 8).toUpperCase()}`}</span>
-                            <span className="text-[8px] uppercase tracking-wider text-muted-foreground bg-neutral-100 hover:bg-neutral-200 border border-border px-1.5 py-0.5 rounded-md inline-block text-center font-bold">View Slip 🧾</span>
                           </button>
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedOrder(order)}
+                              className="text-[8px] uppercase tracking-wider text-muted-foreground bg-neutral-100 hover:bg-neutral-200 border border-border px-1.5 py-0.5 rounded-md text-center font-bold"
+                            >
+                              Slip 🧾
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOrderForThermalPrint(order)}
+                              className="text-[8px] uppercase tracking-wider text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300/80 px-2 py-0.5 rounded-md text-center font-black flex items-center gap-1 shadow-2xs cursor-pointer"
+                              title="Print Thermal Packing Slip"
+                            >
+                              <Printer className="w-2.5 h-2.5 text-emerald-600" /> Print
+                            </button>
+                          </div>
                         </td>
                         <td className="p-3 sm:p-4 md:p-5 leading-relaxed max-w-[200px] sm:max-w-xs whitespace-normal">
                           <span className="font-extrabold text-foreground uppercase block text-[10px] sm:text-xs">{order.shippingDetails?.name || 'Customer'}</span>
@@ -4305,6 +4341,14 @@ export function AdminDashboard() {
                               onStatusChange={(newStatus) => handleUpdateOrderStatus(order.id, newStatus)} 
                               isPickup={order.shippingDetails?.address?.includes('Store Pickup')}
                             />
+                            <button
+                              type="button"
+                              onClick={() => setOrderForThermalPrint(order)}
+                              className="text-neutral-700 hover:text-black bg-neutral-100 hover:bg-neutral-200 border border-border p-2 rounded-xl transition-colors shrink-0 cursor-pointer"
+                              title="Print Thermal Packing Slip"
+                            >
+                              <Printer className="w-4 h-4 text-primary" />
+                            </button>
                             <button
                               type="button"
                               onClick={() => setOrderToDelete(order.id)}
@@ -6198,6 +6242,16 @@ export function AdminDashboard() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setOrderForThermalPrint(selectedOrder)}
+                  className="bg-neutral-900 hover:bg-neutral-800 text-white font-extrabold text-[10px] sm:text-xs px-2.5 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                  title="Print Thermal Packing Slip"
+                >
+                  <Printer className="w-3.5 h-3.5 text-primary" />
+                  <span className="hidden sm:inline">Print Packing Slip</span>
+                  <span className="sm:hidden">Print Slip</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setOrderToDelete(selectedOrder.id)}
                   className="ml-2 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-lg p-1.5 sm:p-2 cursor-pointer transition-colors"
                   title="Delete Order"
@@ -6798,6 +6852,13 @@ export function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Thermal Packing Slip Modal */}
+      <ThermalPackingSlipModal
+        order={orderForThermalPrint}
+        isOpen={!!orderForThermalPrint}
+        onClose={() => setOrderForThermalPrint(null)}
+      />
       </div>
     </div>
   );
