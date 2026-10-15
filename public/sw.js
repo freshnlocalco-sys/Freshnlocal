@@ -1,5 +1,4 @@
-const CACHE_NAME = 'fnl-cache-v3';
-const BRANDING_CACHE = 'fnl-branding';
+const CACHE_NAME = 'fnl-cache-v4';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
@@ -8,8 +7,9 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
+      // Delete all old caches, including old 'fnl-branding' and previous versions
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME && key !== BRANDING_CACHE).map((key) => caches.delete(key))
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
     }).then(() => self.clients.claim())
   );
@@ -21,32 +21,10 @@ self.addEventListener('fetch', (event) => {
   // Skip cross-origin non-GET requests or browser extensions
   if (event.request.method !== 'GET') return;
 
-  // 1. Handle dynamic manifest.json with custom icon support
+  // 1. Handle manifest.json - always return the dedicated padded PWA icons
   if (url.pathname === '/manifest.json') {
     event.respondWith(
       (async () => {
-        let iconUrl = url.searchParams.get('icon');
-        try {
-          const cache = await caches.open(BRANDING_CACHE);
-          if (iconUrl) {
-            await cache.put('/branding-icon-url', new Response(iconUrl));
-            try {
-              const imgResponse = await fetch(iconUrl);
-              if (imgResponse.ok) {
-                await cache.put('/branding-icon-image', imgResponse);
-              }
-            } catch (imgErr) {}
-          } else {
-            const cachedResponse = await cache.match('/branding-icon-url');
-            if (cachedResponse) {
-              iconUrl = await cachedResponse.text();
-            }
-          }
-        } catch (e) {
-          console.warn("Service worker cache error:", e);
-        }
-
-        const mimeType = iconUrl && iconUrl.endsWith('.svg') ? 'image/svg+xml' : (iconUrl && iconUrl.endsWith('.png') ? 'image/png' : 'image/jpeg');
         const manifest = {
           "id": "/",
           "name": "Fresh N Local Co.",
@@ -59,37 +37,37 @@ self.addEventListener('fetch', (event) => {
           "theme_color": "#15803d",
           "icons": [
             {
-              "src": iconUrl || "/icon-192.png",
-              "type": mimeType || "image/png",
+              "src": "/icon-192.png?v=2",
+              "type": "image/png",
               "sizes": "192x192",
               "purpose": "any"
             },
             {
-              "src": iconUrl || "/icon-512.png",
-              "type": mimeType || "image/png",
+              "src": "/icon-512.png?v=2",
+              "type": "image/png",
               "sizes": "512x512",
               "purpose": "any"
             },
             {
-              "src": iconUrl || "/icon-512.png",
-              "type": mimeType || "image/png",
+              "src": "/icon-512.png?v=2",
+              "type": "image/png",
               "sizes": "512x512",
               "purpose": "maskable"
             },
             {
-              "src": iconUrl || "/icon.png",
-              "type": mimeType || "image/png",
+              "src": "/icon.png?v=2",
+              "type": "image/png",
               "sizes": "512x512",
               "purpose": "any"
             },
             {
-              "src": iconUrl || "/apple-touch-icon.png",
-              "type": mimeType || "image/png",
+              "src": "/apple-touch-icon.png?v=2",
+              "type": "image/png",
               "sizes": "180x180",
               "purpose": "any"
             },
             {
-              "src": "/favicon.ico",
+              "src": "/favicon.ico?v=2",
               "sizes": "64x64 32x32 24x24 16x16",
               "type": "image/x-icon"
             }
@@ -99,6 +77,7 @@ self.addEventListener('fetch', (event) => {
         return new Response(JSON.stringify(manifest), {
           headers: { 
             'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Access-Control-Allow-Origin': '*'
           }
         });
@@ -107,30 +86,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Handle branding icons & favicon
-  if (url.pathname === '/icon-192.png' || url.pathname === '/icon-512.png' || url.pathname === '/favicon.ico') {
+  // 2. Handle app icons - network-first / fresh fetch so updates are never stuck in stale cache
+  if (url.pathname.match(/^\/(icon-192\.png|icon-512\.png|apple-touch-icon\.png|icon\.png|favicon\.ico|favicon\.svg)$/)) {
     event.respondWith(
-      (async () => {
-        try {
-          const cache = await caches.open(BRANDING_CACHE);
-          const cachedImgResponse = await cache.match('/branding-icon-image');
-          if (cachedImgResponse) {
-            return cachedImgResponse.clone();
-          }
-          const cachedUrlResponse = await cache.match('/branding-icon-url');
-          if (cachedUrlResponse) {
-            const iconUrl = await cachedUrlResponse.text();
-            if (iconUrl) {
-              const response = await fetch(iconUrl);
-              if (response.ok) {
-                await cache.put('/branding-icon-image', response.clone());
-                return response;
-              }
-            }
-          }
-        } catch (e) {}
-        return fetch(event.request);
-      })()
+      fetch(event.request).catch(() => caches.match(event.request))
     );
     return;
   }
@@ -158,7 +117,6 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         } catch (err) {
-          // If offline and not in cache, return fallback or fail gracefully
           return new Response('Offline asset not available', { status: 404, statusText: 'Offline' });
         }
       })()
@@ -181,7 +139,6 @@ self.addEventListener('fetch', (event) => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          // Ultimate fallback index.html if cached
           const indexCache = await cache.match('/index.html');
           if (indexCache) return indexCache;
           return new Response('App is offline. Please check your internet connection.', {

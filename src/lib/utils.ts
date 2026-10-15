@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function updateFaviconInDOM(url: string | null) {
   if (typeof document === 'undefined') return;
-  const links = document.querySelectorAll("link[rel*='icon']");
+  const links = document.querySelectorAll("link[rel='icon'], link[rel='shortcut icon']");
   
   if (url) {
     if (links.length > 0) {

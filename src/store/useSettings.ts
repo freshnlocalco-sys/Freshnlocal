@@ -570,23 +570,9 @@ export const useSettings = create<SettingsState>((set, get) => ({
         }
         set({ faviconUrl });
         updateFaviconInDOM(faviconUrl);
-        if (faviconUrl && 'caches' in window) {
-          caches.open('fnl-branding')
-            .then(async (cache) => {
-              await cache.put('/branding-icon-url', new Response(faviconUrl));
-              try {
-                const cachedImg = await cache.match('/branding-icon-image');
-                if (!cachedImg) {
-                  const imgResponse = await fetch(faviconUrl);
-                  if (imgResponse.ok) {
-                    await cache.put('/branding-icon-image', imgResponse);
-                  }
-                }
-              } catch (imgErr) {
-                console.warn("Failed to pre-cache branding icon image:", imgErr);
-              }
-            })
-            .catch(err => console.warn("Failed to cache favicon URL:", err));
+        // Purge legacy fnl-branding cache if present
+        if ('caches' in window) {
+          caches.delete('fnl-branding').catch(() => {});
         }
       } else {
         set({ faviconUrl: null });
@@ -608,24 +594,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       set({ faviconUrl: url });
       updateFaviconInDOM(url);
       if ('caches' in window) {
-        caches.open('fnl-branding')
-          .then(async (cache) => {
-            if (url) {
-              await cache.put('/branding-icon-url', new Response(url));
-              try {
-                const imgResponse = await fetch(url);
-                if (imgResponse.ok) {
-                  await cache.put('/branding-icon-image', imgResponse);
-                }
-              } catch (imgErr) {
-                console.warn("Failed to pre-cache updated branding icon image:", imgErr);
-              }
-            } else {
-              await cache.delete('/branding-icon-url');
-              await cache.delete('/branding-icon-image');
-            }
-          })
-          .catch(err => console.warn("Failed to update cache favicon URL:", err));
+        caches.delete('fnl-branding').catch(() => {});
       }
     } catch (error: any) {
       handleFirestoreError(error, OperationType.WRITE, 'settings/branding');

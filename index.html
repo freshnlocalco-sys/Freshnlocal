@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Fresh N Local" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -20,33 +21,15 @@
       (function() {
         try {
           var faviconUrl = localStorage.getItem('fnl_favicon_url');
-          var manifestUrl = '/manifest.json';
           if (faviconUrl) {
-            manifestUrl += '?icon=' + encodeURIComponent(faviconUrl);
-            
-            // Inject dynamic apple touch icon if custom favicon exists
-            var appleLink = document.createElement('link');
-            appleLink.rel = 'apple-touch-icon';
-            appleLink.href = faviconUrl;
-            document.head.appendChild(appleLink);
-            
-            // Inject dynamic favicon
-            var iconLink = document.createElement('link');
-            iconLink.rel = 'icon';
-            iconLink.href = faviconUrl;
-            document.head.appendChild(iconLink);
+            // Only update the browser tab favicon if custom branding exists
+            var iconLink = document.querySelector("link[rel='icon']");
+            if (iconLink) {
+              iconLink.href = faviconUrl;
+            }
           }
-          
-          var manifestLink = document.createElement('link');
-          manifestLink.rel = 'manifest';
-          manifestLink.href = manifestUrl;
-          document.head.appendChild(manifestLink);
         } catch (e) {
           console.error(e);
-          var defaultManifest = document.createElement('link');
-          defaultManifest.rel = 'manifest';
-          defaultManifest.href = '/manifest.json';
-          document.head.appendChild(defaultManifest);
         }
       })();
     </script>
