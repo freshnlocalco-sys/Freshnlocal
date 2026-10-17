@@ -15,7 +15,6 @@ import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
 import { SEO } from '../components/SEO';
 import { ThermalPackingSlipModal } from '../components/ThermalPackingSlipModal';
-import { printThermalSlip, printBatchThermalSlips } from '../lib/thermalPrinter';
 import toast from 'react-hot-toast';
 
 const STATUS_OPTIONS = [
@@ -4169,21 +4168,6 @@ export function AdminDashboard() {
                   />
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (filteredOrders.length === 0) {
-                        toast.error('No orders to print in current view');
-                        return;
-                      }
-                      printBatchThermalSlips(filteredOrders);
-                      toast.success(`Printing ${filteredOrders.length} thermal packing slips...`);
-                    }}
-                    className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-700 bg-neutral-900 text-white hover:bg-neutral-800 transition-all text-[10px] uppercase font-black tracking-widest cursor-pointer shadow-xs h-[40px] whitespace-nowrap"
-                    title="Print continuous thermal packing slips for all matching orders"
-                  >
-                    <Printer className="w-4 h-4 text-primary" /> Batch Print Slips ({filteredOrders.length})
-                  </button>
                   <button
                     type="button"
                     onClick={() => {

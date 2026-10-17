@@ -20,7 +20,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
     paperWidth = '80mm',
     showPrices = true,
     storeName = 'FRESH N LOCAL CO.',
-    storePhone = '+91 98765 43210',
+    storePhone = '+91 9106070032',
     includeCheckboxes = true,
   } = options;
 
@@ -85,7 +85,6 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
     <div class="thermal-slip ${paperWidth === '58mm' ? 'width-58' : 'width-80'}">
       <!-- Header -->
       <div class="center bold text-lg">${storeName}</div>
-      <div class="center text-xs tracking-wide">ORGANIC &amp; FRESH GROCERIES</div>
       <div class="center text-xs">Ph: ${storePhone}</div>
       <div class="divider-double"></div>
 
