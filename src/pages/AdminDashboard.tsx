@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
@@ -273,6 +273,280 @@ export function AdminDashboard() {
     } catch (error) {
       console.error('Error updating role:', error);
       toast.error('Failed to update role');
+    }
+  };
+
+  const handleExportCustomers = (exportFilteredOnly: boolean = false) => {
+    try {
+      const listToExport = exportFilteredOnly && customerSearch.trim()
+        ? customers.filter(c => 
+            (c.displayName || '').toLowerCase().includes(customerSearch.toLowerCase()) || 
+            (c.email || '').toLowerCase().includes(customerSearch.toLowerCase()) ||
+            (c.phone || '').includes(customerSearch)
+          )
+        : customers;
+
+      if (listToExport.length === 0) {
+        toast.error('No customer data available to export');
+        return;
+      }
+
+      const toastId = toast.loading('Generating Customer Data Excel sheet...');
+
+      const rows = listToExport.map((customer, idx) => {
+        // Match customer orders by uid, email, or normalized phone
+        const custPhoneDigits = (customer.phone || '').replace(/\D/g, '');
+        const cOrders = orders.filter(o => {
+          if (o.userId && o.userId === customer.uid) return true;
+          if (customer.email && o.customerEmail && o.customerEmail.toLowerCase().trim() === customer.email.toLowerCase().trim()) return true;
+          if (custPhoneDigits && o.shippingDetails?.phone) {
+            const shipPhoneDigits = (o.shippingDetails.phone || '').replace(/\D/g, '');
+            if (shipPhoneDigits && (custPhoneDigits.slice(-10) === shipPhoneDigits.slice(-10))) return true;
+          }
+          return false;
+        });
+
+        const totalOrders = cOrders.length;
+        const validOrders = cOrders.filter(o => o.status !== 'cancelled');
+        const totalSpent = validOrders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
+
+        let lastOrderDateStr = 'Never Ordered';
+        if (cOrders.length > 0) {
+          const sorted = [...cOrders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          const d = new Date(sorted[0].createdAt);
+          if (!isNaN(d.getTime())) {
+            lastOrderDateStr = d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+          }
+        }
+
+        // Registration date
+        let regDateStr = 'N/A';
+        if (customer.createdAt) {
+          try {
+            const raw: any = customer.createdAt;
+            const d = typeof raw === 'number' 
+              ? new Date(raw) 
+              : typeof raw.toDate === 'function' ? raw.toDate() : new Date(raw);
+            if (!isNaN(d.getTime())) {
+              regDateStr = d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+          } catch {
+            regDateStr = 'N/A';
+          }
+        }
+
+        // Primary Address details
+        const primaryAddr = customer.addresses?.find(a => a.isDefault) || customer.addresses?.[0];
+        const primaryAddressStr = primaryAddr 
+          ? [primaryAddr.line1, primaryAddr.line2, primaryAddr.landmark].filter(Boolean).join(', ')
+          : (customer.address || 'N/A');
+        const city = primaryAddr?.city || (customer as any).city || 'N/A';
+        const state = primaryAddr?.state || (customer as any).state || 'N/A';
+        const pincode = primaryAddr?.pincode || (customer as any).pincode || 'N/A';
+        const contactPhone = customer.phone || primaryAddr?.phone || 'N/A';
+
+        const allAddressesStr = customer.addresses && customer.addresses.length > 0
+          ? customer.addresses.map((a, i) => `[${a.label || `Addr ${i + 1}`}] ${[a.name ? `Name: ${a.name}` : '', a.phone ? `Ph: ${a.phone}` : '', a.line1, a.line2, a.landmark, a.city, a.state, a.pincode].filter(Boolean).join(', ')}`).join(' | ')
+          : (customer.address || 'N/A');
+
+        const anyCust = customer as any;
+        const businessName = anyCust.companyName || anyCust.businessName || anyCust.partyName || 'N/A';
+        const gstin = anyCust.gstin || anyCust.gstNumber || 'N/A';
+
+        const roleFormatted = customer.role === 'horeca' 
+          ? 'HoReCa B2B' 
+          : customer.role === 'horeca_admin'
+          ? 'HoReCa Admin'
+          : customer.role === 'admin'
+          ? 'Admin'
+          : 'Retail Customer';
+
+        return {
+          "S.No": idx + 1,
+          "Customer Name": customer.displayName || 'Unnamed Customer',
+          "Email Address": customer.email || 'N/A',
+          "Phone / Mobile": contactPhone,
+          "Role": roleFormatted,
+          "FNL Points Balance": customer.points ?? 0,
+          "Total Orders": totalOrders,
+          "Total Spent (₹)": totalSpent,
+          "Last Order Date": lastOrderDateStr,
+          "Business / Company Name": businessName,
+          "GSTIN / Tax ID": gstin,
+          "Primary Street Address": primaryAddressStr,
+          "City": city,
+          "State": state,
+          "Pincode": pincode,
+          "Total Saved Addresses": customer.addresses ? customer.addresses.length : (customer.address ? 1 : 0),
+          "All Saved Addresses": allAddressesStr,
+          "Registration Date": regDateStr,
+          "Customer UID": customer.uid
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+
+      // Auto set column widths for nice appearance in Excel
+      worksheet['!cols'] = [
+        { wch: 6 },  // S.No
+        { wch: 25 }, // Customer Name
+        { wch: 30 }, // Email Address
+        { wch: 18 }, // Phone / Mobile
+        { wch: 16 }, // Role
+        { wch: 20 }, // FNL Points Balance
+        { wch: 14 }, // Total Orders
+        { wch: 16 }, // Total Spent (₹)
+        { wch: 18 }, // Last Order Date
+        { wch: 26 }, // Business / Company Name
+        { wch: 18 }, // GSTIN / Tax ID
+        { wch: 36 }, // Primary Street Address
+        { wch: 16 }, // City
+        { wch: 16 }, // State
+        { wch: 12 }, // Pincode
+        { wch: 22 }, // Total Saved Addresses
+        { wch: 50 }, // All Saved Addresses
+        { wch: 18 }, // Registration Date
+        { wch: 32 }  // Customer UID
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Customers & Points');
+
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const today = new Date().toISOString().split('T')[0];
+      link.download = `FreshNLocal_Customers_${exportFilteredOnly ? 'Filtered_' : ''}${today}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.dismiss(toastId);
+      toast.success(`Exported ${rows.length} customer records to Excel!`);
+    } catch (error) {
+      console.error('Error exporting customer data:', error);
+      toast.error('Failed to export customer data');
+    }
+  };
+
+  const handleExportSingleCustomer = (customer: AppUser) => {
+    try {
+      const toastId = toast.loading(`Generating Excel file for ${customer.displayName || customer.email || 'customer'}...`);
+      const anyCust = customer as any;
+      const primaryAddr = customer.addresses?.find(a => a.isDefault) || customer.addresses?.[0];
+
+      // Find all orders for this customer
+      const custPhoneDigits = (customer.phone || '').replace(/\D/g, '');
+      const cOrders = orders.filter(o => {
+        if (o.userId && o.userId === customer.uid) return true;
+        if (customer.email && o.customerEmail && o.customerEmail.toLowerCase().trim() === customer.email.toLowerCase().trim()) return true;
+        if (custPhoneDigits && o.shippingDetails?.phone) {
+          const shipPhoneDigits = (o.shippingDetails.phone || '').replace(/\D/g, '');
+          if (shipPhoneDigits && (custPhoneDigits.slice(-10) === shipPhoneDigits.slice(-10))) return true;
+        }
+        return false;
+      });
+
+      const totalSpent = cOrders
+        .filter(o => o.status !== 'cancelled')
+        .reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
+
+      // Sheet 1: Customer Profile & Points
+      let regDateStr = 'N/A';
+      if (customer.createdAt) {
+        try {
+          const raw: any = customer.createdAt;
+          const d = typeof raw === 'number' ? new Date(raw) : typeof raw.toDate === 'function' ? raw.toDate() : new Date(raw);
+          if (!isNaN(d.getTime())) {
+            regDateStr = d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+          }
+        } catch {
+          regDateStr = 'N/A';
+        }
+      }
+
+      const profileData = [
+        { "Detail": "Customer Name", "Information": customer.displayName || 'Unknown Name' },
+        { "Detail": "Email Address", "Information": customer.email || 'N/A' },
+        { "Detail": "Phone / Mobile", "Information": customer.phone || primaryAddr?.phone || 'N/A' },
+        { "Detail": "Account Role", "Information": customer.role === 'horeca' ? 'HoReCa B2B' : customer.role === 'admin' ? 'Admin' : 'Retail Customer' },
+        { "Detail": "FNL Reward Points Balance", "Information": `${customer.points ?? 0} PTS` },
+        { "Detail": "Total Orders Placed", "Information": cOrders.length },
+        { "Detail": "Total Amount Spent (₹)", "Information": `₹${totalSpent}` },
+        { "Detail": "Business / Company Name", "Information": anyCust.companyName || anyCust.businessName || anyCust.partyName || 'N/A' },
+        { "Detail": "GSTIN / Tax ID", "Information": anyCust.gstin || anyCust.gstNumber || 'N/A' },
+        { "Detail": "Primary Address", "Information": primaryAddr ? [primaryAddr.line1, primaryAddr.line2, primaryAddr.landmark, primaryAddr.city, primaryAddr.state, primaryAddr.pincode].filter(Boolean).join(', ') : (customer.address || 'N/A') },
+        { "Detail": "City", "Information": primaryAddr?.city || anyCust.city || 'N/A' },
+        { "Detail": "State", "Information": primaryAddr?.state || anyCust.state || 'N/A' },
+        { "Detail": "Pincode", "Information": primaryAddr?.pincode || anyCust.pincode || 'N/A' },
+        { "Detail": "Registration Date", "Information": regDateStr },
+        { "Detail": "Customer UID", "Information": customer.uid }
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      const profileWs = XLSX.utils.json_to_sheet(profileData);
+      profileWs['!cols'] = [{ wch: 28 }, { wch: 55 }];
+      XLSX.utils.book_append_sheet(workbook, profileWs, 'Profile & Points');
+
+      // Sheet 2: Order History
+      if (cOrders.length > 0) {
+        const orderRows = cOrders.map((ord, idx) => ({
+          "S.No": idx + 1,
+          "Order Number": ord.orderNumber || ord.id,
+          "Date": new Date(ord.createdAt).toLocaleDateString('en-IN'),
+          "Time": new Date(ord.createdAt).toLocaleTimeString('en-IN'),
+          "Status": ord.status || 'pending',
+          "Customer Type": ord.customerType || 'retail',
+          "Total Amount (₹)": ord.totalAmount || 0,
+          "Payment Method": ord.paymentMethod || 'COD',
+          "Items Count": ord.items ? ord.items.length : 0,
+          "Items Summary": (ord.items || []).map((it: any) => `${it.quantity || 1}x ${it.product?.name || it.name || 'Item'}`).join(', ')
+        }));
+        const ordersWs = XLSX.utils.json_to_sheet(orderRows);
+        ordersWs['!cols'] = [{ wch: 6 }, { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 12 }, { wch: 50 }];
+        XLSX.utils.book_append_sheet(workbook, ordersWs, 'Order History');
+      }
+
+      // Sheet 3: Saved Addresses
+      if (customer.addresses && customer.addresses.length > 0) {
+        const addrRows = customer.addresses.map((a, idx) => ({
+          "S.No": idx + 1,
+          "Label": a.label || `Address ${idx + 1}`,
+          "Default": a.isDefault ? 'YES' : 'NO',
+          "Recipient Name": a.name || 'N/A',
+          "Phone": a.phone || 'N/A',
+          "Address Line 1": a.line1 || '',
+          "Address Line 2": a.line2 || '',
+          "Landmark": a.landmark || '',
+          "City": a.city || '',
+          "State": a.state || '',
+          "Pincode": a.pincode || ''
+        }));
+        const addrWs = XLSX.utils.json_to_sheet(addrRows);
+        addrWs['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 10 }, { wch: 20 }, { wch: 16 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 16 }, { wch: 16 }, { wch: 12 }];
+        XLSX.utils.book_append_sheet(workbook, addrWs, 'Saved Addresses');
+      }
+
+      const safeName = (customer.displayName || customer.email || 'Customer').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Customer_${safeName}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.dismiss(toastId);
+      toast.success(`Exported details for ${customer.displayName || customer.email || 'customer'}!`);
+    } catch (error) {
+      console.error('Error exporting single customer:', error);
+      toast.error('Failed to export customer data');
     }
   };
 
@@ -5356,13 +5630,24 @@ export function AdminDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border shadow-sm">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">Customers</h2>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">Manage user roles and HoReCa access</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">Manage user roles, HoReCa access, and loyalty reward points ({customers.length} registered)</p>
+              </div>
+              <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => handleExportCustomers(false)}
+                  disabled={loadingCustomers || customers.length === 0}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs shadow-sm hover:shadow transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Export all customers with points and full profile details to Excel (.xlsx)"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-white" />
+                  <span>Export Customer Data (.xlsx)</span>
+                </button>
               </div>
             </div>
             
-            
             <div className="bg-white rounded-2xl sm:rounded-3xl border border-border shadow-sm overflow-hidden">
-              <div className="p-4 sm:p-6 border-b border-border">
+              <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
                 <input 
                   type="text" 
                   placeholder="Search customers by name, email, or phone..." 
@@ -5370,6 +5655,25 @@ export function AdminDashboard() {
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   className="w-full sm:max-w-md border border-border rounded-xl px-4 py-3 bg-muted/30 outline-none focus:border-primary text-xs"
                 />
+                {customerSearch.trim() && (
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <span className="text-[11px] font-bold text-muted-foreground">
+                      {customers.filter(c => 
+                        (c.displayName || '').toLowerCase().includes(customerSearch.toLowerCase()) || 
+                        (c.email || '').toLowerCase().includes(customerSearch.toLowerCase()) ||
+                        (c.phone || '').includes(customerSearch)
+                      ).length} matching
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleExportCustomers(true)}
+                      className="px-3 py-1.5 rounded-lg border border-emerald-600/30 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Export only matching search results to Excel"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Export Filtered
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -5419,6 +5723,14 @@ export function AdminDashboard() {
                           </td>
                           <td className="px-4 sm:px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleExportSingleCustomer(customer)}
+                                className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center gap-1 cursor-pointer"
+                                title="Export this customer's full profile and order history to Excel"
+                              >
+                                <Download className="w-3 h-3 text-emerald-600" /> Export Excel
+                              </button>
                               {customer.role !== 'admin' && (
                                 <button 
                                   onClick={() => handleSetRole(customer, 'admin')}
