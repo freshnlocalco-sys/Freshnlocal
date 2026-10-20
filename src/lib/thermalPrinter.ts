@@ -51,12 +51,14 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
     const price = Number(rawPrice) || 0;
 
     const name = prod.name || prod.title || it.name || it.title || 'Item';
+    const itemCode = prod.itemCode || it.itemCode || it.product?.itemCode || '';
     const unit = prod.unit || prod.selectedUnit || it.unit || it.selectedUnit || '';
     const variantName = prod.variantName || it.variantName || prod.selectedVariant || it.selectedVariant || '';
     const total = qty * price;
 
     return {
       name,
+      itemCode,
       qty,
       price,
       unit,
@@ -152,7 +154,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
             <div class="item-row">
               <div class="item-top">
                 ${includeCheckboxes ? '<span class="checkbox">[ ]</span>' : `<span class="item-num">${index + 1}.</span>`}
-                <span class="item-name bold">${it.name}</span>
+                <span class="item-name bold">${it.itemCode ? `[#${it.itemCode}] ` : ''}${it.name}</span>
                 <span class="item-qty bold right">x${it.qty}</span>
                 ${showPrices ? `<span class="item-amt right bold">${formatCurrency(it.total)}</span>` : ''}
               </div>

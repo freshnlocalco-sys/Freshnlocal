@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
@@ -1074,12 +1074,16 @@ export function AdminDashboard() {
     if (productSection === 'veg-fruits' && isJuice) return false;
     if (productSection === 'juices' && !isJuice) return false;
 
-    const q = productSearch.toLowerCase();
+    const q = productSearch.toLowerCase().trim();
     const name = (product.name || '').toLowerCase();
     const cat = (product.category || '').toLowerCase();
     const subCat = ((product as any).subCategory || '').toLowerCase();
+    const itemCode = (product.itemCode ? String(product.itemCode) : '').toLowerCase();
 
     return !q ? true : (
+      itemCode === q ||
+      itemCode === q.replace(/^#/, '') ||
+      itemCode.includes(q) ||
       name.startsWith(q) || name.includes(` ${q}`) || name.includes(`-${q}`) ||
       cat.startsWith(q) || cat.includes(` ${q}`) || cat.includes(`-${q}`) ||
       subCat.startsWith(q) || subCat.includes(` ${q}`) || subCat.includes(`-${q}`)
@@ -1133,6 +1137,10 @@ export function AdminDashboard() {
 
       if (isOutA !== isOutB) {
         return isOutA ? 1 : -1;
+      }
+
+      if (a.itemCode && b.itemCode && !isNaN(Number(a.itemCode)) && !isNaN(Number(b.itemCode))) {
+        return Number(a.itemCode) - Number(b.itemCode);
       }
 
       return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
@@ -1259,9 +1267,10 @@ export function AdminDashboard() {
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[]; useBasePricing?: boolean; basePrice?: string; baseUnit?: string; baseOriginalPrice?: string; baseHorecaPrice?: string }>({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
+  const [newProduct, setNewProduct] = useState<{ itemCode: string; name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[]; useBasePricing?: boolean; basePrice?: string; baseUnit?: string; baseOriginalPrice?: string; baseHorecaPrice?: string }>({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
+  const [isAssigningCodes, setIsAssigningCodes] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [orderForThermalPrint, setOrderForThermalPrint] = useState<any | null>(null);
 
@@ -1588,6 +1597,7 @@ export function AdminDashboard() {
   const handleExportCSV = () => {
     try {
       const headers = [
+        "ITEM CODE",
         "ID",
         "NAME",
         "CATEGORY",
@@ -1610,6 +1620,7 @@ export function AdminDashboard() {
         const v2 = product.variants && product.variants[1] ? product.variants[1] : null;
 
         const row = [
+          `"${(product.itemCode || '').replace(/"/g, '""')}"`,
           `"${(product.id || '').replace(/"/g, '""')}"`,
           `"${(product.name || '').replace(/"/g, '""')}"`,
           `"${(product.category || '').replace(/"/g, '""')}"`,
@@ -1638,7 +1649,7 @@ export function AdminDashboard() {
       link.click();
       document.body.removeChild(link);
       
-      toast.success("Products exported successfully with Base Unit & Variant price details.");
+      toast.success("Products exported successfully with Item Codes and pricing details.");
     } catch (err) {
       console.error("Export error:", err);
       toast.error("Failed to export products.");
@@ -1647,7 +1658,7 @@ export function AdminDashboard() {
 
   const handleExportHorecaCSV = () => {
     try {
-      const headers = ["PRODUCT NAME", "CATEGORY", "HORECA PRICE", "HORECA UNIT", "DESCRIPTION", "IMAGE URL"];
+      const headers = ["ITEM CODE", "PRODUCT NAME", "CATEGORY", "HORECA PRICE", "HORECA UNIT", "DESCRIPTION", "IMAGE URL"];
       const csvRows = [];
       csvRows.push(headers.join(","));
       
@@ -1655,6 +1666,7 @@ export function AdminDashboard() {
       
       horecaProducts.forEach(product => {
         const row = [
+          `"${(product.itemCode || '').replace(/"/g, '""')}"`,
           `"${(product.name || '').replace(/"/g, '""')}"`,
           `"${(product.category || '').replace(/"/g, '""')}"`,
           `"${product.horecaPrice !== undefined && product.horecaPrice !== null ? product.horecaPrice : ''}"`,
@@ -1975,6 +1987,114 @@ export function AdminDashboard() {
       }
     } finally {
       setSeedingJuices(false);
+    }
+  };
+
+  const handleAutoAssignItemCodes = async () => {
+    if (isAssigningCodes) return;
+    const confirmAssign = window.confirm("Are you sure you want to assign/update Item Codes for all products based on category order (1 to 284 for vegetables & fruits, and 285+ for juices)?");
+    if (!confirmAssign) return;
+
+    setIsAssigningCodes(true);
+    const toastId = toast.loading("Assigning item codes by category order...");
+
+    try {
+      const catOrder = new Map<string, number>();
+      productCategories.forEach((c, i) => {
+        if (c) catOrder.set(c.toLowerCase().trim(), i);
+      });
+
+      const getCatIndex = (cat?: string): number => {
+        let lower = (cat || '').toLowerCase().trim();
+        if (lower === 'exotic vegetables') lower = 'exotic vegetable';
+        if (lower === 'imported vegetables') lower = 'imported vegetable';
+        if (lower === 'mushrooms') lower = 'mushroom';
+        if (catOrder.has(lower)) return catOrder.get(lower)!;
+        if (catOrder.has(lower.replace(/s$/, ''))) return catOrder.get(lower.replace(/s$/, ''))!;
+        return 999;
+      };
+
+      const nonJuices = products.filter(p => {
+        const isJuice = (p.category || '').toLowerCase().includes('juice');
+        return !isJuice;
+      });
+
+      const juices = products.filter(p => {
+        const isJuice = (p.category || '').toLowerCase().includes('juice');
+        return isJuice;
+      });
+
+      nonJuices.sort((a, b) => {
+        const idxA = getCatIndex(a.category);
+        const idxB = getCatIndex(b.category);
+        if (idxA !== idxB) return idxA - idxB;
+        const orderA = a.orderIndex !== undefined && a.orderIndex !== null ? a.orderIndex : 999999;
+        const orderB = b.orderIndex !== undefined && b.orderIndex !== null ? b.orderIndex : 999999;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      const juiceSubOrder = ['cold-pressed', 'detox', 'satvik', 'smoothies', 'sweet-cravings', 'special'];
+      juices.sort((a, b) => {
+        const subA = ((a as any).subCategory || 'cold-pressed').toLowerCase().trim();
+        const subB = ((b as any).subCategory || 'cold-pressed').toLowerCase().trim();
+        const idxA = juiceSubOrder.indexOf(subA) !== -1 ? juiceSubOrder.indexOf(subA) : 999;
+        const idxB = juiceSubOrder.indexOf(subB) !== -1 ? juiceSubOrder.indexOf(subB) : 999;
+        if (idxA !== idxB) return idxA - idxB;
+        const orderA = a.orderIndex !== undefined && a.orderIndex !== null ? a.orderIndex : 999999;
+        const orderB = b.orderIndex !== undefined && b.orderIndex !== null ? b.orderIndex : 999999;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      const batch = writeBatch(db);
+      const updatedMap = new Map<string, string>();
+      const now = Date.now();
+
+      nonJuices.forEach((p, idx) => {
+        const code = String(idx + 1);
+        updatedMap.set(p.id, code);
+        batch.update(doc(db, 'products', p.id), {
+          itemCode: code,
+          updatedAt: now
+        });
+      });
+
+      juices.forEach((p, idx) => {
+        const code = String(nonJuices.length + idx + 1);
+        updatedMap.set(p.id, code);
+        batch.update(doc(db, 'products', p.id), {
+          itemCode: code,
+          updatedAt: now
+        });
+      });
+
+      await batch.commit();
+
+      const nextProducts = products.map(p => {
+        if (updatedMap.has(p.id)) {
+          return { ...p, itemCode: updatedMap.get(p.id)!, updatedAt: now };
+        }
+        return p;
+      });
+
+      setProducts(nextProducts);
+      const mProductsStore = await import('../store/useProducts');
+      mProductsStore.useProducts.getState().products = nextProducts;
+      mProductsStore.useProducts.getState().lastFetched = Date.now();
+
+      const mCache = await import('../lib/cacheManager');
+      const mIdb = await import('../lib/indexedDB');
+      mCache.cacheManager.set('products_v6', nextProducts);
+      mCache.cacheManager.set('products_last_fetched_v4', Date.now());
+      mIdb.idb.set('products_v6', nextProducts, 24 * 60 * 60 * 1000).catch(()=>{});
+
+      toast.success(`Successfully assigned item codes to ${updatedMap.size} products!`, { id: toastId });
+    } catch (err: any) {
+      console.error("Failed to assign item codes:", err);
+      toast.error(`Error: ${err?.message || 'Failed to update item codes'}`, { id: toastId });
+    } finally {
+      setIsAssigningCodes(false);
     }
   };
 
@@ -2498,6 +2618,7 @@ export function AdminDashboard() {
 
       if (editingProductId) {
         await updateDoc(doc(db, 'products', editingProductId), {
+          itemCode: newProduct.itemCode ? newProduct.itemCode.trim() : '',
           name: newProduct.name,
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
@@ -2521,6 +2642,7 @@ export function AdminDashboard() {
         });
       } else {
         await setDoc(doc(db, 'products', productId), {
+          itemCode: newProduct.itemCode ? newProduct.itemCode.trim() : '',
           name: newProduct.name,
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
@@ -2551,6 +2673,7 @@ export function AdminDashboard() {
       const renderStartTime = performance.now();
       const updatedProductObj: Product = {
         id: productId,
+        itemCode: newProduct.itemCode ? newProduct.itemCode.trim() : undefined,
         name: newProduct.name,
         price: Number(newProduct.price),
         originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
@@ -2638,7 +2761,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
+      setNewProduct({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -3081,6 +3204,7 @@ export function AdminDashboard() {
     const inferred = inferBasePricing(product, mainQuantityValue, mainQuantityUnit);
 
     setNewProduct({
+      itemCode: product.itemCode ? String(product.itemCode) : '',
       name: product.name,
       price: product.price.toString(),
       originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
@@ -3124,7 +3248,7 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
+    setNewProduct({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
   };
 
   const uploadRawFileToStorage = async (
@@ -4701,17 +4825,31 @@ export function AdminDashboard() {
                   )}
                   
                   <form onSubmit={handleSaveProduct} className="space-y-4">
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                        {productSection === 'juices' ? 'Juice / Drink Name' : 'Crop/Item Name'}
-                      </label>
-                      <input 
-                        required 
-                        placeholder={productSection === 'juices' ? 'Watermelon Punch or Mango Smoothie...' : 'Royal Washington Red Apples...'} 
-                        className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
-                        value={newProduct.name} 
-                        onChange={e => setNewProduct({...newProduct, name: e.target.value})} 
-                      />
+                    <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 items-stretch">
+                      <div className="w-full sm:w-24 md:w-24 shrink-0 space-y-1.5 sm:space-y-2">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1">
+                          <Hash className="w-2.5 h-2.5 text-primary" /> Code
+                        </label>
+                        <input 
+                          type="text"
+                          placeholder="e.g. 1" 
+                          className="w-full border border-border rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono font-bold text-center" 
+                          value={newProduct.itemCode} 
+                          onChange={e => setNewProduct({...newProduct, itemCode: e.target.value})} 
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                          {productSection === 'juices' ? 'Juice / Drink Name' : 'Crop/Item Name'}
+                        </label>
+                        <input 
+                          required 
+                          placeholder={productSection === 'juices' ? 'Watermelon Punch or Mango Smoothie...' : 'Royal Washington Red Apples...'} 
+                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-xs sm:text-sm" 
+                          value={newProduct.name} 
+                          onChange={e => setNewProduct({...newProduct, name: e.target.value})} 
+                        />
+                      </div>
                     </div>
 
                     {/* Base Pricing Toggle & Inputs */}
@@ -5355,6 +5493,14 @@ export function AdminDashboard() {
                   >
                     <Download className="w-3.5 h-3.5" /> HORECA
                   </button>
+                  <button
+                    onClick={handleAutoAssignItemCodes}
+                    disabled={isAssigningCodes}
+                    className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                    title="Auto-assign/sync item codes from 1 to 284 by category order"
+                  >
+                    <Hash className="w-3.5 h-3.5" /> {isAssigningCodes ? 'Assigning...' : 'Assign Codes (1–284)'}
+                  </button>
                   <input 
                     type="search"
                     placeholder="Search inventory..."
@@ -5403,6 +5549,7 @@ export function AdminDashboard() {
                 <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border bg-secondary text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap text-center w-16">Code</th>
                       <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Product Details</th>
                       <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Catalog Category</th>
                       <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Rate (₹)</th>
@@ -5441,7 +5588,7 @@ export function AdminDashboard() {
                         <React.Fragment key={product.id}>
                           {showHeader && (
                             <tr className="bg-secondary/30">
-                              <td colSpan={5} className="py-4 sm:py-6 px-3 sm:px-5">
+                              <td colSpan={6} className="py-4 sm:py-6 px-3 sm:px-5">
                                 <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#151515] bg-white border border-border px-4 py-2 rounded-xl shadow-sm">
                                   {isJuice ? '🍹 FNL Juices / ' + displayJuiceLabel : (product.category || '').replace(/ font-bold/gi, '')}
                                 </span>
@@ -5465,6 +5612,15 @@ export function AdminDashboard() {
                           }}
                           className={`transition-colors cursor-move ${dragOverProductIdx === idx ? 'border-primary border-t-2 border-dashed' : ''} ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}
                         >
+                          <td className="px-3 sm:px-4 py-3 text-center whitespace-nowrap">
+                            {product.itemCode ? (
+                              <span className="inline-block bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-300 dark:border-neutral-700 font-mono font-black px-2 py-0.5 rounded-lg text-[9px] sm:text-[10px]">
+                                #{product.itemCode}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground/40 font-mono text-[9px]">-</span>
+                            )}
+                          </td>
                           <td className="px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
                             <div className={`w-10 sm:w-12 md:w-14 aspect-[4/3] rounded-lg sm:rounded-xl bg-white dark:bg-white overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
                               <img src={product.imageUrl || getCategoryImage(product.category) || undefined} alt="" loading="lazy" className="w-full h-full object-contain object-center" />
@@ -6535,16 +6691,6 @@ export function AdminDashboard() {
                   <Mail className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Send Rates Email</span>
                   <span className="sm:hidden">Send Email</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOrderForThermalPrint(selectedOrder)}
-                  className="bg-neutral-900 hover:bg-neutral-800 text-white font-extrabold text-[10px] sm:text-xs px-2.5 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap"
-                  title="Print Thermal Packing Slip"
-                >
-                  <Printer className="w-3.5 h-3.5 text-primary" />
-                  <span className="hidden sm:inline">Print Packing Slip</span>
-                  <span className="sm:hidden">Print Slip</span>
                 </button>
                 <button
                   type="button"
