@@ -15,15 +15,15 @@ export const DeliveryLocationBadge: React.FC<DeliveryLocationBadgeProps> = ({
     <button
       type="button"
       onClick={openLocationModal}
-      className={`group flex items-center gap-1 text-left cursor-pointer transition-all duration-150 focus:outline-none py-1 px-1 sm:px-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 ${className}`}
+      className={`group flex items-center gap-0.5 sm:gap-1 text-left cursor-pointer transition-all duration-150 focus:outline-none py-0.5 sm:py-1 px-0.5 sm:px-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 ${className}`}
       title="Click to select delivery area in Surat"
       aria-label="Select delivery area in Surat"
     >
-      <div className="flex items-center gap-1 font-bold text-xs sm:text-sm text-foreground max-w-[85px] min-[360px]:max-w-[110px] md:max-w-[140px] lg:max-w-[160px] xl:max-w-[200px]">
+      <div className="flex items-center gap-0.5 sm:gap-1 font-bold text-[11px] min-[360px]:text-xs sm:text-sm text-foreground max-w-[70px] min-[360px]:max-w-[92px] md:max-w-[140px] lg:max-w-[160px] xl:max-w-[200px]">
         <span className="truncate border-b border-foreground group-hover:border-primary group-hover:text-primary transition-colors pb-0.5">
           {selectedLocation ? selectedLocation.areaName : 'Select Area'}
         </span>
-        <ChevronDown className="w-3.5 h-3.5 text-primary shrink-0 transition-transform group-hover:translate-y-0.5" />
+        <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary shrink-0 transition-transform group-hover:translate-y-0.5" />
       </div>
     </button>
   );

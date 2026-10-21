@@ -110,6 +110,44 @@ export function Shop() {
   }, [categoryFilter, navigate]);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+  const desktopSearchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const focusSearchInput = () => {
+      const isMobile = window.innerWidth < 768;
+      const targetInput = isMobile ? mobileSearchInputRef.current : desktopSearchInputRef.current;
+      const inputToFocus = targetInput || document.querySelector<HTMLInputElement>('.search-container input');
+
+      if (inputToFocus) {
+        inputToFocus.focus();
+        const len = inputToFocus.value.length;
+        try {
+          inputToFocus.setSelectionRange(len, len);
+        } catch {
+          // ignore
+        }
+        inputToFocus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setIsSearchFocused(true);
+      }
+    };
+
+    const handleFocusEvent = () => {
+      focusSearchInput();
+    };
+
+    window.addEventListener('focus-catalog-search', handleFocusEvent);
+
+    if (searchParams.get('focus') === 'search' || searchParams.get('focus') === '1') {
+      const timer = setTimeout(focusSearchInput, 150);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('focus-catalog-search', handleFocusEvent);
+      };
+    }
+
+    return () => window.removeEventListener('focus-catalog-search', handleFocusEvent);
+  }, [searchParams]);
 
   useEffect(() => {
     async function load() {
@@ -414,6 +452,7 @@ export function Shop() {
         <div className="relative w-full search-container z-50">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary z-10" />
             <input 
+              ref={mobileSearchInputRef}
               type="text" 
               value={searchQuery}
               onChange={handleSearchChange}
@@ -578,6 +617,7 @@ export function Shop() {
                 <div className="relative w-full lg:w-[400px] shrink-0 search-container">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
                   <input 
+                    ref={desktopSearchInputRef}
                     type="text" 
                     value={searchQuery}
                     onChange={handleSearchChange}

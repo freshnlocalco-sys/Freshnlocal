@@ -116,6 +116,20 @@ export function Layout() {
     }
   };
 
+  const handleTopBarSearchClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname === '/shop') {
+      window.dispatchEvent(new CustomEvent('focus-catalog-search'));
+      const el = document.querySelector<HTMLInputElement>('.search-container input');
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else {
+      navigate('/shop?focus=search');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white w-full max-w-full box-border overflow-x-clip">
       {/* Top Premium Announcement Bar */}
@@ -130,10 +144,10 @@ export function Layout() {
       </div>
 
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl shadow-xs border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-2.5 sm:px-4 md:px-8 h-14 sm:h-18 flex items-center justify-between gap-2 w-full box-border">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-8 h-14 sm:h-18 flex items-center justify-between gap-1.5 sm:gap-2 w-full box-border">
           {/* Left Section: Brand Logo & Location Selector */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 z-10">
-            <Link to="/" className="flex items-center gap-1 sm:gap-2 group shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 z-10">
+            <Link to="/" className="flex items-center gap-1 sm:gap-1.5 group shrink-0">
               {faviconUrl && !logoError && (
                 <motion.img 
                   initial={{ opacity: 0 }}
@@ -143,16 +157,16 @@ export function Layout() {
                   alt="Logo" 
                   onError={() => setLogoError(true)}
                   referrerPolicy="no-referrer"
-                  className="w-6 h-6 sm:w-9 sm:h-9 object-contain rounded-full shrink-0" 
+                  className="w-5 h-5 sm:w-8 sm:h-8 md:w-9 md:h-9 object-contain rounded-full shrink-0" 
                 />
               )}
-              <span className="font-sans font-black text-xs min-[360px]:text-sm sm:text-xl tracking-tighter uppercase text-foreground flex items-center gap-0.5 shrink-0">
+              <span className="font-sans font-black text-[11px] min-[360px]:text-xs sm:text-lg md:text-xl tracking-tighter uppercase text-foreground flex items-center gap-0.5 shrink-0">
                 FreshNLocal<span className="text-primary font-black">.CO</span>
               </span>
             </Link>
 
             {/* Vertical separator & Location Badge */}
-            <div className="pl-1.5 sm:pl-3 border-l border-border/80 flex items-center h-6 shrink-0">
+            <div className="pl-1 sm:pl-2.5 border-l border-border/80 flex items-center h-5 sm:h-6 shrink-0">
               <DeliveryLocationBadge />
             </div>
           </div>
@@ -172,17 +186,31 @@ export function Layout() {
           </nav>
 
           {/* Right Section: Action Buttons & User Menu */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-3 shrink-0">
+          <div className="flex items-center gap-1 min-[360px]:gap-1.5 sm:gap-2.5 md:gap-3 shrink-0">
+            {/* Top Bar Search Button */}
+            <button
+              type="button"
+              onClick={handleTopBarSearchClick}
+              title="Search Catalog"
+              className="relative flex items-center justify-center sm:gap-1.5 w-8 h-8 sm:w-auto sm:px-3 sm:h-9 md:h-10 rounded-full border border-border hover:border-primary/50 bg-secondary/60 hover:bg-primary/5 text-foreground hover:text-primary transition-all cursor-pointer group shrink-0 shadow-2xs"
+              aria-label="Search Catalog"
+            >
+              <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground group-hover:text-primary transition-colors shrink-0" />
+              <span className="hidden sm:inline text-xs font-extrabold text-foreground group-hover:text-primary transition-colors tracking-wide">
+                Search
+              </span>
+            </button>
+
             {/* Wishlist Button (Desktop/Laptop only) */}
-            <Link to="/wishlist" title="Wishlist" className="hidden md:flex relative items-center justify-center w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-full border border-border hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all group">
-              <Heart className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-foreground group-hover:text-red-500 transition-colors" />
+            <Link to="/wishlist" title="Wishlist" className="hidden md:flex relative items-center justify-center w-8 h-8 sm:w-9 md:w-10 sm:h-9 md:h-10 rounded-full border border-border hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all group shrink-0">
+              <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground group-hover:text-red-500 transition-colors" />
             </Link>
 
             {/* Cart Button with Counter Badge */}
-            <Link to="/cart" title="Shopping Cart" className="relative flex items-center justify-center w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-full border border-border hover:border-primary/50 hover:bg-primary/5 transition-all">
-              <ShoppingBag className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-foreground" />
+            <Link to="/cart" title="Shopping Cart" className="relative flex items-center justify-center w-8 h-8 sm:w-9 md:w-10 sm:h-9 md:h-10 rounded-full border border-border hover:border-primary/50 hover:bg-primary/5 transition-all shrink-0">
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground" />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-background shadow-xs">
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-[8px] sm:text-[9px] font-black w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center border-2 border-background shadow-xs">
                   {cartItemsCount}
                 </span>
               )}
@@ -191,13 +219,13 @@ export function Layout() {
             {!loading && (
               <>
                 {user ? (
-                  <div className="flex items-center gap-1.5 sm:gap-2.5">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     {(user.role === 'admin' || user.role === 'horeca_admin') && (
                       <Link to="/admin" title="Admin Panel" className="text-[10px] uppercase tracking-wider font-extrabold text-primary hidden xl:block border border-primary/25 hover:border-primary bg-primary/5 px-3 py-1.5 rounded-full transition-all shrink-0 whitespace-nowrap">
                         {user.role === 'horeca_admin' ? 'HoReCa Desk' : 'Admin Portal'}
                       </Link>
                     )}
-                    <div className="relative group flex items-center gap-1.5 sm:gap-2">
+                    <div className="relative group flex items-center gap-1 sm:gap-2">
                       {(user.role === 'horeca' || user.role === 'horeca_admin') && (
                         <div className="hidden 2xl:flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/25 rounded-full cursor-help shadow-2xs shrink-0" title="Verified HoReCa B2B Wholesale Partner">
                           <Building2 className="w-3.5 h-3.5 text-primary" />
@@ -213,11 +241,11 @@ export function Layout() {
                       <span className="text-[10px] uppercase tracking-wider font-black hidden 2xl:block text-[#506053] group-hover:text-primary cursor-pointer transition-colors shrink-0">
                         {user.displayName?.split(' ')[0] || 'User'}
                       </span>
-                      <Link to="/profile" className="relative flex items-center justify-center w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all">
+                      <Link to="/profile" className="relative flex items-center justify-center w-8 h-8 sm:w-9 md:w-10 sm:h-9 md:h-10 rounded-full border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all shrink-0">
                         {(user.role === 'horeca' || user.role === 'horeca_admin') ? (
-                          <ChefHat className="w-4 h-4 text-orange-600" />
+                          <ChefHat className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600" />
                         ) : (
-                          <User className="w-4 h-4 text-foreground" />
+                          <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground" />
                         )}
                       </Link>
                       <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 p-2 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
@@ -237,8 +265,8 @@ export function Layout() {
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center justify-center w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-full border border-border hover:border-primary/50 hover:bg-primary/5 transition-all">
-                    <LogIn className="w-4 h-4 text-foreground" />
+                  <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center justify-center w-8 h-8 sm:w-9 md:w-10 sm:h-9 md:h-10 rounded-full border border-border hover:border-primary/50 hover:bg-primary/5 transition-all shrink-0">
+                    <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground" />
                   </button>
                 )}
               </>
@@ -246,10 +274,10 @@ export function Layout() {
 
             <button 
               onClick={() => setIsMobileNavOpen(!isMobileNavOpen)} 
-              className="md:hidden flex items-center justify-center w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-full border border-border hover:bg-secondary transition-colors text-foreground shrink-0"
+              className="md:hidden flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-border hover:bg-secondary transition-colors text-foreground shrink-0"
               aria-label="Toggle Menu"
             >
-              {isMobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {isMobileNavOpen ? <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Menu className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </button>
           </div>
         </div>
@@ -292,6 +320,19 @@ export function Layout() {
                 </div>
 
                 <nav className="flex flex-col gap-4 text-[13px] uppercase tracking-[0.18em] font-extrabold text-foreground">
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      setIsMobileNavOpen(false);
+                      handleTopBarSearchClick(e);
+                    }} 
+                    className="px-3 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all flex justify-between items-center text-left cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Search className="w-4 h-4 shrink-0" /> Search Catalog
+                    </span>
+                    <span className="opacity-60">→</span>
+                  </button>
                   <Link 
                     to="/" 
                     onClick={() => setIsMobileNavOpen(false)} 
