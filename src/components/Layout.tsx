@@ -12,6 +12,7 @@ import { AdminNotifier } from './AdminNotifier';
 import { StickyMiniCartBar } from './StickyMiniCartBar';
 import { DeliveryLocationBadge } from './DeliveryLocationBadge';
 import { LocationSelectorModal } from './LocationSelectorModal';
+import { FreshiFloatingChatbot } from './FreshiFloatingChatbot';
 import { notifySignOutSuccess } from '../lib/authNotifications';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -525,6 +526,7 @@ export function Layout() {
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <LocationSelectorModal />
       <StickyMiniCartBar />
+      <FreshiFloatingChatbot />
     </div>
   );
 }
