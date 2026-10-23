@@ -85,7 +85,7 @@ export function Layout() {
     // Also include any newly added categories directly from product catalog
     if (products && products.length > 0) {
       products.forEach((p) => {
-        if (p.category && typeof p.category === 'string') {
+        if (!p.isDeactivated && p.category && typeof p.category === 'string') {
           const trimmed = p.category.trim().replace(' font-bold', '');
           if (trimmed && !allCats.some(c => c.toLowerCase().trim() === trimmed.toLowerCase().trim())) {
             allCats.push(trimmed);
@@ -130,18 +130,35 @@ export function Layout() {
     }
   };
 
+  // Memoized Announcement Banner Text (No default fallback value)
+  const displayBannerText = React.useMemo(() => {
+    if (offer && offer.enabled && offer.showTopBanner && offer.bannerText && offer.bannerText.trim().length > 0) {
+      const raw = offer.bannerText.trim();
+      // If the admin text starts with "Free", strip the redundant leading "Free" since "Free" is prominently shown beside it
+      const trimmed = raw.replace(/^free[:\s\-–—]+/i, '').trim();
+      return trimmed || raw;
+    }
+    return "";
+  }, [offer]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white w-full max-w-full box-border overflow-x-clip">
-      {/* Top Premium Announcement Bar */}
-      {/* Top Banner */}
-      <div className="bg-primary text-white text-[9px] min-[360px]:text-[10px] sm:text-[11px] tracking-wider uppercase font-black py-2 px-2 text-center select-none flex items-center justify-center gap-1.5 relative z-50">
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0"></span>
-        <span className="leading-tight">
-          {offer && offer.enabled && offer.showTopBanner && offer.bannerText 
-            ? offer.bannerText 
-            : "SURAT'S PREMIUM FRESH DELIVERY ENGINE - FREE DELIVERY ABOVE ₹1000/-"}
-        </span>
-      </div>
+      {/* Top Banner (rendered only when banner text is provided) */}
+      {displayBannerText && (
+        <div className="bg-primary text-white py-1.5 sm:py-2 px-2 sm:px-4 text-center select-none flex items-center justify-center relative z-50 min-h-[36px] sm:min-h-[38px] shadow-xs">
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 flex-wrap sm:flex-nowrap max-w-7xl mx-auto">
+            <span className="inline-block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-pulse shrink-0"></span>
+            
+            <span className="bg-white text-primary px-2 sm:px-2.5 py-0.5 rounded-md font-black text-xs min-[360px]:text-sm sm:text-base md:text-lg tracking-wider uppercase shadow-xs shrink-0 inline-flex items-center">
+              Free
+            </span>
+            
+            <span className="text-[10px] min-[360px]:text-[11px] sm:text-xs md:text-sm font-extrabold tracking-wide uppercase leading-tight text-white/95">
+              {displayBannerText}
+            </span>
+          </div>
+        </div>
+      )}
 
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl shadow-xs border-b border-border/50">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-8 h-14 sm:h-18 flex items-center justify-between gap-1.5 sm:gap-2 w-full box-border">

@@ -525,7 +525,7 @@ export function Home() {
 
         const matchedList: Product[] = [];
         sortedBaseIds.forEach(baseId => {
-          const found = products.find(p => p.id === baseId || (p.id && baseId.startsWith(p.id)));
+          const found = products.find(p => !p.isDeactivated && (p.id === baseId || (p.id && baseId.startsWith(p.id))));
           if (found && !matchedList.some(m => m.id === found.id)) {
             matchedList.push(found);
           }
@@ -829,9 +829,9 @@ export function Home() {
             `}} />
 
             {/* RECENTLY VIEWED SECTION */}
-            {recentlyViewedProducts.length > 0 && (
+            {recentlyViewedProducts.filter(p => !p.isDeactivated).length > 0 && (
               <RecentlyViewedCarousel 
-                products={recentlyViewedProducts}
+                products={recentlyViewedProducts.filter(p => !p.isDeactivated)}
                 handleAddToCart={handleAddToCart}
                 onQuickView={setQuickViewProduct}
               />
@@ -848,6 +848,7 @@ export function Home() {
 
             {activeCategories.map(category => {
               const categoryProducts = products.filter(p => {
+                if (p.isDeactivated) return false;
                 let pCat = (p.category || '').toLowerCase().trim().replace(' font-bold', '');
                 let cName = (category.name || '').toLowerCase().trim().replace(' font-bold', '');
                 let cId = (category.id || '').toLowerCase().trim();

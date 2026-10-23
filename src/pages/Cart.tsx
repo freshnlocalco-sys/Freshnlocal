@@ -1558,9 +1558,9 @@ export function Cart() {
                 </div>
               )}
               {minOrderAlert && (
-                <div className="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600 text-red-600 dark:text-red-400 p-3.5 rounded-xl text-center text-xs sm:text-[13px] font-black leading-snug shadow-sm flex items-center justify-center gap-2">
+                <div className="bg-amber-50 dark:bg-amber-950/80 border-2 border-amber-500 text-amber-950 dark:text-amber-100 p-3.5 rounded-xl text-center text-xs sm:text-[13px] font-bold leading-snug shadow-sm flex items-center justify-center gap-2">
                   <span className="text-base shrink-0">⚠️</span>
-                  <span className="text-red-600 dark:text-red-400 font-black">{minOrderAlert}</span>
+                  <span className="text-amber-950 dark:text-amber-100 font-bold">{minOrderAlert}</span>
                 </div>
               )}
               {deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable && activePincode.length > 0 && (

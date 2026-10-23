@@ -465,12 +465,18 @@ export function FNLJuice() {
     async function fetchAndSeedJuices() {
       if (storeLoading) return;
       try {
-        const currentJuices = products.filter(p => {
+        const hasAnyJuicesInDb = products.some(p => {
           const cat = p.category ? p.category.toLowerCase().trim() : '';
           return cat === 'fnl juices' || cat === 'fnl juice';
         });
 
-        if (currentJuices.length === 0 && !seeding) {
+        const currentJuices = products.filter(p => {
+          if (p.isDeactivated) return false;
+          const cat = p.category ? p.category.toLowerCase().trim() : '';
+          return cat === 'fnl juices' || cat === 'fnl juice';
+        });
+
+        if (!hasAnyJuicesInDb && !seeding) {
           setSeeding(true);
           
           const chunks = [];

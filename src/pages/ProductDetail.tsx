@@ -105,7 +105,7 @@ export function ProductDetail() {
   const relatedProducts = useMemo(() => {
     if (!product || allProducts.length === 0) return [];
     return allProducts
-      .filter(p => p.category === product.category && p.id !== product.id && p.inStock)
+      .filter(p => !p.isDeactivated && p.category === product.category && p.id !== product.id && p.inStock)
       .slice(0, 4);
   }, [product, allProducts]);
 
@@ -212,11 +212,11 @@ export function ProductDetail() {
     );
   }
 
-  if (!product) {
+  if (!product || product.isDeactivated) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-36 text-center flex flex-col items-center gap-6 bg-background">
-        <span className="text-red-400 text-xs font-mono uppercase tracking-widest">PRODUCT ID EXPIRED OR OFFLINE</span>
-        <h2 className="text-3xl font-black uppercase tracking-tight text-foreground mb-2">Sought crop not found</h2>
+        <span className="text-red-400 text-xs font-mono uppercase tracking-widest">PRODUCT UNAVAILABLE</span>
+        <h2 className="text-3xl font-black uppercase tracking-tight text-foreground mb-2">This crop is currently not active in our catalog</h2>
         <Link to="/shop" className="slice-btn-secondary px-6 py-4 text-[10px] text-foreground flex items-center gap-2">
           <ArrowLeft className="w-4 h-4" /> Return to Catalog
         </Link>

@@ -92,6 +92,7 @@ export function OffersSettings() {
   const filteredProducts = React.useMemo(() => {
     if (!products) return [];
     return products.filter(p => {
+      if (p.isDeactivated) return false;
       const name = p.name || '';
       const cat = p.category || '';
       if (cat.toLowerCase().includes('juice')) return false;
@@ -436,7 +437,7 @@ export function OffersSettings() {
             </div>
 
             {/* Top Bar Announcement Text */}
-            <div className="space-y-1.5 pt-1">
+            <div className="space-y-2 pt-1">
               <div className="flex items-center justify-between">
                 <label className="block text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                   Header Announcement Banner Text
@@ -453,11 +454,33 @@ export function OffersSettings() {
               </div>
               <input 
                 type="text"
-                placeholder="e.g. 🥑 SPECIAL OFFER: Choose 1 Free Avocado or Strawberry on orders of ₹1000+!"
+                placeholder="e.g. Choose between Fresh Avocado or Sweet Strawberries on orders of ₹1000+!"
                 className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs bg-white text-foreground focus:border-emerald-600 outline-none transition-colors"
-                value={formData.bannerText}
+                value={formData.bannerText || ''}
                 onChange={(e) => setFormData({ ...formData, bannerText: e.target.value })}
               />
+
+              {/* Live Preview of Top Header Announcement Banner */}
+              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 space-y-1.5">
+                <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400">
+                  Header Bar Live Preview
+                </div>
+                {formData.bannerText?.trim() ? (
+                  <div className="bg-emerald-600 text-white py-1.5 px-3 rounded-lg flex items-center justify-center gap-2 text-center overflow-hidden">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0"></span>
+                    <span className="bg-white text-emerald-700 px-2 py-0.5 rounded-md font-black text-xs uppercase tracking-wider shadow-xs shrink-0">
+                      Free
+                    </span>
+                    <span className="text-[11px] font-extrabold tracking-wide uppercase text-white/95 truncate">
+                      {formData.bannerText.trim().replace(/^free[:\s\-–—]+/i, '').trim() || formData.bannerText.trim()}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="bg-neutral-800 text-neutral-400 py-2 px-3 rounded-lg text-center text-[10px] font-medium italic">
+                    (No announcement banner text entered — top header bar is hidden)
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 2. Free Gift Awarding Mode: Choice vs All */}

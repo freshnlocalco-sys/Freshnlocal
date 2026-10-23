@@ -54,33 +54,18 @@ export function getEffectiveGiftItems(offer?: Partial<FreeGiftOffer> | null): Gi
 
 export const DEFAULT_FREE_GIFT_OFFER: FreeGiftOffer = {
   enabled: true,
-  title: 'Free Avocado or Fresh Strawberries Offer',
-  description: 'Choose 1 Free Gift (Fresh Avocado or Sweet Strawberries) on all Home Delivery orders of ₹1000 or more!',
+  title: '',
+  description: '',
   minOrderAmount: 1000,
   deliveryMethodRequired: 'delivery',
   rewardType: 'choice',
   maxChoices: 1,
-  giftItems: [
-    {
-      id: 'gift-avocado',
-      name: 'Fresh Avocado',
-      unit: '1 Pc',
-      imageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&auto=format&fit=crop&q=80',
-      originalPrice: 140,
-    },
-    {
-      id: 'gift-strawberry',
-      name: 'Fresh Sweet Strawberries',
-      unit: '1 Box (200g)',
-      imageUrl: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&auto=format&fit=crop&q=80',
-      originalPrice: 130,
-    }
-  ],
-  giftItemName: 'Fresh Avocado',
+  giftItems: [],
+  giftItemName: '',
   giftItemUnit: '1 Pc',
-  giftItemImageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&auto=format&fit=crop&q=80',
-  giftItemOriginalPrice: 140,
-  bannerText: '🥑 SPECIAL OFFER: Choose 1 Free Avocado or Strawberries on Home Delivery orders of ₹1000+!',
+  giftItemImageUrl: '',
+  giftItemOriginalPrice: 0,
+  bannerText: '',
   showTopBanner: true,
 };
 
@@ -259,6 +244,7 @@ export const OFFER_PRESETS: OfferPreset[] = [
 interface OffersState {
   offer: FreeGiftOffer;
   loading: boolean;
+  isLoaded: boolean;
   error: string | null;
   lastFetched: number;
   fetchOffer: (force?: boolean) => Promise<void>;
@@ -269,6 +255,7 @@ interface OffersState {
 export const useOffers = create<OffersState>((set, get) => ({
   offer: DEFAULT_FREE_GIFT_OFFER,
   loading: false,
+  isLoaded: false,
   error: null,
   lastFetched: 0,
 
@@ -283,12 +270,25 @@ export const useOffers = create<OffersState>((set, get) => ({
     // 2. Load from localStorage cache immediately
     const cachedOffer = cacheManager.get<FreeGiftOffer>('freeGiftOffer', true);
     if (cachedOffer) {
-      set({ offer: { ...DEFAULT_FREE_GIFT_OFFER, ...cachedOffer } });
+      // Clear out legacy hardcoded default avocado banner text if still in localStorage cache
+      if (
+        cachedOffer.bannerText &&
+        (cachedOffer.bannerText.includes('Choose 1 Free Avocado') ||
+         cachedOffer.bannerText.includes('🥑 SPECIAL OFFER: Choose 1 Free Avocado') ||
+         cachedOffer.bannerText.includes('🥑 SPECIAL OFFER: Get 1 Free Avocado'))
+      ) {
+        cachedOffer.bannerText = '';
+      }
+      if (cachedOffer.title === 'Free Avocado or Fresh Strawberries Offer') {
+        cachedOffer.title = '';
+        cachedOffer.giftItems = [];
+      }
+      set({ offer: { ...DEFAULT_FREE_GIFT_OFFER, ...cachedOffer }, isLoaded: true });
     }
 
     // 3. Skip network if cache is still fresh (<24h) and not forced
     if (!force && cacheManager.isValid('freeGiftOffer') && cachedOffer) {
-      set({ lastFetched: Date.now() });
+      set({ lastFetched: Date.now(), isLoaded: true });
       return;
     }
 
@@ -326,12 +326,13 @@ export const useOffers = create<OffersState>((set, get) => ({
           offer: finalOffer,
           lastFetched: Date.now(),
           loading: false,
+          isLoaded: true,
         });
       } catch (error: any) {
         if (isQuotaError(error)) {
-          set({ error: error?.message || String(error), loading: false });
+          set({ error: error?.message || String(error), loading: false, isLoaded: true });
         } else {
-          set({ loading: false });
+          set({ loading: false, isLoaded: true });
           if (!isBackground) {
             handleFirestoreError(error, OperationType.GET, 'settings/promotions');
           } else {

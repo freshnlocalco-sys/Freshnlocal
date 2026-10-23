@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
@@ -597,6 +597,8 @@ export function AdminDashboard() {
 
   // Confirmation states to avoid iframe-blocking window.confirm
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [productToDeactivate, setProductToDeactivate] = useState<Product | null>(null);
+  const [productToReactivate, setProductToReactivate] = useState<Product | null>(null);
   const [prodCatToDelete, setProdCatToDelete] = useState<string | null>(null);
   const [editingProdCat, setEditingProdCat] = useState<{ oldName: string; newName: string } | null>(null);
   const [juiceCatToDelete, setJuiceCatToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -619,7 +621,7 @@ export function AdminDashboard() {
 
   // Filter for products
   const [productSearch, setProductSearch] = useState('');
-  const [productSection, setProductSection] = useState<'all' | 'veg-fruits' | 'juices'>('veg-fruits');
+  const [productSection, setProductSection] = useState<'all' | 'veg-fruits' | 'juices' | 'deactivated'>('veg-fruits');
 
   const [migrationStatus, setMigrationStatus] = useState<{
     migrating: boolean;
@@ -1070,9 +1072,17 @@ export function AdminDashboard() {
   };
 
   const filteredProducts = products.filter(product => {
-    const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
-    if (productSection === 'veg-fruits' && isJuice) return false;
-    if (productSection === 'juices' && !isJuice) return false;
+    // Separate deactivated products from regular active catalog
+    if (productSection === 'deactivated') {
+      if (product.isDeactivated !== true) return false;
+    } else {
+      // Normal products catalog view - completely hide deactivated items
+      if (product.isDeactivated === true) return false;
+
+      const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
+      if (productSection === 'veg-fruits' && isJuice) return false;
+      if (productSection === 'juices' && !isJuice) return false;
+    }
 
     const q = productSearch.toLowerCase().trim();
     const name = (product.name || '').toLowerCase();
@@ -2664,11 +2674,15 @@ export function AdminDashboard() {
           baseHorecaPrice,
           stock: 100,
           inStock: true,
+          isDeactivated: false,
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
       }
       firestoreDurationMs = performance.now() - firestoreStartTime;
+
+      const existingProd = editingProductId ? products.find(p => p.id === editingProductId) : null;
+      const isDeactivatedStatus = existingProd?.isDeactivated ?? false;
 
       const renderStartTime = performance.now();
       const updatedProductObj: Product = {
@@ -2695,6 +2709,7 @@ export function AdminDashboard() {
         baseHorecaPrice: baseHorecaPrice !== null ? baseHorecaPrice : undefined,
         stock: 100,
         inStock: true,
+        isDeactivated: isDeactivatedStatus,
         createdAt: editingProductId ? (products.find(p => p.id === editingProductId)?.createdAt || Date.now()) : Date.now(),
         updatedAt: Date.now()
       } as unknown as Product;
@@ -3440,6 +3455,68 @@ export function AdminDashboard() {
        toast.error('Failed to remove product.');
     } finally {
       setProductToDelete(null);
+    }
+  };
+
+  const handleConfirmDeactivateProduct = async () => {
+    if (!productToDeactivate) return;
+    const target = productToDeactivate;
+    const toastId = toast.loading(`Deactivating "${target.name}"...`);
+    try {
+      await updateDoc(doc(db, 'products', target.id), {
+        isDeactivated: true,
+        updatedAt: Date.now()
+      });
+      const updated = products.map(p => p.id === target.id ? { ...p, isDeactivated: true } : p);
+      setProducts(updated);
+
+      const mProductsStore = await import('../store/useProducts');
+      mProductsStore.useProducts.getState().products = updated;
+      mProductsStore.useProducts.getState().lastFetched = Date.now();
+
+      const mCache = await import('../lib/cacheManager');
+      const mIdb = await import('../lib/indexedDB');
+      mCache.cacheManager.set('products_v6', updated);
+      mCache.cacheManager.set('products_last_fetched_v4', Date.now());
+      mIdb.idb.set('products_v6', updated, 24 * 60 * 60 * 1000).catch(()=>{});
+
+      toast.success(`"${target.name}" deactivated and removed from catalog.`, { id: toastId });
+    } catch (error) {
+      console.error("Error deactivating product:", error);
+      toast.error("Failed to deactivate product", { id: toastId });
+    } finally {
+      setProductToDeactivate(null);
+    }
+  };
+
+  const handleConfirmReactivateProduct = async (prod?: Product) => {
+    const target = prod || productToReactivate;
+    if (!target) return;
+    const toastId = toast.loading(`Reactivating "${target.name}"...`);
+    try {
+      await updateDoc(doc(db, 'products', target.id), {
+        isDeactivated: false,
+        updatedAt: Date.now()
+      });
+      const updated = products.map(p => p.id === target.id ? { ...p, isDeactivated: false } : p);
+      setProducts(updated);
+
+      const mProductsStore = await import('../store/useProducts');
+      mProductsStore.useProducts.getState().products = updated;
+      mProductsStore.useProducts.getState().lastFetched = Date.now();
+
+      const mCache = await import('../lib/cacheManager');
+      const mIdb = await import('../lib/indexedDB');
+      mCache.cacheManager.set('products_v6', updated);
+      mCache.cacheManager.set('products_last_fetched_v4', Date.now());
+      mIdb.idb.set('products_v6', updated, 24 * 60 * 60 * 1000).catch(()=>{});
+
+      toast.success(`"${target.name}" reactivated! Restored to regular catalog.`, { id: toastId });
+    } catch (error) {
+      console.error("Error reactivating product:", error);
+      toast.error("Failed to reactivate product", { id: toastId });
+    } finally {
+      setProductToReactivate(null);
     }
   };
 
@@ -5511,7 +5588,7 @@ export function AdminDashboard() {
                 </div>
               </div>
 
-              {/* SECTION NAVIGATION FOR FRUITS/VEGETABLES VS JUICE SECTIONS */}
+              {/* SECTION NAVIGATION FOR FRUITS/VEGETABLES VS JUICE SECTIONS VS DEACTIVATED */}
               <div className="flex border-b border-border bg-neutral-50 p-1.5 gap-1.5 overflow-x-auto no-scrollbar">
                 <button
                   onClick={() => setProductSection('all')}
@@ -5521,7 +5598,7 @@ export function AdminDashboard() {
                       : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100'
                   }`}
                 >
-                  All Items ({products.length})
+                  All Items ({products.filter(p => p.isDeactivated !== true).length})
                 </button>
                 <button
                   onClick={() => setProductSection('veg-fruits')}
@@ -5531,7 +5608,7 @@ export function AdminDashboard() {
                       : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100'
                   }`}
                 >
-                  🍎 Vegetables & Fruits ({products.filter(p => p.category !== 'fnl juices' && p.category !== 'fnl juice').length})
+                  🍎 Vegetables & Fruits ({products.filter(p => p.isDeactivated !== true && p.category !== 'fnl juices' && p.category !== 'fnl juice').length})
                 </button>
                 <button
                   onClick={() => setProductSection('juices')}
@@ -5541,9 +5618,38 @@ export function AdminDashboard() {
                       : 'text-orange-600 hover:text-orange-700 hover:bg-neutral-100'
                   }`}
                 >
-                  🍹 FNL Juices ({products.filter(p => p.category === 'fnl juices' || p.category === 'fnl juice').length})
+                  🍹 FNL Juices ({products.filter(p => p.isDeactivated !== true && (p.category === 'fnl juices' || p.category === 'fnl juice')).length})
+                </button>
+                <button
+                  onClick={() => setProductSection('deactivated')}
+                  className={`flex-1 min-w-[140px] py-2 px-2.5 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+                    productSection === 'deactivated'
+                      ? 'bg-rose-700 text-white shadow-sm'
+                      : 'text-rose-600 hover:text-rose-700 hover:bg-rose-50'
+                  }`}
+                >
+                  🚫 Deactivated ({products.filter(p => p.isDeactivated === true).length})
                 </button>
               </div>
+
+              {/* Informational Banner for Deactivated tab */}
+              {productSection === 'deactivated' && (
+                <div className="bg-rose-50 border-b border-rose-200/80 px-4 py-3 flex items-center justify-between gap-3 text-rose-900">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-7 h-7 rounded-lg bg-rose-200/80 text-rose-700 flex items-center justify-center shrink-0">
+                      <Ban className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <p className="text-[10px] sm:text-xs font-black uppercase tracking-wider">
+                        Deactivated Products List ({products.filter(p => p.isDeactivated === true).length} Items)
+                      </p>
+                      <p className="text-[9px] sm:text-[10px] text-rose-700 font-semibold leading-tight">
+                        These crops are completely removed from regular customer catalog, search, and showcases. Click <strong>"Reactivate"</strong> on any product below to instantly restore it back to the active catalog.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[500px]">
@@ -5553,7 +5659,7 @@ export function AdminDashboard() {
                       <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Product Details</th>
                       <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Catalog Category</th>
                       <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Rate (₹)</th>
-                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap text-center">In Stock</th>
+                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap text-center">{productSection === 'deactivated' ? 'Status' : 'In Stock'}</th>
                       <th className="px-3 sm:px-4 py-3 text-right whitespace-nowrap">Controls</th>
                     </tr>
                   </thead>
@@ -5677,44 +5783,78 @@ export function AdminDashboard() {
                             )}
                           </td>
                           <td className="px-3 sm:px-4 py-3 text-center whitespace-nowrap">
-                            <button
-                              onClick={() => handleToggleStock(product)}
-                              className={`relative inline-flex h-5 sm:h-6 w-9 sm:w-11 items-center rounded-full transition-colors ${
-                                product.inStock !== false ? 'bg-primary' : 'bg-red-500'
-                              } focus:outline-none`}
-                            >
-                              <span
-                                className={`inline-block h-3 sm:h-4 w-3 sm:w-4 transform rounded-full bg-white transition-transform ${
-                                  product.inStock !== false ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
-                                }`}
-                              />
-                            </button>
-                            <span className="block mt-1 text-muted-foreground uppercase tracking-widest text-[7px] whitespace-nowrap">
-                              {product.inStock !== false ? 'In Stock' : 'Out'}
-                            </span>
+                            {product.isDeactivated ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 border border-rose-200/80 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider">
+                                  <Ban className="w-3 h-3 text-rose-600" /> Deactivated
+                                </span>
+                                <span className="text-[7.5px] text-muted-foreground font-semibold">Hidden from Shop</span>
+                              </div>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => handleToggleStock(product)}
+                                  className={`relative inline-flex h-5 sm:h-6 w-9 sm:w-11 items-center rounded-full transition-colors ${
+                                    product.inStock !== false ? 'bg-primary' : 'bg-red-500'
+                                  } focus:outline-none`}
+                                >
+                                  <span
+                                    className={`inline-block h-3 sm:h-4 w-3 sm:w-4 transform rounded-full bg-white transition-transform ${
+                                      product.inStock !== false ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                                    }`}
+                                  />
+                                </button>
+                                <span className="block mt-1 text-muted-foreground uppercase tracking-widest text-[7px] whitespace-nowrap">
+                                  {product.inStock !== false ? 'In Stock' : 'Out'}
+                                </span>
+                              </>
+                            )}
                           </td>
                           <td className="px-3 sm:px-4 py-3 text-right space-x-1.5 sm:space-x-2 whitespace-nowrap">
-                          <button 
-                            onClick={() => handleEditSetup(product)} 
-                            className="text-muted-foreground hover:text-primary p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
-                          >
-                            <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteProduct(product.id)} 
-                            className="text-muted-foreground hover:text-red-500 p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-red-500/10 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          </button>
-                        </td>
-                      </tr>
+                            {product.isDeactivated ? (
+                              <button 
+                                onClick={() => handleConfirmReactivateProduct(product)} 
+                                title="Reactivate Product (Restore to active customer catalog)"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-colors shadow-xs cursor-pointer"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" /> Reactivate
+                              </button>
+                            ) : (
+                              <>
+                                <button 
+                                  onClick={() => handleEditSetup(product)} 
+                                  title="Edit Product"
+                                  className="text-muted-foreground hover:text-primary p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => setProductToDeactivate(product)} 
+                                  title="Deactivate Product (Remove from customer catalog)"
+                                  className="text-muted-foreground hover:text-amber-600 p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-amber-500/10 transition-colors cursor-pointer"
+                                >
+                                  <PowerOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                </button>
+                              </>
+                            )}
+                            <button 
+                              onClick={() => handleDeleteProduct(product.id)} 
+                              title="Delete permanently"
+                              className="text-muted-foreground hover:text-red-500 p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-red-500/10 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            </button>
+                          </td>
+                        </tr>
                       </React.Fragment>
                       );
                     })}
                     {categorizedFilteredProducts.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
-                          Zero items registered inside the database yet.
+                        <td colSpan={6} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
+                          {productSection === 'deactivated' 
+                            ? 'No deactivated products found. All catalog items are active in the store.' 
+                            : 'Zero items registered inside this view.'}
                         </td>
                       </tr>
                     )}
@@ -6990,6 +7130,50 @@ export function AdminDashboard() {
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
               >
                 Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Deactivation Confirmation Modal: Products */}
+      {productToDeactivate && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setProductToDeactivate(null)} />
+          <div className="bg-secondary border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-3">
+              <PowerOff className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-black uppercase text-foreground">Deactivate Product</h3>
+            <p className="text-xs text-muted-foreground mt-2 font-medium leading-relaxed">
+              Are you sure you want to deactivate <span className="text-foreground font-black">"{productToDeactivate.name}"</span>?
+            </p>
+            <div className="text-[11.5px] text-neutral-900 dark:text-neutral-100 bg-amber-50/90 dark:bg-amber-950/60 p-3.5 rounded-xl border border-amber-300/80 dark:border-amber-700/60 mt-3 font-medium leading-relaxed space-y-2 shadow-xs">
+              <p className="flex items-start gap-2">
+                <span className="text-amber-600 dark:text-amber-400 font-black text-sm leading-none shrink-0">•</span>
+                <span>This product will be <strong className="font-black text-black dark:text-white underline decoration-amber-400 decoration-2">completely removed</strong> from the regular customer catalog, search, home showcases, and juices menu.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-amber-600 dark:text-amber-400 font-black text-sm leading-none shrink-0">•</span>
+                <span>It is <strong className="font-black text-black dark:text-white">NOT</strong> marked out of stock. It is safely archived in your <strong className="font-black text-black dark:text-white">Deactivated</strong> list.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-amber-600 dark:text-amber-400 font-black text-sm leading-none shrink-0">•</span>
+                <span>You can reactivate and restore it to the catalog at any time with one click.</span>
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setProductToDeactivate(null)}
+                className="px-4 py-2 border border-border rounded-xl text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:bg-muted/10 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeactivateProduct}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer shadow-sm"
+              >
+                Confirm Deactivate
               </button>
             </div>
           </div>

@@ -32,6 +32,7 @@ export interface Product {
   variants?: ProductVariant[];
   stock: number;
   inStock: boolean;
+  isDeactivated?: boolean;
   orderIndex?: number;
   createdAt: number;
   updatedAt: number;

@@ -60,7 +60,7 @@ export function Shop() {
   const [loading, setLoading] = useState(true);
   const productNames = React.useMemo(() => {
     if (products && products.length > 0) {
-      return products.map(p => p.name).filter(Boolean);
+      return products.filter(p => !p.isDeactivated).map(p => p.name).filter(Boolean);
     }
     return ['Apple', 'Avocado', 'Oyster Mushroom', 'Golden Pear', 'Shimla Apple', 'Fresh Spinach', 'Hass Avocados'];
   }, [products]);
@@ -182,6 +182,7 @@ export function Shop() {
   const POPULAR_SEARCHES = React.useMemo(() => {
     // Dynamic selection of active in stock non-juice products
     const activeShopProducts = products.filter(p => {
+      if (p.isDeactivated) return false;
       let productCategory = p.category ? p.category.toLowerCase() : '';
       productCategory = productCategory.replace(' font-bold', '');
       return !productCategory.includes('juice');
@@ -261,13 +262,14 @@ export function Shop() {
   const searchSuggestions = React.useMemo(() => {
     if (!searchQuery) return [];
     const q = searchQuery.toLowerCase();
+    const activeProducts = products.filter(p => !p.isDeactivated);
     
-    const startsWithMatches = products.filter(p => {
+    const startsWithMatches = activeProducts.filter(p => {
       const name = (p.name || '').toLowerCase();
       return name.startsWith(q) || name.includes(` ${q}`) || name.includes(`-${q}`);
     });
     
-    const containsMatches = products.filter(p => {
+    const containsMatches = activeProducts.filter(p => {
       const name = (p.name || '').toLowerCase();
       return name.includes(q) && !(name.startsWith(q) || name.includes(` ${q}`) || name.includes(`-${q}`));
     });
@@ -287,6 +289,7 @@ export function Shop() {
   }, []);
 
   const filteredProductsRaw = products.filter(p => {
+    if (p.isDeactivated) return false;
     let productCategory = p.category ? p.category.toLowerCase() : '';
     productCategory = productCategory.replace(' font-bold', ''); // Normalize older data typos
 
