@@ -287,29 +287,41 @@ export function Cart() {
   const userPoints = user?.points || 0;
   const canUsePoints = userPoints >= 100;
   const discount = usePoints && canUsePoints ? 100 : 0;
-  const finalTotal = total() - discount;
+
+  // Reactively calculate cart subtotal whenever cartItems change (quantity increased/decreased)
+  const cartSubtotal = useMemo(() => {
+    return (cartItems || []).reduce((sum, item) => {
+      if (!item || !item.product) return sum;
+      const config = getUnitQuantityConfig(item.product.unit);
+      const packs = config.initialQty > 0 ? (item.quantity || 0) / config.initialQty : (item.quantity || 0);
+      return sum + (item.product.price || 0) * packs;
+    }, 0);
+  }, [cartItems]);
+
+  const finalTotal = Math.max(0, cartSubtotal - discount);
 
   const isOfferEligible = useMemo(() => {
     if (!offer || !offer.enabled || isHoreca) return false;
-    const meetsSubtotal = total() >= (offer.minOrderAmount || 1000);
+    const minAmount = offer.minOrderAmount || 1000;
+    const meetsSubtotal = cartSubtotal >= minAmount;
     const meetsDelivery = 
       offer.deliveryMethodRequired === 'any' || 
       offer.deliveryMethodRequired === deliveryMethod;
     return meetsSubtotal && meetsDelivery;
-  }, [offer, total, deliveryMethod, isHoreca]);
+  }, [offer, cartSubtotal, deliveryMethod, isHoreca]);
 
   const effectiveGifts = useMemo(() => getEffectiveGiftItems(offer), [offer]);
   const [selectedGiftIds, setSelectedGiftIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (effectiveGifts.length === 0) {
+    if (!offer || effectiveGifts.length === 0) {
       setSelectedGiftIds([]);
       return;
     }
-    if (offer?.rewardType === 'all') {
+    if (offer.rewardType === 'all') {
       setSelectedGiftIds(effectiveGifts.map(g => g.id));
     } else {
-      const max = Math.max(1, offer?.maxChoices || 1);
+      const max = Math.max(1, offer.maxChoices || 1);
       setSelectedGiftIds(prev => {
         const valid = prev.filter(id => effectiveGifts.some(g => g.id === id));
         if (valid.length > 0) {
@@ -318,7 +330,7 @@ export function Cart() {
         return effectiveGifts.slice(0, max).map(g => g.id);
       });
     }
-  }, [offer, effectiveGifts]);
+  }, [offer, effectiveGifts, isOfferEligible]);
 
   const awardedGifts = useMemo(() => {
     if (!isOfferEligible || !offer || effectiveGifts.length === 0) return [];
@@ -365,7 +377,7 @@ export function Cart() {
   }, []);
 
   const triggerMinOrderWarning = () => {
-    const remainingForDelivery = Math.max(0, Math.ceil(1000 - total()));
+    const remainingForDelivery = Math.max(0, Math.ceil(1000 - cartSubtotal));
     const msg = `Add ₹${remainingForDelivery} more for place order Or select Store Pickup delivery method.`;
     setMinOrderAlert(msg);
     if (minOrderAlertTimerRef.current) {
@@ -423,7 +435,7 @@ export function Cart() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) {
+    if (!isHoreca && deliveryMethod === 'delivery' && cartSubtotal < 1000) {
       triggerMinOrderWarning();
       return;
     }
@@ -555,8 +567,12 @@ export function Cart() {
               return { product: p, quantity: i.quantity };
             });
 
-          if (isOfferEligible && awardedGifts.length > 0) {
-            awardedGifts.forEach((g, idx) => {
+          const giftsToAward = awardedGifts.length > 0 
+            ? awardedGifts 
+            : (effectiveGifts.length > 0 ? effectiveGifts.slice(0, Math.max(1, offer?.maxChoices || 1)) : []);
+
+          if (isOfferEligible && giftsToAward.length > 0) {
+            giftsToAward.forEach((g, idx) => {
               mapped.push({
                 product: {
                   id: g.productId || `promo-free-gift-${g.id || idx}`,
@@ -571,16 +587,19 @@ export function Cart() {
           }
           return mapped;
         })(),
-        freeGiftsAwarded: isOfferEligible && awardedGifts.length > 0 ? awardedGifts.map(g => ({
+        freeGiftsAwarded: isOfferEligible ? (awardedGifts.length > 0 ? awardedGifts : effectiveGifts.slice(0, Math.max(1, offer?.maxChoices || 1))).map(g => ({
           name: g.name,
           unit: g.unit || '1 Pc',
           originalPrice: g.originalPrice || 0,
         })) : [],
-        freeGiftAwarded: isOfferEligible && awardedGifts.length > 0 ? {
-          name: awardedGifts[0].name,
-          unit: awardedGifts[0].unit || '1 Pc',
-          originalPrice: awardedGifts[0].originalPrice || 0,
-        } : null,
+        freeGiftAwarded: isOfferEligible ? (() => {
+          const g = awardedGifts[0] || effectiveGifts[0];
+          return g ? {
+            name: g.name,
+            unit: g.unit || '1 Pc',
+            originalPrice: g.originalPrice || 0,
+          } : null;
+        })() : null,
         totalAmount: isHoreca ? (finalTotal > 0 ? finalTotal : 0) : finalTotal,
         discount: isHoreca ? 0 : discount,
         pointsEarned: isHoreca ? 0 : Math.floor(finalTotal / 100) * 2,
@@ -1225,9 +1244,9 @@ export function Cart() {
                       )}
                     </div>
                     <p className="text-xs sm:text-sm font-bold text-foreground leading-snug">
-                      {total() < (offer.minOrderAmount || 1000) ? (
+                      {cartSubtotal < (offer.minOrderAmount || 1000) ? (
                         <>
-                          Add <span className="text-emerald-600 font-black">₹{((offer.minOrderAmount || 1000) - total()).toFixed(0)}</span> more to unlock {offer.rewardType === 'choice' ? (
+                          Add <span className="text-emerald-600 font-black">₹{((offer.minOrderAmount || 1000) - cartSubtotal).toFixed(0)}</span> more to unlock {offer.rewardType === 'choice' ? (
                             <>free gift choice of <span className="text-emerald-700 font-extrabold">{effectiveGifts.map(g => g.name).join(' or ')}</span></>
                           ) : (
                             <>all free gifts: <span className="text-emerald-700 font-extrabold">{effectiveGifts.map(g => g.name).join(' + ')}</span></>
@@ -1241,7 +1260,7 @@ export function Cart() {
                     </p>
                   </div>
                 </div>
-                {total() < (offer.minOrderAmount || 1000) && (
+                {cartSubtotal < (offer.minOrderAmount || 1000) && (
                   <div className="self-end sm:self-center shrink-0">
                     <button 
                       type="button"
@@ -1475,7 +1494,7 @@ export function Cart() {
             <div className="space-y-3 text-xs font-semibold">
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Item Total</span>
-                <span className="font-mono text-foreground">₹{total().toFixed(2)}</span>
+                <span className="font-mono text-foreground">₹{cartSubtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Handling Fee</span>
@@ -1518,7 +1537,7 @@ export function Cart() {
             {/* Order Threshold Container: Placed down below "To Pay" Amount */}
             <div className="pt-1">
               <FreeDeliveryProgressBar 
-                currentTotal={total()} 
+                currentTotal={cartSubtotal} 
                 threshold={1000} 
                 isHoreca={isHoreca} 
                 showShopLink={true}
@@ -1589,7 +1608,7 @@ export function Cart() {
                 <button 
                   type="button" 
                   onClick={() => {
-                    if (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) {
+                    if (!isHoreca && deliveryMethod === 'delivery' && cartSubtotal < 1000) {
                       triggerMinOrderWarning();
                       return;
                     }
