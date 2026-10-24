@@ -4997,14 +4997,14 @@ export function AdminDashboard() {
 
                     {/* Duplicate Item Code Alert Banner */}
                     {duplicateItemCodeProduct && (
-                      <div className="p-2.5 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-xl text-[9px] text-red-700 dark:text-red-300 font-semibold flex items-start gap-2 shadow-2xs leading-tight animate-in fade-in duration-200">
-                        <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                      <div className="p-2.5 bg-red-600 border border-red-700 rounded-xl text-[9px] text-white font-semibold flex items-start gap-2 shadow-sm leading-tight animate-in fade-in duration-200">
+                        <AlertCircle className="w-4 h-4 text-white shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-bold text-red-800 dark:text-red-200">
+                          <p className="font-bold text-white text-[9.5px]">
                             Duplicate Item Code: #{newProduct.itemCode.trim()}
                           </p>
-                          <p className="mt-0.5 text-red-600 dark:text-red-400">
-                            Already assigned to <strong>"{duplicateItemCodeProduct.name}"</strong> ({duplicateItemCodeProduct.category}). Each product must have a unique item code.
+                          <p className="mt-0.5 text-white/95">
+                            Already assigned to <strong className="text-white font-black underline decoration-white/50">"{duplicateItemCodeProduct.name}"</strong> ({duplicateItemCodeProduct.category}). Each product must have a unique item code.
                           </p>
                         </div>
                       </div>
