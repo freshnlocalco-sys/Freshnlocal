@@ -1623,6 +1623,7 @@ export function AdminDashboard() {
         "ID",
         "NAME",
         "CATEGORY",
+        "IMAGE URL",
         "BASE UNIT",
         "BASE PRICE",
         "UNIT",
@@ -1646,6 +1647,7 @@ export function AdminDashboard() {
           `"${(product.id || '').replace(/"/g, '""')}"`,
           `"${(product.name || '').replace(/"/g, '""')}"`,
           `"${(product.category || '').replace(/"/g, '""')}"`,
+          `"${(product.imageUrl || getCategoryImage(product.category) || '').replace(/"/g, '""')}"`,
           `"${(product.baseUnit || product.quantityUnit || 'Kg').replace(/"/g, '""')}"`,
           `"${product.basePrice !== undefined && product.basePrice !== null ? product.basePrice : ''}"`,
           `"${(product.unit || (product.quantityValue ? `${product.quantityValue} ${product.quantityUnit || 'Kg'}` : 'Kg')).replace(/"/g, '""')}"`,
@@ -1671,7 +1673,7 @@ export function AdminDashboard() {
       link.click();
       document.body.removeChild(link);
       
-      toast.success("Products exported successfully with Item Codes and pricing details.");
+      toast.success("Products exported successfully with Item Codes, Image URLs, and pricing details.");
     } catch (err) {
       console.error("Export error:", err);
       toast.error("Failed to export products.");
@@ -1694,7 +1696,7 @@ export function AdminDashboard() {
           `"${product.horecaPrice !== undefined && product.horecaPrice !== null ? product.horecaPrice : ''}"`,
           `"${(product.horecaUnit || '').replace(/"/g, '""')}"`,
           `"${(product.description || '').replace(/"/g, '""')}"`,
-          `"${(product.imageUrl || '').replace(/"/g, '""')}"`
+          `"${(product.imageUrl || getCategoryImage(product.category) || '').replace(/"/g, '""')}"`
         ];
         csvRows.push(row.join(","));
       });
@@ -3890,8 +3892,10 @@ export function AdminDashboard() {
 
           return {
             'ID (Do not edit)': p.id,
+            'Item Code': p.itemCode || '',
             'Product Name': p.name || '',
             'Category': p.category || '',
+            'Image URL': p.imageUrl || getCategoryImage(p.category) || '',
             'Base Unit': effectiveBaseUnit,
             'Base Price': finalBasePrice,
             'Base MRP': finalBaseMRP,
@@ -4109,8 +4113,10 @@ export function AdminDashboard() {
         }
 
         const id = String(row.id || row.iddonotedit || row.productid || '').trim();
+        const itemCode = String(row.itemcode || row.code || '').trim();
         const name = String(row.productname || row.name || row.title || '').trim();
         const category = String(row.category || 'indian fruits').toLowerCase().trim();
+        const imageUrl = String(row.imageurl || row.image || row.productimage || '').trim();
         const rowUnitStr = row.baseunit || row.quantityunit;
         const primaryUnitStr = row.unit || row.thisunit || '1 Kg';
         const parsedPrimaryUnit = parseQuantityAndUnit(primaryUnitStr);
@@ -4141,8 +4147,10 @@ export function AdminDashboard() {
 
         return {
           id,
+          itemCode,
           name,
           category,
+          imageUrl,
           baseUnit,
           basePrice,
           baseOriginalPrice,
@@ -4187,13 +4195,16 @@ export function AdminDashboard() {
           name: parsed.name,
           category: parsed.category,
           description: '',
-          imageUrl: '',
+          imageUrl: parsed.imageUrl || '',
+          itemCode: parsed.itemCode || '',
           variants: []
         };
 
         updated.useBasePricing = true;
         if (parsed.name) updated.name = parsed.name;
         if (parsed.category) updated.category = parsed.category;
+        if (parsed.imageUrl) updated.imageUrl = parsed.imageUrl;
+        if (parsed.itemCode) updated.itemCode = parsed.itemCode;
         
         let effectiveBasePrice = parsed.basePrice;
         if (effectiveBasePrice === undefined && parsed.thisUnitPrice !== undefined) {
@@ -4364,14 +4375,18 @@ export function AdminDashboard() {
           const hasInStockChange = parsed.inStock !== undefined && Boolean(parsed.inStock) !== Boolean(match.inStock);
           const hasNameChange = parsed.name && parsed.name.toLowerCase().trim() !== match.name.toLowerCase().trim();
           const hasCategoryChange = parsed.category && parsed.category.toLowerCase().trim() !== match.category.toLowerCase().trim();
+          const hasImageUrlChange = Boolean(parsed.imageUrl && parsed.imageUrl.trim() !== (match.imageUrl || '').trim());
+          const hasItemCodeChange = Boolean(parsed.itemCode && parsed.itemCode.trim() !== (match.itemCode || '').trim());
 
-          if (!hasBasePriceChange && !hasBaseOriginalChange && !hasBaseHorecaChange && !hasStockChange && !hasInStockChange && !hasNameChange && !hasCategoryChange) {
+          if (!hasBasePriceChange && !hasBaseOriginalChange && !hasBaseHorecaChange && !hasStockChange && !hasInStockChange && !hasNameChange && !hasCategoryChange && !hasImageUrlChange && !hasItemCodeChange) {
             continue; // Skip unchanged products entirely
           }
 
           updated.useBasePricing = true;
           if (hasNameChange) updated.name = parsed.name;
           if (hasCategoryChange) updated.category = parsed.category;
+          if (hasImageUrlChange) updated.imageUrl = parsed.imageUrl;
+          if (hasItemCodeChange) updated.itemCode = parsed.itemCode;
           
           if (hasBasePriceChange) {
             updated.basePrice = effectiveBasePrice;
@@ -4405,8 +4420,10 @@ export function AdminDashboard() {
 
           // Check for differences
           const diffs: string[] = [];
+          if (hasItemCodeChange) diffs.push(`Item Code: #${match.itemCode || 'None'} ➜ #${updated.itemCode}`);
           if (hasNameChange) diffs.push(`Name: "${match.name}" ➜ "${updated.name}"`);
           if (hasCategoryChange) diffs.push(`Category: "${match.category}" ➜ "${updated.category}"`);
+          if (hasImageUrlChange) diffs.push(`Image URL: Updated`);
           if (hasBasePriceChange) diffs.push(`Base Price: ₹${match.basePrice || 'None'} ➜ ₹${updated.basePrice || 'None'}`);
           if (hasBaseOriginalChange) diffs.push(`Base MRP: ₹${match.baseOriginalPrice || 'None'} ➜ ₹${updated.baseOriginalPrice || 'None'}`);
           if (hasBaseHorecaChange) diffs.push(`Base HoReCa Price: ₹${match.baseHorecaPrice || 'None'} ➜ ₹${updated.baseHorecaPrice || 'None'}`);
