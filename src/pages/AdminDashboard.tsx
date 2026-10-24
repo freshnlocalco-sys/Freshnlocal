@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff, CheckCircle2, AlertCircle, Eye } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
@@ -1277,7 +1277,7 @@ export function AdminDashboard() {
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState<{ itemCode: string; name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[]; useBasePricing?: boolean; basePrice?: string; baseUnit?: string; baseOriginalPrice?: string; baseHorecaPrice?: string }>({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
+  const [newProduct, setNewProduct] = useState<{ itemCode: string; name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[]; useBasePricing?: boolean; basePrice?: string; baseUnit?: string; baseOriginalPrice?: string; baseHorecaPrice?: string; inStock?: boolean; isDeactivated?: boolean }>({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '', inStock: true, isDeactivated: false });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [isAssigningCodes, setIsAssigningCodes] = useState(false);
@@ -2626,6 +2626,9 @@ export function AdminDashboard() {
       const baseOriginalPrice = newProduct.baseOriginalPrice ? Number(newProduct.baseOriginalPrice) : null;
       const baseHorecaPrice = newProduct.baseHorecaPrice ? Number(newProduct.baseHorecaPrice) : null;
 
+      const finalInStock = newProduct.inStock !== false;
+      const finalIsDeactivated = !!newProduct.isDeactivated;
+
       if (editingProductId) {
         await updateDoc(doc(db, 'products', editingProductId), {
           itemCode: newProduct.itemCode ? newProduct.itemCode.trim() : '',
@@ -2648,6 +2651,8 @@ export function AdminDashboard() {
           baseUnit,
           baseOriginalPrice,
           baseHorecaPrice,
+          inStock: finalInStock,
+          isDeactivated: finalIsDeactivated,
           updatedAt: Date.now()
         });
       } else {
@@ -2673,16 +2678,13 @@ export function AdminDashboard() {
           baseOriginalPrice,
           baseHorecaPrice,
           stock: 100,
-          inStock: true,
-          isDeactivated: false,
+          inStock: finalInStock,
+          isDeactivated: finalIsDeactivated,
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
       }
       firestoreDurationMs = performance.now() - firestoreStartTime;
-
-      const existingProd = editingProductId ? products.find(p => p.id === editingProductId) : null;
-      const isDeactivatedStatus = existingProd?.isDeactivated ?? false;
 
       const renderStartTime = performance.now();
       const updatedProductObj: Product = {
@@ -2708,8 +2710,8 @@ export function AdminDashboard() {
         baseOriginalPrice: baseOriginalPrice !== null ? baseOriginalPrice : undefined,
         baseHorecaPrice: baseHorecaPrice !== null ? baseHorecaPrice : undefined,
         stock: 100,
-        inStock: true,
-        isDeactivated: isDeactivatedStatus,
+        inStock: finalInStock,
+        isDeactivated: finalIsDeactivated,
         createdAt: editingProductId ? (products.find(p => p.id === editingProductId)?.createdAt || Date.now()) : Date.now(),
         updatedAt: Date.now()
       } as unknown as Product;
@@ -2776,7 +2778,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
+      setNewProduct({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '', inStock: true, isDeactivated: false });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -3255,7 +3257,9 @@ export function AdminDashboard() {
       basePrice: inferred.basePrice,
       baseUnit: inferred.baseUnit,
       baseOriginalPrice: inferred.baseOriginalPrice,
-      baseHorecaPrice: inferred.baseHorecaPrice
+      baseHorecaPrice: inferred.baseHorecaPrice,
+      inStock: product.inStock !== false,
+      isDeactivated: product.isDeactivated === true
     });
     setProductSection(isJuice ? 'juices' : 'veg-fruits');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3263,7 +3267,7 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
+    setNewProduct({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '', inStock: true, isDeactivated: false });
   };
 
   const uploadRawFileToStorage = async (
@@ -5374,6 +5378,87 @@ export function AdminDashboard() {
                     />
                   </div>
 
+                  {/* Stock Availability & Deactivation Status Options */}
+                  <div className="p-3.5 bg-background border border-border rounded-xl sm:rounded-2xl space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-2">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Package className="w-3.5 h-3.5 text-primary" /> Inventory & Catalog Visibility
+                      </span>
+                      <span className="text-[8px] font-bold text-muted-foreground uppercase">
+                        {newProduct.isDeactivated ? 'Deactivated' : (newProduct.inStock !== false ? 'In Stock' : 'Out of Stock')}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {/* Stock In / Out Switch */}
+                      <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-colors ${
+                        newProduct.inStock !== false ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-red-500/5 border-red-500/30'
+                      }`}>
+                        <div className="min-w-0">
+                          <span className="block text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                            Stock Status
+                          </span>
+                          <span className={`text-xs font-black uppercase tracking-tight flex items-center gap-1 ${
+                            newProduct.inStock !== false ? 'text-emerald-600' : 'text-red-500'
+                          }`}>
+                            {newProduct.inStock !== false ? (
+                              <><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> In Stock</>
+                            ) : (
+                              <><AlertCircle className="w-3.5 h-3.5 shrink-0" /> Out of Stock</>
+                            )}
+                          </span>
+                        </div>
+
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0" title="Toggle Stock In / Stock Out">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={newProduct.inStock !== false}
+                            onChange={e => setNewProduct(prev => ({ ...prev, inStock: e.target.checked }))}
+                          />
+                          <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                      </div>
+
+                      {/* Active / Deactivated Switch */}
+                      <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-colors ${
+                        newProduct.isDeactivated ? 'bg-amber-500/10 border-amber-500/40' : 'bg-secondary/40 border-border'
+                      }`}>
+                        <div className="min-w-0">
+                          <span className="block text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                            Catalog Status
+                          </span>
+                          <span className={`text-xs font-black uppercase tracking-tight flex items-center gap-1 ${
+                            newProduct.isDeactivated ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'
+                          }`}>
+                            {newProduct.isDeactivated ? (
+                              <><Ban className="w-3.5 h-3.5 text-amber-600 shrink-0" /> Deactivated</>
+                            ) : (
+                              <><Eye className="w-3.5 h-3.5 text-primary shrink-0" /> Active</>
+                            )}
+                          </span>
+                        </div>
+
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0" title="Toggle Active / Deactivate Product">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={!!newProduct.isDeactivated}
+                            onChange={e => setNewProduct(prev => ({ ...prev, isDeactivated: e.target.checked }))}
+                          />
+                          <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
+                        </label>
+                      </div>
+                    </div>
+
+                    {newProduct.isDeactivated && (
+                      <div className="p-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/50 rounded-xl text-[9px] text-amber-900 dark:text-amber-200 font-semibold flex items-center gap-1.5 leading-tight">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>Product will be placed in the <strong>Deactivated list</strong> and completely removed from the regular customer catalog.</span>
+                      </div>
+                    )}
+                  </div>
+
                   {editingProductId ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                       <button 
@@ -5387,7 +5472,7 @@ export function AdminDashboard() {
                         type="submit" 
                         className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        Update Stock <Check className="w-4 h-4 text-white" />
+                        {newProduct.isDeactivated ? 'Update Product (Deactivated)' : 'Update Product'} <Check className="w-4 h-4 text-white" />
                       </button>
                     </div>
                   ) : (
@@ -5395,7 +5480,7 @@ export function AdminDashboard() {
                       type="submit" 
                       className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black mt-2 shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      Commit Stock <Plus className="w-4 h-4 text-white" />
+                      {newProduct.isDeactivated ? 'Commit Product (Deactivated)' : 'Commit Product'} <Plus className="w-4 h-4 text-white" />
                     </button>
                   )}
                 </form>
