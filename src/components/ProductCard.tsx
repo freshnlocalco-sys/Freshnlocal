@@ -161,13 +161,18 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
             </div>
           )}
         </Link>
-        {isReorderItem && (
-          <div className="absolute top-2 left-2 z-20 pointer-events-none">
-            <span className="inline-flex items-center gap-1 bg-primary text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md border border-white/20">
+        <div className="absolute top-2 left-2 z-20 pointer-events-none flex flex-col items-start gap-1">
+          {product.itemCode && (
+            <span className="inline-flex items-center font-mono font-black text-[8px] sm:text-[9px] bg-neutral-900/90 text-white backdrop-blur-md px-1.5 py-0.5 rounded-md shadow-sm border border-white/10 tracking-wide select-none">
+              #{product.itemCode}
+            </span>
+          )}
+          {isReorderItem && (
+            <span className="inline-flex items-center gap-1 bg-primary text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md border border-white/20 select-none">
               <RotateCcw className="w-2.5 h-2.5 shrink-0" /> REORDER
             </span>
-          </div>
-        )}
+          )}
+        </div>
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -205,6 +210,13 @@ export const ProductCard = React.memo(function ProductCard({ product, onAddToCar
         }}
       >
         <div className="flex flex-col gap-1 w-full">
+          {product.itemCode && (
+            <div className="flex items-center gap-1">
+              <span className="inline-flex items-center text-[8px] sm:text-[9px] font-mono font-black text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.2 rounded-md leading-tight">
+                #{product.itemCode}
+              </span>
+            </div>
+          )}
           <h3 className="text-[10px] sm:text-xs font-sans font-bold text-foreground line-clamp-2 leading-tight">{product.name}</h3>
           
           {allVariants.length > 1 ? (

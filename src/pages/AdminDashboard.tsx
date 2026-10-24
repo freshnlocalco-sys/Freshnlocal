@@ -1149,11 +1149,13 @@ export function AdminDashboard() {
         return isOutA ? 1 : -1;
       }
 
-      if (a.itemCode && b.itemCode && !isNaN(Number(a.itemCode)) && !isNaN(Number(b.itemCode))) {
-        return Number(a.itemCode) - Number(b.itemCode);
+      const idxA = a.orderIndex !== undefined && a.orderIndex !== null ? a.orderIndex : 999;
+      const idxB = b.orderIndex !== undefined && b.orderIndex !== null ? b.orderIndex : 999;
+      if (idxA !== idxB) {
+        return idxA - idxB;
       }
 
-      return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
+      return (a.name || '').localeCompare(b.name || '');
     });
     return list;
   }, [filteredProducts, productCategories, juiceCategories]);
@@ -1279,6 +1281,16 @@ export function AdminDashboard() {
   // New product form handling
   const [newProduct, setNewProduct] = useState<{ itemCode: string; name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[]; useBasePricing?: boolean; basePrice?: string; baseUnit?: string; baseOriginalPrice?: string; baseHorecaPrice?: string; inStock?: boolean; isDeactivated?: boolean }>({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '', inStock: true, isDeactivated: false });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+
+  const duplicateItemCodeProduct = useMemo(() => {
+    const rawCode = (newProduct.itemCode || '').trim();
+    if (!rawCode) return null;
+    return products.find(p => {
+      if (editingProductId && p.id === editingProductId) return false;
+      const otherCode = (p.itemCode ? String(p.itemCode) : '').trim();
+      return otherCode && otherCode.toLowerCase() === rawCode.toLowerCase();
+    }) || null;
+  }, [newProduct.itemCode, products, editingProductId]);
   const [seedingJuices, setSeedingJuices] = useState(false);
   const [isAssigningCodes, setIsAssigningCodes] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -2591,6 +2603,21 @@ export function AdminDashboard() {
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const rawCode = (newProduct.itemCode || '').trim();
+    if (rawCode) {
+      const duplicate = products.find(p => {
+        if (editingProductId && p.id === editingProductId) return false;
+        const otherCode = (p.itemCode ? String(p.itemCode) : '').trim();
+        return otherCode && otherCode.toLowerCase() === rawCode.toLowerCase();
+      });
+
+      if (duplicate) {
+        toast.error(`Cannot save: Item Code #${rawCode} is already assigned to "${duplicate.name}". Each product must have a unique code.`);
+        return;
+      }
+    }
+
     const processStartTime = performance.now();
     let firestoreDurationMs = 0;
     let reactRenderDurationMs = 0;
@@ -2680,11 +2707,15 @@ export function AdminDashboard() {
           stock: 100,
           inStock: finalInStock,
           isDeactivated: finalIsDeactivated,
+          orderIndex: 999,
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
       }
       firestoreDurationMs = performance.now() - firestoreStartTime;
+
+      const existingProd = editingProductId ? products.find(p => p.id === editingProductId) : null;
+      const assignedOrderIndex = existingProd?.orderIndex !== undefined ? existingProd.orderIndex : 999;
 
       const renderStartTime = performance.now();
       const updatedProductObj: Product = {
@@ -2712,6 +2743,7 @@ export function AdminDashboard() {
         stock: 100,
         inStock: finalInStock,
         isDeactivated: finalIsDeactivated,
+        orderIndex: assignedOrderIndex,
         createdAt: editingProductId ? (products.find(p => p.id === editingProductId)?.createdAt || Date.now()) : Date.now(),
         updatedAt: Date.now()
       } as unknown as Product;
@@ -3661,22 +3693,41 @@ export function AdminDashboard() {
         await batch.commit();
       }
 
-      setProducts(prevProducts => {
-        const updated = prevProducts.map(p => ({...p}));
-        newOrder.forEach((p, idx) => {
-          const match = updated.find(up => up.id === p.id);
-          if (match) {
-            match.orderIndex = (idx + 1) * 10;
-            if (p.id === itemToMove.id && categoryChanged) {
-              match.category = itemToMove.category;
-              if (itemToMove.category === 'fnl juices' || itemToMove.category === 'fnl juice') {
-                (match as any).subCategory = (itemToMove as any).subCategory;
-              }
+      const updatedProducts = products.map(p => {
+        const match = newOrder.find(no => no.id === p.id);
+        if (match) {
+          const idx = newOrder.indexOf(match);
+          const pObj = {
+            ...p,
+            orderIndex: (idx + 1) * 10
+          };
+          if (p.id === itemToMove.id && categoryChanged) {
+            pObj.category = itemToMove.category;
+            if (itemToMove.category === 'fnl juices' || itemToMove.category === 'fnl juice') {
+              (pObj as any).subCategory = (itemToMove as any).subCategory;
             }
           }
-        });
-        return updated.sort((a,b) => (a.orderIndex ?? 999) - (b.orderIndex ?? 999));
+          return pObj;
+        }
+        return p;
       });
+
+      setProducts(updatedProducts);
+
+      const mProductsStore = await import('../store/useProducts');
+      mProductsStore.useProducts.getState().products = updatedProducts;
+      mProductsStore.useProducts.getState().lastFetched = Date.now();
+      const mCache = await import('../lib/cacheManager');
+      const mIdb = await import('../lib/indexedDB');
+      try {
+        mCache.cacheManager.set('products_v6', updatedProducts);
+        mCache.cacheManager.set('products_last_fetched_v4', Date.now());
+        mIdb.idb.set('products_v6', updatedProducts, 24 * 60 * 60 * 1000).catch(()=>{});
+        mIdb.idb.set('products_last_fetched_v4', Date.now(), 24 * 60 * 60 * 1000).catch(()=>{});
+      } catch (cacheErr) {
+        console.warn("Async Cache sync failed safely:", cacheErr);
+      }
+
       toast.success('Products reordered successfully');
     } catch (err) {
       console.error(err);
@@ -4906,21 +4957,32 @@ export function AdminDashboard() {
                   )}
                   
                   <form onSubmit={handleSaveProduct} className="space-y-4">
-                    <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 items-stretch">
-                      <div className="w-full sm:w-24 md:w-24 shrink-0 space-y-1.5 sm:space-y-2">
-                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1">
-                          <Hash className="w-2.5 h-2.5 text-primary" /> Code
+                    <div className="flex flex-row gap-2.5 sm:gap-3 items-start">
+                      <div className="w-20 sm:w-24 shrink-0 space-y-1.5 sm:space-y-2">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center justify-between h-4">
+                          <span className="flex items-center gap-1">
+                            <Hash className="w-2.5 h-2.5 text-primary" /> Code
+                          </span>
+                          {duplicateItemCodeProduct && (
+                            <span className="text-[7px] font-black text-red-500 uppercase tracking-tight">
+                              Taken!
+                            </span>
+                          )}
                         </label>
                         <input 
                           type="text"
                           placeholder="e.g. 1" 
-                          className="w-full border border-border rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs font-mono font-bold text-center" 
+                          className={`w-full border rounded-xl sm:rounded-2xl px-2 sm:px-2.5 py-2.5 sm:py-3.5 bg-white outline-none text-foreground transition-colors text-[10px] sm:text-xs font-mono font-bold text-center ${
+                            duplicateItemCodeProduct 
+                              ? 'border-red-500 focus:border-red-500 ring-2 ring-red-500/20 text-red-600' 
+                              : 'border-border focus:border-primary'
+                          }`}
                           value={newProduct.itemCode} 
                           onChange={e => setNewProduct({...newProduct, itemCode: e.target.value})} 
                         />
                       </div>
                       <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
-                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center h-4">
                           {productSection === 'juices' ? 'Juice / Drink Name' : 'Crop/Item Name'}
                         </label>
                         <input 
@@ -4932,6 +4994,21 @@ export function AdminDashboard() {
                         />
                       </div>
                     </div>
+
+                    {/* Duplicate Item Code Alert Banner */}
+                    {duplicateItemCodeProduct && (
+                      <div className="p-2.5 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-xl text-[9px] text-red-700 dark:text-red-300 font-semibold flex items-start gap-2 shadow-2xs leading-tight animate-in fade-in duration-200">
+                        <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-red-800 dark:text-red-200">
+                            Duplicate Item Code: #{newProduct.itemCode.trim()}
+                          </p>
+                          <p className="mt-0.5 text-red-600 dark:text-red-400">
+                            Already assigned to <strong>"{duplicateItemCodeProduct.name}"</strong> ({duplicateItemCodeProduct.category}). Each product must have a unique item code.
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Base Pricing Toggle & Inputs */}
                     <div className="p-3.5 bg-background border border-border rounded-2xl space-y-3 shadow-sm">
@@ -5470,7 +5547,11 @@ export function AdminDashboard() {
                       </button>
                       <button 
                         type="submit" 
-                        className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
+                        disabled={Boolean(duplicateItemCodeProduct)}
+                        title={duplicateItemCodeProduct ? `Item code #${newProduct.itemCode.trim()} is already in use by "${duplicateItemCodeProduct.name}"` : undefined}
+                        className={`slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black shadow-[0_4px_15px_rgba(0,184,83,0.2)] flex items-center justify-center gap-1.5 ${
+                          duplicateItemCodeProduct ? 'opacity-50 cursor-not-allowed bg-neutral-400 dark:bg-neutral-600' : 'hover:scale-102 cursor-pointer'
+                        }`}
                       >
                         {newProduct.isDeactivated ? 'Update Product (Deactivated)' : 'Update Product'} <Check className="w-4 h-4 text-white" />
                       </button>
@@ -5478,7 +5559,11 @@ export function AdminDashboard() {
                   ) : (
                     <button 
                       type="submit" 
-                      className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black mt-2 shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
+                      disabled={Boolean(duplicateItemCodeProduct)}
+                      title={duplicateItemCodeProduct ? `Item code #${newProduct.itemCode.trim()} is already in use by "${duplicateItemCodeProduct.name}"` : undefined}
+                      className={`slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black mt-2 shadow-[0_4px_15px_rgba(0,184,83,0.2)] flex items-center justify-center gap-1.5 ${
+                        duplicateItemCodeProduct ? 'opacity-50 cursor-not-allowed bg-neutral-400 dark:bg-neutral-600' : 'hover:scale-102 cursor-pointer'
+                      }`}
                     >
                       {newProduct.isDeactivated ? 'Commit Product (Deactivated)' : 'Commit Product'} <Plus className="w-4 h-4 text-white" />
                     </button>
