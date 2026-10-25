@@ -314,7 +314,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                 </span>
 
                 {/* Print Orientation Selector */}
-                <div className="inline-flex rounded-lg border border-border bg-card p-0.5 shadow-2xs">
+                <div className="inline-flex rounded-lg border border-border bg-card p-0.5 shadow-2xs gap-0.5">
                   <button
                     type="button"
                     onClick={() => setLabelOrientation('horizontal')}
@@ -323,21 +323,45 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                         ? 'bg-primary text-primary-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
-                    title="Prints horizontally across 79mm width (Landscape format)"
+                    title="Standard Horizontal 0° (79mm width × 50mm height)"
                   >
-                    ↔️ Horizontal
+                    ↔️ 0° Normal
                   </button>
                   <button
                     type="button"
-                    onClick={() => setLabelOrientation('rotated')}
+                    onClick={() => setLabelOrientation('rotate180')}
                     className={`px-2 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
-                      labelOrientation === 'rotated'
+                      labelOrientation === 'rotate180'
                         ? 'bg-primary text-primary-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
-                    title="Rotates output 90 degrees if your printer roll feeds vertically"
+                    title="Rotates sticker 180 degrees (Inverted Horizontal for printers feeding opposite direction)"
                   >
-                    🔄 Rotate 90°
+                    🔄 180° Invert
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLabelOrientation('rotate90')}
+                    className={`px-1.5 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
+                      labelOrientation === 'rotate90' || (labelOrientation as any) === 'rotated'
+                        ? 'bg-primary text-primary-foreground shadow-2xs'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Rotate 90 degrees clockwise (for rolls fed along 50mm width)"
+                  >
+                    90°
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLabelOrientation('rotate270')}
+                    className={`px-1.5 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
+                      labelOrientation === 'rotate270'
+                        ? 'bg-primary text-primary-foreground shadow-2xs'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Rotate 270 degrees counter-clockwise"
+                  >
+                    270°
                   </button>
                 </div>
 
@@ -502,7 +526,10 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                   <div className="mt-2.5 max-w-[300px] text-center space-y-1">
                     <p className="text-[9.5px] text-muted-foreground">
                       Previewing 1 of {currentItemPreviewQty} sticker(s) for{' '}
-                      <span className="font-bold text-foreground">IDPRT SP410BT</span>.
+                      <span className="font-bold text-foreground">IDPRT SP410BT</span> •{' '}
+                      <span className="font-black text-primary font-mono">
+                        {labelOrientation === 'rotate180' ? '180° Inverted' : labelOrientation === 'rotate90' || (labelOrientation as any) === 'rotated' ? '90° Clockwise' : labelOrientation === 'rotate270' ? '270° Counter-Clockwise' : '0° Normal Horizontal'}
+                      </span>
                     </p>
                     <p className="text-[8.5px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                       ✓ QR Code encodes Order ID & Item Code on right
