@@ -8,7 +8,8 @@ import {
   extractItemLabelData,
   generateSingleItemLabelHtml,
   generateLabelStyles,
-  ItemLabelData
+  ItemLabelData,
+  LabelOrientation
 } from '../lib/thermalPrinter';
 import { useProducts } from '../store/useProducts';
 import toast from 'react-hot-toast';
@@ -25,6 +26,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
   const [paperWidth, setPaperWidth] = useState<'80mm' | '58mm'>('80mm');
   const [showPrices, setShowPrices] = useState(true);
   const [includeCheckboxes, setIncludeCheckboxes] = useState(true);
+  const [labelOrientation, setLabelOrientation] = useState<LabelOrientation>('horizontal');
   
   // Manage printing quantities for each order item (defaulted to item.quantity)
   const [itemPrintQuantities, setItemPrintQuantities] = useState<Record<number, number>>({});
@@ -79,7 +81,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
   const handlePrintSingleItemLabel = (item: any, idx: number) => {
     const printQty = itemPrintQuantities[idx] ?? Math.max(1, Number(item?.quantity) || 1);
     const labelData = extractItemLabelData(order, item, printQty, products);
-    printItemLabels(labelData);
+    printItemLabels(labelData, labelOrientation);
     toast.success(`Sent ${printQty} sticker${printQty > 1 ? 's' : ''} to IDPRT SP410BT printer`);
   };
 
@@ -94,7 +96,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
       return extractItemLabelData(order, it, printQty, products);
     });
     const totalCount = allLabels.reduce((sum, l) => sum + (l.printQty || 1), 0);
-    printItemLabels(allLabels);
+    printItemLabels(allLabels, labelOrientation);
     toast.success(`Printing ${totalCount} labels for ${allLabels.length} items`);
   };
 
@@ -118,11 +120,11 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
     ? generateSingleItemLabelHtml(labelPreviewData, 1, currentItemPreviewQty)
     : '';
 
-  const labelPreviewStyles = generateLabelStyles();
+  const labelPreviewStyles = generateLabelStyles(labelOrientation);
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className={`bg-secondary border border-border rounded-2xl w-full ${activeTab === 'labels' ? 'max-w-5xl' : 'max-w-xl'} max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative transition-all duration-200`}>
+      <div className={`bg-secondary border border-border rounded-2xl w-full ${activeTab === 'labels' ? 'max-w-4xl' : 'max-w-xl'} max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative transition-all duration-200`}>
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between bg-card shrink-0">
           <div className="flex items-center gap-2.5">
@@ -304,37 +306,66 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
         {activeTab === 'labels' && (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Top Toolbar for Labels */}
-            <div className="p-3 bg-neutral-100 dark:bg-neutral-900 border-b border-border flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 bg-neutral-900 text-white rounded-lg text-[9px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <div className="p-3 bg-neutral-100 dark:bg-neutral-900 border-b border-border flex flex-wrap items-center justify-between gap-2.5 text-xs shrink-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-1 bg-neutral-900 text-white rounded-lg text-[9px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  IDPRT SP410BT (79mm × 50mm)
+                  IDPRT SP410BT (79×50mm)
                 </span>
+
+                {/* Print Orientation Selector */}
+                <div className="inline-flex rounded-lg border border-border bg-card p-0.5 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setLabelOrientation('horizontal')}
+                    className={`px-2 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
+                      labelOrientation === 'horizontal'
+                        ? 'bg-primary text-primary-foreground shadow-2xs'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Prints horizontally across 79mm width (Landscape format)"
+                  >
+                    ↔️ Horizontal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLabelOrientation('rotated')}
+                    className={`px-2 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
+                      labelOrientation === 'rotated'
+                        ? 'bg-primary text-primary-foreground shadow-2xs'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Rotates output 90 degrees if your printer roll feeds vertically"
+                  >
+                    🔄 Rotate 90°
+                  </button>
+                </div>
+
                 <span className="text-[11px] font-extrabold text-foreground">
-                  Total Stickers: <span className="text-primary font-mono">{totalStickersToPrint}</span>
+                  Stickers: <span className="text-primary font-mono">{totalStickersToPrint}</span>
                 </span>
               </div>
 
               <button
                 type="button"
                 onClick={handlePrintAllItemLabels}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xs cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xs cursor-pointer"
               >
                 <Layers className="w-3.5 h-3.5" />
-                Print All Item Labels ({totalStickersToPrint})
+                Print All ({totalStickersToPrint})
               </button>
             </div>
 
-            {/* Split View: Left List of Items with Qty Box + Right Live 79x50mm Sticker Preview */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-12 overflow-hidden bg-neutral-50 dark:bg-neutral-950">
-              {/* Left Column: Items List (Spacious & wide) */}
-              <div className="md:col-span-7 border-b md:border-b-0 md:border-r border-border overflow-y-auto p-4 sm:p-5 space-y-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-                    Order Items ({rawItems.length})
+            {/* Split View: Left List of Items (Properly small) + Right Live 79x50mm Sticker Preview */}
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-neutral-50 dark:bg-neutral-950">
+              {/* Left Column: Items List (Compact & small) */}
+              <div className="w-full md:w-[360px] lg:w-[380px] shrink-0 border-b md:border-b-0 md:border-r border-border overflow-y-auto p-3 space-y-2">
+                <div className="flex items-center justify-between px-1 mb-0.5">
+                  <span className="text-[9.5px] font-black uppercase tracking-wider text-muted-foreground">
+                    Items List ({rawItems.length})
                   </span>
                   <span className="text-[9px] text-muted-foreground font-mono">
-                    Adjust quantity & click 🖨️ to print
+                    Set Qty & print 🖨️
                   </span>
                 </div>
 
@@ -354,54 +385,55 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                   return (
                     <div
                       key={idx}
-                      className={`p-3.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 ${
                         isSelected
-                          ? 'bg-card border-primary/60 shadow-sm ring-1 ring-primary/20'
-                          : 'bg-card/80 border-border hover:border-border/80'
+                          ? 'bg-card border-primary/60 shadow-xs ring-1 ring-primary/20'
+                          : 'bg-card/85 border-border hover:border-border/80'
                       }`}
                     >
                       {/* Left Item Information */}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-extrabold text-xs sm:text-sm text-foreground uppercase truncate">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-extrabold text-xs text-foreground uppercase truncate max-w-[170px]" title={itemName}>
                             {itemName}
                           </span>
                           {itemCode && (
-                            <span className="px-2 py-0.5 rounded bg-black text-white text-[10px] font-mono font-black tracking-wider shadow-2xs">
+                            <span className="px-1.5 py-0.2 rounded bg-black text-white text-[9px] font-mono font-black tracking-wider shadow-2xs">
                               #{itemCode.replace(/^#/, '')}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground font-medium mt-1">
-                          {unit ? <span className="font-semibold text-foreground/80">Pack: {unit} • </span> : ''}
-                          Order Qty: <b className="text-foreground">{orderQty}</b>
+                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                          {unit ? <span className="font-semibold text-foreground/80">{unit} • </span> : ''}
+                          Order: <b className="text-foreground">{orderQty}</b>
                         </p>
                       </div>
 
                       {/* Right Controls: Preview Button + Stepper + Compact Printer Button (No text) */}
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => setSelectedPreviewIndex(idx)}
-                          className={`px-2.5 py-1 rounded-lg text-[9px] uppercase font-bold tracking-wider cursor-pointer border transition-colors ${
+                          className={`px-1.5 py-1 rounded-md text-[8.5px] uppercase font-bold tracking-wider cursor-pointer border transition-colors ${
                             isSelected
                               ? 'bg-primary/10 text-primary border-primary/30'
                               : 'bg-secondary text-muted-foreground border-border hover:text-foreground'
                           }`}
+                          title="Preview this sticker"
                         >
-                          {isSelected ? 'Viewing' : 'Preview'}
+                          {isSelected ? 'View' : 'Prev'}
                         </button>
 
-                        {/* Visible Stepper with vibrant Red (-) and Green (+) buttons */}
-                        <div className="inline-flex items-center bg-secondary border border-border rounded-xl p-1 gap-1 shadow-2xs">
+                        {/* Visible Stepper with Red (-) and Green (+) buttons */}
+                        <div className="inline-flex items-center bg-secondary border border-border rounded-lg p-0.5 gap-0.5 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => handleQtyChange(idx, printQty - 1)}
                             disabled={printQty <= 1}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-100 dark:bg-red-950/60 hover:bg-red-200 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 disabled:opacity-30 transition-all font-black text-sm cursor-pointer shadow-2xs"
+                            className="w-6 h-6 flex items-center justify-center rounded-md bg-red-100 dark:bg-red-950/60 hover:bg-red-200 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 disabled:opacity-30 transition-all font-black text-xs cursor-pointer shadow-2xs"
                             title="Decrease sticker count"
                           >
-                            <Minus className="w-3.5 h-3.5 stroke-[3]" />
+                            <Minus className="w-3 h-3 stroke-[3]" />
                           </button>
                           <input
                             type="number"
@@ -409,16 +441,16 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                             max="999"
                             value={printQty}
                             onChange={(e) => handleQtyChange(idx, parseInt(e.target.value) || 1)}
-                            className="w-9 h-7 text-center font-mono font-black text-xs bg-white dark:bg-card border border-border rounded-md text-foreground outline-none shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-8 h-6 text-center font-mono font-black text-[11px] bg-white dark:bg-card border border-border rounded text-foreground outline-none shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             title="Enter number of stickers"
                           />
                           <button
                             type="button"
                             onClick={() => handleQtyChange(idx, printQty + 1)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 transition-all font-black text-sm cursor-pointer shadow-2xs"
+                            className="w-6 h-6 flex items-center justify-center rounded-md bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 transition-all font-black text-xs cursor-pointer shadow-2xs"
                             title="Increase sticker count"
                           >
-                            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                            <Plus className="w-3 h-3 stroke-[3]" />
                           </button>
                         </div>
 
@@ -426,10 +458,10 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                         <button
                           type="button"
                           onClick={() => handlePrintSingleItemLabel(item, idx)}
-                          className="w-8 h-8 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                          className="w-7 h-7 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
                           title={`Print ${printQty} sticker(s) for ${itemName}`}
                         >
-                          <Printer className="w-4 h-4" />
+                          <Printer className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -444,10 +476,10 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
               </div>
 
               {/* Right Column: Live 79x50mm Sticker Preview */}
-              <div className="md:col-span-5 p-4 sm:p-5 flex flex-col items-center justify-start overflow-y-auto bg-neutral-100/50 dark:bg-neutral-900/50">
-                <div className="w-full flex items-center justify-between mb-2">
+              <div className="flex-1 p-4 sm:p-5 flex flex-col items-center justify-start overflow-y-auto bg-neutral-100/50 dark:bg-neutral-900/50">
+                <div className="w-full flex items-center justify-between mb-2 max-w-[320px]">
                   <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Tag className="w-3 h-3 text-primary" /> Live 79×50mm Preview
+                    <Tag className="w-3 h-3 text-primary" /> 79×50mm Horizontal Preview
                   </span>
                   <span className="text-[9px] font-mono text-muted-foreground">
                     1:1 Thermal Ratio
@@ -455,7 +487,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                 </div>
 
                 {/* 79mm x 50mm Visual Container */}
-                <div className="w-full flex flex-col items-center justify-center py-2">
+                <div className="w-full flex flex-col items-center justify-center py-1">
                   <div
                     className="bg-white text-black shadow-xl rounded-md p-0 overflow-hidden border-2 border-dashed border-neutral-400 relative transition-all"
                     style={{
@@ -467,10 +499,15 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                     <div dangerouslySetInnerHTML={{ __html: labelPreviewHtml }} />
                   </div>
 
-                  <p className="text-[9px] text-muted-foreground text-center mt-2.5 max-w-[280px]">
-                    Previewing 1 of {currentItemPreviewQty} sticker(s) formatted for{' '}
-                    <span className="font-bold text-foreground">IDPRT SP410BT</span>.
-                  </p>
+                  <div className="mt-2.5 max-w-[300px] text-center space-y-1">
+                    <p className="text-[9.5px] text-muted-foreground">
+                      Previewing 1 of {currentItemPreviewQty} sticker(s) for{' '}
+                      <span className="font-bold text-foreground">IDPRT SP410BT</span>.
+                    </p>
+                    <p className="text-[8.5px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      ✓ QR Code encodes Order ID & Item Code on right
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

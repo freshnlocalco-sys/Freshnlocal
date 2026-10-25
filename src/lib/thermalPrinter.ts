@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+
 /**
  * Thermal Packing Slip Printer Utility
  * Formatted specifically for 80mm and 58mm POS thermal receipt & label printers.
@@ -480,9 +482,7 @@ export function dispatchDirectPrint(contentHtml: string, cssStyles: string, jobT
       #thermal-print-container {
         display: block !important;
         visibility: visible !important;
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
+        position: static !important;
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
@@ -589,37 +589,249 @@ export interface ItemLabelData {
   storeName?: string;
 }
 
-export function generateSimpleBarcodeSvg(code: string, width = 110, height = 16): string {
-  const clean = (code || '0000').replace(/[^a-zA-Z0-9]/g, '');
-  const bars: number[] = [];
-  for (let i = 0; i < clean.length; i++) {
-    const charCode = clean.charCodeAt(i);
-    bars.push(charCode % 2 === 0 ? 2 : 1);
-    bars.push(charCode % 3 === 0 ? 3 : 1);
-    bars.push(1);
-    bars.push(charCode % 5 === 0 ? 2 : 1);
-  }
-  while (bars.length < 28) {
-    bars.push(bars.length % 2 === 0 ? 2 : 1);
-  }
-  
-  let x = 2;
-  const rects: string[] = [];
-  for (let i = 0; i < bars.length && x < width - 4; i++) {
-    const barW = bars[i];
-    if (i % 2 === 0) {
-      rects.push(`<rect x="${x}" y="0" width="${barW}" height="${height}" fill="#000" />`);
+export function generateQrCodeSvg(text: string, size = 66): string {
+  try {
+    const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
+    const count = qr.modules.size;
+    const moduleSize = size / count;
+    let path = '';
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (qr.modules.get(r, c)) {
+          const x = (c * moduleSize).toFixed(2);
+          const y = (r * moduleSize).toFixed(2);
+          const w = (moduleSize + 0.05).toFixed(2);
+          path += `M${x},${y}h${w}v${w}h-${w}z `;
+        }
+      }
     }
-    x += barW + 1;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" style="display:block; shape-rendering:crispEdges;"><path d="${path}" fill="#000000" /></svg>`;
+  } catch (err) {
+    return '';
   }
-  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="display:block;">${rects.join('')}</svg>`;
 }
 
-export function generateLabelStyles(): string {
+export type LabelOrientation = 'horizontal' | 'rotated';
+
+export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'): string {
+  if (orientation === 'rotated') {
+    return `
+      @page {
+        size: 50mm 79mm;
+        margin: 0mm;
+      }
+      @media print {
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 50mm !important;
+          height: 79mm !important;
+          background: #ffffff !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .label-sticker-page {
+          width: 79mm !important;
+          height: 50mm !important;
+          transform: rotate(90deg) translate(0, -50mm);
+          transform-origin: top left;
+          page-break-after: always !important;
+          break-after: page !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        .label-sticker-page:last-child {
+          page-break-after: avoid !important;
+          break-after: avoid !important;
+        }
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #000000;
+        background: #ffffff;
+      }
+      .label-sticker-page {
+        width: 79mm;
+        height: 50mm;
+        max-height: 50mm;
+        box-sizing: border-box;
+        padding: 2mm 3mm;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        background: #ffffff;
+        position: relative;
+      }
+      .label-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1.5px solid #000000;
+        padding-bottom: 0.5mm;
+        margin-bottom: 0.4mm;
+      }
+      .label-brand {
+        font-size: 8pt;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .label-order-tag {
+        font-size: 7.5pt;
+        font-weight: 900;
+        font-family: monospace;
+        background: #000000;
+        color: #ffffff;
+        padding: 0.3mm 1.6mm;
+        border-radius: 2px;
+        white-space: nowrap;
+      }
+      .label-sub-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 7pt;
+        margin-bottom: 0.4mm;
+        font-weight: 700;
+        color: #111111;
+      }
+      .label-customer-name {
+        max-width: 48mm;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+      .label-dest-badge {
+        font-size: 6.2pt;
+        font-weight: 900;
+        text-transform: uppercase;
+        border: 1px solid #000000;
+        padding: 0.2mm 1mm;
+        border-radius: 2px;
+      }
+      .label-hero-row {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2mm;
+        border-top: 1px dashed #000000;
+        border-bottom: 1px dashed #000000;
+        padding: 0.8mm 0;
+        margin: 0.3mm 0;
+        min-height: 22mm;
+        overflow: hidden;
+      }
+      .label-hero-left {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        padding-right: 1.5mm;
+      }
+      .label-code-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #000000;
+        color: #ffffff;
+        font-weight: 900;
+        font-size: 8.5pt;
+        font-family: monospace;
+        padding: 0.2mm 1.8mm;
+        border-radius: 2px;
+        margin-bottom: 0.5mm;
+        align-self: flex-start;
+        letter-spacing: 0.4px;
+      }
+      .label-item-name {
+        font-size: 12.5pt;
+        font-weight: 900;
+        line-height: 1.1;
+        text-transform: uppercase;
+        color: #000000;
+        max-height: 12mm;
+        overflow: hidden;
+        word-break: break-word;
+      }
+      .label-item-meta {
+        font-size: 7.5pt;
+        font-weight: 700;
+        color: #222222;
+        margin-top: 0.5mm;
+        display: flex;
+        align-items: center;
+        gap: 2mm;
+        flex-wrap: wrap;
+      }
+      .label-hero-qr {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        padding: 0.4mm 1mm;
+        background: #ffffff;
+        border-left: 1px dotted #888888;
+      }
+      .label-qr-caption {
+        font-size: 5.5pt;
+        font-family: monospace;
+        font-weight: 800;
+        color: #000000;
+        text-align: center;
+        margin-top: 0.3mm;
+        max-width: 20mm;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .label-qr-code {
+        font-size: 6pt;
+        font-family: monospace;
+        font-weight: 900;
+        color: #000000;
+        background: #f0f0f0;
+        border-radius: 2px;
+        padding: 0 1.5px;
+        text-align: center;
+        margin-top: 0.2mm;
+      }
+      .label-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 0.6mm;
+        font-size: 7pt;
+        font-weight: 700;
+      }
+      .label-sticker-counter {
+        font-size: 8pt;
+        font-weight: 900;
+        font-family: monospace;
+        border: 1.5px solid #000000;
+        padding: 0.4mm 2mm;
+        border-radius: 2px;
+        background: #ffffff;
+        white-space: nowrap;
+      }
+    `;
+  }
+
+  // Standard Horizontal: 79mm wide x 50mm high
   return `
     @page {
       size: 79mm 50mm;
-      margin: 0;
+      margin: 0mm;
     }
     @media print {
       html, body {
@@ -632,10 +844,16 @@ export function generateLabelStyles(): string {
         print-color-adjust: exact !important;
       }
       .label-sticker-page {
+        width: 79mm !important;
+        height: 50mm !important;
+        max-width: 79mm !important;
+        max-height: 50mm !important;
         page-break-after: always !important;
         break-after: page !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
       }
       .label-sticker-page:last-child {
         page-break-after: avoid !important;
@@ -658,7 +876,7 @@ export function generateLabelStyles(): string {
       height: 50mm;
       max-height: 50mm;
       box-sizing: border-box;
-      padding: 2.2mm 3.2mm;
+      padding: 2mm 3mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -671,22 +889,22 @@ export function generateLabelStyles(): string {
       align-items: center;
       justify-content: space-between;
       border-bottom: 1.5px solid #000000;
-      padding-bottom: 0.8mm;
-      margin-bottom: 0.8mm;
+      padding-bottom: 0.5mm;
+      margin-bottom: 0.4mm;
     }
     .label-brand {
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.4px;
     }
     .label-order-tag {
-      font-size: 8pt;
+      font-size: 7.5pt;
       font-weight: 900;
       font-family: monospace;
       background: #000000;
       color: #ffffff;
-      padding: 0.4mm 1.8mm;
+      padding: 0.3mm 1.6mm;
       border-radius: 2px;
       white-space: nowrap;
     }
@@ -694,8 +912,8 @@ export function generateLabelStyles(): string {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 7.2pt;
-      margin-bottom: 0.8mm;
+      font-size: 7pt;
+      margin-bottom: 0.4mm;
       font-weight: 700;
       color: #111111;
     }
@@ -708,23 +926,33 @@ export function generateLabelStyles(): string {
       font-weight: 800;
     }
     .label-dest-badge {
-      font-size: 6.5pt;
+      font-size: 6.2pt;
       font-weight: 900;
       text-transform: uppercase;
       border: 1px solid #000000;
-      padding: 0.2mm 1.2mm;
+      padding: 0.2mm 1mm;
       border-radius: 2px;
     }
-    .label-hero {
+    .label-hero-row {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2mm;
+      border-top: 1px dashed #000000;
+      border-bottom: 1px dashed #000000;
+      padding: 0.8mm 0;
+      margin: 0.3mm 0;
+      min-height: 22mm;
+      overflow: hidden;
+    }
+    .label-hero-left {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      border-top: 1px dashed #000000;
-      border-bottom: 1px dashed #000000;
-      padding: 1.2mm 0;
-      margin: 0.4mm 0;
-      min-height: 21mm;
+      min-width: 0;
+      padding-right: 1.5mm;
     }
     .label-code-badge {
       display: inline-flex;
@@ -732,18 +960,18 @@ export function generateLabelStyles(): string {
       background: #000000;
       color: #ffffff;
       font-weight: 900;
-      font-size: 9.5pt;
+      font-size: 8.5pt;
       font-family: monospace;
-      padding: 0.4mm 2.2mm;
+      padding: 0.2mm 1.8mm;
       border-radius: 2px;
-      margin-bottom: 0.8mm;
+      margin-bottom: 0.5mm;
       align-self: flex-start;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
     }
     .label-item-name {
-      font-size: 13pt;
+      font-size: 12.5pt;
       font-weight: 900;
-      line-height: 1.12;
+      line-height: 1.1;
       text-transform: uppercase;
       color: #000000;
       max-height: 12mm;
@@ -751,28 +979,62 @@ export function generateLabelStyles(): string {
       word-break: break-word;
     }
     .label-item-meta {
-      font-size: 8.5pt;
+      font-size: 7.5pt;
       font-weight: 700;
       color: #222222;
-      margin-top: 0.8mm;
+      margin-top: 0.5mm;
       display: flex;
       align-items: center;
-      gap: 3mm;
+      gap: 2mm;
+      flex-wrap: wrap;
+    }
+    .label-hero-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 0.4mm 1mm;
+      background: #ffffff;
+      border-left: 1px dotted #888888;
+    }
+    .label-qr-caption {
+      font-size: 5.5pt;
+      font-family: monospace;
+      font-weight: 800;
+      color: #000000;
+      text-align: center;
+      margin-top: 0.3mm;
+      max-width: 20mm;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .label-qr-code {
+      font-size: 6pt;
+      font-family: monospace;
+      font-weight: 900;
+      color: #000000;
+      background: #f0f0f0;
+      border-radius: 2px;
+      padding: 0 1.5px;
+      text-align: center;
+      margin-top: 0.2mm;
     }
     .label-footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 0.8mm;
-      font-size: 7.5pt;
+      padding-top: 0.6mm;
+      font-size: 7pt;
       font-weight: 700;
     }
     .label-sticker-counter {
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-weight: 900;
       font-family: monospace;
       border: 1.5px solid #000000;
-      padding: 0.5mm 2.2mm;
+      padding: 0.4mm 2mm;
       border-radius: 2px;
       background: #ffffff;
       white-space: nowrap;
@@ -796,7 +1058,10 @@ export function generateSingleItemLabelHtml(
     : '';
   const isPickup = labelData.deliveryType === 'pickup' || labelData.address?.includes('Store Pickup');
   const dateStr = labelData.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-  const barcodeSvg = generateSimpleBarcodeSvg(`${orderNum}-${itemCode || 'ITEM'}`);
+
+  // Generate QR code encoding both Item Code and Order ID (plus product name)
+  const qrText = `Order: ${orderNum}\nItem Code: ${itemCode || 'N/A'}\nItem: ${itemName}`;
+  const qrSvg = generateQrCodeSvg(qrText, 62);
 
   return `
     <div class="label-sticker-page">
@@ -812,23 +1077,27 @@ export function generateSingleItemLabelHtml(
         <span class="label-dest-badge">${isPickup ? 'STORE PICKUP' : 'HOME DELIVERY'}</span>
       </div>
 
-      <!-- Hero Section: Item Code, Name, Pack -->
-      <div class="label-hero">
-        ${itemCode ? `<div class="label-code-badge">ITEM CODE: ${itemCode}</div>` : ''}
-        <div class="label-item-name">${itemName}</div>
-        <div class="label-item-meta">
-          ${unit ? `<span>Pack: <b>${unit}</b></span>` : ''}
-          ${price ? `<span>Rate: <b>${price}</b></span>` : ''}
-          <span>Order Qty: <b>${labelData.orderQty || 1}</b></span>
+      <!-- Hero Section: Left Product Details + Right QR Code -->
+      <div class="label-hero-row">
+        <div class="label-hero-left">
+          ${itemCode ? `<div class="label-code-badge">ITEM CODE: ${itemCode}</div>` : ''}
+          <div class="label-item-name">${itemName}</div>
+          <div class="label-item-meta">
+            ${unit ? `<span>Pack: <b>${unit}</b></span>` : ''}
+            ${price ? `<span>Rate: <b>${price}</b></span>` : ''}
+            <span>Order Qty: <b>${labelData.orderQty || 1}</b></span>
+          </div>
+        </div>
+        <div class="label-hero-qr">
+          ${qrSvg}
+          <span class="label-qr-caption">${orderNum}</span>
+          ${itemCode ? `<span class="label-qr-code">${itemCode}</span>` : ''}
         </div>
       </div>
 
-      <!-- Footer Row: Barcode & Sticker Counter -->
+      <!-- Footer Row: Date & Sticker Counter -->
       <div class="label-footer">
-        <div style="display:flex; flex-direction:column; gap:1px;">
-          ${barcodeSvg}
-          <span style="font-size:6.5pt; font-family:monospace; color:#333; margin-top:1px;">${dateStr}</span>
-        </div>
+        <span style="font-size:6.8pt; font-family:monospace; color:#333;">${dateStr} • Fresh Produce</span>
         <div class="label-sticker-counter">
           STICKER ${index} OF ${totalInBatch}
         </div>
@@ -837,7 +1106,10 @@ export function generateSingleItemLabelHtml(
   `;
 }
 
-export function printItemLabels(labels: ItemLabelData | ItemLabelData[]): void {
+export function printItemLabels(
+  labels: ItemLabelData | ItemLabelData[],
+  orientation: LabelOrientation = 'horizontal'
+): void {
   const items = Array.isArray(labels) ? labels : [labels];
   if (items.length === 0) return;
 
@@ -851,7 +1123,7 @@ export function printItemLabels(labels: ItemLabelData | ItemLabelData[]): void {
 
   dispatchDirectPrint(
     pagesHtml,
-    generateLabelStyles(),
+    generateLabelStyles(orientation),
     'Sticker Labels 79x50mm - IDPRT SP410BT'
   );
 }
