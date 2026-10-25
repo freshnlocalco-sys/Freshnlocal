@@ -443,63 +443,115 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
 /**
  * Triggers printing of a single order thermal packing slip
  */
-export function printThermalSlip(order: any, options: ThermalPrintOptions = {}): void {
-  const printContent = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>Packing Slip - ${order.orderNumber || order.id}</title>
-        <style>
-          ${generateThermalStyles(options.paperWidth || '80mm')}
-        </style>
-      </head>
-      <body>
-        ${generateSingleSlipHtml(order, options)}
-        <script>
-          window.onload = function() {
-            window.focus();
-            window.print();
-            setTimeout(function() {
-              window.close();
-            }, 500);
-          };
-        </script>
-      </body>
-    </html>
-  `;
-
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.top = '-10000px';
-  iframe.style.left = '-10000px';
-  iframe.style.width = '1px';
-  iframe.style.height = '1px';
-  iframe.style.border = 'none';
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentWindow?.document || iframe.contentDocument;
-  if (!doc) {
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.open();
-      win.document.write(printContent);
-      win.document.close();
-    }
-    return;
+/**
+ * Direct print dispatcher that renders content in a dedicated print container
+ * and invokes the browser native system print dialog without hidden iframe blocks.
+ */
+export function dispatchDirectPrint(contentHtml: string, cssStyles: string, jobTitle: string = 'Thermal Print Job'): void {
+  let mount = document.getElementById('thermal-print-container');
+  if (!mount) {
+    mount = document.createElement('div');
+    mount.id = 'thermal-print-container';
+    document.body.appendChild(mount);
   }
 
-  doc.open();
-  doc.write(printContent);
-  doc.close();
+  let styleTag = document.getElementById('thermal-print-dynamic-style') as HTMLStyleElement | null;
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = 'thermal-print-dynamic-style';
+    document.head.appendChild(styleTag);
+  }
+
+  styleTag.innerHTML = `
+    @media screen {
+      #thermal-print-container {
+        display: none !important;
+      }
+    }
+    @media print {
+      body > *:not(#thermal-print-container),
+      #root {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+      }
+      #thermal-print-container {
+        display: block !important;
+        visibility: visible !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        background: #ffffff !important;
+      }
+      ${cssStyles}
+    }
+  `;
+
+  mount.innerHTML = contentHtml;
+
+  const prevTitle = document.title;
+  document.title = jobTitle;
+
+  const cleanup = () => {
+    document.title = prevTitle;
+    if (mount) mount.innerHTML = '';
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
 
   setTimeout(() => {
     try {
-      document.body.removeChild(iframe);
-    } catch (e) {
-      // ignore
+      window.focus();
+      window.print();
+    } catch (err) {
+      console.warn('Direct window.print error, attempting popup fallback:', err);
+      try {
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.open();
+          win.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8" />
+                <title>${jobTitle}</title>
+                <style>${cssStyles}</style>
+              </head>
+              <body>
+                ${contentHtml}
+                <script>
+                  window.onload = function() {
+                    window.focus();
+                    window.print();
+                  };
+                </script>
+              </body>
+            </html>
+          `);
+          win.document.close();
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback window.open failed:', fallbackErr);
+      }
     }
-  }, 60000);
+  }, 100);
+}
+
+/**
+ * Triggers printing of a single order thermal packing slip
+ */
+export function printThermalSlip(order: any, options: ThermalPrintOptions = {}): void {
+  const slipHtml = generateSingleSlipHtml(order, options);
+  dispatchDirectPrint(
+    slipHtml,
+    generateThermalStyles(options.paperWidth || '80mm'),
+    `Packing Slip - ${order.orderNumber || order.id}`
+  );
 }
 
 /**
@@ -509,61 +561,346 @@ export function printBatchThermalSlips(orders: any[], options: ThermalPrintOptio
   if (!orders || orders.length === 0) return;
 
   const slipsHtml = orders.map(ord => generateSingleSlipHtml(ord, options)).join('\n');
+  dispatchDirectPrint(
+    slipsHtml,
+    generateThermalStyles(options.paperWidth || '80mm'),
+    `Batch Packing Slips (${orders.length} Orders)`
+  );
+}
 
-  const printContent = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>Batch Packing Slips (${orders.length} Orders)</title>
-        <style>
-          ${generateThermalStyles(options.paperWidth || '80mm')}
-        </style>
-      </head>
-      <body>
-        ${slipsHtml}
-        <script>
-          window.onload = function() {
-            window.focus();
-            window.print();
-            setTimeout(function() {
-              window.close();
-            }, 500);
-          };
-        </script>
-      </body>
-    </html>
-  `;
+/**
+ * 79mm x 50mm Sticker Label Printer Implementation for IDPRT SP410BT
+ */
+export interface ItemLabelData {
+  orderNumber: string;
+  orderId?: string;
+  customerName: string;
+  customerPhone?: string;
+  deliveryType?: 'pickup' | 'delivery' | string;
+  address?: string;
+  itemName: string;
+  itemCode?: string;
+  unit?: string;
+  variantName?: string;
+  price?: number;
+  orderQty: number;
+  printQty: number;
+  date?: string;
+  storeName?: string;
+}
 
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.top = '-10000px';
-  iframe.style.left = '-10000px';
-  iframe.style.width = '1px';
-  iframe.style.height = '1px';
-  iframe.style.border = 'none';
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentWindow?.document || iframe.contentDocument;
-  if (!doc) {
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.open();
-      win.document.write(printContent);
-      win.document.close();
+export function generateSimpleBarcodeSvg(code: string, width = 110, height = 16): string {
+  const clean = (code || '0000').replace(/[^a-zA-Z0-9]/g, '');
+  const bars: number[] = [];
+  for (let i = 0; i < clean.length; i++) {
+    const charCode = clean.charCodeAt(i);
+    bars.push(charCode % 2 === 0 ? 2 : 1);
+    bars.push(charCode % 3 === 0 ? 3 : 1);
+    bars.push(1);
+    bars.push(charCode % 5 === 0 ? 2 : 1);
+  }
+  while (bars.length < 28) {
+    bars.push(bars.length % 2 === 0 ? 2 : 1);
+  }
+  
+  let x = 2;
+  const rects: string[] = [];
+  for (let i = 0; i < bars.length && x < width - 4; i++) {
+    const barW = bars[i];
+    if (i % 2 === 0) {
+      rects.push(`<rect x="${x}" y="0" width="${barW}" height="${height}" fill="#000" />`);
     }
-    return;
+    x += barW + 1;
+  }
+  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="display:block;">${rects.join('')}</svg>`;
+}
+
+export function generateLabelStyles(): string {
+  return `
+    @page {
+      size: 79mm 50mm;
+      margin: 0;
+    }
+    @media print {
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 79mm !important;
+        height: 50mm !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .label-sticker-page {
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .label-sticker-page:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #000000;
+      background: #ffffff;
+    }
+    .label-sticker-page {
+      width: 79mm;
+      height: 50mm;
+      max-height: 50mm;
+      box-sizing: border-box;
+      padding: 2.2mm 3.2mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      background: #ffffff;
+      position: relative;
+    }
+    .label-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1.5px solid #000000;
+      padding-bottom: 0.8mm;
+      margin-bottom: 0.8mm;
+    }
+    .label-brand {
+      font-size: 8.5pt;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .label-order-tag {
+      font-size: 8pt;
+      font-weight: 900;
+      font-family: monospace;
+      background: #000000;
+      color: #ffffff;
+      padding: 0.4mm 1.8mm;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .label-sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 7.2pt;
+      margin-bottom: 0.8mm;
+      font-weight: 700;
+      color: #111111;
+    }
+    .label-customer-name {
+      max-width: 48mm;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+    .label-dest-badge {
+      font-size: 6.5pt;
+      font-weight: 900;
+      text-transform: uppercase;
+      border: 1px solid #000000;
+      padding: 0.2mm 1.2mm;
+      border-radius: 2px;
+    }
+    .label-hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-top: 1px dashed #000000;
+      border-bottom: 1px dashed #000000;
+      padding: 1.2mm 0;
+      margin: 0.4mm 0;
+      min-height: 21mm;
+    }
+    .label-code-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #000000;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 9.5pt;
+      font-family: monospace;
+      padding: 0.4mm 2.2mm;
+      border-radius: 2px;
+      margin-bottom: 0.8mm;
+      align-self: flex-start;
+      letter-spacing: 0.5px;
+    }
+    .label-item-name {
+      font-size: 13pt;
+      font-weight: 900;
+      line-height: 1.12;
+      text-transform: uppercase;
+      color: #000000;
+      max-height: 12mm;
+      overflow: hidden;
+      word-break: break-word;
+    }
+    .label-item-meta {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: #222222;
+      margin-top: 0.8mm;
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+    }
+    .label-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 0.8mm;
+      font-size: 7.5pt;
+      font-weight: 700;
+    }
+    .label-sticker-counter {
+      font-size: 8.5pt;
+      font-weight: 900;
+      font-family: monospace;
+      border: 1.5px solid #000000;
+      padding: 0.5mm 2.2mm;
+      border-radius: 2px;
+      background: #ffffff;
+      white-space: nowrap;
+    }
+  `;
+}
+
+export function generateSingleItemLabelHtml(
+  labelData: ItemLabelData,
+  index: number = 1,
+  totalInBatch: number = 1
+): string {
+  const storeName = labelData.storeName || 'FRESH N LOCAL CO.';
+  const orderNum = labelData.orderNumber || (labelData.orderId ? `#FNL-${labelData.orderId.slice(0, 8).toUpperCase()}` : '#ORDER');
+  const custName = labelData.customerName || 'Valued Customer';
+  const itemName = labelData.itemName || 'Produce Item';
+  const itemCode = labelData.itemCode ? (labelData.itemCode.startsWith('#') ? labelData.itemCode : `#${labelData.itemCode}`) : '';
+  const unit = labelData.unit || labelData.variantName || '';
+  const price = labelData.price !== undefined && labelData.price !== null && labelData.price > 0 
+    ? `₹${Number(labelData.price).toFixed(2).replace(/\.00$/, '')}` 
+    : '';
+  const isPickup = labelData.deliveryType === 'pickup' || labelData.address?.includes('Store Pickup');
+  const dateStr = labelData.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+  const barcodeSvg = generateSimpleBarcodeSvg(`${orderNum}-${itemCode || 'ITEM'}`);
+
+  return `
+    <div class="label-sticker-page">
+      <!-- Top Row: Brand & Order No -->
+      <div class="label-header">
+        <span class="label-brand">${storeName}</span>
+        <span class="label-order-tag">${orderNum}</span>
+      </div>
+
+      <!-- Customer & Mode Row -->
+      <div class="label-sub-row">
+        <span class="label-customer-name">CUST: ${custName}</span>
+        <span class="label-dest-badge">${isPickup ? 'STORE PICKUP' : 'HOME DELIVERY'}</span>
+      </div>
+
+      <!-- Hero Section: Item Code, Name, Pack -->
+      <div class="label-hero">
+        ${itemCode ? `<div class="label-code-badge">ITEM CODE: ${itemCode}</div>` : ''}
+        <div class="label-item-name">${itemName}</div>
+        <div class="label-item-meta">
+          ${unit ? `<span>Pack: <b>${unit}</b></span>` : ''}
+          ${price ? `<span>Rate: <b>${price}</b></span>` : ''}
+          <span>Order Qty: <b>${labelData.orderQty || 1}</b></span>
+        </div>
+      </div>
+
+      <!-- Footer Row: Barcode & Sticker Counter -->
+      <div class="label-footer">
+        <div style="display:flex; flex-direction:column; gap:1px;">
+          ${barcodeSvg}
+          <span style="font-size:6.5pt; font-family:monospace; color:#333; margin-top:1px;">${dateStr}</span>
+        </div>
+        <div class="label-sticker-counter">
+          STICKER ${index} OF ${totalInBatch}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function printItemLabels(labels: ItemLabelData | ItemLabelData[]): void {
+  const items = Array.isArray(labels) ? labels : [labels];
+  if (items.length === 0) return;
+
+  let pagesHtml = '';
+  for (const item of items) {
+    const qtyToPrint = Math.max(1, Number(item.printQty) || 1);
+    for (let i = 1; i <= qtyToPrint; i++) {
+      pagesHtml += generateSingleItemLabelHtml(item, i, qtyToPrint);
+    }
   }
 
-  doc.open();
-  doc.write(printContent);
-  doc.close();
-
-  setTimeout(() => {
-    try {
-      document.body.removeChild(iframe);
-    } catch (e) {
-      // ignore
-    }
-  }, 60000);
+  dispatchDirectPrint(
+    pagesHtml,
+    generateLabelStyles(),
+    'Sticker Labels 79x50mm - IDPRT SP410BT'
+  );
 }
+
+export function extractItemLabelData(
+  order: any,
+  item: any,
+  printQty?: number,
+  catalogProducts?: any[]
+): ItemLabelData {
+  const prod = item?.product || item || {};
+  const orderNum = order?.orderNumber || (order?.id ? `#FNL-${order.id.slice(0, 8).toUpperCase()}` : '#FNL');
+  const isPickup = order?.shippingDetails?.address?.includes('Store Pickup') || order?.deliveryType === 'pickup';
+  const customerName = order?.shippingDetails?.name || order?.customerName || order?.userName || 'Customer';
+  const customerPhone = order?.shippingDetails?.phone || order?.phone || '';
+  const orderQty = Math.max(1, Number(item?.quantity) || 1);
+  const actualPrintQty = printQty !== undefined ? Math.max(1, Number(printQty) || 1) : orderQty;
+
+  let itemCode = prod.itemCode || item.itemCode || item.product?.itemCode || '';
+  if (!itemCode && Array.isArray(catalogProducts)) {
+    const match = catalogProducts.find(p => (prod.id && p.id === prod.id) || (p.name && prod.name && p.name.toLowerCase() === prod.name.toLowerCase()));
+    if (match?.itemCode) {
+      itemCode = match.itemCode;
+    }
+  }
+
+  let rawPrice = 0;
+  if (item?.price !== undefined && item?.price !== null && item?.price !== '') {
+    rawPrice = item.price;
+  } else if (prod.price !== undefined && prod.price !== null && prod.price !== '') {
+    rawPrice = prod.price;
+  }
+  const price = Number(rawPrice) || 0;
+
+  return {
+    orderNumber: orderNum,
+    orderId: order?.id,
+    customerName,
+    customerPhone,
+    deliveryType: isPickup ? 'pickup' : 'delivery',
+    address: order?.shippingDetails?.address || order?.address || '',
+    itemName: prod.name || prod.title || item.name || item.title || 'Produce Item',
+    itemCode,
+    unit: prod.unit || prod.selectedUnit || item.unit || item.selectedUnit || '',
+    variantName: prod.variantName || item.variantName || '',
+    price,
+    orderQty,
+    printQty: actualPrintQty,
+    date: order?.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+  };
+}
+

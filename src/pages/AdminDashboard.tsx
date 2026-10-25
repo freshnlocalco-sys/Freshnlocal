@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff, CheckCircle2, AlertCircle, Eye } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Minus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff, CheckCircle2, AlertCircle, Eye, Tag } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
@@ -15,6 +15,7 @@ import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
 import { SEO } from '../components/SEO';
 import { ThermalPackingSlipModal } from '../components/ThermalPackingSlipModal';
+import { printItemLabels, extractItemLabelData } from '../lib/thermalPrinter';
 import toast from 'react-hot-toast';
 
 const STATUS_OPTIONS = [
@@ -1295,6 +1296,38 @@ export function AdminDashboard() {
   const [isAssigningCodes, setIsAssigningCodes] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [orderForThermalPrint, setOrderForThermalPrint] = useState<any | null>(null);
+  const [selectedOrderLabelQtys, setSelectedOrderLabelQtys] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    if (selectedOrder?.items && Array.isArray(selectedOrder.items)) {
+      const initial: Record<number, number> = {};
+      selectedOrder.items.forEach((it: any, idx: number) => {
+        initial[idx] = Math.max(1, Number(it?.quantity) || 1);
+      });
+      setSelectedOrderLabelQtys(initial);
+    }
+  }, [selectedOrder?.id]);
+
+  const handlePrintOrderItemLabel = (ord: any, itm: any, printQty: number) => {
+    const qty = Math.max(1, Number(printQty) || 1);
+    const labelData = extractItemLabelData(ord, itm, qty, products);
+    printItemLabels(labelData);
+    toast.success(`Printing ${qty} sticker${qty > 1 ? 's' : ''} on IDPRT SP410BT`);
+  };
+
+  const handlePrintAllSelectedOrderLabels = (ord: any) => {
+    if (!ord?.items || !Array.isArray(ord.items) || ord.items.length === 0) {
+      toast.error('No items to print');
+      return;
+    }
+    const allLabels = ord.items.map((it: any, idx: number) => {
+      const q = selectedOrderLabelQtys[idx] ?? Math.max(1, Number(it?.quantity) || 1);
+      return extractItemLabelData(ord, it, q, products);
+    });
+    const totalCount = allLabels.reduce((sum: number, l: any) => sum + (l.printQty || 1), 0);
+    printItemLabels(allLabels);
+    toast.success(`Printing ${totalCount} labels for ${allLabels.length} items on IDPRT SP410BT`);
+  };
 
   const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
 
@@ -4806,7 +4839,7 @@ export function AdminDashboard() {
                           >
                             <span className="font-extrabold">{order.orderNumber || `FNL-${order.id.slice(0, 8).toUpperCase()}`}</span>
                           </button>
-                          <div className="flex items-center gap-1.5 mt-1.5">
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                             <button
                               type="button"
                               onClick={() => setSelectedOrder(order)}
@@ -4821,6 +4854,14 @@ export function AdminDashboard() {
                               title="Print Thermal Packing Slip"
                             >
                               <Printer className="w-2.5 h-2.5 text-emerald-600" /> Print
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOrderForThermalPrint({ ...order, defaultTab: 'labels' })}
+                              className="text-[8px] uppercase tracking-wider text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-300/80 px-2 py-0.5 rounded-md text-center font-black flex items-center gap-1 shadow-2xs cursor-pointer"
+                              title="Print 79x50mm Item Sticker Labels on IDPRT SP410BT"
+                            >
+                              <Tag className="w-2.5 h-2.5 text-blue-600" /> Labels
                             </button>
                           </div>
                         </td>
@@ -4839,15 +4880,34 @@ export function AdminDashboard() {
                                 {(order.items || []).map((item: any, idx: number) => {
                                   const prod = item?.product || item;
                                   if (!prod) return null;
+                                  let itmCode = prod.itemCode || item.itemCode || '';
+                                  if (!itmCode && products?.length) {
+                                    const m = products.find(p => (prod.id && p.id === prod.id) || (p.name && prod.name && p.name.toLowerCase() === prod.name.toLowerCase()));
+                                    if (m?.itemCode) itmCode = m.itemCode;
+                                  }
                                   return (
-                                    <div key={idx} className="flex justify-between items-start gap-2 text-[10px] sm:text-xs border-b border-dashed border-border/40 pb-0.5 last:border-0">
+                                    <div key={idx} className="flex justify-between items-center gap-2 text-[10px] sm:text-xs border-b border-dashed border-border/40 pb-0.5 last:border-0 group">
                                       <span className="text-muted-foreground font-medium truncate max-w-[140px] sm:max-w-[170px] inline-block">
                                         <span className="font-extrabold text-[#111111]">{item.quantity || 1}x</span> {prod.name || 'Unknown'}
                                         {prod.unit ? <span className="text-[8px] text-muted-foreground ml-1">({prod.unit})</span> : null}
+                                        {itmCode ? <span className="text-[7.5px] font-mono bg-black text-white px-1 py-0.2 rounded ml-1 font-bold">#{itmCode.replace(/^#/, '')}</span> : null}
                                       </span>
-                                      <span className="font-mono text-muted-foreground text-[9px] sm:text-[10px] shrink-0 font-black">
-                                        ₹{(prod.price || 0) * (item.quantity || 1)}
-                                      </span>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <span className="font-mono text-muted-foreground text-[9px] sm:text-[10px] font-black">
+                                          ₹{(prod.price || 0) * (item.quantity || 1)}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handlePrintOrderItemLabel(order, item, item.quantity || 1);
+                                          }}
+                                          className="p-0.5 hover:bg-blue-100 text-blue-600 rounded transition-colors cursor-pointer"
+                                          title={`Print ${item.quantity || 1} label(s) on IDPRT SP410BT`}
+                                        >
+                                          <Tag className="w-2.5 h-2.5" />
+                                        </button>
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -7067,13 +7127,34 @@ export function AdminDashboard() {
 
             {/* Items Breakdown list */}
             <div className="space-y-4 flex-1">
-              <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">Shopping Cart Items</h4>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  Shopping Cart Items
+                  <span className="text-[9px] bg-primary/10 text-primary font-mono px-2 py-0.5 rounded-full font-bold">
+                    {selectedOrder.items?.length || 0} items
+                  </span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => handlePrintAllSelectedOrderLabels(selectedOrder)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer w-fit"
+                  title="Print 79x50mm stickers for all items on IDPRT SP410BT"
+                >
+                  <Printer className="w-3 h-3" /> Print All Item Labels (79×50mm)
+                </button>
+              </div>
               <div className="border border-border rounded-2xl overflow-hidden bg-secondary/50 divide-y divide-border">
                 {selectedOrder.items && selectedOrder.items.length > 0 ? (
                   selectedOrder.items.map((item: any, idx: number) => {
                     const prod = item?.product || item;
                     if (!prod) return null;
                     const catImg = getCategoryImage(prod.category, categoryImages);
+                    let itmCode = prod.itemCode || item.itemCode || '';
+                    if (!itmCode && products?.length) {
+                      const m = products.find(p => (prod.id && p.id === prod.id) || (p.name && prod.name && p.name.toLowerCase() === prod.name.toLowerCase()));
+                      if (m?.itemCode) itmCode = m.itemCode;
+                    }
+                    const labelPrintQty = selectedOrderLabelQtys[idx] ?? Math.max(1, Number(item.quantity) || 1);
                     return (
                       <div key={idx} className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-3.5 items-start sm:items-center justify-between min-w-0 w-full">
                         {/* Left/Top Part: Image, Name, Category/Unit and Mobile Total Qty */}
@@ -7082,7 +7163,14 @@ export function AdminDashboard() {
                             <img src={prod.imageUrl || catImg || null} alt={prod.name} className="w-full h-full object-contain object-center" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-extrabold text-xs text-foreground uppercase truncate" title={prod.name}>{prod.name}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-extrabold text-xs text-foreground uppercase truncate" title={prod.name}>{prod.name}</p>
+                              {itmCode && (
+                                <span className="px-1.5 py-0.5 rounded bg-black text-white text-[9px] font-mono font-black tracking-wider shadow-2xs">
+                                  #{itmCode.replace(/^#/, '')}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5 truncate">
                               {prod.category?.replace(/ font-bold/gi, '')} {prod.unit ? `• ${prod.unit}` : ''}
                             </p>
@@ -7095,14 +7183,15 @@ export function AdminDashboard() {
                           </div>
                         </div>
 
-                        {/* Right/Bottom Part: Total Qty (Desktop), Controls, Price, Remove Button */}
-                        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 border-t border-dashed border-border/60 pt-2.5 sm:pt-0 sm:border-t-0">
+                        {/* Right/Bottom Part: Total Qty (Desktop), Controls, Label Printer, Price, Remove Button */}
+                        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0 border-t border-dashed border-border/60 pt-2.5 sm:pt-0 sm:border-t-0">
                           {/* Desktop-only Total Qty badge */}
-                          <div className="hidden sm:flex flex-col items-center justify-center px-2.5 py-1 bg-primary/5 border border-primary/10 rounded-xl min-w-[75px] shrink-0 text-center mx-1 sm:mx-2">
+                          <div className="hidden sm:flex flex-col items-center justify-center px-2.5 py-1 bg-primary/5 border border-primary/10 rounded-xl min-w-[70px] shrink-0 text-center">
                             <span className="text-[8px] uppercase font-black tracking-widest text-primary/60">Total Qty</span>
                             <span className="text-[10px] sm:text-xs font-black text-primary uppercase whitespace-nowrap">{formatTotalQuantity(item.quantity || 1, prod.unit)}</span>
                           </div>
 
+                          {/* Quantity +/- for order item */}
                           <div className="flex items-center gap-2 bg-secondary rounded-lg p-1 border border-border">
                             <button
                               type="button"
@@ -7130,6 +7219,60 @@ export function AdminDashboard() {
                               <span className="text-xs font-black">+</span>
                             </button>
                           </div>
+
+                          {/* Label Printing Unit: Compact Stepper + Compact Printer Button (No text) */}
+                          <div className="flex items-center gap-1 shrink-0 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-1 shadow-2xs">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (labelPrintQty > 1) {
+                                  setSelectedOrderLabelQtys(prev => ({ ...prev, [idx]: labelPrintQty - 1 }));
+                                }
+                              }}
+                              disabled={labelPrintQty <= 1}
+                              className="w-6 h-6 flex items-center justify-center rounded-lg bg-red-100 dark:bg-red-950/60 hover:bg-red-200 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 disabled:opacity-30 transition-all font-black text-xs cursor-pointer shadow-2xs"
+                              title="Decrease stickers"
+                            >
+                              <Minus className="w-3 h-3 stroke-[3]" />
+                            </button>
+                            <input
+                              type="number"
+                              min="1"
+                              max="999"
+                              value={labelPrintQty}
+                              onChange={(e) => {
+                                const val = Math.max(1, Math.min(999, parseInt(e.target.value) || 1));
+                                setSelectedOrderLabelQtys(prev => ({ ...prev, [idx]: val }));
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-8 h-6 text-center font-mono font-black text-[11px] bg-white dark:bg-card border border-border rounded-md text-foreground outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-2xs"
+                              title="Number of 79x50mm stickers to print"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrderLabelQtys(prev => ({ ...prev, [idx]: labelPrintQty + 1 }));
+                              }}
+                              className="w-6 h-6 flex items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 transition-all font-black text-xs cursor-pointer shadow-2xs"
+                              title="Increase stickers"
+                            >
+                              <Plus className="w-3 h-3 stroke-[3]" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePrintOrderItemLabel(selectedOrder, item, labelPrintQty);
+                              }}
+                              className="w-7 h-6 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-xs cursor-pointer active:scale-95 shrink-0 ml-0.5"
+                              title={`Print ${labelPrintQty} sticker(s) on IDPRT SP410BT`}
+                            >
+                              <Printer className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
                           {selectedOrder.customerType === 'horeca' || selectedOrder.customerType === 'horeca_admin' ? (
                             (() => {
                               const itemScale = parseUnitScale(prod.unit || item.unit);
