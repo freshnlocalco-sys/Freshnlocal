@@ -91,3 +91,11 @@ export function notifyAuthError(error: any) {
   });
   return friendlyMessage;
 }
+
+export function notifyPasswordResetSuccess(email: string) {
+  toast.success(`Password reset email sent to ${email}. Please check your inbox and spam folder!`, {
+    id: 'password-reset-success',
+    duration: 6000,
+    icon: '✉️',
+  });
+}

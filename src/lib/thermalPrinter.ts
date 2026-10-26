@@ -17,6 +17,65 @@ export function formatCurrency(amount: number): string {
   return `₹${(amount || 0).toFixed(2).replace(/\.00$/, '')}`;
 }
 
+/**
+ * Calculates and formats the total weight or units for packing slips
+ * (e.g. 500 gm * 3 = 1.5 Kg, 250 ml * 4 = 1 L, 1 pack * 6 = 6 packs)
+ */
+export function formatItemTotalWeightOrUnits(qty: number, unitStr: string | undefined): string {
+  if (!unitStr) return `${qty}`;
+  const cleanUnit = unitStr.trim();
+
+  const match = cleanUnit.match(/^([\d.]+)\s*(.*)$/);
+  if (match) {
+    const val = parseFloat(match[1]);
+    const unitPart = match[2].trim();
+    if (!isNaN(val) && val > 0) {
+      const totalVal = val * qty;
+      const lowerUnit = unitPart.toLowerCase();
+
+      // Grams to Kg
+      if ((lowerUnit === 'g' || lowerUnit === 'gm' || lowerUnit === 'gram' || lowerUnit === 'grams') && totalVal >= 1000) {
+        const kgVal = totalVal / 1000;
+        return `${kgVal.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} Kg`;
+      }
+      if (lowerUnit === 'g' || lowerUnit === 'gm' || lowerUnit === 'gram' || lowerUnit === 'grams') {
+        return `${totalVal.toFixed(0)} gm`;
+      }
+
+      // Milliliters to Litres
+      if ((lowerUnit === 'ml' || lowerUnit === 'milli' || lowerUnit === 'milliliter' || lowerUnit === 'milliliters') && totalVal >= 1000) {
+        const lVal = totalVal / 1000;
+        return `${lVal.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} L`;
+      }
+      if (lowerUnit === 'ml' || lowerUnit === 'milli' || lowerUnit === 'milliliter' || lowerUnit === 'milliliters') {
+        return `${totalVal.toFixed(0)} ml`;
+      }
+
+      // Kg
+      if (lowerUnit === 'kg' || lowerUnit === 'kgs' || lowerUnit === 'kilo' || lowerUnit === 'kilogram' || lowerUnit === 'kilograms') {
+        return `${totalVal.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} Kg`;
+      }
+
+      // Other unit with number like "1 pack", "1 bunch", "1 box", "1 pc"
+      if (unitPart) {
+        const cleanVal = totalVal.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+        return `${cleanVal} ${totalVal > 1 && !unitPart.endsWith('s') && !['kg', 'gm', 'g', 'ml', 'l'].includes(lowerUnit) ? `${unitPart}s` : unitPart}`;
+      }
+    }
+  }
+
+  // Word-based units: "pack", "bunch", "box", "pc", "bottle"
+  const lower = cleanUnit.toLowerCase();
+  if (lower === 'pack') return `${qty} ${qty > 1 ? 'packs' : 'pack'}`;
+  if (lower === 'bunch') return `${qty} ${qty > 1 ? 'bunches' : 'bunch'}`;
+  if (lower === 'box') return `${qty} ${qty > 1 ? 'boxes' : 'box'}`;
+  if (lower === 'piece' || lower === 'pc') return `${qty} ${qty > 1 ? 'pcs' : 'pc'}`;
+  if (lower === 'bottle') return `${qty} ${qty > 1 ? 'bottles' : 'bottle'}`;
+  if (lower === 'kg' || lower === 'kgs') return `${qty} Kg`;
+
+  return `${qty} ${cleanUnit}`;
+}
+
 export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions = {}): string {
   const {
     paperWidth = '80mm',
@@ -57,6 +116,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
     const unit = prod.unit || prod.selectedUnit || it.unit || it.selectedUnit || '';
     const variantName = prod.variantName || it.variantName || prod.selectedVariant || it.selectedVariant || '';
     const total = qty * price;
+    const totalQtyFormatted = formatItemTotalWeightOrUnits(qty, unit);
 
     return {
       name,
@@ -66,6 +126,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
       unit,
       variantName,
       total,
+      totalQtyFormatted,
     };
   });
 
@@ -81,6 +142,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
 
   const customerName = order.shippingDetails?.name || order.customerName || order.userName || 'Customer';
   const customerPhone = order.shippingDetails?.phone || order.phone || order.customerPhone || 'No phone';
+  const customerEmail = order.shippingDetails?.email || order.customerEmail || order.userEmail || order.email || order.shippingAddress?.email || '';
   const customerAddress = isPickup 
     ? 'STORE PICKUP: Fresh N Local Co. Farm Store' 
     : (order.shippingDetails?.address || order.address || 'No address specified');
@@ -125,6 +187,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
       <div class="bold text-xs uppercase">Customer Details:</div>
       <div class="bold text-sm text-black">${customerName}</div>
       <div class="bold text-sm phone-number">📞 ${customerPhone}</div>
+      ${customerEmail ? `<div class="customer-email">✉️ ${customerEmail}</div>` : ''}
       
       <div class="bold text-xs uppercase" style="margin-top: 4px;">Delivery Address:</div>
       <div class="text-xs address-box">
@@ -164,6 +227,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
                 ${it.unit ? `<span class="unit-badge">${it.unit}</span>` : ''}
                 ${showPrices ? `<span class="unit-rate">(@ ${formatCurrency(it.price)})</span>` : ''}
                 ${it.variantName ? `<span class="variant-text">${it.variantName}</span>` : ''}
+                <span class="total-qty-badge bold">📦 Total: ${it.totalQtyFormatted}</span>
               </div>
             </div>
           `;
@@ -221,23 +285,32 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
       size: ${paperWidth} auto;
       margin: 0;
     }
-    * {
+    .thermal-slip, .thermal-slip * {
       box-sizing: border-box;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    body {
-      margin: 0;
-      padding: 0;
-      background: #fff;
-      color: #000;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
-      font-size: 12px;
-      line-height: 1.25;
+    @media print {
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
     }
     .thermal-slip {
       width: ${widthPx};
       max-width: ${widthMm};
+      margin: 0 auto;
+      padding: 6px 4px 16px 4px;
+      background: #fff;
+      color: #000;
+      page-break-after: always;
+      break-after: page;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+      font-size: 12px;
+      line-height: 1.25;
+    }
       margin: 0 auto;
       padding: 6px 4px 16px 4px;
       background: #fff;
@@ -314,6 +387,13 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
       font-size: 13px;
       letter-spacing: 0.5px;
       margin: 2px 0;
+    }
+    .customer-email {
+      font-size: 11px;
+      font-weight: bold;
+      font-family: monospace;
+      word-break: break-all;
+      margin: 1px 0 3px 0;
     }
     .address-box {
       border-left: 2px solid #000;
@@ -403,6 +483,18 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
       margin-right: 4px;
       font-size: 9.5px;
     }
+    .total-qty-badge {
+      display: inline-block;
+      border: 1.5px solid #000;
+      padding: 0 4px;
+      font-weight: 900;
+      border-radius: 2px;
+      margin-left: 3px;
+      font-size: 10px;
+      background: #f4f4f4;
+      color: #000;
+      letter-spacing: 0.2px;
+    }
     .pack-summary {
       display: flex;
       justify-content: space-between;
@@ -450,19 +542,23 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
  * and invokes the browser native system print dialog without hidden iframe blocks.
  */
 export function dispatchDirectPrint(contentHtml: string, cssStyles: string, jobTitle: string = 'Thermal Print Job'): void {
-  let mount = document.getElementById('thermal-print-container');
-  if (!mount) {
-    mount = document.createElement('div');
-    mount.id = 'thermal-print-container';
-    document.body.appendChild(mount);
+  // Remove any previous print container or print styles
+  const existingMount = document.getElementById('thermal-print-container');
+  if (existingMount && existingMount.parentNode) {
+    existingMount.parentNode.removeChild(existingMount);
+  }
+  const existingStyle = document.getElementById('thermal-print-dynamic-style');
+  if (existingStyle && existingStyle.parentNode) {
+    existingStyle.parentNode.removeChild(existingStyle);
   }
 
-  let styleTag = document.getElementById('thermal-print-dynamic-style') as HTMLStyleElement | null;
-  if (!styleTag) {
-    styleTag = document.createElement('style');
-    styleTag.id = 'thermal-print-dynamic-style';
-    document.head.appendChild(styleTag);
-  }
+  const mount = document.createElement('div');
+  mount.id = 'thermal-print-container';
+  document.body.appendChild(mount);
+
+  const styleTag = document.createElement('style');
+  styleTag.id = 'thermal-print-dynamic-style';
+  document.head.appendChild(styleTag);
 
   styleTag.innerHTML = `
     @media screen {
@@ -497,12 +593,22 @@ export function dispatchDirectPrint(contentHtml: string, cssStyles: string, jobT
   const prevTitle = document.title;
   document.title = jobTitle;
 
+  let cleanedUp = false;
   const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
     document.title = prevTitle;
-    if (mount) mount.innerHTML = '';
+    if (mount && mount.parentNode) {
+      mount.parentNode.removeChild(mount);
+    }
+    if (styleTag && styleTag.parentNode) {
+      styleTag.parentNode.removeChild(styleTag);
+    }
     window.removeEventListener('afterprint', cleanup);
   };
   window.addEventListener('afterprint', cleanup);
+  // Safety timeout cleanup after 2 minutes in case afterprint is suppressed
+  setTimeout(cleanup, 120000);
 
   setTimeout(() => {
     try {
@@ -611,56 +717,59 @@ export function generateQrCodeSvg(text: string, size = 66): string {
   }
 }
 
-export type LabelOrientation = 'horizontal' | 'system_auto' | 'rotate180' | 'rotate90' | 'rotate270' | 'rotated';
+export type LabelOrientation = 'portrait' | 'horizontal' | 'system_auto' | 'rotate180' | 'rotate90' | 'rotate270' | 'rotated';
 
-const LABEL_ORIENTATION_STORAGE_KEY = 'fnl_label_orientation';
+const LABEL_ORIENTATION_STORAGE_KEY = 'fnl_label_orientation_v2';
 
 export function getSavedLabelOrientation(): LabelOrientation {
   try {
     const val = localStorage.getItem(LABEL_ORIENTATION_STORAGE_KEY) as LabelOrientation;
-    if (val && ['horizontal', 'system_auto', 'rotate180', 'rotate90', 'rotate270'].includes(val)) {
+    if (val && ['portrait', 'horizontal', 'system_auto', 'rotate180', 'rotate90', 'rotate270'].includes(val)) {
       return val;
+    }
+    const legacy = localStorage.getItem('fnl_label_orientation') as LabelOrientation;
+    if (legacy && ['system_auto', 'rotate180', 'rotate90', 'rotate270'].includes(legacy)) {
+      return legacy;
     }
   } catch (e) {
     // Ignore error
   }
-  return 'horizontal';
+  return 'portrait';
 }
 
 export function saveLabelOrientation(orientation: LabelOrientation): void {
   try {
     localStorage.setItem(LABEL_ORIENTATION_STORAGE_KEY, orientation);
+    localStorage.setItem('fnl_label_orientation', orientation);
   } catch (e) {
     // Ignore error
   }
 }
 
-export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'): string {
+export function generateLabelStyles(orientation: LabelOrientation = 'portrait'): string {
   const normOrientation = orientation === 'rotated' ? 'rotate90' : orientation;
 
-  let pageRule = 'size: 79mm 50mm; margin: 0mm;';
-  let bodyPrintWidth = 'width: 79mm !important; height: 50mm !important;';
+  let pageRule = 'size: 78mm 50mm; margin: 0mm;';
+  let bodyPrintWidth = 'width: 78mm !important; height: 50mm !important; margin: 0 auto !important;';
   let stickerTransform = '';
   let stickerTransformOrigin = '';
 
   if (normOrientation === 'system_auto') {
-    // Leaves orientation and paper size adjustable in browser/system print dialog
     pageRule = 'size: auto; margin: 0mm;';
     bodyPrintWidth = 'margin: 0 !important; padding: 0 !important;';
   } else if (normOrientation === 'rotate180') {
-    pageRule = 'size: 79mm 50mm; margin: 0mm;';
-    bodyPrintWidth = 'width: 79mm !important; height: 50mm !important;';
+    pageRule = 'size: 78mm 50mm; margin: 0mm;';
     stickerTransform = 'transform: rotate(180deg);';
     stickerTransformOrigin = 'transform-origin: center center;';
   } else if (normOrientation === 'rotate90') {
-    pageRule = 'size: 50mm 79mm; margin: 0mm;';
-    bodyPrintWidth = 'width: 50mm !important; height: 79mm !important;';
+    pageRule = 'size: 50mm 78mm; margin: 0mm;';
+    bodyPrintWidth = 'width: 50mm !important; height: 78mm !important;';
     stickerTransform = 'transform: rotate(90deg) translate(0, -50mm);';
     stickerTransformOrigin = 'transform-origin: top left;';
   } else if (normOrientation === 'rotate270') {
-    pageRule = 'size: 50mm 79mm; margin: 0mm;';
-    bodyPrintWidth = 'width: 50mm !important; height: 79mm !important;';
-    stickerTransform = 'transform: rotate(-90deg) translate(-79mm, 0);';
+    pageRule = 'size: 50mm 78mm; margin: 0mm;';
+    bodyPrintWidth = 'width: 50mm !important; height: 78mm !important;';
+    stickerTransform = 'transform: rotate(-90deg) translate(-78mm, 0);';
     stickerTransformOrigin = 'transform-origin: top left;';
   }
 
@@ -678,10 +787,12 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
         print-color-adjust: exact !important;
       }
       .label-sticker-page {
-        width: 79mm !important;
-        height: 50mm !important;
-        max-width: 79mm !important;
-        max-height: 50mm !important;
+        width: 74mm !important;
+        max-width: 74mm !important;
+        height: 46.5mm !important;
+        max-height: 47mm !important;
+        padding: 1.5mm 3mm !important;
+        margin: 0 auto !important;
         ${stickerTransform ? `${stickerTransform} !important;` : ''}
         ${stickerTransformOrigin ? `${stickerTransformOrigin} !important;` : ''}
         page-break-after: always !important;
@@ -690,37 +801,32 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
         break-inside: avoid !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
-        margin: 0 auto !important;
       }
       .label-sticker-page:last-child {
         page-break-after: avoid !important;
         break-after: avoid !important;
       }
     }
-    * {
+    .label-sticker-page, .label-sticker-page * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
       -webkit-font-smoothing: antialiased;
     }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      color: #000000;
-      background: #ffffff;
-    }
     .label-sticker-page {
-      width: 79mm;
-      height: 50mm;
-      max-height: 50mm;
+      width: 74mm;
+      height: 46.5mm;
+      max-width: 74mm;
+      max-height: 47mm;
       box-sizing: border-box;
-      padding: 2mm 3mm;
+      padding: 1.5mm 3mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
       background: #ffffff;
+      color: #000000;
       position: relative;
       margin: 0 auto;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       ${stickerTransform}
       ${stickerTransformOrigin}
     }
@@ -729,7 +835,7 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       align-items: center;
       justify-content: space-between;
       border-bottom: 1.5px solid #000000;
-      padding-bottom: 0.5mm;
+      padding-bottom: 0.4mm;
       margin-bottom: 0.4mm;
     }
     .label-brand {
@@ -739,12 +845,12 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       letter-spacing: 0.4px;
     }
     .label-order-tag {
-      font-size: 7.5pt;
+      font-size: 7.2pt;
       font-weight: 900;
       font-family: monospace;
       background: #000000;
       color: #ffffff;
-      padding: 0.3mm 1.6mm;
+      padding: 0.2mm 1.5mm;
       border-radius: 2px;
       white-space: nowrap;
     }
@@ -752,13 +858,14 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 7pt;
+      font-size: 6.8pt;
       margin-bottom: 0.4mm;
       font-weight: 700;
       color: #111111;
+      gap: 1mm;
     }
     .label-customer-name {
-      max-width: 48mm;
+      max-width: 42mm;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -766,12 +873,13 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       font-weight: 800;
     }
     .label-dest-badge {
-      font-size: 6.2pt;
+      font-size: 6pt;
       font-weight: 900;
       text-transform: uppercase;
       border: 1px solid #000000;
       padding: 0.2mm 1mm;
       border-radius: 2px;
+      white-space: nowrap;
     }
     .label-hero-row {
       flex: 1;
@@ -781,9 +889,9 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       gap: 2mm;
       border-top: 1px dashed #000000;
       border-bottom: 1px dashed #000000;
-      padding: 0.8mm 0;
+      padding: 0.6mm 0;
       margin: 0.3mm 0;
-      min-height: 22mm;
+      min-height: 20mm;
       overflow: hidden;
     }
     .label-hero-left {
@@ -800,18 +908,18 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       background: #000000;
       color: #ffffff;
       font-weight: 900;
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-family: monospace;
-      padding: 0.2mm 1.8mm;
+      padding: 0.2mm 1.6mm;
       border-radius: 2px;
-      margin-bottom: 0.5mm;
+      margin-bottom: 0.4mm;
       align-self: flex-start;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.3px;
     }
     .label-item-name {
-      font-size: 12.5pt;
+      font-size: 11pt;
       font-weight: 900;
-      line-height: 1.1;
+      line-height: 1.15;
       text-transform: uppercase;
       color: #000000;
       max-height: 12mm;
@@ -819,13 +927,13 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       word-break: break-word;
     }
     .label-item-meta {
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 700;
       color: #222222;
-      margin-top: 0.5mm;
+      margin-top: 0.4mm;
       display: flex;
       align-items: center;
-      gap: 2mm;
+      gap: 1.8mm;
       flex-wrap: wrap;
     }
     .label-hero-qr {
@@ -834,7 +942,7 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      padding: 0.4mm 1mm;
+      padding: 0.2mm 1mm;
       background: #ffffff;
       border-left: 1px dotted #888888;
     }
@@ -845,7 +953,7 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       color: #000000;
       text-align: center;
       margin-top: 0.3mm;
-      max-width: 20mm;
+      max-width: 22mm;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -865,16 +973,16 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 0.6mm;
-      font-size: 7pt;
+      padding-top: 0.4mm;
+      font-size: 6.8pt;
       font-weight: 700;
     }
     .label-sticker-counter {
-      font-size: 8pt;
+      font-size: 7.5pt;
       font-weight: 900;
       font-family: monospace;
       border: 1.5px solid #000000;
-      padding: 0.4mm 2mm;
+      padding: 0.3mm 1.8mm;
       border-radius: 2px;
       background: #ffffff;
       white-space: nowrap;
@@ -901,7 +1009,7 @@ export function generateSingleItemLabelHtml(
 
   // Generate QR code encoding both Item Code and Order ID (plus product name)
   const qrText = `Order: ${orderNum}\nItem Code: ${itemCode || 'N/A'}\nItem: ${itemName}`;
-  const qrSvg = generateQrCodeSvg(qrText, 62);
+  const qrSvg = generateQrCodeSvg(qrText, 46);
 
   return `
     <div class="label-sticker-page">
@@ -937,7 +1045,7 @@ export function generateSingleItemLabelHtml(
 
       <!-- Footer Row: Date & Sticker Counter -->
       <div class="label-footer">
-        <span style="font-size:6.8pt; font-family:monospace; color:#333;">${dateStr} • Fresh Produce</span>
+        <span style="font-size:6.5pt; font-family:monospace; color:#333;">${dateStr} • Fresh Produce</span>
         <div class="label-sticker-counter">
           STICKER ${index} OF ${totalInBatch}
         </div>
@@ -965,7 +1073,7 @@ export function printItemLabels(
   dispatchDirectPrint(
     pagesHtml,
     generateLabelStyles(actualOrientation),
-    'Sticker Labels 79x50mm - IDPRT SP410BT'
+    'Sticker Labels 78x50mm - IDPRT SP410BT'
   );
 }
 

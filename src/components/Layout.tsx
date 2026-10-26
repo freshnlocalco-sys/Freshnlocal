@@ -26,6 +26,7 @@ export function Layout() {
   const [logoError, setLogoError] = useState(false);
   const cartItemsCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   
   React.useEffect(() => {
@@ -33,7 +34,14 @@ export function Layout() {
   }, [fetchOffer]);
   
   React.useEffect(() => {
-    const handleOpenAuth = () => setIsAuthModalOpen(true);
+    const handleOpenAuth = (e?: any) => {
+      if (e?.detail?.mode) {
+        setAuthModalMode(e.detail.mode);
+      } else {
+        setAuthModalMode('login');
+      }
+      setIsAuthModalOpen(true);
+    };
     window.addEventListener('open-auth-modal', handleOpenAuth);
     return () => window.removeEventListener('open-auth-modal', handleOpenAuth);
   }, []);
@@ -581,7 +589,11 @@ export function Layout() {
       </footer>
 
       <AdminNotifier />
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        defaultMode={authModalMode}
+      />
       <LocationSelectorModal />
       <StickyMiniCartBar />
       <FreshiFloatingChatbot />

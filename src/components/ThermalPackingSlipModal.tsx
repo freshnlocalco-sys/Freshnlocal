@@ -147,7 +147,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
               </h3>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">
                 {activeTab === 'labels' 
-                  ? 'IDPRT SP410BT • 79mm (W) × 50mm (H) Continuous/Gap Stickers' 
+                  ? 'IDPRT SP410BT • 78mm (W) × 50mm (H) Sticker Labels' 
                   : 'Optimized for 80mm & 58mm Thermal Receipt Printers'}
               </p>
             </div>
@@ -185,7 +185,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
             }`}
           >
             <Tag className="w-3.5 h-3.5" />
-            Item Labels (79×50mm Stickers)
+            Item Labels (78×50mm Stickers)
             <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-primary/15 text-primary font-mono font-bold">
               {rawItems.length}
             </span>
@@ -317,22 +317,22 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-2.5 py-1 bg-neutral-900 text-white rounded-lg text-[9px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  IDPRT SP410BT (79×50mm)
+                  IDPRT SP410BT (78×50mm)
                 </span>
 
                 {/* Print Orientation Selector */}
                 <div className="inline-flex rounded-lg border border-border bg-card p-0.5 shadow-2xs gap-0.5">
                   <button
                     type="button"
-                    onClick={() => handleOrientationChange('horizontal')}
+                    onClick={() => handleOrientationChange('portrait')}
                     className={`px-2 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
-                      labelOrientation === 'horizontal'
+                      labelOrientation === 'portrait'
                         ? 'bg-primary text-primary-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
-                    title="Horizontal 79×50mm (Default - Prints horizontally on 1 sticker)"
+                    title="Default 78×50mm (Sized 74×46.5mm safe from right edge cut)"
                   >
-                    ↔️ Horizontal (Default)
+                    📱 Default (78×50mm)
                   </button>
                   <button
                     type="button"
@@ -354,7 +354,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                         ? 'bg-primary text-primary-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
-                    title="Rotates sticker 180 degrees (Inverted Horizontal)"
+                    title="Rotates sticker 180 degrees (Inverted Portrait)"
                   >
                     🔄 180°
                   </button>
@@ -366,7 +366,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                         ? 'bg-primary text-primary-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
-                    title="Rotate 90 degrees clockwise (for rolls fed along 50mm width)"
+                    title="Rotate 90 degrees clockwise"
                   >
                     90°
                   </button>
@@ -430,25 +430,25 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                       key={idx}
                       className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 ${
                         isSelected
-                          ? 'bg-card border-primary/60 shadow-xs ring-1 ring-primary/20'
-                          : 'bg-card/85 border-border hover:border-border/80'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm ring-1 ring-emerald-500/30'
+                          : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 shadow-2xs'
                       }`}
                     >
                       {/* Left Item Information */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-extrabold text-xs text-foreground uppercase truncate max-w-[170px]" title={itemName}>
+                          <span className="font-black text-xs text-neutral-900 dark:text-neutral-50 uppercase truncate max-w-[170px]" title={itemName}>
                             {itemName}
                           </span>
                           {itemCode && (
-                            <span className="px-1.5 py-0.2 rounded bg-black text-white text-[9px] font-mono font-black tracking-wider shadow-2xs">
+                            <span className="px-1.5 py-0.2 rounded bg-neutral-900 dark:bg-black text-white text-[9px] font-mono font-black tracking-wider shadow-2xs">
                               #{itemCode.replace(/^#/, '')}
                             </span>
                           )}
                         </div>
-                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
-                          {unit ? <span className="font-semibold text-foreground/80">{unit} • </span> : ''}
-                          Order: <b className="text-foreground">{orderQty}</b>
+                        <p className="text-[10px] text-neutral-600 dark:text-neutral-300 font-medium mt-0.5">
+                          {unit ? <span className="font-semibold text-neutral-700 dark:text-neutral-200">{unit} • </span> : ''}
+                          Order: <b className="text-neutral-900 dark:text-neutral-100">{orderQty}</b>
                         </p>
                       </div>
 
@@ -460,7 +460,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                           className={`px-1.5 py-1 rounded-md text-[8.5px] uppercase font-bold tracking-wider cursor-pointer border transition-colors ${
                             isSelected
                               ? 'bg-primary/10 text-primary border-primary/30'
-                              : 'bg-secondary text-muted-foreground border-border hover:text-foreground'
+                              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:text-foreground'
                           }`}
                           title="Preview this sticker"
                         >
@@ -468,7 +468,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                         </button>
 
                         {/* Visible Stepper with Red (-) and Green (+) buttons */}
-                        <div className="inline-flex items-center bg-secondary border border-border rounded-lg p-0.5 gap-0.5 shadow-2xs">
+                        <div className="inline-flex items-center bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg p-0.5 gap-0.5 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => handleQtyChange(idx, printQty - 1)}
@@ -484,7 +484,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                             max="999"
                             value={printQty}
                             onChange={(e) => handleQtyChange(idx, parseInt(e.target.value) || 1)}
-                            className="w-8 h-6 text-center font-mono font-black text-[11px] bg-white dark:bg-card border border-border rounded text-foreground outline-none shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-8 h-6 text-center font-mono font-black text-[11px] bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded text-neutral-900 dark:text-neutral-100 outline-none shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             title="Enter number of stickers"
                           />
                           <button
@@ -518,24 +518,24 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                 )}
               </div>
 
-              {/* Right Column: Live 79x50mm Sticker Preview */}
+              {/* Right Column: Live Sticker Preview */}
               <div className="flex-1 p-4 sm:p-5 flex flex-col items-center justify-start overflow-y-auto bg-neutral-100/50 dark:bg-neutral-900/50">
                 <div className="w-full flex items-center justify-between mb-2 max-w-[320px]">
                   <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Tag className="w-3 h-3 text-primary" /> 79×50mm Horizontal Preview
+                    <Tag className="w-3 h-3 text-primary" /> 78×50mm Sticker Preview (Default)
                   </span>
                   <span className="text-[9px] font-mono text-muted-foreground">
                     1:1 Thermal Ratio
                   </span>
                 </div>
 
-                {/* 79mm x 50mm Visual Container */}
+                {/* Sticker Visual Container */}
                 <div className="w-full flex flex-col items-center justify-center py-1">
                   <div
                     className="bg-white text-black shadow-xl rounded-md p-0 overflow-hidden border-2 border-dashed border-neutral-400 relative transition-all"
                     style={{
-                      width: (labelOrientation === 'rotate90' || labelOrientation === 'rotate270' || (labelOrientation as any) === 'rotated') ? '189px' : '298px',
-                      height: (labelOrientation === 'rotate90' || labelOrientation === 'rotate270' || (labelOrientation as any) === 'rotated') ? '298px' : '189px',
+                      width: (labelOrientation === 'rotate90' || labelOrientation === 'rotate270') ? '189px' : '295px',
+                      height: (labelOrientation === 'rotate90' || labelOrientation === 'rotate270') ? '295px' : '189px',
                     }}
                   >
                     <style dangerouslySetInnerHTML={{ __html: labelPreviewStyles }} />
@@ -555,11 +555,11 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                           ? '90° Clockwise'
                           : labelOrientation === 'rotate270'
                           ? '270° Counter-Clockwise'
-                          : '↔️ Horizontal (Default)'}
+                          : '📱 Default (78×50mm)'}
                       </span>
                     </p>
                     <p className="text-[8.5px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                      ✓ QR Code encodes Order ID & Item Code on right
+                      ✓ Sized 74×46.5mm inside 78×50mm sticker (Right side protected with safety margin)
                     </p>
                   </div>
 
@@ -570,9 +570,9 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                       <span>IDPRT Sticker Print Guide</span>
                     </div>
                     <ul className="text-[9px] text-muted-foreground leading-tight space-y-0.5 list-disc list-inside">
-                      <li>Use <b>↔️ Horizontal (Default)</b> to print horizontally on 1 sticker (79×50mm).</li>
-                      <li>Select <b>⚙️ System Adjustable</b> to adjust <b>Landscape / Portrait</b> in the print preview.</li>
-                      <li>In print settings, ensure <b>Margins: None</b> and Paper Size is <b>79×50mm</b> (or 3×2").</li>
+                      <li>Use <b>📱 Default (78×50mm)</b> for IDPRT printer to fit 78×50mm sticker without right-side cutting.</li>
+                      <li>Select <b>⚙️ System Adjustable</b> to adjust <b>Portrait / Landscape</b> in print preview.</li>
+                      <li>In print settings, ensure <b>Margins: None</b> and Paper Size is <b>78×50mm</b> (or 3×2").</li>
                       <li>Tip: Press <kbd className="px-1 py-0.2 bg-card border border-border rounded text-[8px] font-mono font-bold">Ctrl+Shift+P</kbd> for the Windows driver dialog.</li>
                     </ul>
                   </div>
