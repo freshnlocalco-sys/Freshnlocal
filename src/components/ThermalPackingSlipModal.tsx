@@ -9,7 +9,9 @@ import {
   generateSingleItemLabelHtml,
   generateLabelStyles,
   ItemLabelData,
-  LabelOrientation
+  LabelOrientation,
+  getSavedLabelOrientation,
+  saveLabelOrientation
 } from '../lib/thermalPrinter';
 import { useProducts } from '../store/useProducts';
 import toast from 'react-hot-toast';
@@ -26,7 +28,12 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
   const [paperWidth, setPaperWidth] = useState<'80mm' | '58mm'>('80mm');
   const [showPrices, setShowPrices] = useState(true);
   const [includeCheckboxes, setIncludeCheckboxes] = useState(true);
-  const [labelOrientation, setLabelOrientation] = useState<LabelOrientation>('horizontal');
+  const [labelOrientation, setLabelOrientation] = useState<LabelOrientation>(() => getSavedLabelOrientation());
+
+  const handleOrientationChange = (newOrientation: LabelOrientation) => {
+    setLabelOrientation(newOrientation);
+    saveLabelOrientation(newOrientation);
+  };
   
   // Manage printing quantities for each order item (defaulted to item.quantity)
   const [itemPrintQuantities, setItemPrintQuantities] = useState<Record<number, number>>({});
@@ -317,31 +324,43 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                 <div className="inline-flex rounded-lg border border-border bg-card p-0.5 shadow-2xs gap-0.5">
                   <button
                     type="button"
-                    onClick={() => setLabelOrientation('horizontal')}
+                    onClick={() => handleOrientationChange('horizontal')}
                     className={`px-2 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
                       labelOrientation === 'horizontal'
                         ? 'bg-primary text-primary-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
-                    title="Standard Horizontal 0° (79mm width × 50mm height)"
+                    title="Horizontal 79×50mm (Default - Prints horizontally on 1 sticker)"
                   >
-                    ↔️ 0° Normal
+                    ↔️ Horizontal (Default)
                   </button>
                   <button
                     type="button"
-                    onClick={() => setLabelOrientation('rotate180')}
+                    onClick={() => handleOrientationChange('system_auto')}
                     className={`px-2 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
+                      labelOrientation === 'system_auto'
+                        ? 'bg-primary text-primary-foreground shadow-2xs'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="System Adjustable: Unlocks Portrait / Landscape dropdown in browser print options"
+                  >
+                    ⚙️ System Adjustable
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOrientationChange('rotate180')}
+                    className={`px-1.5 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
                       labelOrientation === 'rotate180'
                         ? 'bg-primary text-primary-foreground shadow-2xs'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
-                    title="Rotates sticker 180 degrees (Inverted Horizontal for printers feeding opposite direction)"
+                    title="Rotates sticker 180 degrees (Inverted Horizontal)"
                   >
-                    🔄 180° Invert
+                    🔄 180°
                   </button>
                   <button
                     type="button"
-                    onClick={() => setLabelOrientation('rotate90')}
+                    onClick={() => handleOrientationChange('rotate90')}
                     className={`px-1.5 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
                       labelOrientation === 'rotate90' || (labelOrientation as any) === 'rotated'
                         ? 'bg-primary text-primary-foreground shadow-2xs'
@@ -353,7 +372,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                   </button>
                   <button
                     type="button"
-                    onClick={() => setLabelOrientation('rotate270')}
+                    onClick={() => handleOrientationChange('rotate270')}
                     className={`px-1.5 py-0.5 text-[9.5px] font-black uppercase rounded-md transition-all cursor-pointer ${
                       labelOrientation === 'rotate270'
                         ? 'bg-primary text-primary-foreground shadow-2xs'
@@ -515,25 +534,47 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                   <div
                     className="bg-white text-black shadow-xl rounded-md p-0 overflow-hidden border-2 border-dashed border-neutral-400 relative transition-all"
                     style={{
-                      width: '298px', // ~79mm at 96 DPI
-                      height: '189px', // ~50mm at 96 DPI
+                      width: (labelOrientation === 'rotate90' || labelOrientation === 'rotate270' || (labelOrientation as any) === 'rotated') ? '189px' : '298px',
+                      height: (labelOrientation === 'rotate90' || labelOrientation === 'rotate270' || (labelOrientation as any) === 'rotated') ? '298px' : '189px',
                     }}
                   >
                     <style dangerouslySetInnerHTML={{ __html: labelPreviewStyles }} />
                     <div dangerouslySetInnerHTML={{ __html: labelPreviewHtml }} />
                   </div>
 
-                  <div className="mt-2.5 max-w-[300px] text-center space-y-1">
+                  <div className="mt-2.5 max-w-[340px] text-center space-y-1">
                     <p className="text-[9.5px] text-muted-foreground">
                       Previewing 1 of {currentItemPreviewQty} sticker(s) for{' '}
                       <span className="font-bold text-foreground">IDPRT SP410BT</span> •{' '}
                       <span className="font-black text-primary font-mono">
-                        {labelOrientation === 'rotate180' ? '180° Inverted' : labelOrientation === 'rotate90' || (labelOrientation as any) === 'rotated' ? '90° Clockwise' : labelOrientation === 'rotate270' ? '270° Counter-Clockwise' : '0° Normal Horizontal'}
+                        {labelOrientation === 'system_auto'
+                          ? '⚙️ System Adjustable'
+                          : labelOrientation === 'rotate180'
+                          ? '180° Inverted'
+                          : labelOrientation === 'rotate90' || (labelOrientation as any) === 'rotated'
+                          ? '90° Clockwise'
+                          : labelOrientation === 'rotate270'
+                          ? '270° Counter-Clockwise'
+                          : '↔️ Horizontal (Default)'}
                       </span>
                     </p>
                     <p className="text-[8.5px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                       ✓ QR Code encodes Order ID & Item Code on right
                     </p>
+                  </div>
+
+                  {/* IDPRT Printer Quick Guide */}
+                  <div className="mt-2.5 max-w-[340px] text-left space-y-1 bg-amber-500/10 border border-amber-500/25 p-2 rounded-xl text-foreground">
+                    <div className="text-[9.5px] font-black uppercase text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                      <span>🖨️</span>
+                      <span>IDPRT Sticker Print Guide</span>
+                    </div>
+                    <ul className="text-[9px] text-muted-foreground leading-tight space-y-0.5 list-disc list-inside">
+                      <li>Use <b>↔️ Horizontal (Default)</b> to print horizontally on 1 sticker (79×50mm).</li>
+                      <li>Select <b>⚙️ System Adjustable</b> to adjust <b>Landscape / Portrait</b> in the print preview.</li>
+                      <li>In print settings, ensure <b>Margins: None</b> and Paper Size is <b>79×50mm</b> (or 3×2").</li>
+                      <li>Tip: Press <kbd className="px-1 py-0.2 bg-card border border-border rounded text-[8px] font-mono font-bold">Ctrl+Shift+P</kbd> for the Windows driver dialog.</li>
+                    </ul>
                   </div>
                 </div>
               </div>

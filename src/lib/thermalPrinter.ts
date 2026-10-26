@@ -488,8 +488,8 @@ export function dispatchDirectPrint(contentHtml: string, cssStyles: string, jobT
         width: 100% !important;
         background: #ffffff !important;
       }
-      ${cssStyles}
     }
+    ${cssStyles}
   `;
 
   mount.innerHTML = contentHtml;
@@ -611,7 +611,29 @@ export function generateQrCodeSvg(text: string, size = 66): string {
   }
 }
 
-export type LabelOrientation = 'horizontal' | 'rotate180' | 'rotate90' | 'rotate270' | 'rotated';
+export type LabelOrientation = 'horizontal' | 'system_auto' | 'rotate180' | 'rotate90' | 'rotate270' | 'rotated';
+
+const LABEL_ORIENTATION_STORAGE_KEY = 'fnl_label_orientation';
+
+export function getSavedLabelOrientation(): LabelOrientation {
+  try {
+    const val = localStorage.getItem(LABEL_ORIENTATION_STORAGE_KEY) as LabelOrientation;
+    if (val && ['horizontal', 'system_auto', 'rotate180', 'rotate90', 'rotate270'].includes(val)) {
+      return val;
+    }
+  } catch (e) {
+    // Ignore error
+  }
+  return 'horizontal';
+}
+
+export function saveLabelOrientation(orientation: LabelOrientation): void {
+  try {
+    localStorage.setItem(LABEL_ORIENTATION_STORAGE_KEY, orientation);
+  } catch (e) {
+    // Ignore error
+  }
+}
 
 export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'): string {
   const normOrientation = orientation === 'rotated' ? 'rotate90' : orientation;
@@ -621,7 +643,11 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
   let stickerTransform = '';
   let stickerTransformOrigin = '';
 
-  if (normOrientation === 'rotate180') {
+  if (normOrientation === 'system_auto') {
+    // Leaves orientation and paper size adjustable in browser/system print dialog
+    pageRule = 'size: auto; margin: 0mm;';
+    bodyPrintWidth = 'margin: 0 !important; padding: 0 !important;';
+  } else if (normOrientation === 'rotate180') {
     pageRule = 'size: 79mm 50mm; margin: 0mm;';
     bodyPrintWidth = 'width: 79mm !important; height: 50mm !important;';
     stickerTransform = 'transform: rotate(180deg);';
@@ -664,6 +690,7 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
         break-inside: avoid !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+        margin: 0 auto !important;
       }
       .label-sticker-page:last-child {
         page-break-after: avoid !important;
@@ -693,6 +720,7 @@ export function generateLabelStyles(orientation: LabelOrientation = 'horizontal'
       overflow: hidden;
       background: #ffffff;
       position: relative;
+      margin: 0 auto;
       ${stickerTransform}
       ${stickerTransformOrigin}
     }
@@ -920,8 +948,9 @@ export function generateSingleItemLabelHtml(
 
 export function printItemLabels(
   labels: ItemLabelData | ItemLabelData[],
-  orientation: LabelOrientation = 'horizontal'
+  orientation?: LabelOrientation
 ): void {
+  const actualOrientation = orientation || getSavedLabelOrientation();
   const items = Array.isArray(labels) ? labels : [labels];
   if (items.length === 0) return;
 
@@ -935,7 +964,7 @@ export function printItemLabels(
 
   dispatchDirectPrint(
     pagesHtml,
-    generateLabelStyles(orientation),
+    generateLabelStyles(actualOrientation),
     'Sticker Labels 79x50mm - IDPRT SP410BT'
   );
 }
