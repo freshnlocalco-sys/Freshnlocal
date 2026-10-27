@@ -535,118 +535,111 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
 }
 
 /**
- * Triggers printing of a single order thermal packing slip
- */
-/**
- * Direct print dispatcher that renders content in a dedicated print container
- * and invokes the browser native system print dialog without hidden iframe blocks.
+ * Direct print dispatcher that renders content inside an isolated hidden iframe
+ * so that the browser does not need to parse or freeze the main React app DOM.
+ * This makes print preview open significantly faster and prevents main window layout shifts.
  */
 export function dispatchDirectPrint(contentHtml: string, cssStyles: string, jobTitle: string = 'Thermal Print Job'): void {
-  // Remove any previous print container or print styles
-  const existingMount = document.getElementById('thermal-print-container');
-  if (existingMount && existingMount.parentNode) {
-    existingMount.parentNode.removeChild(existingMount);
+  // Remove any previous print iframe or legacy print elements
+  const existingIframe = document.getElementById('thermal-print-iframe');
+  if (existingIframe && existingIframe.parentNode) {
+    existingIframe.parentNode.removeChild(existingIframe);
   }
-  const existingStyle = document.getElementById('thermal-print-dynamic-style');
-  if (existingStyle && existingStyle.parentNode) {
-    existingStyle.parentNode.removeChild(existingStyle);
+  const legacyMount = document.getElementById('thermal-print-container');
+  if (legacyMount && legacyMount.parentNode) {
+    legacyMount.parentNode.removeChild(legacyMount);
+  }
+  const legacyStyle = document.getElementById('thermal-print-dynamic-style');
+  if (legacyStyle && legacyStyle.parentNode) {
+    legacyStyle.parentNode.removeChild(legacyStyle);
   }
 
-  const mount = document.createElement('div');
-  mount.id = 'thermal-print-container';
-  document.body.appendChild(mount);
+  // Create isolated invisible iframe to avoid freezing or parsing the main app DOM
+  const iframe = document.createElement('iframe');
+  iframe.id = 'thermal-print-iframe';
+  iframe.setAttribute('style', 'position:fixed; top:0; left:0; width:0; height:0; border:0; visibility:hidden; z-index:-999;');
+  document.body.appendChild(iframe);
 
-  const styleTag = document.createElement('style');
-  styleTag.id = 'thermal-print-dynamic-style';
-  document.head.appendChild(styleTag);
+  const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+  if (!iframeDoc) {
+    console.error('Failed to access iframe document for printing');
+    return;
+  }
 
-  styleTag.innerHTML = `
-    @media screen {
-      #thermal-print-container {
-        display: none !important;
-      }
-    }
-    @media print {
-      body > *:not(#thermal-print-container),
-      #root {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        max-height: 0 !important;
-        overflow: hidden !important;
-      }
-      #thermal-print-container {
-        display: block !important;
-        visibility: visible !important;
-        position: static !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        background: #ffffff !important;
-      }
-    }
-    ${cssStyles}
+  const fullHtml = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>${jobTitle}</title>
+        <style>
+          *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          html, body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            color: #000000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          ${cssStyles}
+        </style>
+      </head>
+      <body>
+        ${contentHtml}
+      </body>
+    </html>
   `;
 
-  mount.innerHTML = contentHtml;
+  iframeDoc.open();
+  iframeDoc.write(fullHtml);
+  iframeDoc.close();
 
-  const prevTitle = document.title;
-  document.title = jobTitle;
+  const iframeWin = iframe.contentWindow;
+  if (!iframeWin) return;
 
   let cleanedUp = false;
   const cleanup = () => {
     if (cleanedUp) return;
     cleanedUp = true;
-    document.title = prevTitle;
-    if (mount && mount.parentNode) {
-      mount.parentNode.removeChild(mount);
-    }
-    if (styleTag && styleTag.parentNode) {
-      styleTag.parentNode.removeChild(styleTag);
-    }
-    window.removeEventListener('afterprint', cleanup);
+    try {
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+    } catch (_) {}
   };
-  window.addEventListener('afterprint', cleanup);
-  // Safety timeout cleanup after 2 minutes in case afterprint is suppressed
-  setTimeout(cleanup, 120000);
 
+  iframeWin.addEventListener('afterprint', cleanup);
+  // Safety timeout cleanup after 60 seconds
+  setTimeout(cleanup, 60000);
+
+  // Allow iframe layout to finish and trigger print dialog
   setTimeout(() => {
     try {
-      window.focus();
-      window.print();
+      iframeWin.focus();
+      iframeWin.print();
     } catch (err) {
-      console.warn('Direct window.print error, attempting popup fallback:', err);
+      console.warn('Iframe print failed, falling back to window.open:', err);
       try {
         const win = window.open('', '_blank');
         if (win) {
           win.document.open();
-          win.document.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="utf-8" />
-                <title>${jobTitle}</title>
-                <style>${cssStyles}</style>
-              </head>
-              <body>
-                ${contentHtml}
-                <script>
-                  window.onload = function() {
-                    window.focus();
-                    window.print();
-                  };
-                </script>
-              </body>
-            </html>
-          `);
+          win.document.write(fullHtml);
           win.document.close();
+          win.focus();
+          win.print();
         }
       } catch (fallbackErr) {
-        console.error('Fallback window.open failed:', fallbackErr);
+        console.error('Fallback print failed:', fallbackErr);
       }
     }
   }, 100);
 }
+
 
 /**
  * Triggers printing of a single order thermal packing slip
@@ -837,6 +830,7 @@ export function generateLabelStyles(orientation: LabelOrientation = 'portrait'):
       border-bottom: 1.5px solid #000000;
       padding-bottom: 0.4mm;
       margin-bottom: 0.4mm;
+      padding-right: 2mm;
     }
     .label-brand {
       font-size: 8pt;
@@ -845,14 +839,16 @@ export function generateLabelStyles(orientation: LabelOrientation = 'portrait'):
       letter-spacing: 0.4px;
     }
     .label-order-tag {
-      font-size: 7.2pt;
+      font-size: 7.5pt;
       font-weight: 900;
       font-family: monospace;
-      background: #000000;
-      color: #ffffff;
-      padding: 0.2mm 1.5mm;
-      border-radius: 2px;
+      background: #ffffff;
+      color: #000000;
+      border: 1.2px solid #000000;
+      padding: 0.2mm 1.8mm;
+      border-radius: 3px;
       white-space: nowrap;
+      letter-spacing: 0.3px;
     }
     .label-sub-row {
       display: flex;
@@ -863,6 +859,7 @@ export function generateLabelStyles(orientation: LabelOrientation = 'portrait'):
       font-weight: 700;
       color: #111111;
       gap: 1mm;
+      padding-right: 2mm;
     }
     .label-customer-name {
       max-width: 42mm;
@@ -905,14 +902,15 @@ export function generateLabelStyles(orientation: LabelOrientation = 'portrait'):
     .label-code-badge {
       display: inline-flex;
       align-items: center;
-      background: #000000;
-      color: #ffffff;
+      background: #ffffff;
+      color: #000000;
+      border: 1.2px solid #000000;
       font-weight: 900;
       font-size: 8pt;
       font-family: monospace;
-      padding: 0.2mm 1.6mm;
-      border-radius: 2px;
-      margin-bottom: 0.4mm;
+      padding: 0.2mm 1.8mm;
+      border-radius: 3px;
+      margin-bottom: 0.6mm;
       align-self: flex-start;
       letter-spacing: 0.3px;
     }
@@ -942,7 +940,8 @@ export function generateLabelStyles(orientation: LabelOrientation = 'portrait'):
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      padding: 0.2mm 1mm;
+      padding: 0.2mm 1.5mm;
+      margin-right: 3.5mm;
       background: #ffffff;
       border-left: 1px dotted #888888;
     }
@@ -963,11 +962,12 @@ export function generateLabelStyles(orientation: LabelOrientation = 'portrait'):
       font-family: monospace;
       font-weight: 900;
       color: #000000;
-      background: #f0f0f0;
+      background: #ffffff;
+      border: 1px solid #777777;
       border-radius: 2px;
-      padding: 0 1.5px;
+      padding: 0.2px 2px;
       text-align: center;
-      margin-top: 0.2mm;
+      margin-top: 0.3mm;
     }
     .label-footer {
       display: flex;
@@ -1005,7 +1005,7 @@ export function generateSingleItemLabelHtml(
     ? `₹${Number(labelData.price).toFixed(2).replace(/\.00$/, '')}` 
     : '';
   const isPickup = labelData.deliveryType === 'pickup' || labelData.address?.includes('Store Pickup');
-  const dateStr = labelData.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+  const dateStr = labelData.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
   // Generate QR code encoding both Item Code and Order ID (plus product name)
   const qrText = `Order: ${orderNum}\nItem Code: ${itemCode || 'N/A'}\nItem: ${itemName}`;
@@ -1032,7 +1032,6 @@ export function generateSingleItemLabelHtml(
           <div class="label-item-name">${itemName}</div>
           <div class="label-item-meta">
             ${unit ? `<span>Pack: <b>${unit}</b></span>` : ''}
-            ${price ? `<span>Rate: <b>${price}</b></span>` : ''}
             <span>Order Qty: <b>${labelData.orderQty || 1}</b></span>
           </div>
         </div>
@@ -1043,12 +1042,10 @@ export function generateSingleItemLabelHtml(
         </div>
       </div>
 
-      <!-- Footer Row: Date & Sticker Counter -->
+      <!-- Footer Row: Date & Produce Guarantee -->
       <div class="label-footer">
-        <span style="font-size:6.5pt; font-family:monospace; color:#333;">${dateStr} • Fresh Produce</span>
-        <div class="label-sticker-counter">
-          STICKER ${index} OF ${totalInBatch}
-        </div>
+        <span style="font-size:6.8pt; font-family:monospace; color:#222; font-weight:800;">Date: ${dateStr}</span>
+        <span style="font-size:6.2pt; font-weight:900; font-family:monospace; color:#222; letter-spacing:0.3px; text-transform:uppercase;">Fresh Produce • Verified</span>
       </div>
     </div>
   `;
@@ -1121,7 +1118,8 @@ export function extractItemLabelData(
     price,
     orderQty,
     printQty: actualPrintQty,
-    date: order?.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+    // Always use today's printing date for sticker labels (never order creation date)
+    date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
   };
 }
 

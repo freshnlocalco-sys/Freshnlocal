@@ -131,7 +131,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className={`bg-secondary border border-border rounded-2xl w-full ${activeTab === 'labels' ? 'max-w-4xl' : 'max-w-xl'} max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative transition-all duration-200`}>
+      <div className={`bg-secondary border border-border rounded-2xl w-full ${activeTab === 'labels' ? 'max-w-5xl' : 'max-w-2xl'} max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative transition-all duration-200`}>
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between bg-card shrink-0">
           <div className="flex items-center gap-2.5">
@@ -402,7 +402,7 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
             {/* Split View: Left List of Items (Properly small) + Right Live 79x50mm Sticker Preview */}
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-neutral-50 dark:bg-neutral-950">
               {/* Left Column: Items List (Compact & small) */}
-              <div className="w-full md:w-[360px] lg:w-[380px] shrink-0 border-b md:border-b-0 md:border-r border-border overflow-y-auto p-3 space-y-2">
+              <div className="w-full md:w-[380px] lg:w-[420px] shrink-0 border-b md:border-b-0 md:border-r border-border overflow-y-auto p-3 space-y-2">
                 <div className="flex items-center justify-between px-1 mb-0.5">
                   <span className="text-[9.5px] font-black uppercase tracking-wider text-muted-foreground">
                     Items List ({rawItems.length})
@@ -437,11 +437,11 @@ export function ThermalPackingSlipModal({ order, isOpen, onClose }: ThermalPacki
                       {/* Left Item Information */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-black text-xs text-neutral-900 dark:text-neutral-50 uppercase truncate max-w-[170px]" title={itemName}>
+                          <span className="font-black text-xs text-neutral-900 dark:text-neutral-50 uppercase break-words leading-tight" title={itemName}>
                             {itemName}
                           </span>
                           {itemCode && (
-                            <span className="px-1.5 py-0.2 rounded bg-neutral-900 dark:bg-black text-white text-[9px] font-mono font-black tracking-wider shadow-2xs">
+                            <span className="px-1.5 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 text-[9px] font-mono font-black tracking-wider shadow-2xs">
                               #{itemCode.replace(/^#/, '')}
                             </span>
                           )}

@@ -4859,7 +4859,7 @@ export function AdminDashboard() {
                               type="button"
                               onClick={() => setOrderForThermalPrint({ ...order, defaultTab: 'labels' })}
                               className="text-[8px] uppercase tracking-wider text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-300/80 px-2 py-0.5 rounded-md text-center font-black flex items-center gap-1 shadow-2xs cursor-pointer"
-                              title="Print 79x50mm Item Sticker Labels on IDPRT SP410BT"
+                              title="Print 78x50mm Item Sticker Labels on IDPRT SP410BT"
                             >
                               <Tag className="w-2.5 h-2.5 text-blue-600" /> Labels
                             </button>
@@ -4873,7 +4873,7 @@ export function AdminDashboard() {
                           <span className="text-muted-foreground font-mono text-[10px] sm:text-xs tracking-wider block mt-0.5 font-bold">{order.shippingDetails?.phone || 'No phone'}</span>
                           <span className="text-muted-foreground text-[8px] sm:text-[9px] block mt-1 leading-snug">{order.shippingDetails?.address?.includes('Store Pickup') ? 'STORE PICKUP' : (order.shippingDetails?.address || 'No address provided')}</span>
                         </td>
-                        <td className="p-3 sm:p-4 md:p-5 leading-normal max-w-[220px] whitespace-normal">
+                        <td className="p-3 sm:p-4 md:p-5 leading-normal min-w-[240px] max-w-sm whitespace-normal">
                           <div className="space-y-1">
                             {order.items && order.items.length > 0 ? (
                               <div className="flex flex-col gap-0.5">
@@ -4887,7 +4887,7 @@ export function AdminDashboard() {
                                   }
                                   return (
                                     <div key={idx} className="flex justify-between items-center gap-2 text-[10px] sm:text-xs border-b border-dashed border-border/40 pb-0.5 last:border-0 group">
-                                      <span className="text-muted-foreground font-medium truncate max-w-[140px] sm:max-w-[170px] inline-block">
+                                      <span className="text-muted-foreground font-medium break-words leading-tight flex-1" title={prod.name || 'Unknown'}>
                                         <span className="font-extrabold text-[#111111]">{item.quantity || 1}x</span> {prod.name || 'Unknown'}
                                         {prod.unit ? <span className="text-[8px] text-muted-foreground ml-1">({prod.unit})</span> : null}
                                         {itmCode ? <span className="text-[7.5px] font-mono bg-black text-white px-1 py-0.2 rounded ml-1 font-bold">#{itmCode.replace(/^#/, '')}</span> : null}
@@ -7015,7 +7015,7 @@ export function AdminDashboard() {
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0" onClick={() => setSelectedOrder(null)}></div>
-          <div className="bg-white border border-border rounded-[28px] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col p-4 sm:p-8 relative z-10 animate-in fade-in duration-200">
+          <div className="bg-white border border-border rounded-[28px] max-w-5xl lg:max-w-6xl w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col p-4 sm:p-7 md:p-8 relative z-10 animate-in fade-in duration-200">
             {/* Header */}
             <div className="flex justify-between items-start border-b border-border pb-4 sm:pb-5 mb-5 sm:mb-6">
               <div>
@@ -7138,9 +7138,9 @@ export function AdminDashboard() {
                   type="button"
                   onClick={() => handlePrintAllSelectedOrderLabels(selectedOrder)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer w-fit"
-                  title="Print 79x50mm stickers for all items on IDPRT SP410BT"
+                  title="Print 78x50mm stickers for all items on IDPRT SP410BT"
                 >
-                  <Printer className="w-3 h-3" /> Print All Item Labels (79×50mm)
+                  <Printer className="w-3 h-3" /> Print All Item Labels (78×50mm)
                 </button>
               </div>
               <div className="border border-border rounded-2xl overflow-hidden bg-secondary/50 divide-y divide-border">
@@ -7164,14 +7164,14 @@ export function AdminDashboard() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <p className="font-extrabold text-xs text-foreground uppercase truncate" title={prod.name}>{prod.name}</p>
+                              <p className="font-extrabold text-xs sm:text-sm text-foreground uppercase break-words leading-tight" title={prod.name}>{prod.name}</p>
                               {itmCode && (
-                                <span className="px-1.5 py-0.5 rounded bg-black text-white text-[9px] font-mono font-black tracking-wider shadow-2xs">
+                                <span className="px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800 border border-neutral-300 text-[9px] font-mono font-black tracking-wider shadow-2xs shrink-0">
                                   #{itmCode.replace(/^#/, '')}
                                 </span>
                               )}
                             </div>
-                            <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5 truncate">
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5 break-words">
                               {prod.category?.replace(/ font-bold/gi, '')} {prod.unit ? `• ${prod.unit}` : ''}
                             </p>
                           </div>
@@ -7247,7 +7247,7 @@ export function AdminDashboard() {
                               }}
                               onClick={(e) => e.stopPropagation()}
                               className="w-8 h-6 text-center font-mono font-black text-[11px] bg-white dark:bg-card border border-border rounded-md text-foreground outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-2xs"
-                              title="Number of 79x50mm stickers to print"
+                              title="Number of 78x50mm stickers to print"
                             />
                             <button
                               type="button"
