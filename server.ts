@@ -9,6 +9,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
 import { registerCatalogueMirror, mirrorConfigured } from './catalogueMirror';
+import { registerOrderMirror, orderMirrorConfigured } from './orderMirror';
 
 dotenv.config();
 
@@ -510,6 +511,17 @@ Format your output exactly as a JSON object with these keys:
   // writes still land in Firestore. Takes ids only and re-reads Firestore
   // itself -- see catalogueMirror.ts.
   registerCatalogueMirror(app);
+
+  // The same route the deployed function serves (api/orders/mirror.ts), so a
+  // checkout run locally exercises the real path instead of posting into Vite's
+  // SPA middleware and reading the page's HTML back as a success.
+  registerOrderMirror(app);
+  if (!orderMirrorConfigured()) {
+    console.warn(
+      "[ORDER MIRROR] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set; " +
+      "orders placed here will NOT reach the ERP from checkout."
+    );
+  }
   if (!mirrorConfigured()) {
     console.warn(
       "[CATALOGUE MIRROR] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set; " +
