@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType, deleteUserAddress } from '../lib/firebase';
+import { mirrorOrderToErp } from '../lib/mirrorOrder';
 import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2, Gift, Sparkles, Check } from 'lucide-react';
 import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
@@ -637,7 +638,24 @@ export function Cart() {
       }
       
       const ordersRef = collection(db, 'orders');
-      await addDoc(ordersRef, orderData);
+      const placedOrderRef = await addDoc(ordersRef, orderData);
+
+      // Copy the order into the ERP, so the packing floor and the drivers can
+      // see it. Awaited, because this page is about to clear the cart and swap
+      // views and an in-flight request on an unmounting page can be cancelled;
+      // the helper carries its own timeout so a slow server delays the
+      // confirmation rather than holding it. Never thrown from: the order is
+      // already safely in Firestore and a mirror failure must not tell the
+      // customer their order did not go through.
+      const mirrored = await mirrorOrderToErp(placedOrderRef.id);
+      if (!mirrored.ok) {
+        // Loud in the console and nowhere else. There is no catch-up sweep yet,
+        // so this line is the only trace that an order did not reach the ERP --
+        // worth grepping for if one goes missing from the packing list.
+        console.error(
+          `[ORDER MIRROR] order ${placedOrderRef.id} did not reach the ERP: ${mirrored.reason}`
+        );
+      }
 
       // Save address and deduct redeemed discount points immediately from user profile
       try {
