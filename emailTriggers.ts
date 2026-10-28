@@ -3,6 +3,7 @@ import { getFirestore, collection, doc, updateDoc, getDoc, query, orderBy, limit
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import nodemailer from 'nodemailer';
 import firebaseConfig from './firebase-applet-config.json';
+import { mirrorOrderToSupabase, supabaseConfigured } from './erpMirror';
 
 // Initialize secondary Firebase Web client inside the server process
 // This is 100% robust and doesn't require complex service accounts or private keys
@@ -791,6 +792,61 @@ function renderAdminOrderNotificationHtml(order: any, id: string): string {
  * Starts the live background Firestore trigger listener.
  * This runs continuously in our server container, watching for changes.
  */
+/** Said once rather than every poll cycle, which is every few seconds. */
+let warnedNoSupabase = false;
+
+/**
+ * Copies any order that has not reached the ERP yet.
+ *
+ * A pass of its own over the snapshot the email poller already has, rather
+ * than a line inside its loop, for two reasons. That loop skips every order
+ * with no email address on it -- an order that still has to be packed and
+ * driven. And an SMTP failure must not stop orders reaching the floor, nor a
+ * Supabase failure stop customers being emailed.
+ *
+ * `erpMirroredAt` on the order is what stops it being done twice; the mirror
+ * itself is idempotent anyway, so a duplicate pass costs a write, not a
+ * duplicate order. `erpMirrorError` records a failure so a missed order can
+ * be found rather than silently absent -- which is the exact problem this is
+ * here to end.
+ */
+async function mirrorOrdersToErp(docs: any[]) {
+  if (!supabaseConfigured()) {
+    if (!warnedNoSupabase) {
+      console.warn("[ERP MIRROR] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set. Orders are NOT reaching the ERP.");
+      warnedNoSupabase = true;
+    }
+    return;
+  }
+
+  for (const docSnap of docs) {
+    const order = docSnap.data();
+    if (order.erpMirroredAt) continue;
+
+    const id = docSnap.id;
+    try {
+      // The customer's own record, for the row web_orders points at. Null for
+      // an account deleted since the order was placed, which the mirror copes
+      // with by falling back to the order's shipping details.
+      let user: any = null;
+      const userId = String(order.userId ?? order.uid ?? '').trim();
+      if (userId) {
+        const userSnap = await getDoc(doc(db, 'users', userId));
+        user = userSnap.exists() ? userSnap.data() : null;
+      }
+
+      const { lines } = await mirrorOrderToSupabase(id, order, user);
+      await updateDoc(doc(db, 'orders', id), { erpMirroredAt: Date.now(), erpMirrorError: null });
+      console.log(`[ERP MIRROR] Order ${order.orderNumber || id} reached the ERP with ${lines} line(s).`);
+    } catch (err: any) {
+      const message = err?.message ? String(err.message) : String(err);
+      console.error(`[ERP MIRROR] Order ${order.orderNumber || id} did NOT reach the ERP: ${message}`);
+      // The order is safe in Firestore either way. This marks it for another go.
+      await updateDoc(doc(db, 'orders', id), { erpMirrorError: message.slice(0, 900) }).catch(() => undefined);
+    }
+  }
+}
+
 export function setupOrderEmailTriggers() {
   console.log("[EMAIL TRIGGERS] Initializing background trigger poller for 'orders' collection...");
 
@@ -850,6 +906,14 @@ export function setupOrderEmailTriggers() {
       // Limit to 50 most recent orders so we don't query excessive data, filtering them in memory
       const q = query(ordersCol, orderBy('createdAt', 'desc'), limit(50));
       const snapshot = await getDocs(q);
+
+      // The ERP first, and separately: the floor needs the order whether or
+      // not the customer left an email address, and whether or not SMTP is up.
+      try {
+        await mirrorOrdersToErp(snapshot.docs);
+      } catch (mirrorErr) {
+        console.error("[ERP MIRROR] pass failed; emails continue regardless:", mirrorErr);
+      }
 
       const mailTransporter = await getTransporter();
       const senderFrom = process.env.SMTP_FROM || `"FreshNLocal Co." <freshnlocalco@gmail.com>`;
