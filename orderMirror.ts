@@ -35,6 +35,7 @@
 
 import type { Express } from 'express';
 import firebaseConfig from './firebase-applet-config.json';
+import { uidFromIdToken } from './firebaseAuth';
 import { mirrorOrderToSupabase, supabaseConfigured } from './erpMirror';
 
 const cfg = firebaseConfig as Record<string, string>;
@@ -79,20 +80,6 @@ function docToObject(doc: any): Record<string, any> {
   return out;
 }
 
-/** The caller's uid, validated by Google rather than by us. */
-async function uidFromIdToken(idToken: string): Promise<string | null> {
-  if (!cfg.apiKey || !idToken) return null;
-  try {
-    const r = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${cfg.apiKey}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }) });
-    if (!r.ok) return null;
-    const body = await r.json() as { users?: Array<{ localId?: string }> };
-    return body.users?.[0]?.localId ?? null;
-  } catch {
-    return null;
-  }
-}
 
 /** Read a document as the caller. Null when Firestore's rules refuse it. */
 async function readAsCaller(path: string, idToken: string): Promise<Record<string, any> | null> {

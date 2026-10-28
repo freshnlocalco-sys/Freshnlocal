@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType, deleteUserAddress } from '../lib/firebase';
-import { mirrorOrderToErp } from '../lib/mirrorOrder';
+import { createOrder } from '../lib/createOrder';
 import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2, Gift, Sparkles, Check } from 'lucide-react';
-import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
@@ -168,6 +168,21 @@ function calculateTotalUnitString(unitStr: string | undefined, qty: number): str
 
   return `${formattedTotalVal} ${displayUnit}`;
 }
+
+/**
+ * Whether a copy of each new order is still written to Firestore.
+ *
+ * The order itself now lives in Supabase -- see createOrder. This shadow exists
+ * only because four things still read Firestore for orders: the customer's
+ * order history (Orders.tsx, Profile.tsx, Home.tsx), the admin dashboard, the
+ * confirmation-email poller in emailTriggers.ts, and the new-order notifier.
+ *
+ * Turn this off the moment those read Supabase instead, and Firebase is down to
+ * sign-in alone. It is one constant on purpose: the end of this migration
+ * should be a one-line change that is obvious in a diff, not an archaeology
+ * exercise across a checkout handler.
+ */
+const WRITE_ORDER_SHADOW_TO_FIRESTORE = true;
 
 export function Cart() {
   const { categoryImages, faviconUrl } = useSettings();
@@ -637,24 +652,42 @@ export function Cart() {
         throw new Error(`Order too large: ${totalSize} bytes. Please remove some items or contact support.`);
       }
       
-      const ordersRef = collection(db, 'orders');
-      const placedOrderRef = await addDoc(ordersRef, orderData);
+      // The order is created in SUPABASE. This is the line that moved the
+      // business off Firestore: it used to be addDoc(), and an order's
+      // existence began in Firebase.
+      //
+      // Thrown from on failure, unlike the mirror it replaces. The mirror was a
+      // copy -- if it failed the order still existed and checkout could carry
+      // on. This IS the order, so a failure here has to reach the customer as a
+      // failure rather than a confirmation for something nobody recorded.
+      const created = await createOrder(orderData);
+      if (!created.ok || !created.id) {
+        throw new Error(created.reason || 'Could not place the order. Please try again.');
+      }
+      const placedOrderId = created.id;
+      // The server owns the number now, because Supabase has a unique index on
+      // it and the browser cannot retry a collision it never learns about.
+      if (created.orderNumber) orderData.orderNumber = created.orderNumber;
 
-      // Copy the order into the ERP, so the packing floor and the drivers can
-      // see it. Awaited, because this page is about to clear the cart and swap
-      // views and an in-flight request on an unmounting page can be cancelled;
-      // the helper carries its own timeout so a slow server delays the
-      // confirmation rather than holding it. Never thrown from: the order is
-      // already safely in Firestore and a mirror failure must not tell the
-      // customer their order did not go through.
-      const mirrored = await mirrorOrderToErp(placedOrderRef.id);
-      if (!mirrored.ok) {
-        // Loud in the console and nowhere else. There is no catch-up sweep yet,
-        // so this line is the only trace that an order did not reach the ERP --
-        // worth grepping for if one goes missing from the packing list.
-        console.error(
-          `[ORDER MIRROR] order ${placedOrderRef.id} did not reach the ERP: ${mirrored.reason}`
-        );
+      // The Firestore copy, written under the SAME id so the two are one order
+      // in two places rather than two orders.
+      //
+      // Still written because the website's own order history, the admin
+      // dashboard, the confirmation-email poller and the new-order notifier all
+      // still read Firestore. This comes out the moment those move -- it is one
+      // constant, and nothing else depends on it.
+      //
+      // Not fatal: the order is already recorded in Supabase by this point. A
+      // failure here costs the shadow, not the order.
+      if (WRITE_ORDER_SHADOW_TO_FIRESTORE) {
+        try {
+          await setDoc(doc(db, 'orders', placedOrderId), orderData);
+        } catch (shadowErr) {
+          console.error(
+            `[ORDER SHADOW] order ${placedOrderId} is in Supabase but its Firestore copy failed:`,
+            shadowErr instanceof Error ? shadowErr.message : shadowErr
+          );
+        }
       }
 
       // Save address and deduct redeemed discount points immediately from user profile

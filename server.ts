@@ -10,6 +10,7 @@ import { getFirestore, collection, getDocs, query, orderBy, limit, doc, addDoc, 
 import firebaseConfig from './firebase-applet-config.json';
 import { registerCatalogueMirror, mirrorConfigured } from './catalogueMirror';
 import { registerOrderMirror, orderMirrorConfigured } from './orderMirror';
+import { registerOrderCreate } from './orderCreate';
 
 dotenv.config();
 
@@ -516,6 +517,11 @@ Format your output exactly as a JSON object with these keys:
   // checkout run locally exercises the real path instead of posting into Vite's
   // SPA middleware and reading the page's HTML back as a success.
   registerOrderMirror(app);
+
+  // Creating an order IN Supabase, rather than copying one Firestore already
+  // owns. See orderCreate.ts -- this is the route that ends the two-copies
+  // arrangement, and it shares the mirror's Supabase configuration check.
+  registerOrderCreate(app);
   if (!orderMirrorConfigured()) {
     console.warn(
       "[ORDER MIRROR] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set; " +
