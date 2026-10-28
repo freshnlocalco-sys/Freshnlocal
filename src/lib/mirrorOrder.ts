@@ -9,6 +9,7 @@
  */
 
 import { auth } from './firebase';
+import { readApiJson } from './apiJson';
 
 /**
  * Awaited at the checkout call site, with a timeout, rather than fired and
@@ -45,9 +46,17 @@ export async function mirrorOrderToErp(orderId: string): Promise<{ ok: boolean; 
         signal: controller.signal,
       });
 
-      if (!res.ok) {
-        const body = await res.text().catch(() => '');
-        return { ok: false, reason: `${res.status} ${body.slice(0, 200)}` };
+      // readApiJson, not res.ok. An /api function that is not deployed answers
+      // 200 with the page's own HTML, so res.ok is true and this would report
+      // every order as mirrored while none reached the ERP. That is the exact
+      // failure this module exists to end -- see src/lib/apiJson.ts, and the
+      // production probe recorded there.
+      const result = await readApiJson<{ ok?: boolean; orderId?: string; lines?: number }>(res);
+      if (!result.ok) return { ok: false, reason: result.reason };
+      // The function echoes the order id back. Anything that does not is not
+      // this function answering, whatever status it carried.
+      if (result.data?.orderId !== orderId) {
+        return { ok: false, reason: `unexpected reply for ${orderId}: ${JSON.stringify(result.data).slice(0, 160)}` };
       }
       return { ok: true };
     } finally {

@@ -21,6 +21,7 @@ import {
   type SetOptions,
 } from 'firebase/firestore';
 import { auth } from './firebase';
+import { readApiJson } from './apiJson';
 import { usingSupabaseCatalogue } from './supabase';
 
 type MirrorType = 'products' | 'settings';
@@ -62,10 +63,10 @@ async function post(type: MirrorType, ids: string[]): Promise<void> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken, type, ids: ids.slice(i, i + CHUNK) }),
     });
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      throw new Error(`${res.status} ${body.slice(0, 200)}`);
-    }
+    // readApiJson, not res.ok: an undeployed function answers 200 with the
+    // page's own HTML, which res.ok reads as a success. See src/lib/apiJson.ts.
+    const result = await readApiJson<{ ok?: boolean }>(res);
+    if (!result.ok) throw new Error(result.reason);
   }
 }
 
