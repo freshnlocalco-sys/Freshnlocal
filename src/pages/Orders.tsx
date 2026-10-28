@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { fetchMyOrders } from '../lib/orderHistory';
+import { READ_ORDERS_FROM_SUPABASE } from '../lib/orderSource';
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, useAuth, isQuotaError } from '../lib/firebase';
 import { trackFirestoreRead } from '../lib/cacheManager';
@@ -201,6 +203,16 @@ export function Orders() {
       if (!user) return;
       try {
         setLoading(true);
+
+        if (READ_ORDERS_FROM_SUPABASE) {
+          // Orders live in Supabase now. The server returns them in the shape
+          // Firestore used to, already newest-first, so nothing below changes.
+          const mine = await fetchMyOrders();
+          if (!mine.ok) throw new Error(mine.reason || 'Could not load your orders.');
+          setOrders((mine.orders ?? []) as Order[]);
+          return;
+        }
+
         const q = query(
           collection(db, 'orders'),
           where('userId', '==', user.uid)
@@ -211,7 +223,7 @@ export function Orders() {
           id: doc.id,
           ...doc.data()
         })) as Order[];
-        
+
         fetchedOrders.sort((a, b) => b.createdAt - a.createdAt);
         setOrders(fetchedOrders);
       } catch (error: any) {

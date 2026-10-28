@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { fetchMyOrders } from '../lib/orderHistory';
+import { READ_ORDERS_FROM_SUPABASE } from '../lib/orderSource';
 import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError, deleteUserAddress, setDefaultUserAddress, deleteUserLegacyAddress, updateUserDisplayName, sendPasswordReset } from '../lib/firebase';
 import { notifySignOutSuccess, notifyPasswordResetSuccess, getHumanAuthErrorMessage } from '../lib/authNotifications';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
@@ -159,12 +161,21 @@ export function Profile() {
     async function fetchData() {
       if (!user) return;
       try {
-        const qOrders = query(collection(db, 'orders'), where('userId', '==', user.uid));
-        const snapOrders = await getDocs(qOrders);
-        trackFirestoreRead('orders', snapOrders.size);
-        const orderList = snapOrders.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        orderList.sort((a: any, b: any) => b.createdAt - a.createdAt);
-        setOrders(orderList);
+        if (READ_ORDERS_FROM_SUPABASE) {
+          // Orders live in Supabase now; the server hands them back in the old
+          // shape, newest first. A failure here must not take the rest of the
+          // profile down with it -- saved recipes and addresses still load.
+          const mine = await fetchMyOrders();
+          if (mine.ok) setOrders(mine.orders ?? []);
+          else console.error('[ORDERS] could not load this customer\'s orders:', mine.reason);
+        } else {
+          const qOrders = query(collection(db, 'orders'), where('userId', '==', user.uid));
+          const snapOrders = await getDocs(qOrders);
+          trackFirestoreRead('orders', snapOrders.size);
+          const orderList = snapOrders.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          orderList.sort((a: any, b: any) => b.createdAt - a.createdAt);
+          setOrders(orderList);
+        }
 
         const qRecipes = query(collection(db, 'users', user.uid, 'savedRecipes'), orderBy('createdAt', 'desc'));
         const snapRecipes = await getDocs(qRecipes);

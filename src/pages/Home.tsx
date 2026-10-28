@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { fetchMyOrders } from '../lib/orderHistory';
+import { READ_ORDERS_FROM_SUPABASE } from '../lib/orderSource';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -487,22 +489,36 @@ export function Home() {
       }
 
       try {
-        const q = query(
-          collection(db, 'orders'),
-          where('userId', '==', user.uid)
-        );
-        const querySnap = await getDocs(q);
-        trackFirestoreRead('orders', querySnap.docs.length || 1);
+        // Orders live in Supabase now. Either source yields the same shape --
+        // plain order objects with `items` and `createdAt` in milliseconds --
+        // so the reorder logic below is untouched.
+        let orderDocs: any[];
+        if (READ_ORDERS_FROM_SUPABASE) {
+          const mine = await fetchMyOrders();
+          if (!mine.ok) {
+            console.error('[REORDER] could not load past orders:', mine.reason);
+            setReorderProducts([]);
+            return;
+          }
+          orderDocs = mine.orders ?? [];
+        } else {
+          const q = query(
+            collection(db, 'orders'),
+            where('userId', '==', user.uid)
+          );
+          const querySnap = await getDocs(q);
+          trackFirestoreRead('orders', querySnap.docs.length || 1);
+          orderDocs = querySnap.docs.map(d => d.data());
+        }
 
-        if (querySnap.empty) {
+        if (orderDocs.length === 0) {
           setReorderProducts([]);
           return;
         }
 
         const orderedProductTimestamps = new Map<string, number>();
 
-        querySnap.docs.forEach((d) => {
-          const data = d.data();
+        orderDocs.forEach((data) => {
           const itemsArr = data.items || [];
           const timestamp = data.createdAt || 0;
 

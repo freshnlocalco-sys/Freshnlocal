@@ -3,6 +3,7 @@ import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType, deleteUserAddress } from '../lib/firebase';
 import { createOrder } from '../lib/createOrder';
+import { WRITE_ORDER_SHADOW_TO_FIRESTORE } from '../lib/orderSource';
 import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2, Gift, Sparkles, Check } from 'lucide-react';
 import { addDoc, collection, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
@@ -168,21 +169,6 @@ function calculateTotalUnitString(unitStr: string | undefined, qty: number): str
 
   return `${formattedTotalVal} ${displayUnit}`;
 }
-
-/**
- * Whether a copy of each new order is still written to Firestore.
- *
- * The order itself now lives in Supabase -- see createOrder. This shadow exists
- * only because four things still read Firestore for orders: the customer's
- * order history (Orders.tsx, Profile.tsx, Home.tsx), the admin dashboard, the
- * confirmation-email poller in emailTriggers.ts, and the new-order notifier.
- *
- * Turn this off the moment those read Supabase instead, and Firebase is down to
- * sign-in alone. It is one constant on purpose: the end of this migration
- * should be a one-line change that is obvious in a diff, not an archaeology
- * exercise across a checkout handler.
- */
-const WRITE_ORDER_SHADOW_TO_FIRESTORE = true;
 
 export function Cart() {
   const { categoryImages, faviconUrl } = useSettings();
