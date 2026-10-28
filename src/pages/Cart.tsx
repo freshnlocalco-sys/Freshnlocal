@@ -2,12 +2,12 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType, deleteUserAddress } from '../lib/firebase';
-import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2, Gift, Sparkles } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2, Gift, Sparkles, Check } from 'lucide-react';
 import { addDoc, collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { getCategoryImage } from '../lib/constants';
 import { useSettings } from '../store/useSettings';
-import { useOffers } from '../store/useOffers';
+import { useOffers, getEffectiveGiftItems, GiftItem } from '../store/useOffers';
 import { usePWA } from '../store/usePWA';
 import { useProducts } from '../store/useProducts';
 import { ProductCard } from '../components/ProductCard';
@@ -287,16 +287,80 @@ export function Cart() {
   const userPoints = user?.points || 0;
   const canUsePoints = userPoints >= 100;
   const discount = usePoints && canUsePoints ? 100 : 0;
-  const finalTotal = total() - discount;
+
+  // Reactively calculate cart subtotal whenever cartItems change (quantity increased/decreased)
+  const cartSubtotal = useMemo(() => {
+    return (cartItems || []).reduce((sum, item) => {
+      if (!item || !item.product) return sum;
+      const config = getUnitQuantityConfig(item.product.unit);
+      const packs = config.initialQty > 0 ? (item.quantity || 0) / config.initialQty : (item.quantity || 0);
+      return sum + (item.product.price || 0) * packs;
+    }, 0);
+  }, [cartItems]);
+
+  const finalTotal = Math.max(0, cartSubtotal - discount);
 
   const isOfferEligible = useMemo(() => {
     if (!offer || !offer.enabled || isHoreca) return false;
-    const meetsSubtotal = total() >= (offer.minOrderAmount || 1000);
+    const minAmount = offer.minOrderAmount || 1000;
+    const meetsSubtotal = cartSubtotal >= minAmount;
     const meetsDelivery = 
       offer.deliveryMethodRequired === 'any' || 
       offer.deliveryMethodRequired === deliveryMethod;
     return meetsSubtotal && meetsDelivery;
-  }, [offer, total, deliveryMethod, isHoreca]);
+  }, [offer, cartSubtotal, deliveryMethod, isHoreca]);
+
+  const effectiveGifts = useMemo(() => getEffectiveGiftItems(offer), [offer]);
+  const [selectedGiftIds, setSelectedGiftIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!offer || effectiveGifts.length === 0) {
+      setSelectedGiftIds([]);
+      return;
+    }
+    if (offer.rewardType === 'all') {
+      setSelectedGiftIds(effectiveGifts.map(g => g.id));
+    } else {
+      const max = Math.max(1, offer.maxChoices || 1);
+      setSelectedGiftIds(prev => {
+        const valid = prev.filter(id => effectiveGifts.some(g => g.id === id));
+        if (valid.length > 0) {
+          return valid.slice(0, max);
+        }
+        return effectiveGifts.slice(0, max).map(g => g.id);
+      });
+    }
+  }, [offer, effectiveGifts, isOfferEligible]);
+
+  const awardedGifts = useMemo(() => {
+    if (!isOfferEligible || !offer || effectiveGifts.length === 0) return [];
+    if (offer.rewardType === 'all') {
+      return effectiveGifts;
+    }
+    const chosen = effectiveGifts.filter(g => selectedGiftIds.includes(g.id));
+    if (chosen.length > 0) return chosen;
+    return effectiveGifts.slice(0, Math.max(1, offer.maxChoices || 1));
+  }, [isOfferEligible, offer, effectiveGifts, selectedGiftIds]);
+
+  const handleToggleGiftChoice = (id: string) => {
+    const max = Math.max(1, offer?.maxChoices || 1);
+    if (max === 1) {
+      setSelectedGiftIds([id]);
+      return;
+    }
+    setSelectedGiftIds(prev => {
+      if (prev.includes(id)) {
+        if (prev.length > 1) {
+          return prev.filter(itemId => itemId !== id);
+        }
+        return prev;
+      }
+      if (prev.length < max) {
+        return [...prev, id];
+      }
+      return [...prev.slice(1), id];
+    });
+  };
 
   const hasOutOfStockItems = !isHoreca && cartItems.some(item => !item.product.inStock);
   const hasInvalidRetailQuantity = !isHoreca && cartItems.some(item => item.quantity <= 0);
@@ -313,7 +377,7 @@ export function Cart() {
   }, []);
 
   const triggerMinOrderWarning = () => {
-    const remainingForDelivery = Math.max(0, Math.ceil(1000 - total()));
+    const remainingForDelivery = Math.max(0, Math.ceil(1000 - cartSubtotal));
     const msg = `Add ₹${remainingForDelivery} more for place order Or select Store Pickup delivery method.`;
     setMinOrderAlert(msg);
     if (minOrderAlertTimerRef.current) {
@@ -371,7 +435,7 @@ export function Cart() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) {
+    if (!isHoreca && deliveryMethod === 'delivery' && cartSubtotal < 1000) {
       triggerMinOrderWarning();
       return;
     }
@@ -503,25 +567,39 @@ export function Cart() {
               return { product: p, quantity: i.quantity };
             });
 
-          if (isOfferEligible && offer) {
-            mapped.push({
-              product: {
-                id: offer.giftProductId || 'promo-free-gift',
-                name: `[FREE PROMO GIFT] ${offer.giftItemName}`,
-                price: 0,
-                unit: offer.giftItemUnit || '1 Pc',
-                imageUrl: offer.giftItemImageUrl || '',
-              },
-              quantity: 1,
+          const giftsToAward = awardedGifts.length > 0 
+            ? awardedGifts 
+            : (effectiveGifts.length > 0 ? effectiveGifts.slice(0, Math.max(1, offer?.maxChoices || 1)) : []);
+
+          if (isOfferEligible && giftsToAward.length > 0) {
+            giftsToAward.forEach((g, idx) => {
+              mapped.push({
+                product: {
+                  id: g.productId || `promo-free-gift-${g.id || idx}`,
+                  name: `[FREE PROMO GIFT] ${g.name}`,
+                  price: 0,
+                  unit: g.unit || '1 Pc',
+                  imageUrl: g.imageUrl || '',
+                },
+                quantity: 1,
+              });
             });
           }
           return mapped;
         })(),
-        freeGiftAwarded: isOfferEligible && offer ? {
-          name: offer.giftItemName,
-          unit: offer.giftItemUnit || '1 Pc',
-          originalPrice: offer.giftItemOriginalPrice || 0,
-        } : null,
+        freeGiftsAwarded: isOfferEligible ? (awardedGifts.length > 0 ? awardedGifts : effectiveGifts.slice(0, Math.max(1, offer?.maxChoices || 1))).map(g => ({
+          name: g.name,
+          unit: g.unit || '1 Pc',
+          originalPrice: g.originalPrice || 0,
+        })) : [],
+        freeGiftAwarded: isOfferEligible ? (() => {
+          const g = awardedGifts[0] || effectiveGifts[0];
+          return g ? {
+            name: g.name,
+            unit: g.unit || '1 Pc',
+            originalPrice: g.originalPrice || 0,
+          } : null;
+        })() : null,
         totalAmount: isHoreca ? (finalTotal > 0 ? finalTotal : 0) : finalTotal,
         discount: isHoreca ? 0 : discount,
         pointsEarned: isHoreca ? 0 : Math.floor(finalTotal / 100) * 2,
@@ -1019,52 +1097,134 @@ export function Cart() {
           )}
         </div>
 
-        {/* 2. Free Gift Offer Banner */}
-        {offer && offer.enabled && !isHoreca && (
+        {/* 2. Free Gift Offer Banner & Customer Choice Selection */}
+        {offer && offer.enabled && !isHoreca && effectiveGifts.length > 0 && (
           <div className="space-y-3">
             {isOfferEligible ? (
-              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-                <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-                  <div className="w-12 h-12 rounded-xl bg-white border border-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                    {offer.giftItemImageUrl ? (
-                      <img 
-                        src={offer.giftItemImageUrl} 
-                        alt={offer.giftItemName} 
-                        className="w-full h-full object-contain p-1"
-                        referrerPolicy="no-referrer"
-                      />
+              <div className="bg-emerald-500/[0.08] border border-emerald-500/30 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3.5">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-emerald-500/20 pb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-600 text-white px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-2xs">
+                      <Sparkles className="w-3 h-3" /> FREE GIFT UNLOCKED
+                    </span>
+                    {offer.rewardType === 'choice' ? (
+                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md uppercase">
+                        Select {offer.maxChoices || 1} Free Gift{(offer.maxChoices || 1) > 1 ? 's' : ''}
+                      </span>
                     ) : (
-                      <Gift className="w-6 h-6 text-emerald-600" />
+                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md uppercase">
+                        All {effectiveGifts.length} Gifts Included Free
+                      </span>
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                      <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-600 text-white px-1.5 py-0.5 rounded">
-                        🎉 FREE GIFT UNLOCKED
-                      </span>
-                      <span className="text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded uppercase">
-                        Home Delivery Reward
-                      </span>
-                    </div>
-                    <p className="text-xs sm:text-sm font-bold text-emerald-950 leading-snug">
-                      <strong>1 Free {offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</strong> added to your cart for ₹0.00!
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-emerald-700 bg-white border border-emerald-500/20 px-3 py-1 rounded-xl shadow-2xs">
+                      ₹0.00 (100% FREE)
+                    </span>
                   </div>
                 </div>
-                <div className="self-end sm:self-center shrink-0">
-                  <span className="text-xs font-black text-emerald-700 bg-emerald-100/90 border border-emerald-500/20 px-3 py-1 rounded-xl shadow-2xs">
-                    FREE (₹0.00)
-                  </span>
+
+                {/* Subtitle / Prompt */}
+                <div>
+                  <h4 className="text-xs sm:text-sm font-black text-emerald-950 uppercase tracking-tight">
+                    {offer.rewardType === 'choice' 
+                      ? `Choose Your Free Gift (${selectedGiftIds.length} of ${Math.max(1, offer.maxChoices || 1)} selected):`
+                      : `You've Qualified for All ${effectiveGifts.length} Free Gifts!`
+                    }
+                  </h4>
+                  <p className="text-[11px] text-emerald-800 font-semibold mt-0.5">
+                    {offer.rewardType === 'choice'
+                      ? `Tap your preferred free gift below to add it to your order delivery for ₹0.00:`
+                      : `All items below are automatically packaged into your delivery order at no charge.`
+                    }
+                  </p>
+                </div>
+
+                {/* Gift Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                  {effectiveGifts.map((gift) => {
+                    const isSelected = selectedGiftIds.includes(gift.id);
+                    const isChoiceMode = offer.rewardType === 'choice';
+                    return (
+                      <div
+                        key={gift.id}
+                        onClick={() => {
+                          if (isChoiceMode) {
+                            handleToggleGiftChoice(gift.id);
+                          }
+                        }}
+                        className={`p-3 rounded-2xl border-2 transition-all flex items-center gap-3 relative ${
+                          isChoiceMode ? 'cursor-pointer' : ''
+                        } ${
+                          isSelected 
+                            ? 'bg-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/20' 
+                            : 'bg-white/80 border-emerald-500/20 hover:border-emerald-500/40'
+                        }`}
+                      >
+                        {/* Thumbnail */}
+                        <div className="w-14 h-14 rounded-xl bg-neutral-50 border border-emerald-500/20 overflow-hidden shrink-0 flex items-center justify-center">
+                          {gift.imageUrl ? (
+                            <img 
+                              src={gift.imageUrl} 
+                              alt={gift.name} 
+                              className="w-full h-full object-contain p-1"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <Gift className="w-6 h-6 text-emerald-600" />
+                          )}
+                        </div>
+
+                        {/* Details */}
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-bold text-xs text-foreground truncate">
+                            {gift.name}
+                          </h5>
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                            <span className="font-semibold text-neutral-700 bg-neutral-100 px-1.5 py-0.2 rounded">
+                              {gift.unit || '1 Pc'}
+                            </span>
+                            {gift.originalPrice > 0 && (
+                              <span className="line-through font-mono text-[9px]">
+                                ₹{gift.originalPrice}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-black text-emerald-600 mt-1 block">
+                            ₹0.00 FREE
+                          </span>
+                        </div>
+
+                        {/* Choice Button / Indicator */}
+                        <div className="shrink-0">
+                          {isChoiceMode ? (
+                            <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                              isSelected 
+                                ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs' 
+                                : 'border-neutral-300 bg-white hover:border-emerald-500'
+                            }`}>
+                              {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            </span>
+                          ) : (
+                            <span className="text-[8px] font-black uppercase text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                              Included
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : (
               <div className="bg-emerald-500/[0.07] border border-emerald-500/20 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                 <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                   <div className="w-12 h-12 rounded-xl bg-white border border-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                    {offer.giftItemImageUrl ? (
+                    {effectiveGifts[0]?.imageUrl ? (
                       <img 
-                        src={offer.giftItemImageUrl} 
-                        alt={offer.giftItemName} 
+                        src={effectiveGifts[0].imageUrl} 
+                        alt={effectiveGifts[0].name} 
                         className="w-full h-full object-contain p-1"
                         referrerPolicy="no-referrer"
                       />
@@ -1084,19 +1244,23 @@ export function Cart() {
                       )}
                     </div>
                     <p className="text-xs sm:text-sm font-bold text-foreground leading-snug">
-                      {total() < (offer.minOrderAmount || 1000) ? (
+                      {cartSubtotal < (offer.minOrderAmount || 1000) ? (
                         <>
-                          Add <span className="text-emerald-600 font-black">₹{((offer.minOrderAmount || 1000) - total()).toFixed(0)}</span> more to unlock <span className="text-emerald-700 font-extrabold">{offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</span> 100% FREE!
+                          Add <span className="text-emerald-600 font-black">₹{((offer.minOrderAmount || 1000) - cartSubtotal).toFixed(0)}</span> more to unlock {offer.rewardType === 'choice' ? (
+                            <>free gift choice of <span className="text-emerald-700 font-extrabold">{effectiveGifts.map(g => g.name).join(' or ')}</span></>
+                          ) : (
+                            <>all free gifts: <span className="text-emerald-700 font-extrabold">{effectiveGifts.map(g => g.name).join(' + ')}</span></>
+                          )} 100% FREE!
                         </>
                       ) : (
                         <>
-                          Select <span className="text-emerald-700 font-black">Home Delivery</span> at checkout to claim your <span className="text-emerald-700 font-extrabold">{offer.giftItemName}</span> FREE!
+                          Select <span className="text-emerald-700 font-black">Home Delivery</span> at checkout to claim your Free Gift{effectiveGifts.length > 1 ? 's' : ''}!
                         </>
                       )}
                     </p>
                   </div>
                 </div>
-                {total() < (offer.minOrderAmount || 1000) && (
+                {cartSubtotal < (offer.minOrderAmount || 1000) && (
                   <div className="self-end sm:self-center shrink-0">
                     <button 
                       type="button"
@@ -1242,57 +1406,64 @@ export function Cart() {
                 </div>
               ))}
 
-              {/* Free Unlocked Promotional Gift Item in Cart */}
-              {isOfferEligible && offer && (
-                <div className="flex items-center gap-4 py-3.5 px-3 bg-emerald-500/[0.08] border border-emerald-500/30 rounded-xl relative overflow-hidden shadow-2xs animate-in fade-in duration-300">
-                  {/* Thumbnail */}
-                  <div className="w-20 h-[60px] sm:w-24 sm:h-[72px] bg-white border border-emerald-500/30 rounded-xl overflow-hidden shrink-0 relative shadow-2xs flex items-center justify-center">
-                    {offer.giftItemImageUrl ? (
-                      <img 
-                        src={offer.giftItemImageUrl} 
-                        alt={offer.giftItemName} 
-                        loading="lazy"
-                        className="w-full h-full object-contain object-center p-1"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <Gift className="w-7 h-7 text-emerald-600" />
-                    )}
-                  </div>
+              {/* Free Unlocked Promotional Gift Items in Cart */}
+              {isOfferEligible && awardedGifts.length > 0 && (
+                <div className="space-y-2.5">
+                  {awardedGifts.map((giftItem) => (
+                    <div 
+                      key={giftItem.id}
+                      className="flex items-center gap-4 py-3.5 px-3 bg-emerald-500/[0.08] border border-emerald-500/30 rounded-xl relative overflow-hidden shadow-2xs animate-in fade-in duration-300"
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-20 h-[60px] sm:w-24 sm:h-[72px] bg-white border border-emerald-500/30 rounded-xl overflow-hidden shrink-0 relative shadow-2xs flex items-center justify-center">
+                        {giftItem.imageUrl ? (
+                          <img 
+                            src={giftItem.imageUrl} 
+                            alt={giftItem.name} 
+                            loading="lazy"
+                            className="w-full h-full object-contain object-center p-1"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <Gift className="w-7 h-7 text-emerald-600" />
+                        )}
+                      </div>
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[7.5px] font-mono tracking-widest text-emerald-700 uppercase truncate block font-black">
-                      PROMOTIONAL GIFT REWARD
-                    </span>
-                    <h3 className="font-black text-foreground text-[11px] sm:text-xs uppercase tracking-tight line-clamp-2 leading-tight">
-                      {offer.giftItemName}
-                    </h3>
-                    <div className="text-[10px] text-muted-foreground font-semibold mt-0.5 flex flex-wrap items-center gap-1.5">
-                      <span className="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded text-[9px]">
-                        Qty: {offer.giftItemUnit || '1 Pc'}
-                      </span>
-                      <span className="text-emerald-600 font-bold text-[9px] uppercase">
-                        ✓ Included in delivery
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-black text-emerald-600">FREE (₹0.00)</span>
-                      {offer.giftItemOriginalPrice > 0 && (
-                        <span className="text-[10px] text-muted-foreground line-through font-mono">
-                          ₹{offer.giftItemOriginalPrice.toFixed(2)}
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[7.5px] font-mono tracking-widest text-emerald-700 uppercase truncate block font-black">
+                          {offer?.rewardType === 'choice' ? 'CHOSEN FREE GIFT REWARD' : 'PROMOTIONAL GIFT REWARD'}
                         </span>
-                      )}
-                    </div>
-                  </div>
+                        <h3 className="font-black text-foreground text-[11px] sm:text-xs uppercase tracking-tight line-clamp-2 leading-tight">
+                          {giftItem.name}
+                        </h3>
+                        <div className="text-[10px] text-muted-foreground font-semibold mt-0.5 flex flex-wrap items-center gap-1.5">
+                          <span className="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded text-[9px]">
+                            Qty: {giftItem.unit || '1 Pc'}
+                          </span>
+                          <span className="text-emerald-600 font-bold text-[9px] uppercase">
+                            ✓ Included in delivery
+                          </span>
+                        </div>
 
-                  {/* Free Tag Pill */}
-                  <div className="shrink-0 flex flex-col items-end">
-                    <span className="px-2.5 py-1 bg-emerald-600 text-white font-black text-[9px] uppercase tracking-wider rounded-lg shadow-2xs">
-                      100% FREE
-                    </span>
-                  </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs font-black text-emerald-600">FREE (₹0.00)</span>
+                          {giftItem.originalPrice > 0 && (
+                            <span className="text-[10px] text-muted-foreground line-through font-mono">
+                              ₹{giftItem.originalPrice.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Free Tag Pill */}
+                      <div className="shrink-0 flex flex-col items-end">
+                        <span className="px-2.5 py-1 bg-emerald-600 text-white font-black text-[9px] uppercase tracking-wider rounded-lg shadow-2xs">
+                          100% FREE
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -1323,7 +1494,7 @@ export function Cart() {
             <div className="space-y-3 text-xs font-semibold">
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Item Total</span>
-                <span className="font-mono text-foreground">₹{total().toFixed(2)}</span>
+                <span className="font-mono text-foreground">₹{cartSubtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Handling Fee</span>
@@ -1334,13 +1505,20 @@ export function Cart() {
                 <span className="text-primary font-bold uppercase text-[10px]">FREE</span>
               </div>
 
-              {isOfferEligible && offer && (
-                <div className="flex justify-between items-center text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg text-[11px] font-bold">
-                  <span className="flex items-center gap-1.5">
-                    <Gift className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Free Gift: {offer.giftItemName} ({offer.giftItemUnit || '1 Pc'})</span>
-                  </span>
-                  <span className="font-black text-emerald-700">₹0.00</span>
+              {isOfferEligible && awardedGifts.length > 0 && (
+                <div className="space-y-1.5">
+                  {awardedGifts.map((giftItem) => (
+                    <div 
+                      key={giftItem.id}
+                      className="flex justify-between items-center text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg text-[11px] font-bold"
+                    >
+                      <span className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
+                        <Gift className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="truncate">Free Gift: {giftItem.name} ({giftItem.unit || '1 Pc'})</span>
+                      </span>
+                      <span className="font-black text-emerald-700 shrink-0 ml-2">₹0.00</span>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -1359,7 +1537,7 @@ export function Cart() {
             {/* Order Threshold Container: Placed down below "To Pay" Amount */}
             <div className="pt-1">
               <FreeDeliveryProgressBar 
-                currentTotal={total()} 
+                currentTotal={cartSubtotal} 
                 threshold={1000} 
                 isHoreca={isHoreca} 
                 showShopLink={true}
@@ -1399,9 +1577,9 @@ export function Cart() {
                 </div>
               )}
               {minOrderAlert && (
-                <div className="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600 text-red-600 dark:text-red-400 p-3.5 rounded-xl text-center text-xs sm:text-[13px] font-black leading-snug shadow-sm flex items-center justify-center gap-2">
+                <div className="bg-amber-50 dark:bg-amber-950/80 border-2 border-amber-500 text-amber-950 dark:text-amber-100 p-3.5 rounded-xl text-center text-xs sm:text-[13px] font-bold leading-snug shadow-sm flex items-center justify-center gap-2">
                   <span className="text-base shrink-0">⚠️</span>
-                  <span className="text-red-600 dark:text-red-400 font-black">{minOrderAlert}</span>
+                  <span className="text-amber-950 dark:text-amber-100 font-bold">{minOrderAlert}</span>
                 </div>
               )}
               {deliveryMethod === 'delivery' && !isDeliveryPincodeServiceable && activePincode.length > 0 && (
@@ -1430,7 +1608,7 @@ export function Cart() {
                 <button 
                   type="button" 
                   onClick={() => {
-                    if (!isHoreca && deliveryMethod === 'delivery' && total() < 1000) {
+                    if (!isHoreca && deliveryMethod === 'delivery' && cartSubtotal < 1000) {
                       triggerMinOrderWarning();
                       return;
                     }

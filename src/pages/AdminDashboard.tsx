@@ -4,7 +4,7 @@ import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, s
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { setDocMirrored, updateDocMirrored, deleteDocMirrored, mirrorProductIds } from '../lib/mirrorToSupabase';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Package, Users, ShoppingBag, Plus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer } from 'lucide-react';
+import { Package, Users, ShoppingBag, Plus, Minus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff, CheckCircle2, AlertCircle, Eye, Tag } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
@@ -16,6 +16,7 @@ import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
 import { SEO } from '../components/SEO';
 import { ThermalPackingSlipModal } from '../components/ThermalPackingSlipModal';
+import { printItemLabels, extractItemLabelData } from '../lib/thermalPrinter';
 import toast from 'react-hot-toast';
 
 const STATUS_OPTIONS = [
@@ -598,6 +599,8 @@ export function AdminDashboard() {
 
   // Confirmation states to avoid iframe-blocking window.confirm
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [productToDeactivate, setProductToDeactivate] = useState<Product | null>(null);
+  const [productToReactivate, setProductToReactivate] = useState<Product | null>(null);
   const [prodCatToDelete, setProdCatToDelete] = useState<string | null>(null);
   const [editingProdCat, setEditingProdCat] = useState<{ oldName: string; newName: string } | null>(null);
   const [juiceCatToDelete, setJuiceCatToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -620,7 +623,7 @@ export function AdminDashboard() {
 
   // Filter for products
   const [productSearch, setProductSearch] = useState('');
-  const [productSection, setProductSection] = useState<'all' | 'veg-fruits' | 'juices'>('veg-fruits');
+  const [productSection, setProductSection] = useState<'all' | 'veg-fruits' | 'juices' | 'deactivated'>('veg-fruits');
 
   const [migrationStatus, setMigrationStatus] = useState<{
     migrating: boolean;
@@ -1071,16 +1074,28 @@ export function AdminDashboard() {
   };
 
   const filteredProducts = products.filter(product => {
-    const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
-    if (productSection === 'veg-fruits' && isJuice) return false;
-    if (productSection === 'juices' && !isJuice) return false;
+    // Separate deactivated products from regular active catalog
+    if (productSection === 'deactivated') {
+      if (product.isDeactivated !== true) return false;
+    } else {
+      // Normal products catalog view - completely hide deactivated items
+      if (product.isDeactivated === true) return false;
 
-    const q = productSearch.toLowerCase();
+      const isJuice = product.category === 'fnl juices' || product.category === 'fnl juice';
+      if (productSection === 'veg-fruits' && isJuice) return false;
+      if (productSection === 'juices' && !isJuice) return false;
+    }
+
+    const q = productSearch.toLowerCase().trim();
     const name = (product.name || '').toLowerCase();
     const cat = (product.category || '').toLowerCase();
     const subCat = ((product as any).subCategory || '').toLowerCase();
+    const itemCode = (product.itemCode ? String(product.itemCode) : '').toLowerCase();
 
     return !q ? true : (
+      itemCode === q ||
+      itemCode === q.replace(/^#/, '') ||
+      itemCode.includes(q) ||
       name.startsWith(q) || name.includes(` ${q}`) || name.includes(`-${q}`) ||
       cat.startsWith(q) || cat.includes(` ${q}`) || cat.includes(`-${q}`) ||
       subCat.startsWith(q) || subCat.includes(` ${q}`) || subCat.includes(`-${q}`)
@@ -1136,7 +1151,13 @@ export function AdminDashboard() {
         return isOutA ? 1 : -1;
       }
 
-      return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
+      const idxA = a.orderIndex !== undefined && a.orderIndex !== null ? a.orderIndex : 999;
+      const idxB = b.orderIndex !== undefined && b.orderIndex !== null ? b.orderIndex : 999;
+      if (idxA !== idxB) {
+        return idxA - idxB;
+      }
+
+      return (a.name || '').localeCompare(b.name || '');
     });
     return list;
   }, [filteredProducts, productCategories, juiceCategories]);
@@ -1260,11 +1281,54 @@ export function AdminDashboard() {
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
 
   // New product form handling
-  const [newProduct, setNewProduct] = useState<{ name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[]; useBasePricing?: boolean; basePrice?: string; baseUnit?: string; baseOriginalPrice?: string; baseHorecaPrice?: string }>({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
+  const [newProduct, setNewProduct] = useState<{ itemCode: string; name: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string; category: string; subCategory: string; description: string; imageUrl: string; unit: string; quantityValue: string; quantityUnit: string; packSize: string; horecaQuantityValue: string; horecaQuantityUnit: string; variants: { unit: string; quantityValue: string; quantityUnit: string; packSize?: string; horecaQuantityValue: string; horecaQuantityUnit: string; price: string; originalPrice: string; horecaPrice: string; horecaUnit: string }[]; useBasePricing?: boolean; basePrice?: string; baseUnit?: string; baseOriginalPrice?: string; baseHorecaPrice?: string; inStock?: boolean; isDeactivated?: boolean }>({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: 'indian fruits', subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '', inStock: true, isDeactivated: false });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+
+  const duplicateItemCodeProduct = useMemo(() => {
+    const rawCode = (newProduct.itemCode || '').trim();
+    if (!rawCode) return null;
+    return products.find(p => {
+      if (editingProductId && p.id === editingProductId) return false;
+      const otherCode = (p.itemCode ? String(p.itemCode) : '').trim();
+      return otherCode && otherCode.toLowerCase() === rawCode.toLowerCase();
+    }) || null;
+  }, [newProduct.itemCode, products, editingProductId]);
   const [seedingJuices, setSeedingJuices] = useState(false);
+  const [isAssigningCodes, setIsAssigningCodes] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [orderForThermalPrint, setOrderForThermalPrint] = useState<any | null>(null);
+  const [selectedOrderLabelQtys, setSelectedOrderLabelQtys] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    if (selectedOrder?.items && Array.isArray(selectedOrder.items)) {
+      const initial: Record<number, number> = {};
+      selectedOrder.items.forEach((it: any, idx: number) => {
+        initial[idx] = Math.max(1, Number(it?.quantity) || 1);
+      });
+      setSelectedOrderLabelQtys(initial);
+    }
+  }, [selectedOrder?.id]);
+
+  const handlePrintOrderItemLabel = (ord: any, itm: any, printQty: number) => {
+    const qty = Math.max(1, Number(printQty) || 1);
+    const labelData = extractItemLabelData(ord, itm, qty, products);
+    printItemLabels(labelData);
+    toast.success(`Printing ${qty} sticker${qty > 1 ? 's' : ''} on IDPRT SP410BT`);
+  };
+
+  const handlePrintAllSelectedOrderLabels = (ord: any) => {
+    if (!ord?.items || !Array.isArray(ord.items) || ord.items.length === 0) {
+      toast.error('No items to print');
+      return;
+    }
+    const allLabels = ord.items.map((it: any, idx: number) => {
+      const q = selectedOrderLabelQtys[idx] ?? Math.max(1, Number(it?.quantity) || 1);
+      return extractItemLabelData(ord, it, q, products);
+    });
+    const totalCount = allLabels.reduce((sum: number, l: any) => sum + (l.printQty || 1), 0);
+    printItemLabels(allLabels);
+    toast.success(`Printing ${totalCount} labels for ${allLabels.length} items on IDPRT SP410BT`);
+  };
 
   const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
 
@@ -1589,9 +1653,11 @@ export function AdminDashboard() {
   const handleExportCSV = () => {
     try {
       const headers = [
+        "ITEM CODE",
         "ID",
         "NAME",
         "CATEGORY",
+        "IMAGE URL",
         "BASE UNIT",
         "BASE PRICE",
         "UNIT",
@@ -1611,9 +1677,11 @@ export function AdminDashboard() {
         const v2 = product.variants && product.variants[1] ? product.variants[1] : null;
 
         const row = [
+          `"${(product.itemCode || '').replace(/"/g, '""')}"`,
           `"${(product.id || '').replace(/"/g, '""')}"`,
           `"${(product.name || '').replace(/"/g, '""')}"`,
           `"${(product.category || '').replace(/"/g, '""')}"`,
+          `"${(product.imageUrl || getCategoryImage(product.category) || '').replace(/"/g, '""')}"`,
           `"${(product.baseUnit || product.quantityUnit || 'Kg').replace(/"/g, '""')}"`,
           `"${product.basePrice !== undefined && product.basePrice !== null ? product.basePrice : ''}"`,
           `"${(product.unit || (product.quantityValue ? `${product.quantityValue} ${product.quantityUnit || 'Kg'}` : 'Kg')).replace(/"/g, '""')}"`,
@@ -1639,7 +1707,7 @@ export function AdminDashboard() {
       link.click();
       document.body.removeChild(link);
       
-      toast.success("Products exported successfully with Base Unit & Variant price details.");
+      toast.success("Products exported successfully with Item Codes, Image URLs, and pricing details.");
     } catch (err) {
       console.error("Export error:", err);
       toast.error("Failed to export products.");
@@ -1648,7 +1716,7 @@ export function AdminDashboard() {
 
   const handleExportHorecaCSV = () => {
     try {
-      const headers = ["PRODUCT NAME", "CATEGORY", "HORECA PRICE", "HORECA UNIT", "DESCRIPTION", "IMAGE URL"];
+      const headers = ["ITEM CODE", "PRODUCT NAME", "CATEGORY", "HORECA PRICE", "HORECA UNIT", "DESCRIPTION", "IMAGE URL"];
       const csvRows = [];
       csvRows.push(headers.join(","));
       
@@ -1656,12 +1724,13 @@ export function AdminDashboard() {
       
       horecaProducts.forEach(product => {
         const row = [
+          `"${(product.itemCode || '').replace(/"/g, '""')}"`,
           `"${(product.name || '').replace(/"/g, '""')}"`,
           `"${(product.category || '').replace(/"/g, '""')}"`,
           `"${product.horecaPrice !== undefined && product.horecaPrice !== null ? product.horecaPrice : ''}"`,
           `"${(product.horecaUnit || '').replace(/"/g, '""')}"`,
           `"${(product.description || '').replace(/"/g, '""')}"`,
-          `"${(product.imageUrl || '').replace(/"/g, '""')}"`
+          `"${(product.imageUrl || getCategoryImage(product.category) || '').replace(/"/g, '""')}"`
         ];
         csvRows.push(row.join(","));
       });
@@ -1978,6 +2047,114 @@ export function AdminDashboard() {
       }
     } finally {
       setSeedingJuices(false);
+    }
+  };
+
+  const handleAutoAssignItemCodes = async () => {
+    if (isAssigningCodes) return;
+    const confirmAssign = window.confirm("Are you sure you want to assign/update Item Codes for all products based on category order (1 to 284 for vegetables & fruits, and 285+ for juices)?");
+    if (!confirmAssign) return;
+
+    setIsAssigningCodes(true);
+    const toastId = toast.loading("Assigning item codes by category order...");
+
+    try {
+      const catOrder = new Map<string, number>();
+      productCategories.forEach((c, i) => {
+        if (c) catOrder.set(c.toLowerCase().trim(), i);
+      });
+
+      const getCatIndex = (cat?: string): number => {
+        let lower = (cat || '').toLowerCase().trim();
+        if (lower === 'exotic vegetables') lower = 'exotic vegetable';
+        if (lower === 'imported vegetables') lower = 'imported vegetable';
+        if (lower === 'mushrooms') lower = 'mushroom';
+        if (catOrder.has(lower)) return catOrder.get(lower)!;
+        if (catOrder.has(lower.replace(/s$/, ''))) return catOrder.get(lower.replace(/s$/, ''))!;
+        return 999;
+      };
+
+      const nonJuices = products.filter(p => {
+        const isJuice = (p.category || '').toLowerCase().includes('juice');
+        return !isJuice;
+      });
+
+      const juices = products.filter(p => {
+        const isJuice = (p.category || '').toLowerCase().includes('juice');
+        return isJuice;
+      });
+
+      nonJuices.sort((a, b) => {
+        const idxA = getCatIndex(a.category);
+        const idxB = getCatIndex(b.category);
+        if (idxA !== idxB) return idxA - idxB;
+        const orderA = a.orderIndex !== undefined && a.orderIndex !== null ? a.orderIndex : 999999;
+        const orderB = b.orderIndex !== undefined && b.orderIndex !== null ? b.orderIndex : 999999;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      const juiceSubOrder = ['cold-pressed', 'detox', 'satvik', 'smoothies', 'sweet-cravings', 'special'];
+      juices.sort((a, b) => {
+        const subA = ((a as any).subCategory || 'cold-pressed').toLowerCase().trim();
+        const subB = ((b as any).subCategory || 'cold-pressed').toLowerCase().trim();
+        const idxA = juiceSubOrder.indexOf(subA) !== -1 ? juiceSubOrder.indexOf(subA) : 999;
+        const idxB = juiceSubOrder.indexOf(subB) !== -1 ? juiceSubOrder.indexOf(subB) : 999;
+        if (idxA !== idxB) return idxA - idxB;
+        const orderA = a.orderIndex !== undefined && a.orderIndex !== null ? a.orderIndex : 999999;
+        const orderB = b.orderIndex !== undefined && b.orderIndex !== null ? b.orderIndex : 999999;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      const batch = writeBatch(db);
+      const updatedMap = new Map<string, string>();
+      const now = Date.now();
+
+      nonJuices.forEach((p, idx) => {
+        const code = String(idx + 1);
+        updatedMap.set(p.id, code);
+        batch.update(doc(db, 'products', p.id), {
+          itemCode: code,
+          updatedAt: now
+        });
+      });
+
+      juices.forEach((p, idx) => {
+        const code = String(nonJuices.length + idx + 1);
+        updatedMap.set(p.id, code);
+        batch.update(doc(db, 'products', p.id), {
+          itemCode: code,
+          updatedAt: now
+        });
+      });
+
+      await batch.commit();
+
+      const nextProducts = products.map(p => {
+        if (updatedMap.has(p.id)) {
+          return { ...p, itemCode: updatedMap.get(p.id)!, updatedAt: now };
+        }
+        return p;
+      });
+
+      setProducts(nextProducts);
+      const mProductsStore = await import('../store/useProducts');
+      mProductsStore.useProducts.getState().products = nextProducts;
+      mProductsStore.useProducts.getState().lastFetched = Date.now();
+
+      const mCache = await import('../lib/cacheManager');
+      const mIdb = await import('../lib/indexedDB');
+      mCache.cacheManager.set('products_v6', nextProducts);
+      mCache.cacheManager.set('products_last_fetched_v4', Date.now());
+      mIdb.idb.set('products_v6', nextProducts, 24 * 60 * 60 * 1000).catch(()=>{});
+
+      toast.success(`Successfully assigned item codes to ${updatedMap.size} products!`, { id: toastId });
+    } catch (err: any) {
+      console.error("Failed to assign item codes:", err);
+      toast.error(`Error: ${err?.message || 'Failed to update item codes'}`, { id: toastId });
+    } finally {
+      setIsAssigningCodes(false);
     }
   };
 
@@ -2464,6 +2641,21 @@ export function AdminDashboard() {
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const rawCode = (newProduct.itemCode || '').trim();
+    if (rawCode) {
+      const duplicate = products.find(p => {
+        if (editingProductId && p.id === editingProductId) return false;
+        const otherCode = (p.itemCode ? String(p.itemCode) : '').trim();
+        return otherCode && otherCode.toLowerCase() === rawCode.toLowerCase();
+      });
+
+      if (duplicate) {
+        toast.error(`Cannot save: Item Code #${rawCode} is already assigned to "${duplicate.name}". Each product must have a unique code.`);
+        return;
+      }
+    }
+
     const processStartTime = performance.now();
     let firestoreDurationMs = 0;
     let reactRenderDurationMs = 0;
@@ -2499,8 +2691,12 @@ export function AdminDashboard() {
       const baseOriginalPrice = newProduct.baseOriginalPrice ? Number(newProduct.baseOriginalPrice) : null;
       const baseHorecaPrice = newProduct.baseHorecaPrice ? Number(newProduct.baseHorecaPrice) : null;
 
+      const finalInStock = newProduct.inStock !== false;
+      const finalIsDeactivated = !!newProduct.isDeactivated;
+
       if (editingProductId) {
         await updateDocMirrored(doc(db, 'products', editingProductId), {
+          itemCode: newProduct.itemCode ? newProduct.itemCode.trim() : '',
           name: newProduct.name,
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
@@ -2520,10 +2716,13 @@ export function AdminDashboard() {
           baseUnit,
           baseOriginalPrice,
           baseHorecaPrice,
+          inStock: finalInStock,
+          isDeactivated: finalIsDeactivated,
           updatedAt: Date.now()
         });
       } else {
         await setDocMirrored(doc(db, 'products', productId), {
+          itemCode: newProduct.itemCode ? newProduct.itemCode.trim() : '',
           name: newProduct.name,
           price: Number(newProduct.price),
           originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : null,
@@ -2544,16 +2743,22 @@ export function AdminDashboard() {
           baseOriginalPrice,
           baseHorecaPrice,
           stock: 100,
-          inStock: true,
+          inStock: finalInStock,
+          isDeactivated: finalIsDeactivated,
+          orderIndex: 999,
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
       }
       firestoreDurationMs = performance.now() - firestoreStartTime;
 
+      const existingProd = editingProductId ? products.find(p => p.id === editingProductId) : null;
+      const assignedOrderIndex = existingProd?.orderIndex !== undefined ? existingProd.orderIndex : 999;
+
       const renderStartTime = performance.now();
       const updatedProductObj: Product = {
         id: productId,
+        itemCode: newProduct.itemCode ? newProduct.itemCode.trim() : undefined,
         name: newProduct.name,
         price: Number(newProduct.price),
         originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
@@ -2574,7 +2779,9 @@ export function AdminDashboard() {
         baseOriginalPrice: baseOriginalPrice !== null ? baseOriginalPrice : undefined,
         baseHorecaPrice: baseHorecaPrice !== null ? baseHorecaPrice : undefined,
         stock: 100,
-        inStock: true,
+        inStock: finalInStock,
+        isDeactivated: finalIsDeactivated,
+        orderIndex: assignedOrderIndex,
         createdAt: editingProductId ? (products.find(p => p.id === editingProductId)?.createdAt || Date.now()) : Date.now(),
         updatedAt: Date.now()
       } as unknown as Product;
@@ -2641,7 +2848,7 @@ export function AdminDashboard() {
         setLastUploadTiming(null); // Clear log
       }
 
-      setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
+      setNewProduct({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '', inStock: true, isDeactivated: false });
     } catch (error) {
       console.error(`[Step 5: Firestore Save Error] Failed to save product catalog document:`, error);
       handleFirestoreError(error, editingProductId ? OperationType.UPDATE : OperationType.CREATE, 'products');
@@ -3084,6 +3291,7 @@ export function AdminDashboard() {
     const inferred = inferBasePricing(product, mainQuantityValue, mainQuantityUnit);
 
     setNewProduct({
+      itemCode: product.itemCode ? String(product.itemCode) : '',
       name: product.name,
       price: product.price.toString(),
       originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
@@ -3119,7 +3327,9 @@ export function AdminDashboard() {
       basePrice: inferred.basePrice,
       baseUnit: inferred.baseUnit,
       baseOriginalPrice: inferred.baseOriginalPrice,
-      baseHorecaPrice: inferred.baseHorecaPrice
+      baseHorecaPrice: inferred.baseHorecaPrice,
+      inStock: product.inStock !== false,
+      isDeactivated: product.isDeactivated === true
     });
     setProductSection(isJuice ? 'juices' : 'veg-fruits');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3127,7 +3337,7 @@ export function AdminDashboard() {
 
   const handleCancelEdit = () => {
     setEditingProductId(null);
-    setNewProduct({ name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '' });
+    setNewProduct({ itemCode: '', name: '', price: '', originalPrice: '', horecaPrice: '', horecaUnit: '', category: productSection === 'juices' ? 'fnl juices' : (productCategories[0]?.toLowerCase() || 'indian fruits'), subCategory: 'cold-pressed', description: '', imageUrl: '', unit: '', quantityValue: '', quantityUnit: 'Kg', packSize: '', horecaQuantityValue: '', horecaQuantityUnit: 'Kg', variants: [], useBasePricing: false, basePrice: '', baseUnit: 'Kg', baseOriginalPrice: '', baseHorecaPrice: '', inStock: true, isDeactivated: false });
   };
 
   const uploadRawFileToStorage = async (
@@ -3322,6 +3532,68 @@ export function AdminDashboard() {
     }
   };
 
+  const handleConfirmDeactivateProduct = async () => {
+    if (!productToDeactivate) return;
+    const target = productToDeactivate;
+    const toastId = toast.loading(`Deactivating "${target.name}"...`);
+    try {
+      await updateDoc(doc(db, 'products', target.id), {
+        isDeactivated: true,
+        updatedAt: Date.now()
+      });
+      const updated = products.map(p => p.id === target.id ? { ...p, isDeactivated: true } : p);
+      setProducts(updated);
+
+      const mProductsStore = await import('../store/useProducts');
+      mProductsStore.useProducts.getState().products = updated;
+      mProductsStore.useProducts.getState().lastFetched = Date.now();
+
+      const mCache = await import('../lib/cacheManager');
+      const mIdb = await import('../lib/indexedDB');
+      mCache.cacheManager.set('products_v6', updated);
+      mCache.cacheManager.set('products_last_fetched_v4', Date.now());
+      mIdb.idb.set('products_v6', updated, 24 * 60 * 60 * 1000).catch(()=>{});
+
+      toast.success(`"${target.name}" deactivated and removed from catalog.`, { id: toastId });
+    } catch (error) {
+      console.error("Error deactivating product:", error);
+      toast.error("Failed to deactivate product", { id: toastId });
+    } finally {
+      setProductToDeactivate(null);
+    }
+  };
+
+  const handleConfirmReactivateProduct = async (prod?: Product) => {
+    const target = prod || productToReactivate;
+    if (!target) return;
+    const toastId = toast.loading(`Reactivating "${target.name}"...`);
+    try {
+      await updateDoc(doc(db, 'products', target.id), {
+        isDeactivated: false,
+        updatedAt: Date.now()
+      });
+      const updated = products.map(p => p.id === target.id ? { ...p, isDeactivated: false } : p);
+      setProducts(updated);
+
+      const mProductsStore = await import('../store/useProducts');
+      mProductsStore.useProducts.getState().products = updated;
+      mProductsStore.useProducts.getState().lastFetched = Date.now();
+
+      const mCache = await import('../lib/cacheManager');
+      const mIdb = await import('../lib/indexedDB');
+      mCache.cacheManager.set('products_v6', updated);
+      mCache.cacheManager.set('products_last_fetched_v4', Date.now());
+      mIdb.idb.set('products_v6', updated, 24 * 60 * 60 * 1000).catch(()=>{});
+
+      toast.success(`"${target.name}" reactivated! Restored to regular catalog.`, { id: toastId });
+    } catch (error) {
+      console.error("Error reactivating product:", error);
+      toast.error("Failed to reactivate product", { id: toastId });
+    } finally {
+      setProductToReactivate(null);
+    }
+  };
+
   const handleConfirmDeleteProdCat = async () => {
     if (!prodCatToDelete) return;
     try {
@@ -3461,22 +3733,41 @@ export function AdminDashboard() {
 
       mirrorProductIds(updates.map(u => u.id));
 
-      setProducts(prevProducts => {
-        const updated = prevProducts.map(p => ({...p}));
-        newOrder.forEach((p, idx) => {
-          const match = updated.find(up => up.id === p.id);
-          if (match) {
-            match.orderIndex = (idx + 1) * 10;
-            if (p.id === itemToMove.id && categoryChanged) {
-              match.category = itemToMove.category;
-              if (itemToMove.category === 'fnl juices' || itemToMove.category === 'fnl juice') {
-                (match as any).subCategory = (itemToMove as any).subCategory;
-              }
+      const updatedProducts = products.map(p => {
+        const match = newOrder.find(no => no.id === p.id);
+        if (match) {
+          const idx = newOrder.indexOf(match);
+          const pObj = {
+            ...p,
+            orderIndex: (idx + 1) * 10
+          };
+          if (p.id === itemToMove.id && categoryChanged) {
+            pObj.category = itemToMove.category;
+            if (itemToMove.category === 'fnl juices' || itemToMove.category === 'fnl juice') {
+              (pObj as any).subCategory = (itemToMove as any).subCategory;
             }
           }
-        });
-        return updated.sort((a,b) => (a.orderIndex ?? 999) - (b.orderIndex ?? 999));
+          return pObj;
+        }
+        return p;
       });
+
+      setProducts(updatedProducts);
+
+      const mProductsStore = await import('../store/useProducts');
+      mProductsStore.useProducts.getState().products = updatedProducts;
+      mProductsStore.useProducts.getState().lastFetched = Date.now();
+      const mCache = await import('../lib/cacheManager');
+      const mIdb = await import('../lib/indexedDB');
+      try {
+        mCache.cacheManager.set('products_v6', updatedProducts);
+        mCache.cacheManager.set('products_last_fetched_v4', Date.now());
+        mIdb.idb.set('products_v6', updatedProducts, 24 * 60 * 60 * 1000).catch(()=>{});
+        mIdb.idb.set('products_last_fetched_v4', Date.now(), 24 * 60 * 60 * 1000).catch(()=>{});
+      } catch (cacheErr) {
+        console.warn("Async Cache sync failed safely:", cacheErr);
+      }
+
       toast.success('Products reordered successfully');
     } catch (err) {
       console.error(err);
@@ -3639,8 +3930,10 @@ export function AdminDashboard() {
 
           return {
             'ID (Do not edit)': p.id,
+            'Item Code': p.itemCode || '',
             'Product Name': p.name || '',
             'Category': p.category || '',
+            'Image URL': p.imageUrl || getCategoryImage(p.category) || '',
             'Base Unit': effectiveBaseUnit,
             'Base Price': finalBasePrice,
             'Base MRP': finalBaseMRP,
@@ -3862,8 +4155,10 @@ export function AdminDashboard() {
         }
 
         const id = String(row.id || row.iddonotedit || row.productid || '').trim();
+        const itemCode = String(row.itemcode || row.code || '').trim();
         const name = String(row.productname || row.name || row.title || '').trim();
         const category = String(row.category || 'indian fruits').toLowerCase().trim();
+        const imageUrl = String(row.imageurl || row.image || row.productimage || '').trim();
         const rowUnitStr = row.baseunit || row.quantityunit;
         const primaryUnitStr = row.unit || row.thisunit || '1 Kg';
         const parsedPrimaryUnit = parseQuantityAndUnit(primaryUnitStr);
@@ -3894,8 +4189,10 @@ export function AdminDashboard() {
 
         return {
           id,
+          itemCode,
           name,
           category,
+          imageUrl,
           baseUnit,
           basePrice,
           baseOriginalPrice,
@@ -3940,13 +4237,16 @@ export function AdminDashboard() {
           name: parsed.name,
           category: parsed.category,
           description: '',
-          imageUrl: '',
+          imageUrl: parsed.imageUrl || '',
+          itemCode: parsed.itemCode || '',
           variants: []
         };
 
         updated.useBasePricing = true;
         if (parsed.name) updated.name = parsed.name;
         if (parsed.category) updated.category = parsed.category;
+        if (parsed.imageUrl) updated.imageUrl = parsed.imageUrl;
+        if (parsed.itemCode) updated.itemCode = parsed.itemCode;
         
         let effectiveBasePrice = parsed.basePrice;
         if (effectiveBasePrice === undefined && parsed.thisUnitPrice !== undefined) {
@@ -4117,14 +4417,18 @@ export function AdminDashboard() {
           const hasInStockChange = parsed.inStock !== undefined && Boolean(parsed.inStock) !== Boolean(match.inStock);
           const hasNameChange = parsed.name && parsed.name.toLowerCase().trim() !== match.name.toLowerCase().trim();
           const hasCategoryChange = parsed.category && parsed.category.toLowerCase().trim() !== match.category.toLowerCase().trim();
+          const hasImageUrlChange = Boolean(parsed.imageUrl && parsed.imageUrl.trim() !== (match.imageUrl || '').trim());
+          const hasItemCodeChange = Boolean(parsed.itemCode && parsed.itemCode.trim() !== (match.itemCode || '').trim());
 
-          if (!hasBasePriceChange && !hasBaseOriginalChange && !hasBaseHorecaChange && !hasStockChange && !hasInStockChange && !hasNameChange && !hasCategoryChange) {
+          if (!hasBasePriceChange && !hasBaseOriginalChange && !hasBaseHorecaChange && !hasStockChange && !hasInStockChange && !hasNameChange && !hasCategoryChange && !hasImageUrlChange && !hasItemCodeChange) {
             continue; // Skip unchanged products entirely
           }
 
           updated.useBasePricing = true;
           if (hasNameChange) updated.name = parsed.name;
           if (hasCategoryChange) updated.category = parsed.category;
+          if (hasImageUrlChange) updated.imageUrl = parsed.imageUrl;
+          if (hasItemCodeChange) updated.itemCode = parsed.itemCode;
           
           if (hasBasePriceChange) {
             updated.basePrice = effectiveBasePrice;
@@ -4158,8 +4462,10 @@ export function AdminDashboard() {
 
           // Check for differences
           const diffs: string[] = [];
+          if (hasItemCodeChange) diffs.push(`Item Code: #${match.itemCode || 'None'} ➜ #${updated.itemCode}`);
           if (hasNameChange) diffs.push(`Name: "${match.name}" ➜ "${updated.name}"`);
           if (hasCategoryChange) diffs.push(`Category: "${match.category}" ➜ "${updated.category}"`);
+          if (hasImageUrlChange) diffs.push(`Image URL: Updated`);
           if (hasBasePriceChange) diffs.push(`Base Price: ₹${match.basePrice || 'None'} ➜ ₹${updated.basePrice || 'None'}`);
           if (hasBaseOriginalChange) diffs.push(`Base MRP: ₹${match.baseOriginalPrice || 'None'} ➜ ₹${updated.baseOriginalPrice || 'None'}`);
           if (hasBaseHorecaChange) diffs.push(`Base HoReCa Price: ₹${match.baseHorecaPrice || 'None'} ➜ ₹${updated.baseHorecaPrice || 'None'}`);
@@ -4542,7 +4848,7 @@ export function AdminDashboard() {
                           >
                             <span className="font-extrabold">{order.orderNumber || `FNL-${order.id.slice(0, 8).toUpperCase()}`}</span>
                           </button>
-                          <div className="flex items-center gap-1.5 mt-1.5">
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                             <button
                               type="button"
                               onClick={() => setSelectedOrder(order)}
@@ -4558,6 +4864,14 @@ export function AdminDashboard() {
                             >
                               <Printer className="w-2.5 h-2.5 text-emerald-600" /> Print
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => setOrderForThermalPrint({ ...order, defaultTab: 'labels' })}
+                              className="text-[8px] uppercase tracking-wider text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-300/80 px-2 py-0.5 rounded-md text-center font-black flex items-center gap-1 shadow-2xs cursor-pointer"
+                              title="Print 78x50mm Item Sticker Labels on IDPRT SP410BT"
+                            >
+                              <Tag className="w-2.5 h-2.5 text-blue-600" /> Labels
+                            </button>
                           </div>
                         </td>
                         <td className="p-3 sm:p-4 md:p-5 leading-relaxed max-w-[200px] sm:max-w-xs whitespace-normal">
@@ -4568,22 +4882,41 @@ export function AdminDashboard() {
                           <span className="text-muted-foreground font-mono text-[10px] sm:text-xs tracking-wider block mt-0.5 font-bold">{order.shippingDetails?.phone || 'No phone'}</span>
                           <span className="text-muted-foreground text-[8px] sm:text-[9px] block mt-1 leading-snug">{order.shippingDetails?.address?.includes('Store Pickup') ? 'STORE PICKUP' : (order.shippingDetails?.address || 'No address provided')}</span>
                         </td>
-                        <td className="p-3 sm:p-4 md:p-5 leading-normal max-w-[220px] whitespace-normal">
+                        <td className="p-3 sm:p-4 md:p-5 leading-normal min-w-[240px] max-w-sm whitespace-normal">
                           <div className="space-y-1">
                             {order.items && order.items.length > 0 ? (
                               <div className="flex flex-col gap-0.5">
                                 {(order.items || []).map((item: any, idx: number) => {
                                   const prod = item?.product || item;
                                   if (!prod) return null;
+                                  let itmCode = prod.itemCode || item.itemCode || '';
+                                  if (!itmCode && products?.length) {
+                                    const m = products.find(p => (prod.id && p.id === prod.id) || (p.name && prod.name && p.name.toLowerCase() === prod.name.toLowerCase()));
+                                    if (m?.itemCode) itmCode = m.itemCode;
+                                  }
                                   return (
-                                    <div key={idx} className="flex justify-between items-start gap-2 text-[10px] sm:text-xs border-b border-dashed border-border/40 pb-0.5 last:border-0">
-                                      <span className="text-muted-foreground font-medium truncate max-w-[140px] sm:max-w-[170px] inline-block">
+                                    <div key={idx} className="flex justify-between items-center gap-2 text-[10px] sm:text-xs border-b border-dashed border-border/40 pb-0.5 last:border-0 group">
+                                      <span className="text-muted-foreground font-medium break-words leading-tight flex-1" title={prod.name || 'Unknown'}>
                                         <span className="font-extrabold text-[#111111]">{item.quantity || 1}x</span> {prod.name || 'Unknown'}
                                         {prod.unit ? <span className="text-[8px] text-muted-foreground ml-1">({prod.unit})</span> : null}
+                                        {itmCode ? <span className="text-[7.5px] font-mono bg-black text-white px-1 py-0.2 rounded ml-1 font-bold">#{itmCode.replace(/^#/, '')}</span> : null}
                                       </span>
-                                      <span className="font-mono text-muted-foreground text-[9px] sm:text-[10px] shrink-0 font-black">
-                                        ₹{(prod.price || 0) * (item.quantity || 1)}
-                                      </span>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <span className="font-mono text-muted-foreground text-[9px] sm:text-[10px] font-black">
+                                          ₹{(prod.price || 0) * (item.quantity || 1)}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handlePrintOrderItemLabel(order, item, item.quantity || 1);
+                                          }}
+                                          className="p-0.5 hover:bg-blue-100 text-blue-600 rounded transition-colors cursor-pointer"
+                                          title={`Print ${item.quantity || 1} label(s) on IDPRT SP410BT`}
+                                        >
+                                          <Tag className="w-2.5 h-2.5" />
+                                        </button>
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -4710,18 +5043,58 @@ export function AdminDashboard() {
                   )}
                   
                   <form onSubmit={handleSaveProduct} className="space-y-4">
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                        {productSection === 'juices' ? 'Juice / Drink Name' : 'Crop/Item Name'}
-                      </label>
-                      <input 
-                        required 
-                        placeholder={productSection === 'juices' ? 'Watermelon Punch or Mango Smoothie...' : 'Royal Washington Red Apples...'} 
-                        className="w-full border border-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-[10px] sm:text-xs" 
-                        value={newProduct.name} 
-                        onChange={e => setNewProduct({...newProduct, name: e.target.value})} 
-                      />
+                    <div className="flex flex-row gap-2.5 sm:gap-3 items-start">
+                      <div className="w-20 sm:w-24 shrink-0 space-y-1.5 sm:space-y-2">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center justify-between h-4">
+                          <span className="flex items-center gap-1">
+                            <Hash className="w-2.5 h-2.5 text-primary" /> Code
+                          </span>
+                          {duplicateItemCodeProduct && (
+                            <span className="text-[7px] font-black text-red-500 uppercase tracking-tight">
+                              Taken!
+                            </span>
+                          )}
+                        </label>
+                        <input 
+                          type="text"
+                          placeholder="e.g. 1" 
+                          className={`w-full border rounded-xl sm:rounded-2xl px-2 sm:px-2.5 py-2.5 sm:py-3.5 bg-white outline-none text-foreground transition-colors text-[10px] sm:text-xs font-mono font-bold text-center ${
+                            duplicateItemCodeProduct 
+                              ? 'border-red-500 focus:border-red-500 ring-2 ring-red-500/20 text-red-600' 
+                              : 'border-border focus:border-primary'
+                          }`}
+                          value={newProduct.itemCode} 
+                          onChange={e => setNewProduct({...newProduct, itemCode: e.target.value})} 
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+                        <label className="block text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center h-4">
+                          {productSection === 'juices' ? 'Juice / Drink Name' : 'Crop/Item Name'}
+                        </label>
+                        <input 
+                          required 
+                          placeholder={productSection === 'juices' ? 'Watermelon Punch or Mango Smoothie...' : 'Royal Washington Red Apples...'} 
+                          className="w-full border border-border rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3.5 bg-white outline-none focus:border-primary text-foreground transition-colors text-xs sm:text-sm" 
+                          value={newProduct.name} 
+                          onChange={e => setNewProduct({...newProduct, name: e.target.value})} 
+                        />
+                      </div>
                     </div>
+
+                    {/* Duplicate Item Code Alert Banner */}
+                    {duplicateItemCodeProduct && (
+                      <div className="p-2.5 bg-red-600 border border-red-700 rounded-xl text-[9px] text-white font-semibold flex items-start gap-2 shadow-sm leading-tight animate-in fade-in duration-200">
+                        <AlertCircle className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-white text-[9.5px]">
+                            Duplicate Item Code: #{newProduct.itemCode.trim()}
+                          </p>
+                          <p className="mt-0.5 text-white/95">
+                            Already assigned to <strong className="text-white font-black underline decoration-white/50">"{duplicateItemCodeProduct.name}"</strong> ({duplicateItemCodeProduct.category}). Each product must have a unique item code.
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Base Pricing Toggle & Inputs */}
                     <div className="p-3.5 bg-background border border-border rounded-2xl space-y-3 shadow-sm">
@@ -5168,6 +5541,87 @@ export function AdminDashboard() {
                     />
                   </div>
 
+                  {/* Stock Availability & Deactivation Status Options */}
+                  <div className="p-3.5 bg-background border border-border rounded-xl sm:rounded-2xl space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-2">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Package className="w-3.5 h-3.5 text-primary" /> Inventory & Catalog Visibility
+                      </span>
+                      <span className="text-[8px] font-bold text-muted-foreground uppercase">
+                        {newProduct.isDeactivated ? 'Deactivated' : (newProduct.inStock !== false ? 'In Stock' : 'Out of Stock')}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {/* Stock In / Out Switch */}
+                      <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-colors ${
+                        newProduct.inStock !== false ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-red-500/5 border-red-500/30'
+                      }`}>
+                        <div className="min-w-0">
+                          <span className="block text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                            Stock Status
+                          </span>
+                          <span className={`text-xs font-black uppercase tracking-tight flex items-center gap-1 ${
+                            newProduct.inStock !== false ? 'text-emerald-600' : 'text-red-500'
+                          }`}>
+                            {newProduct.inStock !== false ? (
+                              <><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> In Stock</>
+                            ) : (
+                              <><AlertCircle className="w-3.5 h-3.5 shrink-0" /> Out of Stock</>
+                            )}
+                          </span>
+                        </div>
+
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0" title="Toggle Stock In / Stock Out">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={newProduct.inStock !== false}
+                            onChange={e => setNewProduct(prev => ({ ...prev, inStock: e.target.checked }))}
+                          />
+                          <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                      </div>
+
+                      {/* Active / Deactivated Switch */}
+                      <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-colors ${
+                        newProduct.isDeactivated ? 'bg-amber-500/10 border-amber-500/40' : 'bg-secondary/40 border-border'
+                      }`}>
+                        <div className="min-w-0">
+                          <span className="block text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                            Catalog Status
+                          </span>
+                          <span className={`text-xs font-black uppercase tracking-tight flex items-center gap-1 ${
+                            newProduct.isDeactivated ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'
+                          }`}>
+                            {newProduct.isDeactivated ? (
+                              <><Ban className="w-3.5 h-3.5 text-amber-600 shrink-0" /> Deactivated</>
+                            ) : (
+                              <><Eye className="w-3.5 h-3.5 text-primary shrink-0" /> Active</>
+                            )}
+                          </span>
+                        </div>
+
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0" title="Toggle Active / Deactivate Product">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={!!newProduct.isDeactivated}
+                            onChange={e => setNewProduct(prev => ({ ...prev, isDeactivated: e.target.checked }))}
+                          />
+                          <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
+                        </label>
+                      </div>
+                    </div>
+
+                    {newProduct.isDeactivated && (
+                      <div className="p-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/50 rounded-xl text-[9px] text-amber-900 dark:text-amber-200 font-semibold flex items-center gap-1.5 leading-tight">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>Product will be placed in the <strong>Deactivated list</strong> and completely removed from the regular customer catalog.</span>
+                      </div>
+                    )}
+                  </div>
+
                   {editingProductId ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                       <button 
@@ -5179,17 +5633,25 @@ export function AdminDashboard() {
                       </button>
                       <button 
                         type="submit" 
-                        className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
+                        disabled={Boolean(duplicateItemCodeProduct)}
+                        title={duplicateItemCodeProduct ? `Item code #${newProduct.itemCode.trim()} is already in use by "${duplicateItemCodeProduct.name}"` : undefined}
+                        className={`slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black shadow-[0_4px_15px_rgba(0,184,83,0.2)] flex items-center justify-center gap-1.5 ${
+                          duplicateItemCodeProduct ? 'opacity-50 cursor-not-allowed bg-neutral-400 dark:bg-neutral-600' : 'hover:scale-102 cursor-pointer'
+                        }`}
                       >
-                        Update Stock <Check className="w-4 h-4 text-white" />
+                        {newProduct.isDeactivated ? 'Update Product (Deactivated)' : 'Update Product'} <Check className="w-4 h-4 text-white" />
                       </button>
                     </div>
                   ) : (
                     <button 
                       type="submit" 
-                      className="slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black mt-2 shadow-[0_4px_15px_rgba(0,184,83,0.2)] hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
+                      disabled={Boolean(duplicateItemCodeProduct)}
+                      title={duplicateItemCodeProduct ? `Item code #${newProduct.itemCode.trim()} is already in use by "${duplicateItemCodeProduct.name}"` : undefined}
+                      className={`slice-btn-primary w-full py-3 sm:py-4 text-[9px] sm:text-[10px] font-black mt-2 shadow-[0_4px_15px_rgba(0,184,83,0.2)] flex items-center justify-center gap-1.5 ${
+                        duplicateItemCodeProduct ? 'opacity-50 cursor-not-allowed bg-neutral-400 dark:bg-neutral-600' : 'hover:scale-102 cursor-pointer'
+                      }`}
                     >
-                      Commit Stock <Plus className="w-4 h-4 text-white" />
+                      {newProduct.isDeactivated ? 'Commit Product (Deactivated)' : 'Commit Product'} <Plus className="w-4 h-4 text-white" />
                     </button>
                   )}
                 </form>
@@ -5364,6 +5826,14 @@ export function AdminDashboard() {
                   >
                     <Download className="w-3.5 h-3.5" /> HORECA
                   </button>
+                  <button
+                    onClick={handleAutoAssignItemCodes}
+                    disabled={isAssigningCodes}
+                    className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                    title="Auto-assign/sync item codes from 1 to 284 by category order"
+                  >
+                    <Hash className="w-3.5 h-3.5" /> {isAssigningCodes ? 'Assigning...' : 'Assign Codes (1–284)'}
+                  </button>
                   <input 
                     type="search"
                     placeholder="Search inventory..."
@@ -5374,7 +5844,7 @@ export function AdminDashboard() {
                 </div>
               </div>
 
-              {/* SECTION NAVIGATION FOR FRUITS/VEGETABLES VS JUICE SECTIONS */}
+              {/* SECTION NAVIGATION FOR FRUITS/VEGETABLES VS JUICE SECTIONS VS DEACTIVATED */}
               <div className="flex border-b border-border bg-neutral-50 p-1.5 gap-1.5 overflow-x-auto no-scrollbar">
                 <button
                   onClick={() => setProductSection('all')}
@@ -5384,7 +5854,7 @@ export function AdminDashboard() {
                       : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100'
                   }`}
                 >
-                  All Items ({products.length})
+                  All Items ({products.filter(p => p.isDeactivated !== true).length})
                 </button>
                 <button
                   onClick={() => setProductSection('veg-fruits')}
@@ -5394,7 +5864,7 @@ export function AdminDashboard() {
                       : 'text-muted-foreground hover:text-foreground hover:bg-neutral-100'
                   }`}
                 >
-                  🍎 Vegetables & Fruits ({products.filter(p => p.category !== 'fnl juices' && p.category !== 'fnl juice').length})
+                  🍎 Vegetables & Fruits ({products.filter(p => p.isDeactivated !== true && p.category !== 'fnl juices' && p.category !== 'fnl juice').length})
                 </button>
                 <button
                   onClick={() => setProductSection('juices')}
@@ -5404,18 +5874,48 @@ export function AdminDashboard() {
                       : 'text-orange-600 hover:text-orange-700 hover:bg-neutral-100'
                   }`}
                 >
-                  🍹 FNL Juices ({products.filter(p => p.category === 'fnl juices' || p.category === 'fnl juice').length})
+                  🍹 FNL Juices ({products.filter(p => p.isDeactivated !== true && (p.category === 'fnl juices' || p.category === 'fnl juice')).length})
+                </button>
+                <button
+                  onClick={() => setProductSection('deactivated')}
+                  className={`flex-1 min-w-[140px] py-2 px-2.5 rounded-xl text-[8.5px] uppercase font-black tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+                    productSection === 'deactivated'
+                      ? 'bg-rose-700 text-white shadow-sm'
+                      : 'text-rose-600 hover:text-rose-700 hover:bg-rose-50'
+                  }`}
+                >
+                  🚫 Deactivated ({products.filter(p => p.isDeactivated === true).length})
                 </button>
               </div>
+
+              {/* Informational Banner for Deactivated tab */}
+              {productSection === 'deactivated' && (
+                <div className="bg-rose-50 border-b border-rose-200/80 px-4 py-3 flex items-center justify-between gap-3 text-rose-900">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-7 h-7 rounded-lg bg-rose-200/80 text-rose-700 flex items-center justify-center shrink-0">
+                      <Ban className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <p className="text-[10px] sm:text-xs font-black uppercase tracking-wider">
+                        Deactivated Products List ({products.filter(p => p.isDeactivated === true).length} Items)
+                      </p>
+                      <p className="text-[9px] sm:text-[10px] text-rose-700 font-semibold leading-tight">
+                        These crops are completely removed from regular customer catalog, search, and showcases. Click <strong>"Reactivate"</strong> on any product below to instantly restore it back to the active catalog.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border bg-secondary text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap text-center w-16">Code</th>
                       <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Product Details</th>
                       <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Catalog Category</th>
                       <th className="px-3 sm:px-4 py-3 whitespace-nowrap">Rate (₹)</th>
-                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap text-center">In Stock</th>
+                      <th className="px-3 sm:px-4 py-3 whitespace-nowrap text-center">{productSection === 'deactivated' ? 'Status' : 'In Stock'}</th>
                       <th className="px-3 sm:px-4 py-3 text-right whitespace-nowrap">Controls</th>
                     </tr>
                   </thead>
@@ -5450,7 +5950,7 @@ export function AdminDashboard() {
                         <React.Fragment key={product.id}>
                           {showHeader && (
                             <tr className="bg-secondary/30">
-                              <td colSpan={5} className="py-4 sm:py-6 px-3 sm:px-5">
+                              <td colSpan={6} className="py-4 sm:py-6 px-3 sm:px-5">
                                 <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#151515] bg-white border border-border px-4 py-2 rounded-xl shadow-sm">
                                   {isJuice ? '🍹 FNL Juices / ' + displayJuiceLabel : (product.category || '').replace(/ font-bold/gi, '')}
                                 </span>
@@ -5474,6 +5974,15 @@ export function AdminDashboard() {
                           }}
                           className={`transition-colors cursor-move ${dragOverProductIdx === idx ? 'border-primary border-t-2 border-dashed' : ''} ${product.inStock === false ? 'bg-red-500/5 hover:bg-red-500/10' : 'hover:bg-black/5'}`}
                         >
+                          <td className="px-3 sm:px-4 py-3 text-center whitespace-nowrap">
+                            {product.itemCode ? (
+                              <span className="inline-block bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-300 dark:border-neutral-700 font-mono font-black px-2 py-0.5 rounded-lg text-[9px] sm:text-[10px]">
+                                #{product.itemCode}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground/40 font-mono text-[9px]">-</span>
+                            )}
+                          </td>
                           <td className="px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
                             <div className={`w-10 sm:w-12 md:w-14 aspect-[4/3] rounded-lg sm:rounded-xl bg-white dark:bg-white overflow-hidden border border-border flex-shrink-0 ${product.inStock === false ? 'opacity-50 grayscale' : ''}`}>
                               <img src={product.imageUrl || getCategoryImage(product.category) || undefined} alt="" loading="lazy" className="w-full h-full object-contain object-center" />
@@ -5530,44 +6039,78 @@ export function AdminDashboard() {
                             )}
                           </td>
                           <td className="px-3 sm:px-4 py-3 text-center whitespace-nowrap">
-                            <button
-                              onClick={() => handleToggleStock(product)}
-                              className={`relative inline-flex h-5 sm:h-6 w-9 sm:w-11 items-center rounded-full transition-colors ${
-                                product.inStock !== false ? 'bg-primary' : 'bg-red-500'
-                              } focus:outline-none`}
-                            >
-                              <span
-                                className={`inline-block h-3 sm:h-4 w-3 sm:w-4 transform rounded-full bg-white transition-transform ${
-                                  product.inStock !== false ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
-                                }`}
-                              />
-                            </button>
-                            <span className="block mt-1 text-muted-foreground uppercase tracking-widest text-[7px] whitespace-nowrap">
-                              {product.inStock !== false ? 'In Stock' : 'Out'}
-                            </span>
+                            {product.isDeactivated ? (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 border border-rose-200/80 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider">
+                                  <Ban className="w-3 h-3 text-rose-600" /> Deactivated
+                                </span>
+                                <span className="text-[7.5px] text-muted-foreground font-semibold">Hidden from Shop</span>
+                              </div>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => handleToggleStock(product)}
+                                  className={`relative inline-flex h-5 sm:h-6 w-9 sm:w-11 items-center rounded-full transition-colors ${
+                                    product.inStock !== false ? 'bg-primary' : 'bg-red-500'
+                                  } focus:outline-none`}
+                                >
+                                  <span
+                                    className={`inline-block h-3 sm:h-4 w-3 sm:w-4 transform rounded-full bg-white transition-transform ${
+                                      product.inStock !== false ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
+                                    }`}
+                                  />
+                                </button>
+                                <span className="block mt-1 text-muted-foreground uppercase tracking-widest text-[7px] whitespace-nowrap">
+                                  {product.inStock !== false ? 'In Stock' : 'Out'}
+                                </span>
+                              </>
+                            )}
                           </td>
                           <td className="px-3 sm:px-4 py-3 text-right space-x-1.5 sm:space-x-2 whitespace-nowrap">
-                          <button 
-                            onClick={() => handleEditSetup(product)} 
-                            className="text-muted-foreground hover:text-primary p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
-                          >
-                            <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteProduct(product.id)} 
-                            className="text-muted-foreground hover:text-red-500 p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-red-500/10 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          </button>
-                        </td>
-                      </tr>
+                            {product.isDeactivated ? (
+                              <button 
+                                onClick={() => handleConfirmReactivateProduct(product)} 
+                                title="Reactivate Product (Restore to active customer catalog)"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-colors shadow-xs cursor-pointer"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" /> Reactivate
+                              </button>
+                            ) : (
+                              <>
+                                <button 
+                                  onClick={() => handleEditSetup(product)} 
+                                  title="Edit Product"
+                                  className="text-muted-foreground hover:text-primary p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => setProductToDeactivate(product)} 
+                                  title="Deactivate Product (Remove from customer catalog)"
+                                  className="text-muted-foreground hover:text-amber-600 p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-amber-500/10 transition-colors cursor-pointer"
+                                >
+                                  <PowerOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                </button>
+                              </>
+                            )}
+                            <button 
+                              onClick={() => handleDeleteProduct(product.id)} 
+                              title="Delete permanently"
+                              className="text-muted-foreground hover:text-red-500 p-1.5 sm:p-2 bg-background border border-border rounded-full hover:bg-red-500/10 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            </button>
+                          </td>
+                        </tr>
                       </React.Fragment>
                       );
                     })}
                     {categorizedFilteredProducts.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
-                          Zero items registered inside the database yet.
+                        <td colSpan={6} className="p-10 text-center text-muted-foreground font-mono text-xxs tracking-widest uppercase">
+                          {productSection === 'deactivated' 
+                            ? 'No deactivated products found. All catalog items are active in the store.' 
+                            : 'Zero items registered inside this view.'}
                         </td>
                       </tr>
                     )}
@@ -6481,7 +7024,7 @@ export function AdminDashboard() {
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0" onClick={() => setSelectedOrder(null)}></div>
-          <div className="bg-white border border-border rounded-[28px] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col p-4 sm:p-8 relative z-10 animate-in fade-in duration-200">
+          <div className="bg-white border border-border rounded-[28px] max-w-5xl lg:max-w-6xl w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col p-4 sm:p-7 md:p-8 relative z-10 animate-in fade-in duration-200">
             {/* Header */}
             <div className="flex justify-between items-start border-b border-border pb-4 sm:pb-5 mb-5 sm:mb-6">
               <div>
@@ -6547,16 +7090,6 @@ export function AdminDashboard() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setOrderForThermalPrint(selectedOrder)}
-                  className="bg-neutral-900 hover:bg-neutral-800 text-white font-extrabold text-[10px] sm:text-xs px-2.5 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap"
-                  title="Print Thermal Packing Slip"
-                >
-                  <Printer className="w-3.5 h-3.5 text-primary" />
-                  <span className="hidden sm:inline">Print Packing Slip</span>
-                  <span className="sm:hidden">Print Slip</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => setOrderToDelete(selectedOrder.id)}
                   className="ml-2 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-lg p-1.5 sm:p-2 cursor-pointer transition-colors"
                   title="Delete Order"
@@ -6603,13 +7136,34 @@ export function AdminDashboard() {
 
             {/* Items Breakdown list */}
             <div className="space-y-4 flex-1">
-              <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">Shopping Cart Items</h4>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  Shopping Cart Items
+                  <span className="text-[9px] bg-primary/10 text-primary font-mono px-2 py-0.5 rounded-full font-bold">
+                    {selectedOrder.items?.length || 0} items
+                  </span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => handlePrintAllSelectedOrderLabels(selectedOrder)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer w-fit"
+                  title="Print 78x50mm stickers for all items on IDPRT SP410BT"
+                >
+                  <Printer className="w-3 h-3" /> Print All Item Labels (78×50mm)
+                </button>
+              </div>
               <div className="border border-border rounded-2xl overflow-hidden bg-secondary/50 divide-y divide-border">
                 {selectedOrder.items && selectedOrder.items.length > 0 ? (
                   selectedOrder.items.map((item: any, idx: number) => {
                     const prod = item?.product || item;
                     if (!prod) return null;
                     const catImg = getCategoryImage(prod.category, categoryImages);
+                    let itmCode = prod.itemCode || item.itemCode || '';
+                    if (!itmCode && products?.length) {
+                      const m = products.find(p => (prod.id && p.id === prod.id) || (p.name && prod.name && p.name.toLowerCase() === prod.name.toLowerCase()));
+                      if (m?.itemCode) itmCode = m.itemCode;
+                    }
+                    const labelPrintQty = selectedOrderLabelQtys[idx] ?? Math.max(1, Number(item.quantity) || 1);
                     return (
                       <div key={idx} className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-3.5 items-start sm:items-center justify-between min-w-0 w-full">
                         {/* Left/Top Part: Image, Name, Category/Unit and Mobile Total Qty */}
@@ -6618,8 +7172,15 @@ export function AdminDashboard() {
                             <img src={prod.imageUrl || catImg || null} alt={prod.name} className="w-full h-full object-contain object-center" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-extrabold text-xs text-foreground uppercase truncate" title={prod.name}>{prod.name}</p>
-                            <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5 truncate">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-extrabold text-xs sm:text-sm text-foreground uppercase break-words leading-tight" title={prod.name}>{prod.name}</p>
+                              {itmCode && (
+                                <span className="px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800 border border-neutral-300 text-[9px] font-mono font-black tracking-wider shadow-2xs shrink-0">
+                                  #{itmCode.replace(/^#/, '')}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5 break-words">
                               {prod.category?.replace(/ font-bold/gi, '')} {prod.unit ? `• ${prod.unit}` : ''}
                             </p>
                           </div>
@@ -6631,14 +7192,15 @@ export function AdminDashboard() {
                           </div>
                         </div>
 
-                        {/* Right/Bottom Part: Total Qty (Desktop), Controls, Price, Remove Button */}
-                        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 border-t border-dashed border-border/60 pt-2.5 sm:pt-0 sm:border-t-0">
+                        {/* Right/Bottom Part: Total Qty (Desktop), Controls, Label Printer, Price, Remove Button */}
+                        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0 border-t border-dashed border-border/60 pt-2.5 sm:pt-0 sm:border-t-0">
                           {/* Desktop-only Total Qty badge */}
-                          <div className="hidden sm:flex flex-col items-center justify-center px-2.5 py-1 bg-primary/5 border border-primary/10 rounded-xl min-w-[75px] shrink-0 text-center mx-1 sm:mx-2">
+                          <div className="hidden sm:flex flex-col items-center justify-center px-2.5 py-1 bg-primary/5 border border-primary/10 rounded-xl min-w-[70px] shrink-0 text-center">
                             <span className="text-[8px] uppercase font-black tracking-widest text-primary/60">Total Qty</span>
                             <span className="text-[10px] sm:text-xs font-black text-primary uppercase whitespace-nowrap">{formatTotalQuantity(item.quantity || 1, prod.unit)}</span>
                           </div>
 
+                          {/* Quantity +/- for order item */}
                           <div className="flex items-center gap-2 bg-secondary rounded-lg p-1 border border-border">
                             <button
                               type="button"
@@ -6666,6 +7228,60 @@ export function AdminDashboard() {
                               <span className="text-xs font-black">+</span>
                             </button>
                           </div>
+
+                          {/* Label Printing Unit: Compact Stepper + Compact Printer Button (No text) */}
+                          <div className="flex items-center gap-1 shrink-0 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-1 shadow-2xs">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (labelPrintQty > 1) {
+                                  setSelectedOrderLabelQtys(prev => ({ ...prev, [idx]: labelPrintQty - 1 }));
+                                }
+                              }}
+                              disabled={labelPrintQty <= 1}
+                              className="w-6 h-6 flex items-center justify-center rounded-lg bg-red-100 dark:bg-red-950/60 hover:bg-red-200 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 disabled:opacity-30 transition-all font-black text-xs cursor-pointer shadow-2xs"
+                              title="Decrease stickers"
+                            >
+                              <Minus className="w-3 h-3 stroke-[3]" />
+                            </button>
+                            <input
+                              type="number"
+                              min="1"
+                              max="999"
+                              value={labelPrintQty}
+                              onChange={(e) => {
+                                const val = Math.max(1, Math.min(999, parseInt(e.target.value) || 1));
+                                setSelectedOrderLabelQtys(prev => ({ ...prev, [idx]: val }));
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-8 h-6 text-center font-mono font-black text-[11px] bg-white dark:bg-card border border-border rounded-md text-foreground outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-2xs"
+                              title="Number of 78x50mm stickers to print"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrderLabelQtys(prev => ({ ...prev, [idx]: labelPrintQty + 1 }));
+                              }}
+                              className="w-6 h-6 flex items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 transition-all font-black text-xs cursor-pointer shadow-2xs"
+                              title="Increase stickers"
+                            >
+                              <Plus className="w-3 h-3 stroke-[3]" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePrintOrderItemLabel(selectedOrder, item, labelPrintQty);
+                              }}
+                              className="w-7 h-6 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-xs cursor-pointer active:scale-95 shrink-0 ml-0.5"
+                              title={`Print ${labelPrintQty} sticker(s) on IDPRT SP410BT`}
+                            >
+                              <Printer className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
                           {selectedOrder.customerType === 'horeca' || selectedOrder.customerType === 'horeca_admin' ? (
                             (() => {
                               const itemScale = parseUnitScale(prod.unit || item.unit);
@@ -6853,6 +7469,50 @@ export function AdminDashboard() {
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer"
               >
                 Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Deactivation Confirmation Modal: Products */}
+      {productToDeactivate && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setProductToDeactivate(null)} />
+          <div className="bg-secondary border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-3">
+              <PowerOff className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-black uppercase text-foreground">Deactivate Product</h3>
+            <p className="text-xs text-muted-foreground mt-2 font-medium leading-relaxed">
+              Are you sure you want to deactivate <span className="text-foreground font-black">"{productToDeactivate.name}"</span>?
+            </p>
+            <div className="text-[11.5px] text-neutral-900 dark:text-neutral-100 bg-amber-50/90 dark:bg-amber-950/60 p-3.5 rounded-xl border border-amber-300/80 dark:border-amber-700/60 mt-3 font-medium leading-relaxed space-y-2 shadow-xs">
+              <p className="flex items-start gap-2">
+                <span className="text-amber-600 dark:text-amber-400 font-black text-sm leading-none shrink-0">•</span>
+                <span>This product will be <strong className="font-black text-black dark:text-white underline decoration-amber-400 decoration-2">completely removed</strong> from the regular customer catalog, search, home showcases, and juices menu.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-amber-600 dark:text-amber-400 font-black text-sm leading-none shrink-0">•</span>
+                <span>It is <strong className="font-black text-black dark:text-white">NOT</strong> marked out of stock. It is safely archived in your <strong className="font-black text-black dark:text-white">Deactivated</strong> list.</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="text-amber-600 dark:text-amber-400 font-black text-sm leading-none shrink-0">•</span>
+                <span>You can reactivate and restore it to the catalog at any time with one click.</span>
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setProductToDeactivate(null)}
+                className="px-4 py-2 border border-border rounded-xl text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:bg-muted/10 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeactivateProduct}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer shadow-sm"
+              >
+                Confirm Deactivate
               </button>
             </div>
           </div>

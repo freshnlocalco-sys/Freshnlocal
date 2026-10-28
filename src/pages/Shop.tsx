@@ -60,7 +60,7 @@ export function Shop() {
   const [loading, setLoading] = useState(true);
   const productNames = React.useMemo(() => {
     if (products && products.length > 0) {
-      return products.map(p => p.name).filter(Boolean);
+      return products.filter(p => !p.isDeactivated).map(p => p.name).filter(Boolean);
     }
     return ['Apple', 'Avocado', 'Oyster Mushroom', 'Golden Pear', 'Shimla Apple', 'Fresh Spinach', 'Hass Avocados'];
   }, [products]);
@@ -110,6 +110,44 @@ export function Shop() {
   }, [categoryFilter, navigate]);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+  const desktopSearchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const focusSearchInput = () => {
+      const isMobile = window.innerWidth < 768;
+      const targetInput = isMobile ? mobileSearchInputRef.current : desktopSearchInputRef.current;
+      const inputToFocus = targetInput || document.querySelector<HTMLInputElement>('.search-container input');
+
+      if (inputToFocus) {
+        inputToFocus.focus();
+        const len = inputToFocus.value.length;
+        try {
+          inputToFocus.setSelectionRange(len, len);
+        } catch {
+          // ignore
+        }
+        inputToFocus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setIsSearchFocused(true);
+      }
+    };
+
+    const handleFocusEvent = () => {
+      focusSearchInput();
+    };
+
+    window.addEventListener('focus-catalog-search', handleFocusEvent);
+
+    if (searchParams.get('focus') === 'search' || searchParams.get('focus') === '1') {
+      const timer = setTimeout(focusSearchInput, 150);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('focus-catalog-search', handleFocusEvent);
+      };
+    }
+
+    return () => window.removeEventListener('focus-catalog-search', handleFocusEvent);
+  }, [searchParams]);
 
   useEffect(() => {
     async function load() {
@@ -144,6 +182,7 @@ export function Shop() {
   const POPULAR_SEARCHES = React.useMemo(() => {
     // Dynamic selection of active in stock non-juice products
     const activeShopProducts = products.filter(p => {
+      if (p.isDeactivated) return false;
       let productCategory = p.category ? p.category.toLowerCase() : '';
       productCategory = productCategory.replace(' font-bold', '');
       return !productCategory.includes('juice');
@@ -223,13 +262,14 @@ export function Shop() {
   const searchSuggestions = React.useMemo(() => {
     if (!searchQuery) return [];
     const q = searchQuery.toLowerCase();
+    const activeProducts = products.filter(p => !p.isDeactivated);
     
-    const startsWithMatches = products.filter(p => {
+    const startsWithMatches = activeProducts.filter(p => {
       const name = (p.name || '').toLowerCase();
       return name.startsWith(q) || name.includes(` ${q}`) || name.includes(`-${q}`);
     });
     
-    const containsMatches = products.filter(p => {
+    const containsMatches = activeProducts.filter(p => {
       const name = (p.name || '').toLowerCase();
       return name.includes(q) && !(name.startsWith(q) || name.includes(` ${q}`) || name.includes(`-${q}`));
     });
@@ -249,6 +289,7 @@ export function Shop() {
   }, []);
 
   const filteredProductsRaw = products.filter(p => {
+    if (p.isDeactivated) return false;
     let productCategory = p.category ? p.category.toLowerCase() : '';
     productCategory = productCategory.replace(' font-bold', ''); // Normalize older data typos
 
@@ -414,6 +455,7 @@ export function Shop() {
         <div className="relative w-full search-container z-50">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary z-10" />
             <input 
+              ref={mobileSearchInputRef}
               type="text" 
               value={searchQuery}
               onChange={handleSearchChange}
@@ -578,6 +620,7 @@ export function Shop() {
                 <div className="relative w-full lg:w-[400px] shrink-0 search-container">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
                   <input 
+                    ref={desktopSearchInputRef}
                     type="text" 
                     value={searchQuery}
                     onChange={handleSearchChange}

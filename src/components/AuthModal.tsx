@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { signInWithEmail, signUpWithEmail } from '../lib/firebase';
-import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { getHumanAuthErrorMessage, notifySignInSuccess, notifySignUpSuccess, notifyAuthError } from '../lib/authNotifications';
+import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '../lib/firebase';
+import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, ArrowLeft, Key } from 'lucide-react';
+import { getHumanAuthErrorMessage, notifySignInSuccess, notifySignUpSuccess, notifyAuthError, notifyPasswordResetSuccess } from '../lib/authNotifications';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultMode?: 'login' | 'signup';
+  defaultMode?: 'login' | 'signup' | 'forgot';
 }
 
 export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(defaultMode === 'login');
+  const [isForgotMode, setIsForgotMode] = useState(defaultMode === 'forgot');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -19,9 +20,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   // Sync mode if defaultMode changes
   React.useEffect(() => {
+    setIsForgotMode(defaultMode === 'forgot');
     setIsLogin(defaultMode === 'login');
   }, [defaultMode]);
 
@@ -30,15 +33,21 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
     if (isOpen) {
       setError(null);
       setIsSuccess(false);
+      setForgotSuccess(false);
       setLoading(false);
       setShowPassword(false);
+      if (defaultMode === 'forgot') {
+        setIsForgotMode(true);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, defaultMode]);
 
   if (!isOpen) return null;
 
   const handleModeToggle = (loginMode: boolean) => {
     setIsLogin(loginMode);
+    setIsForgotMode(false);
+    setForgotSuccess(false);
     setError(null);
     setShowPassword(false);
   };
@@ -51,6 +60,18 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
     const cleanEmail = email.trim();
 
     try {
+      if (isForgotMode) {
+        if (!cleanEmail) {
+          setError('Please enter your email address.');
+          setLoading(false);
+          return;
+        }
+        await sendPasswordReset(cleanEmail);
+        setForgotSuccess(true);
+        notifyPasswordResetSuccess(cleanEmail);
+        return;
+      }
+
       if (isLogin) {
         const userCred = await signInWithEmail(cleanEmail, password);
         const displayName = userCred.user?.displayName || cleanEmail.split('@')[0];
@@ -153,41 +174,65 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
 
         {/* Modal Header */}
         <div className="mb-5 pr-6">
-          <h2 className="text-2xl font-bold text-foreground tracking-tight">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h2>
+          {isForgotMode ? (
+            <div className="flex items-center gap-2 mb-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotMode(false);
+                  setIsLogin(true);
+                  setError(null);
+                }}
+                className="p-1 -ml-1 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+                title="Back to Sign In"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">
+                Reset Password
+              </h2>
+            </div>
+          ) : (
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">
+              {isLogin ? 'Welcome Back' : 'Create Account'}
+            </h2>
+          )}
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            {isLogin
+            {isForgotMode
+              ? "Enter your email address and we'll send a password reset link to your Gmail inbox."
+              : isLogin
               ? 'Sign in to access your orders, saved items, and local deliveries.'
               : 'Join FreshNLocal to get fresh farm produce delivered to your doorstep.'}
           </p>
         </div>
 
         {/* Segmented Tab Bar */}
-        <div className="flex bg-secondary/80 p-1 rounded-xl border border-border/70 mb-5">
-          <button
-            type="button"
-            onClick={() => handleModeToggle(true)}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              isLogin
-                ? 'bg-white text-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => handleModeToggle(false)}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              !isLogin
-                ? 'bg-white text-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Sign Up
-          </button>
-        </div>
+        {!isForgotMode && (
+          <div className="flex bg-secondary/80 p-1 rounded-xl border border-border/70 mb-5">
+            <button
+              type="button"
+              onClick={() => handleModeToggle(true)}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                isLogin
+                  ? 'bg-white text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => handleModeToggle(false)}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                !isLogin
+                  ? 'bg-white text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
+        )}
 
         {/* Error Alert Box */}
         {error && (
@@ -201,128 +246,204 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
           </motion.div>
         )}
 
-        {/* Form Fields */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-          {!isLogin && (
-            <div>
-              <label className="block text-xs font-semibold text-foreground/85 mb-1.5">
-                Full Name
-              </label>
-              <div className="relative">
-                <input
-                  required
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your Name"
-                  className="w-full h-11 px-3.5 pl-10 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
-                  autoComplete="name"
-                />
-                <UserIcon className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        {isForgotMode && forgotSuccess ? (
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs space-y-2">
+              <div className="flex items-center gap-2 font-bold text-sm text-emerald-700">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span>Reset Link Dispatched!</span>
               </div>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-xs font-semibold text-foreground/85 mb-1.5">
-              Email Address
-            </label>
-            <div className="relative">
-              <input
-                required
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full h-11 px-3.5 pl-10 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
-                autoComplete="email"
-              />
-              <Mail className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-foreground/85 mb-1.5">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                required
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full h-11 px-3.5 pl-10 pr-11 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
-                autoComplete={isLogin ? 'current-password' : 'new-password'}
-              />
-              <Lock className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg transition-colors cursor-pointer"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            {!isLogin && (
-              <p className="text-[11px] text-muted-foreground mt-1 ml-0.5">
-                Must be at least 6 characters
+              <p className="text-[11px] leading-relaxed">
+                A password reset link has been dispatched to <b className="font-mono">{email}</b>. Open your Gmail on this PC, click the link to create your new password, then return here to sign in.
               </p>
-            )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsForgotMode(false);
+                setIsLogin(true);
+                setForgotSuccess(false);
+                setError(null);
+              }}
+              className="w-full h-11 bg-primary hover:bg-[#009e45] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Sign In</span>
+            </button>
           </div>
+        ) : (
+          <>
+            {/* Form Fields */}
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              {!isForgotMode && !isLogin && (
+                <div>
+                  <label className="block text-xs font-semibold text-foreground/85 mb-1.5">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <input
+                      required
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your Name"
+                      className="w-full h-11 px-3.5 pl-10 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
+                      autoComplete="name"
+                    />
+                    <UserIcon className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+              )}
 
-          {/* Primary Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-11 mt-1 bg-primary hover:bg-[#009e45] active:scale-[0.99] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
+              <div>
+                <label className="block text-xs font-semibold text-foreground/85 mb-1.5">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <input
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full h-11 px-3.5 pl-10 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
+                    autoComplete="email"
+                  />
+                  <Mail className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              {!isForgotMode && (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-foreground/85">
+                      Password
+                    </label>
+                    {isLogin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsForgotMode(true);
+                          setError(null);
+                        }}
+                        className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
+                      >
+                        Forgot Password?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      required
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full h-11 px-3.5 pl-10 pr-11 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
+                      autoComplete={isLogin ? 'current-password' : 'new-password'}
+                    />
+                    <Lock className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg transition-colors cursor-pointer"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {!isLogin && (
+                    <p className="text-[11px] text-muted-foreground mt-1 ml-0.5">
+                      Must be at least 6 characters
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Primary Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 mt-1 bg-primary hover:bg-[#009e45] active:scale-[0.99] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>
+                      {isForgotMode
+                        ? 'Sending Reset Link...'
+                        : isLogin
+                        ? 'Signing In...'
+                        : 'Creating Account...'}
+                    </span>
+                  </>
+                ) : (
+                  <span>
+                    {isForgotMode
+                      ? 'Send Password Reset Email'
+                      : isLogin
+                      ? 'Sign In to Account'
+                      : 'Create Account'}
+                  </span>
+                )}
+              </button>
+
+              {isForgotMode && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotMode(false);
+                    setIsLogin(true);
+                    setError(null);
+                  }}
+                  className="w-full text-center text-xs font-bold text-muted-foreground hover:text-foreground pt-2 cursor-pointer"
+                >
+                  Remember your password? <span className="text-primary hover:underline">Back to Sign In</span>
+                </button>
+              )}
+            </form>
+
+            {!isForgotMode && (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>{isLogin ? 'Signing In...' : 'Creating Account...'}</span>
+                {/* Clean Line Divider */}
+                <div className="relative flex items-center justify-center my-4.5">
+                  <div className="w-full border-t border-border/80" />
+                  <span className="absolute bg-white px-2.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    or
+                  </span>
+                </div>
+
+                {/* Google Sign-in Button */}
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleGoogleSignIn}
+                  className="w-full h-11 bg-white hover:bg-secondary/70 border border-border rounded-xl text-xs font-bold text-foreground flex items-center justify-center gap-2.5 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                >
+                  <img
+                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                    alt="Google"
+                    className="w-4 h-4"
+                  />
+                  <span>Continue with Google</span>
+                </button>
+
+                {/* Bottom Toggle */}
+                <div className="text-center text-xs text-muted-foreground mt-4.5">
+                  {isLogin ? "Don't have an account?" : 'Already registered?'}
+                  <button
+                    type="button"
+                    onClick={() => handleModeToggle(!isLogin)}
+                    className="text-primary font-bold hover:underline cursor-pointer ml-1.5"
+                  >
+                    {isLogin ? 'Create one now' : 'Sign in here'}
+                  </button>
+                </div>
               </>
-            ) : (
-              <span>{isLogin ? 'Sign In to Account' : 'Create Account'}</span>
             )}
-          </button>
-        </form>
-
-        {/* Clean Line Divider */}
-        <div className="relative flex items-center justify-center my-4.5">
-          <div className="w-full border-t border-border/80" />
-          <span className="absolute bg-white px-2.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            or
-          </span>
-        </div>
-
-        {/* Google Sign-in Button */}
-        <button
-          type="button"
-          disabled={loading}
-          onClick={handleGoogleSignIn}
-          className="w-full h-11 bg-white hover:bg-secondary/70 border border-border rounded-xl text-xs font-bold text-foreground flex items-center justify-center gap-2.5 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
-        >
-          <img
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-            alt="Google"
-            className="w-4 h-4"
-          />
-          <span>Continue with Google</span>
-        </button>
-
-        {/* Bottom Toggle */}
-        <div className="text-center text-xs text-muted-foreground mt-4.5">
-          {isLogin ? "Don't have an account?" : 'Already registered?'}
-          <button
-            type="button"
-            onClick={() => handleModeToggle(!isLogin)}
-            className="text-primary font-bold hover:underline cursor-pointer ml-1.5"
-          >
-            {isLogin ? 'Create one now' : 'Sign in here'}
-          </button>
-        </div>
+          </>
+        )}
       </motion.div>
     </div>
   );

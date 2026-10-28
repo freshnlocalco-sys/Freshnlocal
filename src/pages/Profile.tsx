@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError, deleteUserAddress, setDefaultUserAddress, deleteUserLegacyAddress, updateUserDisplayName } from '../lib/firebase';
-import { notifySignOutSuccess } from '../lib/authNotifications';
+import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError, deleteUserAddress, setDefaultUserAddress, deleteUserLegacyAddress, updateUserDisplayName, sendPasswordReset } from '../lib/firebase';
+import { notifySignOutSuccess, notifyPasswordResetSuccess, getHumanAuthErrorMessage } from '../lib/authNotifications';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
-import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2, RotateCcw, Pencil, Check, X, User } from 'lucide-react';
+import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2, RotateCcw, Pencil, Check, X, User, Lock, Mail, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { trackFirestoreRead } from '../lib/cacheManager';
 import { SEO } from '../components/SEO';
@@ -28,6 +28,31 @@ export function Profile() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
+
+  // Password Reset State
+  const [resetEmail, setResetEmail] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [resetSentSuccess, setResetSentSuccess] = useState(false);
+
+  const handleSendResetEmail = async (e?: React.FormEvent, targetEmail?: string) => {
+    if (e) e.preventDefault();
+    const emailToUse = (targetEmail || resetEmail).trim();
+    if (!emailToUse) {
+      toast.error('Please enter an email address');
+      return;
+    }
+    setIsSendingReset(true);
+    try {
+      await sendPasswordReset(emailToUse);
+      setResetSentSuccess(true);
+      notifyPasswordResetSuccess(emailToUse);
+    } catch (err: any) {
+      const msg = getHumanAuthErrorMessage(err);
+      toast.error(msg);
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
 
   const handleSaveName = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -127,7 +152,7 @@ export function Profile() {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/');
+      setFetching(false);
       return;
     }
 
@@ -174,11 +199,148 @@ export function Profile() {
     }
   };
 
-  if (loading || fetching) {
+  if (loading || (user && fetching)) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-36 text-center text-muted-foreground font-mono text-xs uppercase tracking-widest flex flex-col items-center justify-center gap-4 bg-background">
         <span className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></span>
         FETCHING SECURITY TOKENS & PROFILE DATABASES...
+      </div>
+    );
+  }
+
+  // Dedicated unauthenticated view with Forgot Password & Sign In
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 md:py-20 w-full text-foreground">
+        <SEO 
+          title="Account Access & Password Recovery - FreshNLocal" 
+          description="Sign in or reset your FreshNLocal admin or customer account password."
+        />
+
+        {/* Header */}
+        <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-bold uppercase tracking-wider mb-2">
+            <ShieldCheck className="w-4 h-4" /> Member & Admin Portal
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-foreground">
+            Account Access & Recovery
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            Sign in to access your orders and admin portal, or request a password reset email if you don't know your password.
+          </p>
+        </div>
+
+        {/* Two Column Grid: Sign In & Forgot Password */}
+        <div className="grid md:grid-cols-2 gap-6 items-stretch">
+          {/* Card 1: Sign In */}
+          <div className="bg-secondary/60 border border-border rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-xs">
+            <div className="space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
+                <User className="w-6 h-6" />
+              </div>
+              <h2 className="text-lg font-bold uppercase tracking-tight text-foreground">
+                Sign In to Account
+              </h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                If you know your password, click below to open the sign in window and enter your email & password.
+              </p>
+            </div>
+
+            <div className="pt-6">
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode: 'login' } }))}
+                className="w-full py-3 px-4 bg-primary hover:bg-[#009e45] text-primary-foreground font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Open Sign In Window</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: Forgot Password Form */}
+          <div className="bg-white dark:bg-card border-2 border-primary/40 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-md relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[9px] font-mono font-black uppercase px-3 py-1 rounded-bl-xl tracking-wider">
+              Password Reset
+            </div>
+
+            <div className="space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <Key className="w-6 h-6" />
+              </div>
+              <h2 className="text-lg font-bold uppercase tracking-tight text-foreground">
+                Forgot Password?
+              </h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Enter your registered admin or customer email address. A password reset link will be sent to your Gmail inbox so you can create a new password.
+              </p>
+
+              {resetSentSuccess ? (
+                <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs space-y-2">
+                  <div className="flex items-center gap-2 font-bold">
+                    <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Reset Link Sent!</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    We sent a password reset link to <b className="font-mono">{resetEmail}</b>. Check your Gmail inbox (and Spam folder) on this PC, click the link to set your new password, then sign in!
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetSentSuccess(false);
+                      window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode: 'login' } }));
+                    }}
+                    className="mt-2 text-xs font-bold text-primary hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    <span>Click here to Sign In now</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={(e) => handleSendResetEmail(e)} className="space-y-3 pt-2">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        placeholder="e.g. freshnlocalco@gmail.com"
+                        className="w-full h-11 px-3.5 pl-10 bg-secondary/40 border border-border focus:border-primary focus:bg-white rounded-xl text-xs font-bold text-foreground outline-none transition-colors"
+                      />
+                      <Mail className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSendingReset || !resetEmail.trim()}
+                    className="w-full py-3 px-4 bg-primary hover:bg-[#009e45] disabled:opacity-50 text-primary-foreground font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isSendingReset ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Sending Link...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4" />
+                        <span>Send Password Reset Email</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-border/60 text-[10px] text-muted-foreground">
+              💡 <b>Tip:</b> Since your admin Gmail is already logged in on this PC, check your Gmail inbox immediately after clicking send.
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -398,6 +560,36 @@ export function Profile() {
               </div>
             ) : null}
             
+            {/* Password & Security Section */}
+            <div className="bg-background p-3.5 rounded-xl border border-border space-y-2 text-left">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 font-bold text-xs uppercase text-foreground">
+                  <Lock className="w-4 h-4 text-primary" /> Password & Security
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground leading-relaxed normal-case">
+                Need to reset or change your password? Click below to send a secure password reset link to <b className="text-foreground">{user?.email}</b>.
+              </p>
+              <button
+                type="button"
+                onClick={() => handleSendResetEmail(undefined, user?.email)}
+                disabled={isSendingReset || !user?.email}
+                className="w-full py-2 px-3 bg-secondary hover:bg-secondary/80 border border-border hover:border-primary/40 rounded-lg text-xs font-bold text-foreground transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs disabled:opacity-50"
+              >
+                {isSendingReset ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Sending Reset Link...</span>
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-3.5 h-3.5 text-primary" />
+                    <span>Send Password Reset Email</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             <button 
               onClick={async () => {
                 await signOut();

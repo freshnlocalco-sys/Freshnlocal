@@ -470,46 +470,6 @@ export function Home() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const [homeSearchQuery, setHomeSearchQuery] = useState('');
-  const [recipeIndex, setRecipeIndex] = useState(0);
-  const [isRecipeFading, setIsRecipeFading] = useState(true);
-  const navigate = useNavigate();
-
-  const RECIPE_SUGGESTIONS = [
-    'Surat Locho',
-    'Undhiyu',
-    'Surat Khaman',
-    'Ghari',
-    'Paneer Tikka Masala',
-    'Butter Chicken',
-    'Pav Bhaji',
-    'Creamy Mushroom Risotto',
-    'Avocado Toast',
-    'Dal Makhani',
-    'Chole Bhature',
-    'Truffle Pasta'
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIsRecipeFading(false);
-      setTimeout(() => {
-        setRecipeIndex(prev => (prev + 1) % RECIPE_SUGGESTIONS.length);
-        setIsRecipeFading(true);
-      }, 300);
-    }, 3000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const currentRecipe = RECIPE_SUGGESTIONS[recipeIndex];
-
-  const handleHomeSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (homeSearchQuery.trim()) {
-      navigate(`/fnl-recipes?q=${encodeURIComponent(homeSearchQuery.trim())}`);
-    }
-  };
   
   useEffect(() => {
     async function init() {
@@ -567,7 +527,7 @@ export function Home() {
 
         const matchedList: Product[] = [];
         sortedBaseIds.forEach(baseId => {
-          const found = products.find(p => p.id === baseId || (p.id && baseId.startsWith(p.id)));
+          const found = products.find(p => !p.isDeactivated && (p.id === baseId || (p.id && baseId.startsWith(p.id))));
           if (found && !matchedList.some(m => m.id === found.id)) {
             matchedList.push(found);
           }
@@ -722,44 +682,9 @@ export function Home() {
       />
       
       {/* Hero Section */}
-      <section className="w-full mx-auto pt-8 md:pt-24 pb-16 md:pb-20 flex flex-col gap-8 lg:gap-10 items-center relative overflow-hidden">
+      <section className="w-full mx-auto pt-4 sm:pt-6 md:pt-8 pb-12 md:pb-16 flex flex-col gap-6 sm:gap-8 items-center relative overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-72 h-72 md:w-96 md:h-96 bg-primary/5 rounded-full blur-[80px] md:blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 md:w-80 md:h-80 bg-primary/10 rounded-full blur-[80px] md:blur-[100px] pointer-events-none"></div>
-
-        {/* Global Search Bar */}
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 relative z-20">
-          <form onSubmit={handleHomeSearch} className="relative w-full shadow-xl shadow-black/5 rounded-full overflow-hidden group border border-border/50 bg-background/80 backdrop-blur-xl focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300">
-            <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-full overflow-hidden flex items-center justify-center bg-white/50 z-10 pointer-events-none">
-              <img src="/freshi-icon.jpg?v=1" alt="Freshi" className="w-full h-full object-contain" />
-            </div>
-            
-            {/* Custom Placeholder */}
-            {!homeSearchQuery && (
-              <div className="absolute left-[3.75rem] sm:left-[5.75rem] right-20 sm:right-36 top-1/2 -translate-y-1/2 pointer-events-none flex flex-col justify-center pr-1">
-                <div className="flex items-center gap-1 text-[11px] sm:text-xl font-bold text-foreground overflow-hidden">
-                  <span className="text-foreground shrink-0">Ask Freshi</span>
-                  <span className={`text-muted-foreground transition-opacity duration-300 font-normal truncate max-w-[110px] sm:max-w-none ${isRecipeFading ? 'opacity-100' : 'opacity-0'}`}>
-                    "{currentRecipe}"
-                  </span>
-                </div>
-                <span className="text-[9px] sm:text-xs text-muted-foreground/60 font-medium truncate">Your AI Recipe Assistant By FNL</span>
-              </div>
-            )}
-            
-            <input
-              type="text"
-              value={homeSearchQuery}
-              onChange={(e) => setHomeSearchQuery(e.target.value)}
-              className="w-full h-16 sm:h-20 pl-[3.75rem] sm:pl-[5.75rem] pr-20 sm:pr-36 bg-transparent border-none outline-none text-xs sm:text-xl font-medium relative z-10"
-            />
-            <button 
-              type="submit"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground px-5 sm:px-8 py-2.5 sm:py-4 rounded-full text-sm sm:text-base font-bold tracking-wide hover:bg-primary/90 transition-colors z-20"
-            >
-              Go
-            </button>
-          </form>
-        </div>
 
         {isLoadingHeroBanners ? (
           <div className="w-full md:max-w-6xl md:mx-auto md:px-6 relative">
@@ -863,36 +788,6 @@ export function Home() {
           </div>
         )}
         
-        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-6 md:pt-8 justify-center w-full sm:w-auto px-4 z-10">
-          <Link to="/shop" className="slice-btn-primary px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] w-full sm:w-auto justify-center flex items-center gap-2">
-            SHOP NOW
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-            </span>
-          </Link>
-          <Link to="/juice" className="slice-btn-secondary border-orange-500/20 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5 px-6 py-4 md:px-8 md:py-5 text-[10px] md:text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full sm:w-auto">
-            FNL Juice House 🍹
-          </Link>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-12 items-center pt-6 md:pt-8 w-full lg:max-w-3xl z-10 mx-auto">
-          <div className="text-center flex-1 min-w-[30%]">
-            <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">IN 24 HRS</p>
-            <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Guaranteed Delivery</p>
-          </div>
-          <div className="w-px h-8 md:h-10 bg-border/60"></div>
-          <div className="text-center flex-1 min-w-[30%]">
-            <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">100%</p>
-            <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">Farmer Traceability</p>
-          </div>
-          <div className="hidden sm:block w-px h-8 md:h-10 bg-border/60"></div>
-          <div className="text-center flex-1 min-w-[30%] mt-2 sm:mt-0">
-            <p className="text-lg sm:text-xl md:text-2xl font-black text-foreground p-0 leading-none">0 FEES</p>
-            <p className="text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground mt-1.5 truncate">No Platform Taxes</p>
-          </div>
-        </div>
-
         <motion.div
            initial={{ opacity: 0, scale: 0.95 }}
            animate={{ opacity: 1, scale: 1 }}
@@ -900,7 +795,7 @@ export function Home() {
            className="relative flex flex-col items-center justify-center z-10 w-full min-w-0"
         >
           {/* Mobile-first categories grid substituting the previous button deck */}
-          <div className="w-full max-w-[1020px] mx-auto mt-10 md:mt-16 text-left relative z-20">
+          <div className="w-full max-w-[1020px] mx-auto mt-6 md:mt-10 text-left relative z-20">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground mb-4 sm:mb-6 px-2">
               Shop By Categories
             </h2>
@@ -954,9 +849,9 @@ export function Home() {
             `}} />
 
             {/* RECENTLY VIEWED SECTION */}
-            {recentlyViewedProducts.length > 0 && (
+            {recentlyViewedProducts.filter(p => !p.isDeactivated).length > 0 && (
               <RecentlyViewedCarousel 
-                products={recentlyViewedProducts}
+                products={recentlyViewedProducts.filter(p => !p.isDeactivated)}
                 handleAddToCart={handleAddToCart}
                 onQuickView={setQuickViewProduct}
               />
@@ -973,6 +868,7 @@ export function Home() {
 
             {activeCategories.map(category => {
               const categoryProducts = products.filter(p => {
+                if (p.isDeactivated) return false;
                 let pCat = (p.category || '').toLowerCase().trim().replace(' font-bold', '');
                 let cName = (category.name || '').toLowerCase().trim().replace(' font-bold', '');
                 let cId = (category.id || '').toLowerCase().trim();

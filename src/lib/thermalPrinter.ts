@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+
 /**
  * Thermal Packing Slip Printer Utility
  * Formatted specifically for 80mm and 58mm POS thermal receipt & label printers.
@@ -13,6 +15,65 @@ export interface ThermalPrintOptions {
 
 export function formatCurrency(amount: number): string {
   return `₹${(amount || 0).toFixed(2).replace(/\.00$/, '')}`;
+}
+
+/**
+ * Calculates and formats the total weight or units for packing slips
+ * (e.g. 500 gm * 3 = 1.5 Kg, 250 ml * 4 = 1 L, 1 pack * 6 = 6 packs)
+ */
+export function formatItemTotalWeightOrUnits(qty: number, unitStr: string | undefined): string {
+  if (!unitStr) return `${qty}`;
+  const cleanUnit = unitStr.trim();
+
+  const match = cleanUnit.match(/^([\d.]+)\s*(.*)$/);
+  if (match) {
+    const val = parseFloat(match[1]);
+    const unitPart = match[2].trim();
+    if (!isNaN(val) && val > 0) {
+      const totalVal = val * qty;
+      const lowerUnit = unitPart.toLowerCase();
+
+      // Grams to Kg
+      if ((lowerUnit === 'g' || lowerUnit === 'gm' || lowerUnit === 'gram' || lowerUnit === 'grams') && totalVal >= 1000) {
+        const kgVal = totalVal / 1000;
+        return `${kgVal.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} Kg`;
+      }
+      if (lowerUnit === 'g' || lowerUnit === 'gm' || lowerUnit === 'gram' || lowerUnit === 'grams') {
+        return `${totalVal.toFixed(0)} gm`;
+      }
+
+      // Milliliters to Litres
+      if ((lowerUnit === 'ml' || lowerUnit === 'milli' || lowerUnit === 'milliliter' || lowerUnit === 'milliliters') && totalVal >= 1000) {
+        const lVal = totalVal / 1000;
+        return `${lVal.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} L`;
+      }
+      if (lowerUnit === 'ml' || lowerUnit === 'milli' || lowerUnit === 'milliliter' || lowerUnit === 'milliliters') {
+        return `${totalVal.toFixed(0)} ml`;
+      }
+
+      // Kg
+      if (lowerUnit === 'kg' || lowerUnit === 'kgs' || lowerUnit === 'kilo' || lowerUnit === 'kilogram' || lowerUnit === 'kilograms') {
+        return `${totalVal.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')} Kg`;
+      }
+
+      // Other unit with number like "1 pack", "1 bunch", "1 box", "1 pc"
+      if (unitPart) {
+        const cleanVal = totalVal.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+        return `${cleanVal} ${totalVal > 1 && !unitPart.endsWith('s') && !['kg', 'gm', 'g', 'ml', 'l'].includes(lowerUnit) ? `${unitPart}s` : unitPart}`;
+      }
+    }
+  }
+
+  // Word-based units: "pack", "bunch", "box", "pc", "bottle"
+  const lower = cleanUnit.toLowerCase();
+  if (lower === 'pack') return `${qty} ${qty > 1 ? 'packs' : 'pack'}`;
+  if (lower === 'bunch') return `${qty} ${qty > 1 ? 'bunches' : 'bunch'}`;
+  if (lower === 'box') return `${qty} ${qty > 1 ? 'boxes' : 'box'}`;
+  if (lower === 'piece' || lower === 'pc') return `${qty} ${qty > 1 ? 'pcs' : 'pc'}`;
+  if (lower === 'bottle') return `${qty} ${qty > 1 ? 'bottles' : 'bottle'}`;
+  if (lower === 'kg' || lower === 'kgs') return `${qty} Kg`;
+
+  return `${qty} ${cleanUnit}`;
 }
 
 export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions = {}): string {
@@ -51,17 +112,21 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
     const price = Number(rawPrice) || 0;
 
     const name = prod.name || prod.title || it.name || it.title || 'Item';
+    const itemCode = prod.itemCode || it.itemCode || it.product?.itemCode || '';
     const unit = prod.unit || prod.selectedUnit || it.unit || it.selectedUnit || '';
     const variantName = prod.variantName || it.variantName || prod.selectedVariant || it.selectedVariant || '';
     const total = qty * price;
+    const totalQtyFormatted = formatItemTotalWeightOrUnits(qty, unit);
 
     return {
       name,
+      itemCode,
       qty,
       price,
       unit,
       variantName,
       total,
+      totalQtyFormatted,
     };
   });
 
@@ -77,6 +142,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
 
   const customerName = order.shippingDetails?.name || order.customerName || order.userName || 'Customer';
   const customerPhone = order.shippingDetails?.phone || order.phone || order.customerPhone || 'No phone';
+  const customerEmail = order.shippingDetails?.email || order.customerEmail || order.userEmail || order.email || order.shippingAddress?.email || '';
   const customerAddress = isPickup 
     ? 'STORE PICKUP: Fresh N Local Co. Farm Store' 
     : (order.shippingDetails?.address || order.address || 'No address specified');
@@ -121,6 +187,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
       <div class="bold text-xs uppercase">Customer Details:</div>
       <div class="bold text-sm text-black">${customerName}</div>
       <div class="bold text-sm phone-number">📞 ${customerPhone}</div>
+      ${customerEmail ? `<div class="customer-email">✉️ ${customerEmail}</div>` : ''}
       
       <div class="bold text-xs uppercase" style="margin-top: 4px;">Delivery Address:</div>
       <div class="text-xs address-box">
@@ -152,7 +219,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
             <div class="item-row">
               <div class="item-top">
                 ${includeCheckboxes ? '<span class="checkbox">[ ]</span>' : `<span class="item-num">${index + 1}.</span>`}
-                <span class="item-name bold">${it.name}</span>
+                <span class="item-name bold">${it.itemCode ? `[#${it.itemCode}] ` : ''}${it.name}</span>
                 <span class="item-qty bold right">x${it.qty}</span>
                 ${showPrices ? `<span class="item-amt right bold">${formatCurrency(it.total)}</span>` : ''}
               </div>
@@ -160,6 +227,7 @@ export function generateSingleSlipHtml(order: any, options: ThermalPrintOptions 
                 ${it.unit ? `<span class="unit-badge">${it.unit}</span>` : ''}
                 ${showPrices ? `<span class="unit-rate">(@ ${formatCurrency(it.price)})</span>` : ''}
                 ${it.variantName ? `<span class="variant-text">${it.variantName}</span>` : ''}
+                <span class="total-qty-badge bold">📦 Total: ${it.totalQtyFormatted}</span>
               </div>
             </div>
           `;
@@ -217,23 +285,32 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
       size: ${paperWidth} auto;
       margin: 0;
     }
-    * {
+    .thermal-slip, .thermal-slip * {
       box-sizing: border-box;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    body {
-      margin: 0;
-      padding: 0;
-      background: #fff;
-      color: #000;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
-      font-size: 12px;
-      line-height: 1.25;
+    @media print {
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
     }
     .thermal-slip {
       width: ${widthPx};
       max-width: ${widthMm};
+      margin: 0 auto;
+      padding: 6px 4px 16px 4px;
+      background: #fff;
+      color: #000;
+      page-break-after: always;
+      break-after: page;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+      font-size: 12px;
+      line-height: 1.25;
+    }
       margin: 0 auto;
       padding: 6px 4px 16px 4px;
       background: #fff;
@@ -310,6 +387,13 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
       font-size: 13px;
       letter-spacing: 0.5px;
       margin: 2px 0;
+    }
+    .customer-email {
+      font-size: 11px;
+      font-weight: bold;
+      font-family: monospace;
+      word-break: break-all;
+      margin: 1px 0 3px 0;
     }
     .address-box {
       border-left: 2px solid #000;
@@ -399,6 +483,18 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
       margin-right: 4px;
       font-size: 9.5px;
     }
+    .total-qty-badge {
+      display: inline-block;
+      border: 1.5px solid #000;
+      padding: 0 4px;
+      font-weight: 900;
+      border-radius: 2px;
+      margin-left: 3px;
+      font-size: 10px;
+      background: #f4f4f4;
+      color: #000;
+      letter-spacing: 0.2px;
+    }
     .pack-summary {
       display: flex;
       justify-content: space-between;
@@ -439,65 +535,122 @@ export function generateThermalStyles(paperWidth: '80mm' | '58mm' = '80mm'): str
 }
 
 /**
- * Triggers printing of a single order thermal packing slip
+ * Direct print dispatcher that renders content inside an isolated hidden iframe
+ * so that the browser does not need to parse or freeze the main React app DOM.
+ * This makes print preview open significantly faster and prevents main window layout shifts.
  */
-export function printThermalSlip(order: any, options: ThermalPrintOptions = {}): void {
-  const printContent = `
+export function dispatchDirectPrint(contentHtml: string, cssStyles: string, jobTitle: string = 'Thermal Print Job'): void {
+  // Remove any previous print iframe or legacy print elements
+  const existingIframe = document.getElementById('thermal-print-iframe');
+  if (existingIframe && existingIframe.parentNode) {
+    existingIframe.parentNode.removeChild(existingIframe);
+  }
+  const legacyMount = document.getElementById('thermal-print-container');
+  if (legacyMount && legacyMount.parentNode) {
+    legacyMount.parentNode.removeChild(legacyMount);
+  }
+  const legacyStyle = document.getElementById('thermal-print-dynamic-style');
+  if (legacyStyle && legacyStyle.parentNode) {
+    legacyStyle.parentNode.removeChild(legacyStyle);
+  }
+
+  // Create isolated invisible iframe to avoid freezing or parsing the main app DOM
+  const iframe = document.createElement('iframe');
+  iframe.id = 'thermal-print-iframe';
+  iframe.setAttribute('style', 'position:fixed; top:0; left:0; width:0; height:0; border:0; visibility:hidden; z-index:-999;');
+  document.body.appendChild(iframe);
+
+  const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+  if (!iframeDoc) {
+    console.error('Failed to access iframe document for printing');
+    return;
+  }
+
+  const fullHtml = `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8" />
-        <title>Packing Slip - ${order.orderNumber || order.id}</title>
+        <title>${jobTitle}</title>
         <style>
-          ${generateThermalStyles(options.paperWidth || '80mm')}
+          *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          html, body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            color: #000000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          ${cssStyles}
         </style>
       </head>
       <body>
-        ${generateSingleSlipHtml(order, options)}
-        <script>
-          window.onload = function() {
-            window.focus();
-            window.print();
-            setTimeout(function() {
-              window.close();
-            }, 500);
-          };
-        </script>
+        ${contentHtml}
       </body>
     </html>
   `;
 
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.top = '-10000px';
-  iframe.style.left = '-10000px';
-  iframe.style.width = '1px';
-  iframe.style.height = '1px';
-  iframe.style.border = 'none';
-  document.body.appendChild(iframe);
+  iframeDoc.open();
+  iframeDoc.write(fullHtml);
+  iframeDoc.close();
 
-  const doc = iframe.contentWindow?.document || iframe.contentDocument;
-  if (!doc) {
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.open();
-      win.document.write(printContent);
-      win.document.close();
-    }
-    return;
-  }
+  const iframeWin = iframe.contentWindow;
+  if (!iframeWin) return;
 
-  doc.open();
-  doc.write(printContent);
-  doc.close();
+  let cleanedUp = false;
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    try {
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+    } catch (_) {}
+  };
 
+  iframeWin.addEventListener('afterprint', cleanup);
+  // Safety timeout cleanup after 60 seconds
+  setTimeout(cleanup, 60000);
+
+  // Allow iframe layout to finish and trigger print dialog
   setTimeout(() => {
     try {
-      document.body.removeChild(iframe);
-    } catch (e) {
-      // ignore
+      iframeWin.focus();
+      iframeWin.print();
+    } catch (err) {
+      console.warn('Iframe print failed, falling back to window.open:', err);
+      try {
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.open();
+          win.document.write(fullHtml);
+          win.document.close();
+          win.focus();
+          win.print();
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback print failed:', fallbackErr);
+      }
     }
-  }, 60000);
+  }, 100);
+}
+
+
+/**
+ * Triggers printing of a single order thermal packing slip
+ */
+export function printThermalSlip(order: any, options: ThermalPrintOptions = {}): void {
+  const slipHtml = generateSingleSlipHtml(order, options);
+  dispatchDirectPrint(
+    slipHtml,
+    generateThermalStyles(options.paperWidth || '80mm'),
+    `Packing Slip - ${order.orderNumber || order.id}`
+  );
 }
 
 /**
@@ -507,61 +660,466 @@ export function printBatchThermalSlips(orders: any[], options: ThermalPrintOptio
   if (!orders || orders.length === 0) return;
 
   const slipsHtml = orders.map(ord => generateSingleSlipHtml(ord, options)).join('\n');
+  dispatchDirectPrint(
+    slipsHtml,
+    generateThermalStyles(options.paperWidth || '80mm'),
+    `Batch Packing Slips (${orders.length} Orders)`
+  );
+}
 
-  const printContent = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>Batch Packing Slips (${orders.length} Orders)</title>
-        <style>
-          ${generateThermalStyles(options.paperWidth || '80mm')}
-        </style>
-      </head>
-      <body>
-        ${slipsHtml}
-        <script>
-          window.onload = function() {
-            window.focus();
-            window.print();
-            setTimeout(function() {
-              window.close();
-            }, 500);
-          };
-        </script>
-      </body>
-    </html>
-  `;
+/**
+ * 79mm x 50mm Sticker Label Printer Implementation for IDPRT SP410BT
+ */
+export interface ItemLabelData {
+  orderNumber: string;
+  orderId?: string;
+  customerName: string;
+  customerPhone?: string;
+  deliveryType?: 'pickup' | 'delivery' | string;
+  address?: string;
+  itemName: string;
+  itemCode?: string;
+  unit?: string;
+  variantName?: string;
+  price?: number;
+  orderQty: number;
+  printQty: number;
+  date?: string;
+  storeName?: string;
+}
 
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.top = '-10000px';
-  iframe.style.left = '-10000px';
-  iframe.style.width = '1px';
-  iframe.style.height = '1px';
-  iframe.style.border = 'none';
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentWindow?.document || iframe.contentDocument;
-  if (!doc) {
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.open();
-      win.document.write(printContent);
-      win.document.close();
+export function generateQrCodeSvg(text: string, size = 66): string {
+  try {
+    const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
+    const count = qr.modules.size;
+    const moduleSize = size / count;
+    let path = '';
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (qr.modules.get(r, c)) {
+          const x = (c * moduleSize).toFixed(2);
+          const y = (r * moduleSize).toFixed(2);
+          const w = (moduleSize + 0.05).toFixed(2);
+          path += `M${x},${y}h${w}v${w}h-${w}z `;
+        }
+      }
     }
-    return;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" style="display:block; shape-rendering:crispEdges;"><path d="${path}" fill="#000000" /></svg>`;
+  } catch (err) {
+    return '';
+  }
+}
+
+export type LabelOrientation = 'portrait' | 'horizontal' | 'system_auto' | 'rotate180' | 'rotate90' | 'rotate270' | 'rotated';
+
+const LABEL_ORIENTATION_STORAGE_KEY = 'fnl_label_orientation_v2';
+
+export function getSavedLabelOrientation(): LabelOrientation {
+  try {
+    const val = localStorage.getItem(LABEL_ORIENTATION_STORAGE_KEY) as LabelOrientation;
+    if (val && ['portrait', 'horizontal', 'system_auto', 'rotate180', 'rotate90', 'rotate270'].includes(val)) {
+      return val;
+    }
+    const legacy = localStorage.getItem('fnl_label_orientation') as LabelOrientation;
+    if (legacy && ['system_auto', 'rotate180', 'rotate90', 'rotate270'].includes(legacy)) {
+      return legacy;
+    }
+  } catch (e) {
+    // Ignore error
+  }
+  return 'portrait';
+}
+
+export function saveLabelOrientation(orientation: LabelOrientation): void {
+  try {
+    localStorage.setItem(LABEL_ORIENTATION_STORAGE_KEY, orientation);
+    localStorage.setItem('fnl_label_orientation', orientation);
+  } catch (e) {
+    // Ignore error
+  }
+}
+
+export function generateLabelStyles(orientation: LabelOrientation = 'portrait'): string {
+  const normOrientation = orientation === 'rotated' ? 'rotate90' : orientation;
+
+  let pageRule = 'size: 78mm 50mm; margin: 0mm;';
+  let bodyPrintWidth = 'width: 78mm !important; height: 50mm !important; margin: 0 auto !important;';
+  let stickerTransform = '';
+  let stickerTransformOrigin = '';
+
+  if (normOrientation === 'system_auto') {
+    pageRule = 'size: auto; margin: 0mm;';
+    bodyPrintWidth = 'margin: 0 !important; padding: 0 !important;';
+  } else if (normOrientation === 'rotate180') {
+    pageRule = 'size: 78mm 50mm; margin: 0mm;';
+    stickerTransform = 'transform: rotate(180deg);';
+    stickerTransformOrigin = 'transform-origin: center center;';
+  } else if (normOrientation === 'rotate90') {
+    pageRule = 'size: 50mm 78mm; margin: 0mm;';
+    bodyPrintWidth = 'width: 50mm !important; height: 78mm !important;';
+    stickerTransform = 'transform: rotate(90deg) translate(0, -50mm);';
+    stickerTransformOrigin = 'transform-origin: top left;';
+  } else if (normOrientation === 'rotate270') {
+    pageRule = 'size: 50mm 78mm; margin: 0mm;';
+    bodyPrintWidth = 'width: 50mm !important; height: 78mm !important;';
+    stickerTransform = 'transform: rotate(-90deg) translate(-78mm, 0);';
+    stickerTransformOrigin = 'transform-origin: top left;';
   }
 
-  doc.open();
-  doc.write(printContent);
-  doc.close();
-
-  setTimeout(() => {
-    try {
-      document.body.removeChild(iframe);
-    } catch (e) {
-      // ignore
+  return `
+    @page {
+      ${pageRule}
     }
-  }, 60000);
+    @media print {
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        ${bodyPrintWidth}
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .label-sticker-page {
+        width: 74mm !important;
+        max-width: 74mm !important;
+        height: 46.5mm !important;
+        max-height: 47mm !important;
+        padding: 1.5mm 3mm !important;
+        margin: 0 auto !important;
+        ${stickerTransform ? `${stickerTransform} !important;` : ''}
+        ${stickerTransformOrigin ? `${stickerTransformOrigin} !important;` : ''}
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+      }
+      .label-sticker-page:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+    }
+    .label-sticker-page, .label-sticker-page * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+    .label-sticker-page {
+      width: 74mm;
+      height: 46.5mm;
+      max-width: 74mm;
+      max-height: 47mm;
+      box-sizing: border-box;
+      padding: 1.5mm 3mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      background: #ffffff;
+      color: #000000;
+      position: relative;
+      margin: 0 auto;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      ${stickerTransform}
+      ${stickerTransformOrigin}
+    }
+    .label-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1.5px solid #000000;
+      padding-bottom: 0.4mm;
+      margin-bottom: 0.4mm;
+      padding-right: 2mm;
+    }
+    .label-brand {
+      font-size: 8pt;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .label-order-tag {
+      font-size: 7.5pt;
+      font-weight: 900;
+      font-family: monospace;
+      background: #ffffff;
+      color: #000000;
+      border: 1.2px solid #000000;
+      padding: 0.2mm 1.8mm;
+      border-radius: 3px;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+    .label-sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 6.8pt;
+      margin-bottom: 0.4mm;
+      font-weight: 700;
+      color: #111111;
+      gap: 1mm;
+      padding-right: 2mm;
+    }
+    .label-customer-name {
+      max-width: 42mm;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+    .label-dest-badge {
+      font-size: 6pt;
+      font-weight: 900;
+      text-transform: uppercase;
+      border: 1px solid #000000;
+      padding: 0.2mm 1mm;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .label-hero-row {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2mm;
+      border-top: 1px dashed #000000;
+      border-bottom: 1px dashed #000000;
+      padding: 0.6mm 0;
+      margin: 0.3mm 0;
+      min-height: 20mm;
+      overflow: hidden;
+    }
+    .label-hero-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      padding-right: 1.5mm;
+    }
+    .label-code-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #ffffff;
+      color: #000000;
+      border: 1.2px solid #000000;
+      font-weight: 900;
+      font-size: 8pt;
+      font-family: monospace;
+      padding: 0.2mm 1.8mm;
+      border-radius: 3px;
+      margin-bottom: 0.6mm;
+      align-self: flex-start;
+      letter-spacing: 0.3px;
+    }
+    .label-item-name {
+      font-size: 11pt;
+      font-weight: 900;
+      line-height: 1.15;
+      text-transform: uppercase;
+      color: #000000;
+      max-height: 12mm;
+      overflow: hidden;
+      word-break: break-word;
+    }
+    .label-item-meta {
+      font-size: 7pt;
+      font-weight: 700;
+      color: #222222;
+      margin-top: 0.4mm;
+      display: flex;
+      align-items: center;
+      gap: 1.8mm;
+      flex-wrap: wrap;
+    }
+    .label-hero-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 0.2mm 1.5mm;
+      margin-right: 3.5mm;
+      background: #ffffff;
+      border-left: 1px dotted #888888;
+    }
+    .label-qr-caption {
+      font-size: 5.5pt;
+      font-family: monospace;
+      font-weight: 800;
+      color: #000000;
+      text-align: center;
+      margin-top: 0.3mm;
+      max-width: 22mm;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .label-qr-code {
+      font-size: 6pt;
+      font-family: monospace;
+      font-weight: 900;
+      color: #000000;
+      background: #ffffff;
+      border: 1px solid #777777;
+      border-radius: 2px;
+      padding: 0.2px 2px;
+      text-align: center;
+      margin-top: 0.3mm;
+    }
+    .label-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 0.4mm;
+      font-size: 6.8pt;
+      font-weight: 700;
+    }
+    .label-sticker-counter {
+      font-size: 7.5pt;
+      font-weight: 900;
+      font-family: monospace;
+      border: 1.5px solid #000000;
+      padding: 0.3mm 1.8mm;
+      border-radius: 2px;
+      background: #ffffff;
+      white-space: nowrap;
+    }
+  `;
 }
+
+export function generateSingleItemLabelHtml(
+  labelData: ItemLabelData,
+  index: number = 1,
+  totalInBatch: number = 1
+): string {
+  const storeName = labelData.storeName || 'FRESH N LOCAL CO.';
+  const orderNum = labelData.orderNumber || (labelData.orderId ? `#FNL-${labelData.orderId.slice(0, 8).toUpperCase()}` : '#ORDER');
+  const custName = labelData.customerName || 'Valued Customer';
+  const itemName = labelData.itemName || 'Produce Item';
+  const itemCode = labelData.itemCode ? (labelData.itemCode.startsWith('#') ? labelData.itemCode : `#${labelData.itemCode}`) : '';
+  const unit = labelData.unit || labelData.variantName || '';
+  const price = labelData.price !== undefined && labelData.price !== null && labelData.price > 0 
+    ? `₹${Number(labelData.price).toFixed(2).replace(/\.00$/, '')}` 
+    : '';
+  const isPickup = labelData.deliveryType === 'pickup' || labelData.address?.includes('Store Pickup');
+  const dateStr = labelData.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  // Generate QR code encoding both Item Code and Order ID (plus product name)
+  const qrText = `Order: ${orderNum}\nItem Code: ${itemCode || 'N/A'}\nItem: ${itemName}`;
+  const qrSvg = generateQrCodeSvg(qrText, 46);
+
+  return `
+    <div class="label-sticker-page">
+      <!-- Top Row: Brand & Order No -->
+      <div class="label-header">
+        <span class="label-brand">${storeName}</span>
+        <span class="label-order-tag">${orderNum}</span>
+      </div>
+
+      <!-- Customer & Mode Row -->
+      <div class="label-sub-row">
+        <span class="label-customer-name">CUST: ${custName}</span>
+        <span class="label-dest-badge">${isPickup ? 'STORE PICKUP' : 'HOME DELIVERY'}</span>
+      </div>
+
+      <!-- Hero Section: Left Product Details + Right QR Code -->
+      <div class="label-hero-row">
+        <div class="label-hero-left">
+          ${itemCode ? `<div class="label-code-badge">ITEM CODE: ${itemCode}</div>` : ''}
+          <div class="label-item-name">${itemName}</div>
+          <div class="label-item-meta">
+            ${unit ? `<span>Pack: <b>${unit}</b></span>` : ''}
+            <span>Order Qty: <b>${labelData.orderQty || 1}</b></span>
+          </div>
+        </div>
+        <div class="label-hero-qr">
+          ${qrSvg}
+          <span class="label-qr-caption">${orderNum}</span>
+          ${itemCode ? `<span class="label-qr-code">${itemCode}</span>` : ''}
+        </div>
+      </div>
+
+      <!-- Footer Row: Date & Produce Guarantee -->
+      <div class="label-footer">
+        <span style="font-size:6.8pt; font-family:monospace; color:#222; font-weight:800;">Date: ${dateStr}</span>
+        <span style="font-size:6.2pt; font-weight:900; font-family:monospace; color:#222; letter-spacing:0.3px; text-transform:uppercase;">Fresh Produce • Verified</span>
+      </div>
+    </div>
+  `;
+}
+
+export function printItemLabels(
+  labels: ItemLabelData | ItemLabelData[],
+  orientation?: LabelOrientation
+): void {
+  const actualOrientation = orientation || getSavedLabelOrientation();
+  const items = Array.isArray(labels) ? labels : [labels];
+  if (items.length === 0) return;
+
+  let pagesHtml = '';
+  for (const item of items) {
+    const qtyToPrint = Math.max(1, Number(item.printQty) || 1);
+    for (let i = 1; i <= qtyToPrint; i++) {
+      pagesHtml += generateSingleItemLabelHtml(item, i, qtyToPrint);
+    }
+  }
+
+  dispatchDirectPrint(
+    pagesHtml,
+    generateLabelStyles(actualOrientation),
+    'Sticker Labels 78x50mm - IDPRT SP410BT'
+  );
+}
+
+export function extractItemLabelData(
+  order: any,
+  item: any,
+  printQty?: number,
+  catalogProducts?: any[]
+): ItemLabelData {
+  const prod = item?.product || item || {};
+  const orderNum = order?.orderNumber || (order?.id ? `#FNL-${order.id.slice(0, 8).toUpperCase()}` : '#FNL');
+  const isPickup = order?.shippingDetails?.address?.includes('Store Pickup') || order?.deliveryType === 'pickup';
+  const customerName = order?.shippingDetails?.name || order?.customerName || order?.userName || 'Customer';
+  const customerPhone = order?.shippingDetails?.phone || order?.phone || '';
+  const orderQty = Math.max(1, Number(item?.quantity) || 1);
+  const actualPrintQty = printQty !== undefined ? Math.max(1, Number(printQty) || 1) : orderQty;
+
+  let itemCode = prod.itemCode || item.itemCode || item.product?.itemCode || '';
+  if (!itemCode && Array.isArray(catalogProducts)) {
+    const match = catalogProducts.find(p => (prod.id && p.id === prod.id) || (p.name && prod.name && p.name.toLowerCase() === prod.name.toLowerCase()));
+    if (match?.itemCode) {
+      itemCode = match.itemCode;
+    }
+  }
+
+  let rawPrice = 0;
+  if (item?.price !== undefined && item?.price !== null && item?.price !== '') {
+    rawPrice = item.price;
+  } else if (prod.price !== undefined && prod.price !== null && prod.price !== '') {
+    rawPrice = prod.price;
+  }
+  const price = Number(rawPrice) || 0;
+
+  return {
+    orderNumber: orderNum,
+    orderId: order?.id,
+    customerName,
+    customerPhone,
+    deliveryType: isPickup ? 'pickup' : 'delivery',
+    address: order?.shippingDetails?.address || order?.address || '',
+    itemName: prod.name || prod.title || item.name || item.title || 'Produce Item',
+    itemCode,
+    unit: prod.unit || prod.selectedUnit || item.unit || item.selectedUnit || '',
+    variantName: prod.variantName || item.variantName || '',
+    price,
+    orderQty,
+    printQty: actualPrintQty,
+    // Always use today's printing date for sticker labels (never order creation date)
+    date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+  };
+}
+

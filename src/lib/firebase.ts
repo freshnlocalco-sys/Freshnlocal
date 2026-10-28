@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp, getDocFromServer, onSnapshot } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { create } from 'zustand';
@@ -291,6 +291,10 @@ export const signOut = async () => {
   } catch (error) {
     console.error('Sign-out error', error);
   }
+};
+
+export const sendPasswordReset = async (email: string) => {
+  return await sendPasswordResetEmail(auth, email.trim());
 };
 
 export const deleteUserAddress = async (addressId: string) => {

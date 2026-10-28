@@ -149,6 +149,11 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
               {product.name}
             </h2>
             <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-4">
+              {product.itemCode && (
+                <span className="text-[9px] md:text-[10px] font-mono font-black text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+                  #{product.itemCode}
+                </span>
+              )}
               <span className="text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground bg-secondary px-2 py-1 rounded">
                 {product.category}
               </span>

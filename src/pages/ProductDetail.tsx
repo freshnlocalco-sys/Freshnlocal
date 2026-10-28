@@ -107,7 +107,7 @@ export function ProductDetail() {
   const relatedProducts = useMemo(() => {
     if (!product || allProducts.length === 0) return [];
     return allProducts
-      .filter(p => p.category === product.category && p.id !== product.id && p.inStock)
+      .filter(p => !p.isDeactivated && p.category === product.category && p.id !== product.id && p.inStock)
       .slice(0, 4);
   }, [product, allProducts]);
 
@@ -225,11 +225,11 @@ export function ProductDetail() {
     );
   }
 
-  if (!product) {
+  if (!product || product.isDeactivated) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-36 text-center flex flex-col items-center gap-6 bg-background">
-        <span className="text-red-400 text-xs font-mono uppercase tracking-widest">PRODUCT ID EXPIRED OR OFFLINE</span>
-        <h2 className="text-3xl font-black uppercase tracking-tight text-foreground mb-2">Sought crop not found</h2>
+        <span className="text-red-400 text-xs font-mono uppercase tracking-widest">PRODUCT UNAVAILABLE</span>
+        <h2 className="text-3xl font-black uppercase tracking-tight text-foreground mb-2">This crop is currently not active in our catalog</h2>
         <Link to="/shop" className="slice-btn-secondary px-6 py-4 text-[10px] text-foreground flex items-center gap-2">
           <ArrowLeft className="w-4 h-4" /> Return to Catalog
         </Link>
@@ -268,6 +268,11 @@ export function ProductDetail() {
         {/* Product Image Panel */}
         <div className="lg:col-span-7 rounded-xl overflow-hidden bg-white dark:bg-white border border-border relative aspect-[4/3] w-full items-center justify-center flex">
           <div className="absolute top-5 left-5 z-20 flex flex-col items-start gap-2 leading-none">
+            {product.itemCode && (
+              <span className="text-[11px] font-mono uppercase tracking-wider font-black text-white bg-neutral-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full select-none border border-white/20 shadow-sm">
+                #{product.itemCode}
+              </span>
+            )}
             {product.category && (
               <span className="text-[10px] uppercase tracking-wider font-extrabold text-black bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full select-none border border-border shadow-sm">
                 {(product.category || '').replace(/ font-bold/gi, '')}
@@ -318,6 +323,19 @@ export function ProductDetail() {
         {/* Product Configurations Panel */}
         <div className="lg:col-span-5 space-y-8 bg-secondary border border-border p-8 rounded-xl shadow-sm">
           <div className="space-y-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              {product.itemCode && (
+                <span className="inline-flex items-center font-mono font-black text-xs text-primary bg-primary/10 border border-primary/25 px-2.5 py-1 rounded-lg tracking-wide shadow-2xs">
+                  Item Code: #{product.itemCode}
+                </span>
+              )}
+              {product.category && (
+                <span className="text-xs uppercase font-bold text-muted-foreground tracking-wider">
+                  {(product.category || '').replace(/ font-bold/gi, '')}
+                </span>
+              )}
+            </div>
+
             <h1 className="text-2xl sm:text-3xl lg:text-5xl font-sans font-black tracking-tight uppercase text-foreground leading-tight">
               {product.name}
             </h1>

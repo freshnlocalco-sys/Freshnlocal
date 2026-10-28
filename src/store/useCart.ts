@@ -15,6 +15,7 @@ export interface ProductVariant {
 
 export interface Product {
   id: string;
+  itemCode?: string;
   name: string;
   price: number;
   originalPrice?: number;
@@ -31,6 +32,7 @@ export interface Product {
   variants?: ProductVariant[];
   stock: number;
   inStock: boolean;
+  isDeactivated?: boolean;
   orderIndex?: number;
   createdAt: number;
   updatedAt: number;
