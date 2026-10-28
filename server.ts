@@ -8,6 +8,7 @@ import { setupOrderEmailTriggers, sendCancellationEmailDirect, sendStatusUpdateE
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
+import { registerCatalogueMirror, mirrorConfigured } from './catalogueMirror';
 
 dotenv.config();
 
@@ -499,6 +500,18 @@ Format your output exactly as a JSON object with these keys:
       res.status(500).json({ error: error?.message || "Failed to send status update email" });
     }
   });
+
+  // Copies an admin's product and settings edits from Firestore into Supabase
+  // as they happen, so the catalogue the storefront reads cannot go stale while
+  // writes still land in Firestore. Takes ids only and re-reads Firestore
+  // itself -- see catalogueMirror.ts.
+  registerCatalogueMirror(app);
+  if (!mirrorConfigured()) {
+    console.warn(
+      "[CATALOGUE MIRROR] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set; " +
+      "admin edits will NOT reach Supabase. Harmless while VITE_CATALOGUE_SOURCE=firestore."
+    );
+  }
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

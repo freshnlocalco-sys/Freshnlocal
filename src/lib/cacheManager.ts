@@ -22,6 +22,19 @@ export function trackFirestoreRead(collectionName: string, docCount: number) {
   );
 }
 
+/**
+ * The same thing for reads served from Postgres. Separate function rather than
+ * a parameter on the one above so the console stays honest about which backend
+ * answered while both are in play during the migration.
+ */
+export function trackSupabaseRead(tableName: string, rowCount: number) {
+  const timestamp = new Date().toISOString();
+  console.log(
+    `%c[SUPABASE READ] [${timestamp}] Table: "${tableName}" | Rows Read: ${rowCount}`,
+    "color: #3ecf8e; font-weight: bold; font-family: monospace; padding: 2px 4px; border: 1px solid #3ecf8e; border-radius: 4px;"
+  );
+}
+
 export const cacheManager = {
   /**
    * Save any item to localStorage with timestamp

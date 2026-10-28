@@ -6,7 +6,9 @@ import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCi
 import { db, isQuotaError, useAuth } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useSettings } from '../store/useSettings';
-import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
+import { cacheManager, trackFirestoreRead, trackSupabaseRead } from '../lib/cacheManager';
+import { usingSupabaseCatalogue } from '../lib/supabase';
+import { fetchWebSetting } from '../lib/webSettings';
 import { getCategoryImage } from '../lib/constants';
 import { useProducts } from '../store/useProducts';
 import { useCart, Product } from '../store/useCart';
@@ -594,11 +596,20 @@ export function Home() {
 
       await cacheManager.fetchDeduplicated('hero_banners_fetch', async () => {
         try {
-          const docRef = doc(db, 'settings', 'heroBanners');
-          const docSnap = await getDoc(docRef);
-          trackFirestoreRead('settings', 1);
-          if (docSnap.exists() && docSnap.data().banners) {
-            const banners = docSnap.data().banners;
+          let data: Record<string, any> | null;
+
+          if (usingSupabaseCatalogue()) {
+            data = await fetchWebSetting('heroBanners');
+            trackSupabaseRead('web_settings', data ? 1 : 0);
+          } else {
+            const docRef = doc(db, 'settings', 'heroBanners');
+            const docSnap = await getDoc(docRef);
+            trackFirestoreRead('settings', 1);
+            data = docSnap.exists() ? docSnap.data() : null;
+          }
+
+          if (data && data.banners) {
+            const banners = data.banners;
             cacheManager.set('heroBanners', banners);
             setHeroBanners(banners);
             // Preload images in background
@@ -676,11 +687,20 @@ export function Home() {
 
       await cacheManager.fetchDeduplicated('spotlights_fetch', async () => {
         try {
-          const docRef = doc(db, 'settings', 'spotlights');
-          const docSnap = await getDoc(docRef);
-          trackFirestoreRead('settings', 1);
-          if (docSnap.exists()) {
-            const overrides = docSnap.data();
+          let overridesData: Record<string, any> | null;
+
+          if (usingSupabaseCatalogue()) {
+            overridesData = await fetchWebSetting('spotlights');
+            trackSupabaseRead('web_settings', overridesData ? 1 : 0);
+          } else {
+            const docRef = doc(db, 'settings', 'spotlights');
+            const docSnap = await getDoc(docRef);
+            trackFirestoreRead('settings', 1);
+            overridesData = docSnap.exists() ? docSnap.data() : null;
+          }
+
+          if (overridesData) {
+            const overrides = overridesData;
             cacheManager.set('spotlights', overrides);
             setSpotlightsConfig(overrides);
           }

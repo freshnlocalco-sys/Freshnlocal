@@ -16,6 +16,7 @@
   "dependencies": {
     "@babel/parser": "^8.0.4",
     "@google/genai": "^1.52.0",
+    "@supabase/supabase-js": "^2.118.0",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.1.14",
     "@vis.gl/react-google-maps": "^1.9.0",

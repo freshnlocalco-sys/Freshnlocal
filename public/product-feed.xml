@@ -334,7 +334,7 @@
       <g:id>17V6OuSOGb1VZgvVn4MG</g:id>
       <g:title>Fresh N Local Cape Gooseberry 1pack (200g)</g:title>
       <g:description>Experience the tangy elegance of our premium Golden Gooseberries, a vibrant exotic fruit that adds a sophisticated flair to your pantry. These tiny golden globes are packed with fiber, protein, and essential minerals like iron, offering approx. 1.9g of protein and 6g of fiber per 100g. In Gujarat, they beautifully brighten traditional dals, salads, or spicy subzis. To maintain their firm, juicy texture, store these delicate berries in a cool, dry place away from direct sunlight for lasting garden-fresh quality.</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>220.00 INR</g:price>
       <g:sale_price>160.00 INR</g:sale_price>
@@ -452,12 +452,25 @@
     <item>
       <g:id>1xCFSy4CutpOFu7IY7dA</g:id>
       <g:title>Fresh N Local Marigold Flower Orange 100 G</g:title>
-      <g:description>Marigold Flower Orange </g:description>
+      <g:description>Marigold Flower Orange</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>15.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/1xCFSy4CutpOFu7IY7dA</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1785656700089_1000215204.png?alt=media&amp;token=cb34dc26-d1eb-4a3c-a8ff-03c451363da6</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
+      <g:id>20xhVWKdWutjux3SSxEq</g:id>
+      <g:title>Fresh N Local Papdi Mix 500 G</g:title>
+      <g:description>Papdi Mix</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>350.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/20xhVWKdWutjux3SSxEq</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792813233561_1000250861.png?alt=media&amp;token=85aaec29-4162-4127-ae1c-a0751fedd183</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -632,6 +645,19 @@
       <g:sale_price>30.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/3hWKN1XWpIlX3VxixeNW</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1785246354593_Bananas.jpeg?alt=media&amp;token=319533e5-383e-4eb7-8d7c-173d7b2b772e</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
+      <g:id>3jJfjHpsCQcpUv6NYy66</g:id>
+      <g:title>Fresh N Local Marinated Ginger 150 G</g:title>
+      <g:description>Marinated Ginger</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>150.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/3jJfjHpsCQcpUv6NYy66</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792321597909_ginger.jfif?alt=media&amp;token=b5e96932-0130-42b6-bd99-fc35527a7881</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -844,7 +870,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>62.50 INR</g:price>
-      <g:sale_price>50.00 INR</g:sale_price>
+      <g:sale_price>45.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/5p6VQmdAGyRGx40q2h0V</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784456099447_ind%20lemoin.jpeg?alt=media&amp;token=ff2a0bc3-8ae8-4059-b310-2a6181594221</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -885,9 +911,22 @@
       <g:description>AMBA HALDI MIX MARINADE</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>300.00 INR</g:price>
+      <g:price>250.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/6Di1yJH2PsvpMNzXMHVH</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792137322175_WhatsApp%20Image%202026-10-16%20at%201.24.41%20PM.jpeg?alt=media&amp;token=4ca111ef-3843-4af5-84bd-bbbb6e578137</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588978353_Amba%20hadad%20pickle.jfif?alt=media&amp;token=7a97754b-29dc-4579-8204-95340ec351c5</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
+      <g:id>6ce3hK9g04tPOY49QwJt</g:id>
+      <g:title>Fresh N Local Marinated Amla 500 G</g:title>
+      <g:description>Marinated Amla</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>200.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/6ce3hK9g04tPOY49QwJt</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1793096260940_1000252104.png?alt=media&amp;token=13af2b76-4680-4e3f-b6cf-595f65327d26</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -921,7 +960,7 @@
     <item>
       <g:id>78bAlUKCvuiQqfchXFTb</g:id>
       <g:title>Fresh N Local Banana Leaf With Stem 1 Pc</g:title>
-      <g:description>Banana Leaf With Stem </g:description>
+      <g:description>Banana Leaf With Stem</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>30.00 INR</g:price>
@@ -938,7 +977,6 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>40.00 INR</g:price>
-      <g:sale_price>30.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/79s9cRRPCJWJR46jaxhW</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783766927587_Peeled_garlic_in_punnet_202607111618.jpeg?alt=media&amp;token=4b89bd24-ac92-49c8-a0f1-d449fc98f9f4</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1006,7 +1044,7 @@
       <g:description>Experience the ultimate crunch with our farm-fresh Iceberg Lettuce, a crisp exotic green that elevates any meal. Packed with hydration, every 100g offers approx. 1.2g of dietary fiber, 0.9g of protein, plus vital vitamins A and K for general vitality. In Gujarati kitchens, it brings a refreshing twist to traditional kachumber salads, wraps, and local fusion chaats. To keep this leafy delight extraordinarily crisp, store the unwashed head in a zip-lock bag with a paper towel inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>37.50 INR</g:price>
+      <g:price>40.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/8xFlPOiBunod5R342usS</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783161411956_1000191932.jpg?alt=media&amp;token=5faa2fa5-7c2f-4506-be7b-d8898b19ce44</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1061,7 +1099,7 @@
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/9ZbeuLlaPfngvtquFePK</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783323439217_1000205400.jpg?alt=media&amp;token=bb9ab8ec-1ac5-49b8-95b2-b5fc5a8fa83a</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588953867_Raspberry.jfif?alt=media&amp;token=023e2508-108f-41d1-b95d-2f330f6941cf</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1086,7 +1124,7 @@
       <g:description>Crisp, elongated, and delightfully sturdy, our farm-fresh Romaine Lettuce brings a refreshing crunch to Surat&apos;s modern kitchens. Rich in essential hydration, this leafy green offers approx. 1.3g of fiber and vital Vitamin A per 100g to support daily wellness. While famous for Caesar salads, local food lovers use these crisp leaves as low-carb wraps for spiced paneer bhurji or chopped into a refreshing Gujarati-style kachumber salad. To maintain its signature crunch, store the unwashed head in a damp paper towel inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>30.00 INR</g:price>
+      <g:price>40.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/9foe6HzA3sjfxXKjLPb3</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783161574460_1000191942.jpg?alt=media&amp;token=84170b04-a85b-428a-bc76-5f8bff804b77</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1102,7 +1140,7 @@
       <g:price>80.00 INR</g:price>
       <g:sale_price>75.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/9fvtMymFTu5Qix48c4ku</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1782656207937_1000202740.jpg?alt=media&amp;token=b3a2caeb-7426-408f-94b5-83fe1ab36a07</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588559542_Fresh%20tender%20coconut.jfif?alt=media&amp;token=8d439c98-1b4d-4985-9c47-4c4113b73c0e</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1121,13 +1159,26 @@
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>ACt86uXI7L6aXlzgTrYZ</g:id>
+      <g:title>Fresh N Local Fresh Hand Peeled Green Peas 1 Kg</g:title>
+      <g:description>Fresh hand peeled green peas</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>620.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/ACt86uXI7L6aXlzgTrYZ</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1793175508848_1000252624.png?alt=media&amp;token=60d58484-0081-4763-bee4-fb502516e910</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>BGWoWEZEQ0yPgrqXR7aK</g:id>
       <g:title>Fresh N Local Brown Coconut 1 Pc</g:title>
       <g:description>Crack open the rich, tropical goodness of our premium Brown Coconut, a staple sourced locally for authentic Surati kitchens. This versatile treasure provides essential hydration and nourishment, packed with approx. 9g of dietary fiber and 3.3g of plant protein per 100g, alongside vital minerals like potassium and iron. Grate it fresh to elevate your daily Gujarati dals, enrich rich undhiyu gravies, or whip up classic coconut chutneys. To check for freshness, choose a heavy coconut that sloshes with water inside, and store it in a cool, dry place.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
-      <g:sale_price>30.00 INR</g:sale_price>
+      <g:sale_price>35.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/BGWoWEZEQ0yPgrqXR7aK</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783155285485_1000192148.jpg?alt=media&amp;token=9ea9252f-b192-4b43-ac33-e5a063072e73</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1203,6 +1254,19 @@
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>CXj8tlzie61zhUrtOLwS</g:id>
+      <g:title>Fresh N Local Chodi Cut 500 G</g:title>
+      <g:description>Chodi Cut</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>225.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/CXj8tlzie61zhUrtOLwS</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792813293039_1000250859.png?alt=media&amp;token=f0ea56f3-d7ed-4262-8463-2f5059166732</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>Cb2n7l4Ik8AtVV3T4O8f</g:id>
       <g:title>Fresh N Local Edible Flower 1 Box</g:title>
       <g:description>Transform your culinary creations into visual masterpieces with our premium, locally sourced Edible Flowers. These delicate, colorful blooms elevate everyday meals, providing approx. 1g of protein, 2g of dietary fiber, and essential vitamin C per 100g. In modern Gujarati kitchens, they are perfect for garnishing festive shrikhand, refreshing summer coolers, and salads. To maintain their fresh, vibrant petals, store this box in your refrigerator crisper wrapped in a lightly damp paper towel.</g:description>
@@ -1222,7 +1286,6 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>40.00 INR</g:price>
-      <g:sale_price>30.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/CzEN8pzH1scTevob6Ozo</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1782896325740_Yellow_and_red_bellpepper_photos%E2%80%A6_202607011425.jpeg?alt=media&amp;token=4231373e-ec51-46f4-a21a-1fc95861e854</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1233,7 +1296,7 @@
       <g:id>DBQmNVW1Ia4xH0CRJNlv</g:id>
       <g:title>Fresh N Local Thai Nam Dok Mai Mango 1 Pc</g:title>
       <g:description>Experience the exotic elegance of our handpicked Thai Nam Dok Mai Mangoes, prized for their slender teardrop shape and silky, fiberless golden pulp. Each 100g serving offers approx. 1.8g of dietary fiber and 36mg of Vitamin C, supporting overall vitality. Perfect for a premium Gujarati summer thali or blended into a rich, velvety aamras, they add global flair to local tables. To enjoy them at their best, store at room temperature until fragrant, then refrigerate.</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>325.00 INR</g:price>
       <g:sale_price>250.00 INR</g:sale_price>
@@ -1244,14 +1307,27 @@
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>DSTiWOfyr93GO6W7mKzV</g:id>
+      <g:title>Fresh N Local Cut Fansi 500 G</g:title>
+      <g:description>Cut fansi</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>200.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/DSTiWOfyr93GO6W7mKzV</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1793175561022_1000252625.png?alt=media&amp;token=0883ade4-d67b-4891-ad01-6320d314ab6c</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>DgjPxNoaTGxl9KPP6qCp</g:id>
       <g:title>Fresh N Local Ewais Mango 1 Pc</g:title>
       <g:description>Ewais Mango</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/DgjPxNoaTGxl9KPP6qCp</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1791543864506_Ewais%20Mango.jpg?alt=media&amp;token=013561c5-1540-4dad-9823-30f5ff51bc5a</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588867003_Eweis%20Mango.jfif?alt=media&amp;token=dc37610d-3de0-4546-8048-71a199eb9997</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1354,13 +1430,25 @@
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
+      <g:id>EMffUgGIyo9K5tzaFML7</g:id>
+      <g:title>Fresh N Local Marinated Onion 300 G</g:title>
+      <g:description>Marinated Onion</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>180.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/EMffUgGIyo9K5tzaFML7</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792380508784_1000249436.png?alt=media&amp;token=8badccc8-58f8-48bb-98c4-f278d3c591e0</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
       <g:id>Ed7uHcgEJR8qhq3uKKuh</g:id>
       <g:title>Fresh N Local Fresh Thyme 25 G</g:title>
       <g:description>Elevate your culinary creations with our premium, locally-sourced Fresh Thyme, a fragrant herb that brings a touch of Mediterranean magic to Surat&apos;s kitchens. Rich in wellness-promoting elements, 100g of this aromatic herb offers approx. 5.6g of dietary fiber, 1.6g of protein, and essential vitamins A and C. It seamlessly elevates roasted Gujarati potatoes, fusion undhiyu, continental pastas, and artisanal marinades with its earthy, mint-lemon flavor. To preserve their aromatic oils, wrap the sprigs in a damp paper towel and refrigerate inside a reusable container.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>20.00 INR</g:price>
-      <g:sale_price>15.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/Ed7uHcgEJR8qhq3uKKuh</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783154292244_1000191960.jpg?alt=media&amp;token=f06de5e5-1d83-4572-b4da-502199c163c9</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1470,7 +1558,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>160.00 INR</g:price>
-      <g:sale_price>120.00 INR</g:sale_price>
+      <g:sale_price>140.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/GCRB4zJ5ARDMHJA3KwBe</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786624708978_Two_avocados.jpeg?alt=media&amp;token=61bace56-318f-45dd-9c3f-7f9704b37ae5</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1552,7 +1640,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>25.00 INR</g:price>
-      <g:sale_price>15.00 INR</g:sale_price>
+      <g:sale_price>20.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/H1G8KiWJwz6dydkrjnBj</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783154257008_1000191961.jpg?alt=media&amp;token=a225defc-c3f1-4939-a17a-d28afaf76bed</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1634,7 +1722,7 @@
       <g:condition>new</g:condition>
       <g:price>500.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/I6AypTIPKFXtwIUEnoOP</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783156796362_1000193370.jpg?alt=media&amp;token=e4b80268-6b67-4532-9e02-5c823a25723a</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588895820_Corean%20pear.jfif?alt=media&amp;token=4e25ea2f-b167-4e9d-9ca2-890bdbab97d6</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1754,23 +1842,9 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>57.00 INR</g:price>
-      <g:sale_price>36.00 INR</g:sale_price>
+      <g:sale_price>45.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/JTu5I8bRkjaijdmPF7iy</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1785753946439_Custard_apple_photoshoot_on_white_202608031614.jpeg?alt=media&amp;token=b42fca56-992b-4247-8059-83d2242888c1</g:image_link>
-      <g:brand>Fresh N Local</g:brand>
-      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
-      <g:identifier_exists>no</g:identifier_exists>
-    </item>
-    <item>
-      <g:id>JWG0jtnar9AQCookAMKr</g:id>
-      <g:title>Fresh N Local Kashmir Plum 500 G</g:title>
-      <g:description>Direct from the pristine valleys of Kashmir, these deep crimson plums bring a refreshing sweet-tart joy to Surat homes. Packed with wholesome goodness, 100g delivers approx 1.4g of fiber and approx 9.5mg of Vitamin C for natural vitality. Gujaratis love slicing them into festive fruit chaats or simmering them into spiced chutneys for rotis. For lasting freshness, ripen them on your counter before storing in the fridge.</g:description>
-      <g:availability>out of stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>110.00 INR</g:price>
-      <g:sale_price>100.00 INR</g:sale_price>
-      <g:link>https://www.freshnlocal.co/product/JWG0jtnar9AQCookAMKr</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1782552602487_z6vcsd.jpg?alt=media&amp;token=b8f5a7c3-56ad-4d9d-9110-c9790d5b73cf</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792589033442_Custard%20apple.jfif?alt=media&amp;token=3ef30f32-0e33-46c5-b77e-11e5f376de18</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1782,7 +1856,6 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>15.00 INR</g:price>
-      <g:sale_price>10.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/K5OwLGM5ua4E2dx30hIc</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783154196669_1000191964.jpg?alt=media&amp;token=0cfab0b6-d02c-46a8-a7e9-160fec0e433c</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -1986,7 +2059,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>30.00 INR</g:price>
-      <g:sale_price>15.00 INR</g:sale_price>
+      <g:sale_price>25.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/NXEoVuinxCUXYI6Xlukg</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784052400841_1000207218.jpg?alt=media&amp;token=2eb69b13-ed12-431b-b19b-c8a769166c67</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2040,7 +2113,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>25.00 INR</g:price>
-      <g:sale_price>20.00 INR</g:sale_price>
+      <g:sale_price>12.50 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/OR3J0OQN1qjUCA6iurnB</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786276422131_CUCUMBER.jpeg?alt=media&amp;token=cf598ac1-6e34-49a4-b9ef-e1519b0d66ab</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2162,7 +2235,7 @@
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/Q4MHbQ9EqjykGHe28BjA</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1785678968983_download.jpg_202608021925.jpeg?alt=media&amp;token=3c979142-5226-40a4-a235-832bd980918a</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588390233_green%20beauty%20pear.jfif?alt=media&amp;token=16ab0663-cff6-4344-b7f2-0b0481d414e5</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2175,7 +2248,7 @@
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/Q4S2TTGv50jB7rc18ua7</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1782915981311_Carrots.jpeg?alt=media&amp;token=4a21d509-ca4a-44de-8f53-f859728ff533</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588525027_baby%20carrot.jfif?alt=media&amp;token=e359d524-4b8d-4c8c-92a0-5ef0d1add9d8</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2240,7 +2313,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>34.00 INR</g:price>
-      <g:sale_price>20.00 INR</g:sale_price>
+      <g:sale_price>30.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/Rr1tkINz0KwKy6e2X7Oc</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784464180616_Fresh_Pakchoi_on_white_background_202607191759.jpeg?alt=media&amp;token=136cd17f-8a78-45ed-a547-f89824758150</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2282,7 +2355,7 @@
       <g:price>140.00 INR</g:price>
       <g:sale_price>80.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/SRTsDmjBGXtTN9ikuPLZ</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1785247968614_red%20prae%20imp.jpeg?alt=media&amp;token=591ccc61-11c0-4915-a940-bcb434d4c7f6</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1785678968983_download.jpg_202608021925.jpeg?alt=media&amp;token=3c979142-5226-40a4-a235-832bd980918a</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2362,6 +2435,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
+      <g:sale_price>30.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/UJPwSFmV3u8Ezj5FLopx</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783161106509_1000204702.jpg?alt=media&amp;token=ac5938cc-31da-47f2-ac86-ac013247362b</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2465,7 +2539,7 @@
       <g:id>WuM2UmxarpiN2oDeu7eN</g:id>
       <g:title>Fresh N Local Spanish Nectarine Peach 200 G</g:title>
       <g:description>Sun-drenched Spanish Nectarines bring a luscious, fuzz-free sweetness straight to Surat. Each 100g serving offers approx. 1.1g of fiber, 1g of protein, and essential vitamins A and C to support daily vitality. These juicy stone fruits are perfect for refreshing Gujarati summer salads, unique fruit raitas, or sliced over shrikhand. To maintain their crisp texture and sweet aroma, store these nectarines in the refrigerator crisper drawer and consume within three days.</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>240.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/WuM2UmxarpiN2oDeu7eN</g:link>
@@ -2493,7 +2567,7 @@
       <g:description>Unveil a treasure trove of ruby-red pearls with our premium, locally sourced pomegranates. Each juicy aril delivers vital nourishment, providing approx. 4g of dietary fiber and 1.7g of protein per 100g, along with essential Vitamin C for daily vitality. In Gujarati kitchens, these glistening seeds are indispensable for crowning savory dabelis, tossing into fresh yogurt raitas, or adding a sweet crunch to festive chaats. To maximize their shelf life, store whole pomegranates in the refrigerator&apos;s crisper drawer for up to three weeks.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>50.00 INR</g:price>
+      <g:price>62.50 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/Xh0r4gg6JnNjfhUXstMq</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783155216610_1000192150.jpg?alt=media&amp;token=0fcd5deb-89a8-40ed-a8d1-b04f96942c79</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2561,7 +2635,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>87.50 INR</g:price>
-      <g:sale_price>50.00 INR</g:sale_price>
+      <g:sale_price>62.50 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/YgM7D94SLjBfCxEVM8ln</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783156615476_1000192139.jpg?alt=media&amp;token=b9e98b73-03ad-4ab7-a383-46f5a0759054</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2575,7 +2649,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>12.00 INR</g:price>
-      <g:sale_price>6.00 INR</g:sale_price>
+      <g:sale_price>8.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/Z911egrlwDnPQtpK5PI5</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784052174440_1000207216.jpg?alt=media&amp;token=263e1a84-e33d-4b9d-94d2-a5cdcc07e0bb</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2589,7 +2663,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>90.00 INR</g:price>
-      <g:sale_price>50.00 INR</g:sale_price>
+      <g:sale_price>60.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/ZGeRvUlEYMDGpAkd9Xx1</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2FZGeRvUlEYMDGpAkd9Xx1%2Foriginal.webp?alt=media&amp;token=6438d52f-297d-4b42-8557-bc043c1fe179</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2605,7 +2679,7 @@
       <g:price>87.50 INR</g:price>
       <g:sale_price>50.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/ZT0mIuyHDKTwXNosU8t3</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1782816524903_1000193379.jpg?alt=media&amp;token=d6e676ea-b121-458d-afa8-7276a36545db</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588424154_pakkam%20pear.jfif?alt=media&amp;token=eca57187-32f5-4ef7-87b4-4ab543ec5363</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -2723,7 +2797,7 @@
       <g:description>Beat the Surat heat with our fresh Watermelon, a luscious treasure of pure hydration. Offering approx. 0.6g of protein, 0.4g of fiber, and 8mg of Vitamin C per 100g, this juicy fruit supports daily wellness. Across Gujarat, families love blending it into chilled tarbooj sherbet, tossing it into spicy fruit chaats, or cooking the rind into a delicious subji. For maximum freshness, store the uncut watermelon at room temperature, keeping it away from direct sunlight until you slice.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>50.00 INR</g:price>
+      <g:price>60.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/bGB9vSpDbiqEndgmMS22</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783155141668_1000192147.jpg?alt=media&amp;token=661c4627-af01-48c5-b8f5-bbe696061d81</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2920,7 +2994,7 @@
       <g:id>e1UfCbv9syHZrvE62YUU</g:id>
       <g:title>Fresh N Local Fresh Mulberry 1pack (100g)</g:title>
       <g:description>Sourced from local orchards, our dark Fresh Mulberries bring a burst of nostalgic sweetness. Each 100g serving of these delicate berries offers approx. 1.4g of protein, 1.7g of dietary fiber, alongside Vitamin C and iron for general wellness. In Gujarati homes, these juicy gems are perfect for direct snacking, blending into refreshing coolers, or simmering into sweet chutneys. To maintain their plumpness, store them unwashed in a dry container inside your refrigerator.</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
       <g:sale_price>60.00 INR</g:sale_price>
@@ -2936,7 +3010,7 @@
       <g:description>Add a vibrant crunch to your daily meals with our farm-fresh Green Capsicum, sourced locally for households in Surat. Rich in dietary fiber (approx. 1.7g per 100g) and loaded with essential Vitamin C, this versatile bell pepper provides vital antioxidants and mild protein (approx. 0.9g per 100g) to support overall wellness. It is a staple in Gujarati kitchens, elevating everything from street-style Pav Bhaji and spicy subzis to crunchy salads. To maintain its signature crispness, store this pepper unwashed in a reusable cotton bag inside your refrigerator.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>20.00 INR</g:price>
+      <g:price>25.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/eHdgGyi3JH5IcBjMkdsz</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784052438386_1000207219.jpg?alt=media&amp;token=20bb14b3-a5b8-4b7e-bedb-92902019f334</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2966,6 +3040,32 @@
       <g:price>6.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/eqzgKx4Fj50RZ9PO2waP</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786860257788_tulsi-l-.png?alt=media&amp;token=9d291a67-3586-41aa-8216-c28160a4c9b5</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
+      <g:id>fKeTzFjUzvNiOSVdoE6K</g:id>
+      <g:title>Fresh N Local Fresh Hand Peeled Tuver Dana 500 G</g:title>
+      <g:description>Fresh Hand Peeled Tuver Dana</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>400.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/fKeTzFjUzvNiOSVdoE6K</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792813164975_1000250863.png?alt=media&amp;token=0f6052fb-8f6e-4f46-bf64-50e454bcda3e</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
+      <g:id>fZjMwuNneGftYp9zl3VB</g:id>
+      <g:title>Fresh N Local Valor Cut 500 G</g:title>
+      <g:description>Valor Cut</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>225.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/fZjMwuNneGftYp9zl3VB</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792813414496_1000250867.png?alt=media&amp;token=edad9e5d-6aa8-42bd-a7d4-849b1287ab20</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -3006,7 +3106,7 @@
       <g:condition>new</g:condition>
       <g:price>120.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/hNsQZclZFugXwpOX6Wb9</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792214319481_Turmeric.webp?alt=media&amp;token=810ba6a6-c99d-4b08-92da-3137634f94bf</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792222127032_fresh%20turmeric.webp?alt=media&amp;token=d42df29e-27a3-455e-a87e-0d2ac7c830e1</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -3085,7 +3185,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>15.00 INR</g:price>
-      <g:sale_price>10.00 INR</g:sale_price>
+      <g:sale_price>12.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/i1b6vGhyRR0Kqzm5Uc9T</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784052213919_1000207221.jpg?alt=media&amp;token=a2e1cc3e-5dfd-4af7-8aae-1df76049aeff</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -3096,7 +3196,7 @@
       <g:id>iIGBHUecs52Z8kgEVwVV</g:id>
       <g:title>Fresh N Local Donut Peach 500 G</g:title>
       <g:description>Unveiling a whimsical summer treat, our unique Donut Peaches bring a delightfully sweet, saucer-shaped novelty to Surat&apos;s dessert tables. These flat-shaped stone fruits offer general wellness benefits, providing approx. 1.5g of dietary fiber and around 6.6mg of Vitamin C per 100g to support vitality. Gujarati homes love slicing them fresh into summer fruit salads, blending them into creamy, chilled shrikhand, or simmering them into spiced sweet chutneys. To enjoy their juicy best, store them stem-side down at room temperature until fragrant, then refrigerate.</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>750.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/iIGBHUecs52Z8kgEVwVV</g:link>
@@ -3140,7 +3240,7 @@
       <g:condition>new</g:condition>
       <g:price>60.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/igcShScwlq9k0bzAcCk9</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1791543625845_Nagpur%20orange.jpg?alt=media&amp;token=268a4b2f-073a-45da-aa96-a30e40aaab9a</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792589012762_Nagpur%20orange.jfif?alt=media&amp;token=9ef84b75-2b14-4b54-b468-59f8c4ed008b</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -3166,7 +3266,7 @@
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/jHGPgGfyCVZeIQSbyZ6I</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786003886094_1000217408.jpg?alt=media&amp;token=1c19d579-78ce-4409-8705-8b341bf9a101</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588632015_Green%20grapes.jfif?alt=media&amp;token=35f539f0-364e-452a-86f8-3824ddded02a</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -3175,7 +3275,7 @@
       <g:id>jREbVFxMhUWdhEshzvEz</g:id>
       <g:title>Fresh N Local Juicy Red Cherry 250 G</g:title>
       <g:description>Experience the bursting sweetness of our handpicked Juicy Red Cherries, sourced from the finest orchards to bring global quality straight to Surat. Delivering approx. 1.1g of protein, 2.1g of dietary fiber, alongside essential Vitamin C and potassium per 100g, they offer natural vitality. Perfect as a vibrant garnish for festive Gujarati Shrikhand, folded into creamy kheer, or tossed in seasonal fruit chaats. To maintain their plump texture and glossy sheen, store them unwashed in a breathable container inside your refrigerator&apos;s crisper drawer.</g:description>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>750.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/jREbVFxMhUWdhEshzvEz</g:link>
@@ -3233,7 +3333,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>160.00 INR</g:price>
-      <g:sale_price>120.00 INR</g:sale_price>
+      <g:sale_price>140.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/kYPiy40Y66wpl1wSqqPc</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786624723533_avocado.jpeg?alt=media&amp;token=a5c2bd28-c248-4f10-88e4-c0e008c0ef96</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -3287,7 +3387,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>130.00 INR</g:price>
-      <g:sale_price>100.00 INR</g:sale_price>
+      <g:sale_price>110.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/kwRGXIv7Kwew4LC7nv1L</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784789511838_Oyster_mushrooms_on_white_backgr%E2%80%A6_202607231221.jpeg?alt=media&amp;token=96e4b9a3-761e-4422-b3b6-2c05ead96080</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -3296,7 +3396,7 @@
     </item>
     <item>
       <g:id>lENgraQDLEQnuUbCFiPN</g:id>
-      <g:title>Fresh N Local Potato Badshah (Low G.I.) 500 G</g:title>
+      <g:title>Fresh N Local Potato Badshah 500 G</g:title>
       <g:description>Introducing a guilt-free twist to your daily meals, our premium Potato Carisma is a unique low-glycemic variety perfect for health-conscious households in Surat. Per 100g, it offers approx. 1.6g of protein, 1.8g of dietary fiber, along with essential Vitamin C and potassium to support overall vitality. This versatile spud blends beautifully into traditional Gujarati Batata Nu Shaak, comforting dry subzis, or festive Undhiyu. Keep these potatoes exceptionally fresh by storing them in a cool, dark, well-ventilated basket away from moisture.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
@@ -3355,7 +3455,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>30.00 INR</g:price>
-      <g:sale_price>20.00 INR</g:sale_price>
+      <g:sale_price>25.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/lrrDmILHeXEE2U9RgwVV</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784455404805_Spring_onion_in_bunch_202607191505.jpeg?alt=media&amp;token=697eac0b-803b-417a-9777-e303e347f7b3</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -3513,7 +3613,7 @@
     <item>
       <g:id>nnTxszy4k1vroWp8XvwL</g:id>
       <g:title>Fresh N Local Tulsi Garland 1 Ft</g:title>
-      <g:description>Tulsi Garland </g:description>
+      <g:description>Tulsi Garland</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -3569,7 +3669,7 @@
       <g:description>Bring a burst of juicy brightness to your kitchen with our plump, farm-fresh Hybrid Tomatoes. Perfectly firm and mildly sweet, every 100g serving offers approx. 0.9g of protein, 1.2g of fiber, alongside essential Vitamin C and potassium to support daily vitality. They form the luscious base for Gujarati sev tameta nu shaak, aromatic dals, and fresh kachumber salads. To maintain their rich flavor, store these tomatoes stem-side down at room temperature, away from direct sunlight.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>25.00 INR</g:price>
+      <g:price>20.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/oXnk7b4azkAc2ie1dmcV</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786275164131_tomato.jpeg?alt=media&amp;token=4048003d-0e7b-41d7-b2ae-e66a41667455</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -3626,7 +3726,7 @@
       <g:price>110.00 INR</g:price>
       <g:sale_price>80.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/pquCbI610m9lTTLqoHQ3</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786626959663_Three_apples_.jpeg?alt=media&amp;token=c4bc059c-e0a1-462d-ba03-8b480b7156d5</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792589079308_Himachal%20apple.jfif?alt=media&amp;token=143c75bb-19ee-4987-8c9a-cfa5e05206e5</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -3666,7 +3766,7 @@
       <g:condition>new</g:condition>
       <g:price>100.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/qbVepG09bsdFSiELQB3J</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1785748060962_Apple_Queen.jpeg?alt=media&amp;token=5daf1e54-7bcb-4d1d-9656-bff567b2f7e7</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588789210_Apple%20Queen.jfif?alt=media&amp;token=613f72e0-f0af-4c2d-af31-4da5ec8a707e</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -3695,6 +3795,19 @@
       <g:sale_price>60.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/qy8w2yM7Uf90f7aoSgNh</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783161547999_1000191943.jpg?alt=media&amp;token=b948485f-fbef-47dc-8c5a-18af712c5d6c</g:image_link>
+      <g:brand>Fresh N Local</g:brand>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
+      <g:identifier_exists>no</g:identifier_exists>
+    </item>
+    <item>
+      <g:id>r5KrtDK1mXLVRTDEqFZb</g:id>
+      <g:title>Fresh N Local Fine Chop Green Garlic 500 G</g:title>
+      <g:description>Fine chop green garlic</g:description>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>700.00 INR</g:price>
+      <g:link>https://www.freshnlocal.co/product/r5KrtDK1mXLVRTDEqFZb</g:link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1793175468109_1000252623.png?alt=media&amp;token=db5e98fc-129f-43b5-9772-94bcdc776830</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -3856,7 +3969,7 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>140.00 INR</g:price>
-      <g:sale_price>100.00 INR</g:sale_price>
+      <g:sale_price>75.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/tQNgLRsDx4QxUo17US3G</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1785753625040_malta%20oranges.jpg?alt=media&amp;token=5726703c-d0a3-4dac-8cfd-8e5185cba875</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -3895,11 +4008,11 @@
       <g:id>uEJdfovHpPpOmsfbnint</g:id>
       <g:title>Fresh N Local Yellow Pitaya 1 Pc</g:title>
       <g:description>Yellow Pitaya</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>600.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/uEJdfovHpPpOmsfbnint</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1791465322967_Yellow%20dragon.jpg?alt=media&amp;token=0374e486-bc28-4c34-8d19-58d2da435c71</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588830051_Yellow%20dragon%20fruit.jfif?alt=media&amp;token=0aed3029-17a7-41c5-9803-4e349978e9a8</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -3938,7 +4051,6 @@
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>250.00 INR</g:price>
-      <g:sale_price>200.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/v3pLlNYBx8hlGtacvvnH</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786626613849_premium%20apple%20shimla.jpeg?alt=media&amp;token=fd318a5a-9c37-42ce-a097-18f3b8e2391f</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -4020,14 +4132,14 @@
       <g:condition>new</g:condition>
       <g:price>240.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/w2cDCsPgvhx537rDrnWy</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1782732611621_ind%20blueberry.jpeg?alt=media&amp;token=76eed284-8713-476f-8639-0a0a9fc93268</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588684471_Bluberry.jfif?alt=media&amp;token=30712669-553f-498d-b4d9-e66dd9b495ca</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
     </item>
     <item>
       <g:id>wDFlxJWDZytNk1WX4qGy</g:id>
-      <g:title>Fresh N Local Leafy Lettuce 100 Kg</g:title>
+      <g:title>Fresh N Local Leafy Lettuce 100 G</g:title>
       <g:description>Elevate your daily meals with the crunch of our locally harvested, vibrant Leafy Lettuce, grown to perfection for Surat&apos;s health-conscious kitchens. This refreshing green delivers approx. 1.3g of protein, 1.2g of fiber, plus essential vitamins A and K per 100g to support overall vitality. Perfect for crisp Gujarati-style summer salads, modern kathi roll wraps, or as a fresh garnish for fusion chaats. Keep it crisp by wrapping the unwashed leaves in a damp paper towel inside a reusable container before refrigerating.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
@@ -4193,7 +4305,7 @@
       <g:description>Bring a splash of vibrant crimson to your dining table with our farm-fresh, earthy beetroots, sourced locally for Surat&apos;s health-conscious kitchens. Rich in natural vitality, 100g of this root veggie offers approx. 1.6g of protein, 2.8g of dietary fiber, and essential folate and potassium. In Gujarati homes, these sweet, ruby-colored roots are grated into refreshing raitas, tossed in crunchy salads, or slow-cooked into a luscious halwa. To maintain their crispness, store unwashed beetroots in a breathable bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>10.00 INR</g:price>
+      <g:price>15.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/yKJBCQXDqtMkoLjEGlP8</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1784455795212_beetroot.jpeg?alt=media&amp;token=58698db7-59b1-4ba8-977a-4ef640c17b3b</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -4232,7 +4344,7 @@
       <g:description>Discover the crisp, refreshing crunch of our premium farm-fresh Cabbage, handpicked from the best local harvests. This versatile vegetable is a powerhouse of essential nutrients, offering approx. 2.5g of fiber and vital vitamins per 100g to support your daily wellness journey. From being the star ingredient in classic Gujarati subzis to adding texture in crunchy salads or traditional dals, it elevates every meal. For maximum longevity, store your head of cabbage in a perforated plastic bag within your refrigerator to maintain its signature crispness.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>12.50 INR</g:price>
+      <g:price>15.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/yuDMffMFTBH4EZU84J1X</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786265216452_cabbage.jpg?alt=media&amp;token=eaa7af3e-833d-404e-af0f-d104e4ec97c1</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -4247,7 +4359,7 @@
       <g:condition>new</g:condition>
       <g:price>64.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/z9V2sussGjrwkLpCE8g9</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1791543131598_strawberry.jpg?alt=media&amp;token=562aae80-88b0-4f76-a142-20418d5d3437</g:image_link>
+      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588923439_Strawberry.jfif?alt=media&amp;token=481e20c9-2df4-47f2-9294-1f07144294f0</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -4271,7 +4383,7 @@
       <g:description>Bring a splash of dramatic ruby-red elegance to your table with our fresh Lolorossa Lettuce. Characterized by its beautiful, deeply ruffled edges, this Italian-heritage green delivers approx. 1.2g of fiber and vital Vitamin A per 100g to support daily vitality. Surat&apos;s contemporary kitchens love using these nutty leaves to elevate local fusion chaats, healthy paneer wraps, or crisp summer salads. To maintain its delicate crunch, store unwashed in a breathable bag inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>30.00 INR</g:price>
+      <g:price>40.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/zQP8vUEfxmCnNlppqnZv</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783161604816_1000191941.jpg?alt=media&amp;token=67af43af-355f-4da3-a667-653ec0b215bc</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -4294,7 +4406,7 @@
     <item>
       <g:id>zxTbS4yc0SWsFXDmAE77</g:id>
       <g:title>Fresh N Local Darbha Grass 1 Bunch</g:title>
-      <g:description>Darbha Grass </g:description>
+      <g:description>Darbha Grass</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>20.00 INR</g:price>
