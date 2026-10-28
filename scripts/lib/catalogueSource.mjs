@@ -48,7 +48,7 @@ const SELECT = [
   'in_stock', 'stock',
   'unit', 'quantity_value', 'quantity_unit', 'pack_size',
   'price', 'original_price', 'horeca_price', 'horeca_unit',
-  'has_own_variants', 'item_code', 'created_at', 'updated_at',
+  'has_own_variants', 'item_code', 'is_deactivated', 'created_at', 'updated_at',
   'web_product_variants(sku,unit,quantity_value,quantity_unit,pack_size,price,original_price,horeca_price,horeca_unit,position,is_primary)',
 ].join(',');
 
@@ -87,6 +87,9 @@ function rowToDoc(row) {
     horecaPrice: n(row.horeca_price),
     horecaUnit: row.horeca_unit ?? undefined,
     itemCode: row.item_code ?? undefined,
+    // Shop, Home, Layout and OffersSettings all filter on this; a product that
+    // comes back without it reappears on the shop.
+    isDeactivated: row.is_deactivated === true,
     createdAt: epoch(row.created_at),
     updatedAt: epoch(row.updated_at),
   };

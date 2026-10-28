@@ -50,6 +50,11 @@ const fsProducts = snap.docs.map(d => {
     // are invisible in HTML, so trimming is a straight improvement and the
     // check should hold the sync to its own rule, not to Firestore's typos.
     name: String(data.name ?? '').trim(),
+    // Coerced to a boolean on both sides: Firestore leaves the field absent on
+    // 334 products while the column is NOT NULL DEFAULT FALSE, and the app
+    // reads both as falsy via !p.isDeactivated. Comparing undefined against
+    // false would report 334 differences that are not differences.
+    isDeactivated: data.isDeactivated === true,
     price: pPrice,
     originalPrice: pMrp > pPrice ? pMrp : undefined,
     horecaPrice: data.horecaPrice ? Number(data.horecaPrice) : undefined,
@@ -62,6 +67,7 @@ const SELECT = [
   'use_base_pricing', 'base_price', 'base_unit', 'base_original_price', 'base_horeca_price',
   'in_stock', 'stock', 'unit', 'quantity_value', 'quantity_unit', 'pack_size',
   'price', 'original_price', 'horeca_price', 'horeca_unit', 'has_own_variants',
+  'item_code', 'is_deactivated',
   'web_product_variants(unit,quantity_value,quantity_unit,pack_size,price,original_price,horeca_price,horeca_unit,position)',
 ].join(',');
 
@@ -85,6 +91,8 @@ const sbProducts = (await r.json()).map(row => {
   return {
     id: row.id,
     name: row.name,
+    itemCode: row.item_code ?? undefined,
+    isDeactivated: row.is_deactivated === true,
     price,
     originalPrice: mrp > price ? mrp : undefined,
     // Mirrors src/lib/catalogue.ts exactly, truthiness included -- this check is
@@ -113,7 +121,7 @@ const sbProducts = (await r.json()).map(row => {
 // Only the fields the storefront actually renders. Comparing everything would
 // flag the description's whitespace and tell us nothing about the shop.
 const norm = v => (v === undefined || v === null || v === '' ? null : v);
-const FIELDS = ['name', 'price', 'originalPrice', 'horecaPrice', 'horecaUnit',
+const FIELDS = ['name', 'price', 'originalPrice', 'horecaPrice', 'horecaUnit', 'isDeactivated', 'itemCode',
                 'imageUrl', 'category', 'unit', 'inStock', 'orderIndex'];
 
 const fsById = new Map(fsProducts.map(p => [p.id, p]));

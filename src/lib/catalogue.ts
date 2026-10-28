@@ -40,6 +40,7 @@ interface ProductRow {
   horeca_unit: string | null;
   has_own_variants: boolean | null;
   item_code: string | null;
+  is_deactivated: boolean | null;
   created_at: string | null;
   updated_at: string | null;
   web_product_variants: VariantRow[] | null;
@@ -66,7 +67,7 @@ const PRODUCT_COLUMNS = `
   in_stock, stock,
   unit, quantity_value, quantity_unit, pack_size,
   price, original_price, horeca_price, horeca_unit,
-  has_own_variants, item_code, created_at, updated_at,
+  has_own_variants, item_code, is_deactivated, created_at, updated_at,
   web_product_variants (
     sku, unit, quantity_value, quantity_unit, pack_size,
     price, original_price, horeca_price, horeca_unit, position, is_primary
@@ -151,6 +152,20 @@ function toProduct(row: ProductRow): Product {
     // treats a Firestore document with no inStock field -- 157 products are
     // genuinely false and they stay false.
     inStock: row.in_stock !== false,
+
+    itemCode: row.item_code ?? undefined,
+
+    // Visibility, and the reason this is not optional: Shop, Home, Layout and
+    // OffersSettings all drop products where isDeactivated is true. Leaving it
+    // undefined makes `!p.isDeactivated` true for every row, which would put
+    // all 100 deactivated products back on the shop.
+    //
+    // This column was added to web_products when nothing in either codebase
+    // read the field -- carried for fidelity, and commented as explicitly NOT a
+    // visibility flag. The storefront shipped deactivation in the meantime.
+    // Keeping the data was what made this a one-line fix rather than another
+    // backfill.
+    isDeactivated: row.is_deactivated ?? undefined,
 
     orderIndex: optionalNumber(row.order_index),
     createdAt: epoch(row.created_at),
