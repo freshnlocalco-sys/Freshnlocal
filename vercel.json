@@ -379,6 +379,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/meta/catalog-feed.xml",
+      "destination": "/api/meta/catalog-feed"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

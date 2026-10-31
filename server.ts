@@ -5,9 +5,10 @@ import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import { setupOrderEmailTriggers, sendCancellationEmailDirect, sendStatusUpdateEmailDirect } from "./emailTriggers";
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
+import { generateMetaFeedXml } from './src/lib/metaFeedGenerator';
 
 dotenv.config();
 
@@ -86,6 +87,91 @@ async function startServer() {
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
   });
+
+  // Meta Commerce Catalog Feed API Endpoint
+  let cachedServerFeed: { xml: string; stats: any; timestamp: number } | null = null;
+  const SERVER_FEED_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+  const handleMetaFeed = async (req: express.Request, res: express.Response) => {
+    const startTime = Date.now();
+    const forceRefresh = req.query.force === 'true' || req.query.refresh === 'true';
+
+    try {
+      const now = Date.now();
+      let feedXml: string;
+      let feedStats: any;
+
+      if (!forceRefresh && cachedServerFeed && (now - cachedServerFeed.timestamp < SERVER_FEED_CACHE_TTL)) {
+        feedXml = cachedServerFeed.xml;
+        feedStats = { ...cachedServerFeed.stats, cached: true, cacheAgeSeconds: Math.round((now - cachedServerFeed.timestamp) / 1000) };
+      } else {
+        const appInstance = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+        const db = getFirestore(appInstance, firebaseConfig.firestoreDatabaseId || "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
+
+        const [productsSnapshot, categoriesConfigSnap] = await Promise.all([
+          getDocs(collection(db, 'products')),
+          getDoc(doc(db, 'settings', 'categoriesConfig')).catch(() => null)
+        ]);
+
+        const products = productsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        const catData = categoriesConfigSnap && categoriesConfigSnap.exists() ? categoriesConfigSnap.data() : {};
+        const customMappings = catData.metaCategoryMapping || {};
+
+        const result = generateMetaFeedXml(products as any[], {
+          baseUrl: 'https://www.freshnlocal.co',
+          brandName: 'Fresh N Local',
+          currency: 'INR',
+          feedTitle: 'Fresh N Local Meta Commerce Product Catalog',
+          feedDescription: 'Real-time automated product catalog data feed for Meta Business Suite and Commerce Manager.',
+          metaCategoryMapping: customMappings
+        });
+
+        feedXml = result.xml;
+        feedStats = { ...result.stats, cached: false };
+        cachedServerFeed = { xml: feedXml, stats: feedStats, timestamp: now };
+      }
+
+      if (req.query.diagnostics === 'true' || req.query.format === 'json') {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        return res.json({
+          success: true,
+          endpoint: 'https://www.freshnlocal.co/api/meta/catalog-feed.xml',
+          executionTimeMs: Date.now() - startTime,
+          feedStats
+        });
+      }
+
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=900, s-maxage=3600, stale-while-revalidate=86400');
+      res.setHeader('X-Catalog-Total-Items', String(feedStats.totalFeedItems));
+      res.setHeader('X-Catalog-Active-Products', String(feedStats.activeIncludedProducts));
+      res.setHeader('X-Catalog-Variants', String(feedStats.totalVariantsIncluded));
+
+      if (req.method === 'HEAD') {
+        return res.status(200).end();
+      }
+
+      return res.send(feedXml);
+    } catch (error: any) {
+      console.error('[META-CATALOG-FEED-ERROR]', error);
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      return res.status(500).send(`<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns="http://base.google.com/ns/1.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Fresh N Local Product Catalog Feed (Error)</title>
+    <link>https://www.freshnlocal.co</link>
+    <description>Catalog feed generation error: ${error?.message || 'Internal Server Error'}</description>
+  </channel>
+</rss>`);
+    }
+  };
+
+  app.get("/api/meta/catalog-feed.xml", handleMetaFeed);
+  app.get("/api/meta/catalog-feed", handleMetaFeed);
 
   // API routes FIRST
   app.post("/api/gemini/recipe", async (req, res) => {

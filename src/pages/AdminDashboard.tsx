@@ -10,6 +10,8 @@ import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
 import { useSettings } from '../store/useSettings';
 import { BrandingSettings } from '../components/BrandingSettings';
 import { OffersSettings } from '../components/OffersSettings';
+import { MetaCatalogSettings } from '../components/MetaCatalogSettings';
+import { getMappedMetaCategory } from '../lib/metaFeedGenerator';
 import { AUTHENTIC_FNL_JUICES } from './FNLJuice';
 import * as XLSX from 'xlsx';
 import { getCategoryImage, CATEGORIES } from '../lib/constants';
@@ -573,6 +575,7 @@ export function AdminDashboard() {
     productCategories, 
     horecaCategoryOrder,
     juiceCategories, 
+    metaCategoryMapping,
     fetchCategoryImages, 
     updateCategoryImage, 
     updateCategoryVisibility,
@@ -6301,6 +6304,9 @@ export function AdminDashboard() {
         ) : activeTab === 'categories' ? (
           <div className="max-w-4xl mx-auto space-y-12">
             
+            {/* META COMMERCE SUITE CATALOG FEED & TAXONOMY MAPPING */}
+            <MetaCatalogSettings products={products} />
+
             {/* PRODUCE CATEGORIES MANAGEMENT */}
             <div className="space-y-6">
               <div>
@@ -6578,6 +6584,23 @@ export function AdminDashboard() {
                                 <span>HoReCa</span>
                               </button>
                             </div>
+
+                            {/* Meta Taxonomy Category mapping */}
+                            {(() => {
+                              const metaCat = getMappedMetaCategory(cat, metaCategoryMapping);
+                              const shortMeta = metaCat.split('>').pop()?.trim() || metaCat;
+                              return (
+                                <div className="mt-2 pt-2 border-t border-border/40 flex items-center justify-between text-[7.5px]" title={metaCat}>
+                                  <span className="font-extrabold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                    <span>Meta:</span>
+                                  </span>
+                                  <span className="font-bold text-foreground truncate max-w-[110px]">
+                                    {shortMeta}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </div>
                         );
                       })()}
