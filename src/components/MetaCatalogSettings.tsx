@@ -18,7 +18,10 @@ import {
   CheckCircle2, 
   AlertCircle,
   Layers,
-  Rss
+  Rss,
+  X,
+  ImageOff,
+  EyeOff
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -39,6 +42,8 @@ export function MetaCatalogSettings({ products = [] }: MetaCatalogSettingsProps)
   const [isRunningDiagnostics, setIsRunningDiagnostics] = useState(false);
   const [diagnosticsData, setDiagnosticsData] = useState<any>(null);
   const [isMappingExpanded, setIsMappingExpanded] = useState(false);
+  const [showSkippedModal, setShowSkippedModal] = useState(false);
+  const [skippedTab, setSkippedTab] = useState<'missing_image' | 'deactivated'>('missing_image');
   const [searchFilter, setSearchFilter] = useState('');
   const [customEditingCat, setCustomEditingCat] = useState<string | null>(null);
   const [customInputValue, setCustomInputValue] = useState('');
@@ -126,7 +131,14 @@ export function MetaCatalogSettings({ products = [] }: MetaCatalogSettingsProps)
     return cat.toLowerCase().includes(q) || currentMeta.toLowerCase().includes(q);
   });
 
-  // Calculate local product counts per category
+  // Calculate products excluded from feed
+  const activeMissingImages = products.filter(p => {
+    if (p.isDeactivated === true) return false;
+    const raw = p.imageUrl || (p as any).image;
+    return !raw || typeof raw !== 'string' || (!raw.startsWith('http://') && !raw.startsWith('https://'));
+  });
+
+  const deactivatedProducts = products.filter(p => p.isDeactivated === true);
   const categoryCounts: Record<string, number> = {};
   products.forEach(p => {
     if (p.isDeactivated === true) return;
@@ -157,7 +169,16 @@ export function MetaCatalogSettings({ products = [] }: MetaCatalogSettingsProps)
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setShowSkippedModal(true)}
+            className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 text-amber-800 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+            title="View products not included in data feed"
+          >
+            <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+            <span>Excluded Items ({activeMissingImages.length + deactivatedProducts.length})</span>
+          </button>
           <button
             type="button"
             onClick={handleRunDiagnostics}
@@ -399,6 +420,167 @@ export function MetaCatalogSettings({ products = [] }: MetaCatalogSettingsProps)
           </div>
         )}
       </div>
+
+      {/* EXCLUDED PRODUCTS MODAL */}
+      {showSkippedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-background border border-border rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between gap-4 bg-secondary/40">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base text-foreground uppercase tracking-wide">
+                    Products Excluded from Meta Catalog Feed
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Meta requires active products to have a valid image and price. Deactivated or incomplete items are excluded.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSkippedModal(false)}
+                className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Subtabs */}
+            <div className="flex items-center gap-2 p-3 bg-secondary/20 border-b border-border px-5">
+              <button
+                type="button"
+                onClick={() => setSkippedTab('missing_image')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+                  skippedTab === 'missing_image'
+                    ? 'bg-amber-500 text-white shadow-xs'
+                    : 'text-muted-foreground hover:bg-secondary'
+                }`}
+              >
+                <ImageOff className="w-3.5 h-3.5" />
+                <span>Active but Missing Image ({activeMissingImages.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSkippedTab('deactivated')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+                  skippedTab === 'deactivated'
+                    ? 'bg-neutral-800 text-white shadow-xs dark:bg-neutral-700'
+                    : 'text-muted-foreground hover:bg-secondary'
+                }`}
+              >
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>Deactivated Products ({deactivatedProducts.length})</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-2 flex-1">
+              {skippedTab === 'missing_image' ? (
+                <>
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-800 space-y-1 mb-3">
+                    <p className="font-bold">
+                      💡 Why are these products excluded?
+                    </p>
+                    <p>
+                      Meta Commerce Manager requires a valid, high-resolution product image for every single catalog item. Items without an image will be rejected by Meta with policy errors. To add these to your Meta catalog, open the product in the admin panel and upload an illustration photo.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {activeMissingImages.map((prod, idx) => (
+                      <div 
+                        key={prod.id}
+                        className="p-3 rounded-xl bg-secondary/40 border border-border/80 flex items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[9px] text-muted-foreground">#{idx + 1}</span>
+                            <span className="font-bold text-foreground truncate">{prod.name}</span>
+                            {prod.itemCode && (
+                              <span className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-background text-muted-foreground border border-border">
+                                Code: {prod.itemCode}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-[9px] text-muted-foreground">
+                            <span className="capitalize">{prod.category}</span>
+                            <span>•</span>
+                            <span className="font-semibold text-foreground">₹{prod.price}</span>
+                            <span>•</span>
+                            <span className={prod.inStock !== false ? 'text-primary font-bold' : 'text-neutral-400'}>
+                              {prod.inStock !== false ? 'In Stock' : 'Out of Stock'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className="px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-700 border border-amber-500/20 shrink-0">
+                          Missing Image
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="p-3 rounded-xl bg-secondary border border-border text-[10px] text-muted-foreground space-y-1 mb-3">
+                    <p className="font-bold text-foreground">
+                      ℹ️ Deactivated / Seasonal Products
+                    </p>
+                    <p>
+                      These products have &quot;isDeactivated&quot; turned ON in the admin panel (e.g. out-of-season fruits, archived festival flowers, or draft items). They are safely omitted so customers cannot see or order inactive products.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {deactivatedProducts.map((prod, idx) => (
+                      <div 
+                        key={prod.id}
+                        className="p-3 rounded-xl bg-secondary/30 border border-border/60 flex items-center justify-between gap-3 text-xs opacity-75"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[9px] text-muted-foreground">#{idx + 1}</span>
+                            <span className="font-medium text-foreground truncate">{prod.name}</span>
+                            {prod.itemCode && (
+                              <span className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-background text-muted-foreground border border-border">
+                                Code: {prod.itemCode}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-[9px] text-muted-foreground">
+                            <span className="capitalize">{prod.category}</span>
+                            <span>•</span>
+                            <span>₹{prod.price || 0}</span>
+                          </div>
+                        </div>
+
+                        <span className="px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 shrink-0">
+                          Deactivated
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 sm:p-4 border-t border-border bg-secondary/40 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowSkippedModal(false)}
+                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-wider cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

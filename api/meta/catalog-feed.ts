@@ -15,9 +15,9 @@ function getDb() {
   return dbInstance;
 }
 
-// In-memory feed cache for edge / serverless instances (TTL: 10 minutes)
+// In-memory feed cache for edge / serverless instances (TTL: 60 seconds for near real-time live data)
 let cachedFeed: { xml: string; stats: any; timestamp: number } | null = null;
-const CACHE_TTL_MS = 10 * 60 * 1000;
+const CACHE_TTL_MS = 60 * 1000;
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -85,7 +85,7 @@ export default async function handler(req: any, res: any) {
 
     // Standard Meta RSS 2.0 XML Feed Response
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=900, s-maxage=3600, stale-while-revalidate=86400');
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
     res.setHeader('X-Catalog-Total-Items', String(feedStats.totalFeedItems));
     res.setHeader('X-Catalog-Active-Products', String(feedStats.activeIncludedProducts));
     res.setHeader('X-Catalog-Variants', String(feedStats.totalVariantsIncluded));
@@ -99,7 +99,7 @@ export default async function handler(req: any, res: any) {
     console.error('[META-CATALOG-FEED-ERROR]', error);
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     return res.status(500).send(`<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns="http://base.google.com/ns/1.0" xmlns:g="http://base.google.com/ns/1.0">
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
   <channel>
     <title>Fresh N Local Product Catalog Feed (Error)</title>
     <link>https://www.freshnlocal.co</link>

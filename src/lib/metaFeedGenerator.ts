@@ -270,9 +270,9 @@ export function generateMetaFeedXml(
   const categoriesMapped: Record<string, string> = {};
   const seenCatalogIds = new Set<string>();
 
-  // Meta XML Header with Google Base namespace
+  // Meta XML Header with Google Base namespace (strict RSS 2.0)
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-  xml += `<rss version="2.0" xmlns="http://base.google.com/ns/1.0" xmlns:g="http://base.google.com/ns/1.0">\n`;
+  xml += `<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">\n`;
   xml += `  <channel>\n`;
   xml += `    <title>${escapeXml(feedTitle)}</title>\n`;
   xml += `    <link>${escapeXml(baseUrl)}</link>\n`;
