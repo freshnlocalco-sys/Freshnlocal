@@ -68,13 +68,13 @@ async function send(path: string, init: RequestInit): Promise<void> {
   }
 }
 
-const num = (v: unknown, fallback = 0): number => {
+export const num = (v: unknown, fallback = 0): number => {
   const n = typeof v === 'number' ? v : parseFloat(String(v ?? ''));
   return Number.isFinite(n) ? n : fallback;
 };
 
 /** Firestore writes epoch milliseconds; Postgres wants an ISO timestamp. */
-const iso = (v: unknown): string | null => {
+export const iso = (v: unknown): string | null => {
   if (v == null) return null;
   if (typeof v === 'number') return new Date(v).toISOString();
   if (typeof v === 'object' && typeof (v as { toDate?: () => Date }).toDate === 'function') {
@@ -175,20 +175,11 @@ async function writeOrder(orderId: string, order: Record<string, any>, userId: s
  * at. `sku` is the storefront's own product reference verbatim -- the same
  * string platform_item_mappings is keyed on, which is what lets the ERP work
  * out what a packer puts in the box.
- *
- * Deleted and re-inserted rather than upserted, so a retry cannot leave a line
- * from a previous attempt behind if the order was edited in between.
  */
-async function writeItems(orderId: string, order: Record<string, any>): Promise<number> {
+function itemRows(orderId: string, order: Record<string, any>) {
   const items = Array.isArray(order.items) ? order.items : [];
 
-  await send(`web_order_items?order_id=eq.${encodeURIComponent(orderId)}`, {
-    method: 'DELETE',
-    headers: headers('return=minimal'),
-  });
-  if (!items.length) return 0;
-
-  const rows = items.map((it: Record<string, any>, i: number) => {
+  return items.map((it: Record<string, any>, i: number) => {
     const p = it.product ?? {};
     const qty = num(it.quantity);
     const unitPrice = Math.max(0, num(p.price));
@@ -210,13 +201,72 @@ async function writeItems(orderId: string, order: Record<string, any>): Promise<
       created_at: iso(order.createdAt) ?? new Date().toISOString(),
     };
   }).filter((r: { quantity: number }) => r.quantity > 0); // the CHECK refuses zero, and a zero line is not a sale
+}
 
+/**
+ * Deleted and re-inserted rather than upserted, so a retry cannot leave a line
+ * from a previous attempt behind if the order was edited in between.
+ */
+async function writeItems(orderId: string, order: Record<string, any>): Promise<number> {
+  await send(`web_order_items?order_id=eq.${encodeURIComponent(orderId)}`, {
+    method: 'DELETE',
+    headers: headers('return=minimal'),
+  });
+
+  const rows = itemRows(orderId, order);
   if (!rows.length) return 0;
 
   await send('web_order_items?on_conflict=id', {
     method: 'POST',
     headers: headers('resolution=merge-duplicates,return=minimal'),
     body: JSON.stringify(rows),
+  });
+  return rows.length;
+}
+
+/**
+ * Update columns on an order that is already here. False when there is no live
+ * row, which the caller reports rather than treats as a failure.
+ *
+ * A PATCH of named columns and never an upsert. writeOrder sends erp_pushed_at
+ * null and a status of its own, so running it over an existing order would
+ * offer that order to the ERP for import a second time.
+ */
+export async function patchLiveOrder(orderId: string, fields: Record<string, unknown>): Promise<boolean> {
+  const path = `web_orders?id=eq.${encodeURIComponent(orderId)}&is_deleted=eq.false&select=id`;
+  const res = await fetch(`${SUPABASE_URL()}/rest/v1/${path}`, {
+    method: 'PATCH',
+    headers: headers('return=representation'),
+    body: JSON.stringify(fields),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Supabase PATCH /web_orders -> ${res.status} ${body.slice(0, 400)}`);
+  }
+  return ((await res.json()) as unknown[]).length > 0;
+}
+
+/**
+ * The lines of an order somebody edited after checkout.
+ *
+ * New lines first and leftovers second, the reverse of writeItems: this runs on
+ * a real order, and a failure halfway must not leave it with no lines at all.
+ * An order with nothing to write keeps the lines it has, for the same reason.
+ */
+export async function replaceOrderLines(orderId: string, order: Record<string, any>): Promise<number> {
+  const rows = itemRows(orderId, order);
+  if (!rows.length) return 0;
+
+  await send('web_order_items?on_conflict=id', {
+    method: 'POST',
+    headers: headers('resolution=merge-duplicates,return=minimal'),
+    body: JSON.stringify(rows),
+  });
+
+  const keep = rows.map((r: { id: string }) => `"${r.id}"`).join(',');
+  await send(`web_order_items?order_id=eq.${encodeURIComponent(orderId)}&id=not.in.(${encodeURIComponent(keep)})`, {
+    method: 'DELETE',
+    headers: headers('return=minimal'),
   });
   return rows.length;
 }

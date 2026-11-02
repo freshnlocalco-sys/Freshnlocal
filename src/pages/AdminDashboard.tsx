@@ -7,6 +7,7 @@ import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } 
 import { Package, Users, ShoppingBag, Plus, Minus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff, CheckCircle2, AlertCircle, Eye, Tag } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
+import { syncOrderChange } from '../lib/syncOrderChange';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
 import { useSettings } from '../store/useSettings';
 import { BrandingSettings } from '../components/BrandingSettings';
@@ -2317,6 +2318,7 @@ export function AdminDashboard() {
         totalAmount: newTotal,
         updatedAt: Date.now() 
       });
+      syncOrderChange(orderId, 'lines');
       
       const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
       setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
@@ -2351,6 +2353,7 @@ export function AdminDashboard() {
         totalAmount: newTotal,
         updatedAt: Date.now() 
       });
+      syncOrderChange(orderId, 'lines');
       
       const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
       setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
@@ -2403,6 +2406,7 @@ export function AdminDashboard() {
         shippingEmailStatus: null,
         updatedAt: Date.now() 
       });
+      syncOrderChange(orderId, 'lines');
 
       // Save remembered price for HoReCa customer
       const customerUserId = order.userId || '';
@@ -2474,6 +2478,7 @@ export function AdminDashboard() {
         shippingEmailStatus: null,
         updatedAt: Date.now() 
       });
+      syncOrderChange(orderId, 'lines');
 
       // Save remembered price if added
       const customerUserIdAdd = order.userId || '';
@@ -2560,6 +2565,7 @@ export function AdminDashboard() {
       }
 
       await updateDoc(doc(db, 'orders', orderId), orderUpdates);
+      syncOrderChange(orderId, 'status');
 
       if (status === 'confirmed' && order) {
         const customerUserId = order.userId || '';
@@ -2630,6 +2636,7 @@ export function AdminDashboard() {
       }
 
       await deleteDoc(doc(db, 'orders', orderId));
+      syncOrderChange(orderId, 'deleted');
       setOrders(orders.filter(o => o.id !== orderId));
       setOrderToDelete(null);
       toast.success('Order deleted and cancellation email sent successfully.');
@@ -7076,6 +7083,7 @@ export function AdminDashboard() {
                         shippingEmailStatus: null,
                         updatedAt: Date.now()
                       });
+                      syncOrderChange(selectedOrder.id, 'emailFlags');
                       toast.success('Updated rates email queued for customer!');
                     } catch (e: any) {
                       toast.error('Failed to queue rate email');

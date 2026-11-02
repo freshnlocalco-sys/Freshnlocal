@@ -151,6 +151,10 @@ Reversible: the flag goes back to `firestore`.
 This is where orders stop living in two places with two truths.
 
 * **AdminDashboard** — 7 `updateDoc` sites plus a delete, all on order status.
+  Those writes now reach `web_orders` through `/api/orders/admin-sync`
+  (`orderAdminSync.ts`), one kind of change at a time, so customers see them
+  while the dashboard is still on Firestore. It still reads Firestore, so it does
+  not see statuses the ERP writes back.
 * **emailTriggers poller** — reads orders and sends confirmations.
   `confirmation_email_sent` already exists as a column.
 * **AdminNotifier** — the Firestore `onSnapshot` listener becomes a Supabase

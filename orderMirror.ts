@@ -74,7 +74,7 @@ function fromRest(value: any): any {
   return undefined;
 }
 
-function docToObject(doc: any): Record<string, any> {
+export function docToObject(doc: any): Record<string, any> {
   const out: Record<string, any> = {};
   for (const [k, v] of Object.entries(doc?.fields ?? {})) out[k] = fromRest(v);
   return out;
@@ -82,7 +82,7 @@ function docToObject(doc: any): Record<string, any> {
 
 
 /** Read a document as the caller. Null when Firestore's rules refuse it. */
-async function readAsCaller(path: string, idToken: string): Promise<Record<string, any> | null> {
+export async function readAsCaller(path: string, idToken: string): Promise<Record<string, any> | null> {
   const r = await fetch(`${DOCS}/${path}`, { headers: { Authorization: `Bearer ${idToken}` } });
   if (!r.ok) return null;
   return docToObject(await r.json());

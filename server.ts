@@ -12,6 +12,7 @@ import { registerCatalogueMirror, mirrorConfigured } from './catalogueMirror';
 import { registerOrderMirror, orderMirrorConfigured } from './orderMirror';
 import { registerOrderCreate } from './orderCreate';
 import { registerOrderHistory } from './orderHistory';
+import { registerOrderAdminSync } from './orderAdminSync';
 
 dotenv.config();
 
@@ -527,6 +528,10 @@ Format your output exactly as a JSON object with these keys:
   // The customer's own order history, read from Supabase and translated back
   // into the shape the pages already render. See orderHistory.ts.
   registerOrderHistory(app);
+
+  // An admin's order edit, copied from Firestore to the row the customer's
+  // order page reads. See orderAdminSync.ts.
+  registerOrderAdminSync(app);
   if (!orderMirrorConfigured()) {
     console.warn(
       "[ORDER MIRROR] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set; " +
