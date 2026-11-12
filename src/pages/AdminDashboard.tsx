@@ -3874,6 +3874,8 @@ export function AdminDashboard() {
     try {
       const catOrder = new Map();
       productCategories.forEach((c, i) => { if (c) catOrder.set(c.toLowerCase().trim(), i) });
+      const juiceOrder = new Map();
+      juiceCategories.forEach((c, i) => { if (c && c.id) juiceOrder.set(c.id, i) });
 
       const sortedProducts = [...products].sort((a, b) => {
         let catA = (a.category || '').toLowerCase().trim();
@@ -3881,13 +3883,25 @@ export function AdminDashboard() {
         if (catA === 'exotic vegetables') catA = 'exotic vegetable';
         if (catA === 'imported vegetables') catA = 'imported vegetable';
         if (catA === 'mushrooms') catA = 'mushroom';
+        if (catA === 'fnl juice') catA = 'fnl juices';
         if (catB === 'exotic vegetables') catB = 'exotic vegetable';
         if (catB === 'imported vegetables') catB = 'imported vegetable';
         if (catB === 'mushrooms') catB = 'mushroom';
+        if (catB === 'fnl juice') catB = 'fnl juices';
 
         const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
         const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
         if (idxA !== idxB) return idxA - idxB;
+
+        if (catA === 'fnl juices' && catB === 'fnl juices') {
+          const subA = ((a as any).subCategory || 'cold-pressed').toLowerCase().trim();
+          const subB = ((b as any).subCategory || 'cold-pressed').toLowerCase().trim();
+          if (subA !== subB) {
+            const idxSubA = juiceOrder.has(subA) ? juiceOrder.get(subA) : 999;
+            const idxSubB = juiceOrder.has(subB) ? juiceOrder.get(subB) : 999;
+            if (idxSubA !== idxSubB) return idxSubA - idxSubB;
+          }
+        }
 
         const isOutA = a.inStock === false;
         const isOutB = b.inStock === false;
@@ -3898,9 +3912,7 @@ export function AdminDashboard() {
         return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
       });
 
-      const data = sortedProducts
-        .filter(p => p.category !== 'fnl juices' && p.category !== 'fnl juice')
-        .map(p => {
+      const data = sortedProducts.map(p => {
           const parsedUnit = parseQuantityAndUnit(p.unit);
           const qVal = p.quantityValue !== undefined && p.quantityValue !== null && String(p.quantityValue) !== '' ? p.quantityValue : parseFloat(parsedUnit.qVal || '1');
           const qUnit = p.quantityUnit || parsedUnit.qUnit || 'Kg';
@@ -3923,9 +3935,6 @@ export function AdminDashboard() {
             ? p.baseHorecaPrice
             : (p.horecaPrice ? calculateBaseFromPrice(p.horecaPrice, effectiveBaseUnit, qVal, qUnit) : '');
 
-          const v1 = p.variants && p.variants[0] ? p.variants[0] : null;
-          const v2 = p.variants && p.variants[1] ? p.variants[1] : null;
-
           return {
             'ID (Do not edit)': p.id,
             'Item Code': p.itemCode || '',
@@ -3936,12 +3945,9 @@ export function AdminDashboard() {
             'Base Price': finalBasePrice,
             'Base MRP': finalBaseMRP,
             'Base HoReCa Price': finalBaseHorecaPrice,
-            'Variant 1 Unit': v1 ? (v1.unit || `${v1.quantityValue || ''}${v1.quantityUnit || ''}`) : '',
-            'Variant 1 Price': v1 ? (v1.price !== undefined ? v1.price : '') : '',
-            'Variant 2 Unit': v2 ? (v2.unit || `${v2.quantityValue || ''}${v2.quantityUnit || ''}`) : '',
-            'Variant 2 Price': v2 ? (v2.price !== undefined ? v2.price : '') : '',
             'Stock': p.stock !== undefined && p.stock !== null ? p.stock : '',
-            'In Stock': p.inStock ? 'TRUE' : 'FALSE'
+            'In Stock': p.inStock !== false ? 'TRUE' : 'FALSE',
+            'Activated Status': p.isDeactivated === true ? 'Deactivated' : 'Active'
           };
         });
 
@@ -3958,7 +3964,7 @@ export function AdminDashboard() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast.success("Current product catalog downloaded for bulk editing with full Base Unit & Sub-Unit details.");
+      toast.success(`Downloaded ${data.length} products for bulk editing with Base Unit, Base Price & Activated Status.`);
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to export catalog for bulk editing.");
@@ -3986,6 +3992,11 @@ export function AdminDashboard() {
             inStock: item.updated.inStock,
             updatedAt: Date.now()
           };
+          if (item.updated.isDeactivated !== undefined) {
+            nextData.isDeactivated = Boolean(item.updated.isDeactivated);
+          } else if (item.isNew) {
+            nextData.isDeactivated = false;
+          }
 
           if (item.updated.description !== undefined) nextData.description = item.updated.description;
           if (item.updated.imageUrl !== undefined) nextData.imageUrl = item.updated.imageUrl;
@@ -4148,7 +4159,7 @@ export function AdminDashboard() {
           row[cleanKey] = rawRow[key];
         }
 
-        const id = String(row.id || row.iddonotedit || row.productid || '').trim();
+        const id = String(row.id || row.iddonotedit || row['id(donotedit)'] || row.productid || '').trim();
         const itemCode = String(row.itemcode || row.code || '').trim();
         const name = String(row.productname || row.name || row.title || '').trim();
         const category = String(row.category || 'indian fruits').toLowerCase().trim();
@@ -4178,8 +4189,25 @@ export function AdminDashboard() {
         const secondHorecaUnit = String(row.secondhorecaunit || '').trim();
         const secondHorecaUnitPrice = parseNum(row.secondhorecaprice);
 
-        const stock = parseNum(row.stock) ?? 100;
-        const inStock = row.instock !== undefined ? parseBoolean(row.instock) : true;
+        const stock = parseNum(row.stock);
+        const inStock = row.instock !== undefined && String(row.instock).trim() !== ''
+          ? parseBoolean(row.instock)
+          : undefined;
+
+        let isDeactivated: boolean | undefined = undefined;
+        const rawActivatedStatus = row.activatedstatus ?? row.isactivated ?? row.active ?? row.activestatus ?? row.catalogstatus;
+        const rawDeactivated = row.deactivated ?? row.isdeactivated;
+        if (rawActivatedStatus !== undefined && String(rawActivatedStatus).trim() !== '') {
+          const s = String(rawActivatedStatus).trim().toLowerCase();
+          if (['deactivated', 'inactive', 'disabled', 'false', 'no', '0', 'n'].includes(s)) {
+            isDeactivated = true;
+          } else if (['active', 'activated', 'enabled', 'true', 'yes', '1', 'y'].includes(s)) {
+            isDeactivated = false;
+          }
+        } else if (rawDeactivated !== undefined && String(rawDeactivated).trim() !== '') {
+          const s = String(rawDeactivated).trim().toLowerCase();
+          isDeactivated = parseBoolean(rawDeactivated) || s === 'deactivated';
+        }
 
         return {
           id,
@@ -4204,7 +4232,8 @@ export function AdminDashboard() {
           secondHorecaUnit,
           secondHorecaUnitPrice,
           stock,
-          inStock
+          inStock,
+          isDeactivated
         };
       };
 
@@ -4220,11 +4249,6 @@ export function AdminDashboard() {
           if (!parsed.id && p.name.toLowerCase().trim() === parsed.name.toLowerCase().trim()) return true;
           return false;
         });
-
-        // Skip FNL Juice House products from bulk import
-        if (parsed.category === 'fnl juices' || parsed.category === 'fnl juice' || (match && (match.category === 'fnl juices' || match.category === 'fnl juice'))) {
-          continue;
-        }
 
         const updated: any = match ? { ...match } : {
           id: doc(collection(db, 'products')).id,
@@ -4254,6 +4278,7 @@ export function AdminDashboard() {
         if (parsed.baseHorecaPrice !== undefined) updated.baseHorecaPrice = parsed.baseHorecaPrice;
         if (parsed.stock !== undefined) updated.stock = parsed.stock;
         if (parsed.inStock !== undefined) updated.inStock = parsed.inStock;
+        if (parsed.isDeactivated !== undefined) updated.isDeactivated = parsed.isDeactivated;
         if (parsed.quantityValue !== undefined) updated.quantityValue = parsed.quantityValue;
         if (parsed.quantityUnit !== undefined) updated.quantityUnit = parsed.quantityUnit;
         if (parsed.unit) updated.unit = parsed.unit;
@@ -4408,13 +4433,14 @@ export function AdminDashboard() {
           const hasBaseHorecaChange = parsed.baseHorecaPrice !== undefined && parsed.baseHorecaPrice !== null && String(parsed.baseHorecaPrice) !== '' && effectiveDbBaseHoreca !== null && Number(parsed.baseHorecaPrice) !== Number(effectiveDbBaseHoreca);
 
           const hasStockChange = parsed.stock !== undefined && parsed.stock !== null && String(parsed.stock) !== '' && Number(parsed.stock) !== Number(match.stock);
-          const hasInStockChange = parsed.inStock !== undefined && Boolean(parsed.inStock) !== Boolean(match.inStock);
+          const hasInStockChange = parsed.inStock !== undefined && Boolean(parsed.inStock) !== (match.inStock !== false);
+          const hasDeactivatedChange = parsed.isDeactivated !== undefined && Boolean(parsed.isDeactivated) !== (match.isDeactivated === true);
           const hasNameChange = parsed.name && parsed.name.toLowerCase().trim() !== match.name.toLowerCase().trim();
           const hasCategoryChange = parsed.category && parsed.category.toLowerCase().trim() !== match.category.toLowerCase().trim();
           const hasImageUrlChange = Boolean(parsed.imageUrl && parsed.imageUrl.trim() !== (match.imageUrl || '').trim());
           const hasItemCodeChange = Boolean(parsed.itemCode && parsed.itemCode.trim() !== (match.itemCode || '').trim());
 
-          if (!hasBasePriceChange && !hasBaseOriginalChange && !hasBaseHorecaChange && !hasStockChange && !hasInStockChange && !hasNameChange && !hasCategoryChange && !hasImageUrlChange && !hasItemCodeChange) {
+          if (!hasBasePriceChange && !hasBaseOriginalChange && !hasBaseHorecaChange && !hasStockChange && !hasInStockChange && !hasDeactivatedChange && !hasNameChange && !hasCategoryChange && !hasImageUrlChange && !hasItemCodeChange) {
             continue; // Skip unchanged products entirely
           }
 
@@ -4453,6 +4479,7 @@ export function AdminDashboard() {
 
           if (hasStockChange) updated.stock = parsed.stock;
           if (hasInStockChange) updated.inStock = parsed.inStock;
+          if (hasDeactivatedChange) updated.isDeactivated = parsed.isDeactivated;
 
           // Check for differences
           const diffs: string[] = [];
@@ -4464,7 +4491,8 @@ export function AdminDashboard() {
           if (hasBaseOriginalChange) diffs.push(`Base MRP: ₹${match.baseOriginalPrice || 'None'} ➜ ₹${updated.baseOriginalPrice || 'None'}`);
           if (hasBaseHorecaChange) diffs.push(`Base HoReCa Price: ₹${match.baseHorecaPrice || 'None'} ➜ ₹${updated.baseHorecaPrice || 'None'}`);
           if (hasStockChange) diffs.push(`Stock: ${match.stock} ➜ ${updated.stock}`);
-          if (hasInStockChange) diffs.push(`In Stock: ${match.inStock ? 'Yes' : 'No'} ➜ ${updated.inStock ? 'Yes' : 'No'}`);
+          if (hasInStockChange) diffs.push(`In Stock: ${match.inStock !== false ? 'Yes' : 'No'} ➜ ${updated.inStock ? 'Yes' : 'No'}`);
+          if (hasDeactivatedChange) diffs.push(`Activated Status: ${match.isDeactivated === true ? 'Deactivated' : 'Active'} ➜ ${updated.isDeactivated ? 'Deactivated' : 'Active'}`);
 
           if (diffs.length > 0) {
             changesList.push({
@@ -4482,8 +4510,9 @@ export function AdminDashboard() {
           if (effectiveBasePrice !== undefined) updated.basePrice = effectiveBasePrice;
           if (parsed.baseOriginalPrice !== undefined) updated.baseOriginalPrice = parsed.baseOriginalPrice;
           if (parsed.baseHorecaPrice !== undefined) updated.baseHorecaPrice = parsed.baseHorecaPrice;
-          if (parsed.stock !== undefined) updated.stock = parsed.stock;
-          if (parsed.inStock !== undefined) updated.inStock = parsed.inStock;
+          updated.stock = parsed.stock ?? 100;
+          updated.inStock = parsed.inStock ?? true;
+          updated.isDeactivated = parsed.isDeactivated ?? false;
           updated.baseUnit = normalizeBaseUnit(parsed.baseUnit || 'Kg', 'Kg');
           
           const qVal = updated.quantityValue || 1;
