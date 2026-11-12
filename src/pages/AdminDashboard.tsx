@@ -1652,68 +1652,25 @@ export function AdminDashboard() {
     );
   }
 
-  const handleExportCSV = () => {
-    try {
-      const headers = [
-        "ITEM CODE",
-        "ID",
-        "NAME",
-        "CATEGORY",
-        "IMAGE URL",
-        "BASE UNIT",
-        "BASE PRICE",
-        "UNIT",
-        "THIS UNIT PRICE",
-        "SECOND UNIT",
-        "SECOND UNIT PRICE",
-        "HORECA UNIT",
-        "HORECA PRICE",
-        "SECOND HORECA UNIT",
-        "SECOND HORECA UNIT PRICE"
-      ];
-      const csvRows = [];
-      csvRows.push(headers.join(","));
-      
-      filteredProducts.forEach(product => {
-        const v1 = product.variants && product.variants[0] ? product.variants[0] : null;
-        const v2 = product.variants && product.variants[1] ? product.variants[1] : null;
-
-        const row = [
-          `"${(product.itemCode || '').replace(/"/g, '""')}"`,
-          `"${(product.id || '').replace(/"/g, '""')}"`,
-          `"${(product.name || '').replace(/"/g, '""')}"`,
-          `"${(product.category || '').replace(/"/g, '""')}"`,
-          `"${(product.imageUrl || getCategoryImage(product.category) || '').replace(/"/g, '""')}"`,
-          `"${(product.baseUnit || product.quantityUnit || 'Kg').replace(/"/g, '""')}"`,
-          `"${product.basePrice !== undefined && product.basePrice !== null ? product.basePrice : ''}"`,
-          `"${(product.unit || (product.quantityValue ? `${product.quantityValue} ${product.quantityUnit || 'Kg'}` : 'Kg')).replace(/"/g, '""')}"`,
-          `"${product.price !== undefined && product.price !== null ? product.price : ''}"`,
-          `"${(v1 ? v1.unit || '' : '').replace(/"/g, '""')}"`,
-          `"${v1 && v1.price !== undefined && v1.price !== null ? v1.price : ''}"`,
-          `"${(product.horecaUnit || (v1 && v1.horecaPrice ? v1.unit : '')).replace(/"/g, '""')}"`,
-          `"${product.horecaPrice !== undefined && product.horecaPrice !== null ? product.horecaPrice : (v1 ? v1.horecaPrice || '' : '')}"`,
-          `"${(v2 ? v2.unit || '' : '').replace(/"/g, '""')}"`,
-          `"${v2 && v2.price !== undefined && v2.price !== null ? (v2.horecaPrice || v2.price) : ''}"`
-        ];
-        csvRows.push(row.join(","));
-      });
-      
-      const csvString = csvRows.join("\n");
-      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `products_base_unit_export_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success("Products exported successfully with Item Codes, Image URLs, and pricing details.");
-    } catch (err) {
-      console.error("Export error:", err);
-      toast.error("Failed to export products.");
+  const handleExportSectionExcel = () => {
+    const sectionMeta: Record<typeof productSection, { label: string; slug: string; sheet: string }> = {
+      all: { label: 'All Items', slug: 'All_Items', sheet: 'All Items' },
+      'veg-fruits': { label: 'Vegetables & Fruits', slug: 'Vegetables_Fruits', sheet: 'Vegetables & Fruits' },
+      juices: { label: 'FNL Juices', slug: 'FNL_Juices', sheet: 'FNL Juices' },
+      deactivated: { label: 'Deactivated Products', slug: 'Deactivated_Products', sheet: 'Deactivated Products' }
+    };
+    const meta = sectionMeta[productSection];
+    if (categorizedFilteredProducts.length === 0) {
+      toast.error(`No products found in ${meta.label} to export.`);
+      return;
     }
+    const today = new Date().toISOString().split('T')[0];
+    exportCatalogRowsToExcel(
+      categorizedFilteredProducts,
+      meta.sheet,
+      `FreshNLocal_${meta.slug}_${today}.xlsx`,
+      `Downloaded ${categorizedFilteredProducts.length} ${meta.label} products (.xlsx).`
+    );
   };
 
   const handleExportHorecaCSV = () => {
@@ -3870,105 +3827,119 @@ export function AdminDashboard() {
     }
   };
 
-  const handleExportCatalogForBulkEdit = () => {
+  const exportCatalogRowsToExcel = (
+    items: Product[],
+    sheetName: string,
+    filename: string,
+    successMessage: string
+  ) => {
     try {
-      const catOrder = new Map();
-      productCategories.forEach((c, i) => { if (c) catOrder.set(c.toLowerCase().trim(), i) });
-      const juiceOrder = new Map();
-      juiceCategories.forEach((c, i) => { if (c && c.id) juiceOrder.set(c.id, i) });
+      const data = items.map(p => {
+        const parsedUnit = parseQuantityAndUnit(p.unit);
+        const qVal = p.quantityValue !== undefined && p.quantityValue !== null && String(p.quantityValue) !== '' ? p.quantityValue : parseFloat(parsedUnit.qVal || '1');
+        const qUnit = p.quantityUnit || parsedUnit.qUnit || 'Kg';
 
-      const sortedProducts = [...products].sort((a, b) => {
-        let catA = (a.category || '').toLowerCase().trim();
-        let catB = (b.category || '').toLowerCase().trim();
-        if (catA === 'exotic vegetables') catA = 'exotic vegetable';
-        if (catA === 'imported vegetables') catA = 'imported vegetable';
-        if (catA === 'mushrooms') catA = 'mushroom';
-        if (catA === 'fnl juice') catA = 'fnl juices';
-        if (catB === 'exotic vegetables') catB = 'exotic vegetable';
-        if (catB === 'imported vegetables') catB = 'imported vegetable';
-        if (catB === 'mushrooms') catB = 'mushroom';
-        if (catB === 'fnl juice') catB = 'fnl juices';
-
-        const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
-        const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
-        if (idxA !== idxB) return idxA - idxB;
-
-        if (catA === 'fnl juices' && catB === 'fnl juices') {
-          const subA = ((a as any).subCategory || 'cold-pressed').toLowerCase().trim();
-          const subB = ((b as any).subCategory || 'cold-pressed').toLowerCase().trim();
-          if (subA !== subB) {
-            const idxSubA = juiceOrder.has(subA) ? juiceOrder.get(subA) : 999;
-            const idxSubB = juiceOrder.has(subB) ? juiceOrder.get(subB) : 999;
-            if (idxSubA !== idxSubB) return idxSubA - idxSubB;
-          }
+        const primaryUnitNorm = normalizeBaseUnit(qUnit, 'Kg');
+        let effectiveBaseUnit = p.baseUnit ? normalizeBaseUnit(p.baseUnit, primaryUnitNorm) : primaryUnitNorm;
+        if (effectiveBaseUnit === 'Kg' && primaryUnitNorm !== 'Kg') {
+          effectiveBaseUnit = primaryUnitNorm;
         }
 
-        const isOutA = a.inStock === false;
-        const isOutB = b.inStock === false;
-        if (isOutA !== isOutB) {
-          return isOutA ? 1 : -1;
-        }
+        const finalBasePrice = p.basePrice !== undefined && p.basePrice !== null && String(p.basePrice) !== ''
+          ? p.basePrice
+          : (p.price ? calculateBaseFromPrice(p.price, effectiveBaseUnit, qVal, qUnit) : '');
 
-        return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
+        const finalBaseMRP = p.baseOriginalPrice !== undefined && p.baseOriginalPrice !== null && String(p.baseOriginalPrice) !== ''
+          ? p.baseOriginalPrice
+          : (p.originalPrice ? calculateBaseFromPrice(p.originalPrice, effectiveBaseUnit, qVal, qUnit) : '');
+
+        const finalBaseHorecaPrice = p.baseHorecaPrice !== undefined && p.baseHorecaPrice !== null && String(p.baseHorecaPrice) !== ''
+          ? p.baseHorecaPrice
+          : (p.horecaPrice ? calculateBaseFromPrice(p.horecaPrice, effectiveBaseUnit, qVal, qUnit) : '');
+
+        return {
+          'ID (Do not edit)': p.id,
+          'Item Code': p.itemCode || '',
+          'Product Name': p.name || '',
+          'Category': p.category || '',
+          'Image URL': p.imageUrl || getCategoryImage(p.category) || '',
+          'Base Unit': effectiveBaseUnit,
+          'Base Price': finalBasePrice,
+          'Base MRP': finalBaseMRP,
+          'Base HoReCa Price': finalBaseHorecaPrice,
+          'Stock': p.stock !== undefined && p.stock !== null ? p.stock : '',
+          'In Stock': p.inStock !== false ? 'TRUE' : 'FALSE',
+          'Activated Status': p.isDeactivated === true ? 'Deactivated' : 'Active'
+        };
       });
-
-      const data = sortedProducts.map(p => {
-          const parsedUnit = parseQuantityAndUnit(p.unit);
-          const qVal = p.quantityValue !== undefined && p.quantityValue !== null && String(p.quantityValue) !== '' ? p.quantityValue : parseFloat(parsedUnit.qVal || '1');
-          const qUnit = p.quantityUnit || parsedUnit.qUnit || 'Kg';
-
-          const primaryUnitNorm = normalizeBaseUnit(qUnit, 'Kg');
-          let effectiveBaseUnit = p.baseUnit ? normalizeBaseUnit(p.baseUnit, primaryUnitNorm) : primaryUnitNorm;
-          if (effectiveBaseUnit === 'Kg' && primaryUnitNorm !== 'Kg') {
-            effectiveBaseUnit = primaryUnitNorm;
-          }
-
-          const finalBasePrice = p.basePrice !== undefined && p.basePrice !== null && String(p.basePrice) !== ''
-            ? p.basePrice
-            : (p.price ? calculateBaseFromPrice(p.price, effectiveBaseUnit, qVal, qUnit) : '');
-
-          const finalBaseMRP = p.baseOriginalPrice !== undefined && p.baseOriginalPrice !== null && String(p.baseOriginalPrice) !== ''
-            ? p.baseOriginalPrice
-            : (p.originalPrice ? calculateBaseFromPrice(p.originalPrice, effectiveBaseUnit, qVal, qUnit) : '');
-
-          const finalBaseHorecaPrice = p.baseHorecaPrice !== undefined && p.baseHorecaPrice !== null && String(p.baseHorecaPrice) !== ''
-            ? p.baseHorecaPrice
-            : (p.horecaPrice ? calculateBaseFromPrice(p.horecaPrice, effectiveBaseUnit, qVal, qUnit) : '');
-
-          return {
-            'ID (Do not edit)': p.id,
-            'Item Code': p.itemCode || '',
-            'Product Name': p.name || '',
-            'Category': p.category || '',
-            'Image URL': p.imageUrl || getCategoryImage(p.category) || '',
-            'Base Unit': effectiveBaseUnit,
-            'Base Price': finalBasePrice,
-            'Base MRP': finalBaseMRP,
-            'Base HoReCa Price': finalBaseHorecaPrice,
-            'Stock': p.stock !== undefined && p.stock !== null ? p.stock : '',
-            'In Stock': p.inStock !== false ? 'TRUE' : 'FALSE',
-            'Activated Status': p.isDeactivated === true ? 'Deactivated' : 'Active'
-          };
-        });
 
       const worksheet = XLSX.utils.json_to_sheet(data);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Catalog Bulk Edit');
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
       const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `FreshNLocal_Catalog_Bulk_Edit_${new Date().toISOString().split('T')[0]}.xlsx`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast.success(`Downloaded ${data.length} products for bulk editing with Base Unit, Base Price & Activated Status.`);
+      toast.success(successMessage);
     } catch (err: any) {
       console.error(err);
-      toast.error("Failed to export catalog for bulk editing.");
+      toast.error("Failed to export catalog to Excel.");
     }
+  };
+
+  const handleExportCatalogForBulkEdit = () => {
+    const catOrder = new Map();
+    productCategories.forEach((c, i) => { if (c) catOrder.set(c.toLowerCase().trim(), i) });
+    const juiceOrder = new Map();
+    juiceCategories.forEach((c, i) => { if (c && c.id) juiceOrder.set(c.id, i) });
+
+    const sortedProducts = [...products].sort((a, b) => {
+      let catA = (a.category || '').toLowerCase().trim();
+      let catB = (b.category || '').toLowerCase().trim();
+      if (catA === 'exotic vegetables') catA = 'exotic vegetable';
+      if (catA === 'imported vegetables') catA = 'imported vegetable';
+      if (catA === 'mushrooms') catA = 'mushroom';
+      if (catA === 'fnl juice') catA = 'fnl juices';
+      if (catB === 'exotic vegetables') catB = 'exotic vegetable';
+      if (catB === 'imported vegetables') catB = 'imported vegetable';
+      if (catB === 'mushrooms') catB = 'mushroom';
+      if (catB === 'fnl juice') catB = 'fnl juices';
+
+      const idxA = catOrder.has(catA) ? catOrder.get(catA) : 999;
+      const idxB = catOrder.has(catB) ? catOrder.get(catB) : 999;
+      if (idxA !== idxB) return idxA - idxB;
+
+      if (catA === 'fnl juices' && catB === 'fnl juices') {
+        const subA = ((a as any).subCategory || 'cold-pressed').toLowerCase().trim();
+        const subB = ((b as any).subCategory || 'cold-pressed').toLowerCase().trim();
+        if (subA !== subB) {
+          const idxSubA = juiceOrder.has(subA) ? juiceOrder.get(subA) : 999;
+          const idxSubB = juiceOrder.has(subB) ? juiceOrder.get(subB) : 999;
+          if (idxSubA !== idxSubB) return idxSubA - idxSubB;
+        }
+      }
+
+      const isOutA = a.inStock === false;
+      const isOutB = b.inStock === false;
+      if (isOutA !== isOutB) {
+        return isOutA ? 1 : -1;
+      }
+
+      return (a.orderIndex ?? 999) - (b.orderIndex ?? 999);
+    });
+
+    exportCatalogRowsToExcel(
+      sortedProducts,
+      'Catalog Bulk Edit',
+      `FreshNLocal_Catalog_Bulk_Edit_${new Date().toISOString().split('T')[0]}.xlsx`,
+      `Downloaded ${sortedProducts.length} products for bulk editing with Base Unit, Base Price & Activated Status.`
+    );
   };
 
   const commitBulkUpdates = async () => {
@@ -5836,11 +5807,11 @@ export function AdminDashboard() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <button
-                    onClick={handleExportCSV}
-                    className="flex-shrink-0 flex items-center gap-1.5 bg-neutral-900 hover:bg-black text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm"
-                    title="Download All Products"
+                    onClick={handleExportSectionExcel}
+                    className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm cursor-pointer"
+                    title="Download currently opened catalog section as Excel (.xlsx)"
                   >
-                    <Download className="w-3.5 h-3.5" /> CSV
+                    <Download className="w-3.5 h-3.5" /> EXCEL
                   </button>
                   <button
                     onClick={handleExportHorecaCSV}
