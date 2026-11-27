@@ -28,9 +28,9 @@
  */
 
 import type { Express } from 'express';
-import { firestoreDocsBase, lookupCaller } from './firebaseAuth';
-import { docToObject, readAsCaller } from './orderMirror';
-import { iso, num, patchLiveOrder, replaceOrderLines, supabaseConfigured } from './erpMirror';
+import { firestoreDocsBase, lookupCaller } from './firebaseAuth.js';
+import { docToObject, readAsCaller } from './orderMirror.js';
+import { iso, num, patchLiveOrder, replaceOrderLines, supabaseConfigured } from './erpMirror.js';
 
 const ADMIN_ROLES = ['admin', 'horeca_admin'];
 

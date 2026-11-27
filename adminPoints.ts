@@ -16,7 +16,7 @@
  */
 
 import type { Express } from 'express';
-import { lookupCaller } from './firebaseAuth';
+import { lookupCaller } from './firebaseAuth.js';
 
 const SUPABASE_URL = () => (process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY || '';

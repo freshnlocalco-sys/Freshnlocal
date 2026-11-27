@@ -35,8 +35,8 @@
  */
 
 import type { Express } from 'express';
-import { lookupCaller } from './firebaseAuth';
-import { mirrorOrderToSupabase, supabaseConfigured } from './erpMirror';
+import { lookupCaller } from './firebaseAuth.js';
+import { mirrorOrderToSupabase, supabaseConfigured } from './erpMirror.js';
 
 /** A Firestore-style id: 20 chars of [A-Za-z0-9]. */
 const ID_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

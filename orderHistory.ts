@@ -24,7 +24,7 @@
  */
 
 import type { Express } from 'express';
-import { lookupCaller } from './firebaseAuth';
+import { lookupCaller } from './firebaseAuth.js';
 
 // Read lazily, never captured at module load. catalogueMirror.ts captured these
 // in module-level consts and has reported itself unconfigured ever since,

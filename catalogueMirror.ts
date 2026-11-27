@@ -27,7 +27,7 @@
 import type { Express, Request, Response } from 'express';
 import { initializeApp, getApps } from 'firebase/app';
 import { initializeFirestore, collection, doc, getDoc, getDocs } from 'firebase/firestore';
-import firebaseConfig from './firebase-applet-config.json';
+import firebaseConfig from './firebaseServerConfig.js';
 import { transformProduct, transformSetting, SETTINGS_KEYS } from './catalogueTransform.mjs';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -214,7 +214,7 @@ async function mirrorSettings(keys: string[]) {
 // ---------------------------------------------------------------------------
 //
 // Two transports reach this: server.ts's Express route in local development,
-// and api/admin/[action].ts as a Vercel function in production. They
+// and api/admin.ts as a Vercel function in production. They
 // share this function for the same reason the bulk sync and the mirror share
 // catalogueTransform.mjs -- if the two disagreed about who counts as an admin,
 // the answer would depend on which environment the request landed in.

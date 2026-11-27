@@ -7,7 +7,7 @@
  * On Vercel this project is a static SPA plus the functions in api/; server.ts
  * is the local development server and is not deployed. The catalogue mirror
  * already learned this lesson -- see catalogueMirror.ts and
- * api/admin/[action].ts -- and the order mirror did not: it shipped as
+ * api/admin.ts -- and the order mirror did not: it shipped as
  * a Vercel function with no Express route beside it.
  *
  * The cost of that was not a production bug. It was worse: there was nowhere to
@@ -34,9 +34,9 @@
  */
 
 import type { Express } from 'express';
-import firebaseConfig from './firebase-applet-config.json';
-import { uidFromIdToken } from './firebaseAuth';
-import { mirrorOrderToSupabase, supabaseConfigured } from './erpMirror';
+import firebaseConfig from './firebaseServerConfig.js';
+import { uidFromIdToken } from './firebaseAuth.js';
+import { mirrorOrderToSupabase, supabaseConfigured } from './erpMirror.js';
 
 const cfg = firebaseConfig as Record<string, string>;
 const DB_ID = cfg.firestoreDatabaseId || 'ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67';

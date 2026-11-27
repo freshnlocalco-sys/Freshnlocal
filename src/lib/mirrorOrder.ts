@@ -4,7 +4,7 @@
  *
  * Only the order id and the customer's ID token go over the wire. The server
  * reads the order back from Firestore as that customer and mirrors what it
- * finds -- see api/orders/[action].ts for why it is built that way rather than
+ * finds -- see api/orders.ts for why it is built that way rather than
  * being handed the order body.
  */
 

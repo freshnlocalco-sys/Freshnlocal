@@ -15,7 +15,7 @@
  * attempt to read or trust the token's own claims.
  */
 
-import firebaseConfig from './firebase-applet-config.json';
+import firebaseConfig from './firebaseServerConfig.js';
 
 const cfg = firebaseConfig as Record<string, string>;
 

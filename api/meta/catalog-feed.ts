@@ -1,13 +1,13 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { initializeFirestore, collection, getDocs, doc, getDoc, getFirestore } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
-import { generateMetaFeedXml, type ProductFeedInput } from '../../src/lib/metaFeedGenerator';
+import firebaseConfig from '../../firebaseServerConfig.js';
+import { generateMetaFeedXml, type ProductFeedInput } from '../../src/lib/metaFeedGenerator.js';
 
 let dbInstance: any = null;
 
 function getDb() {
   if (!dbInstance) {
-    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    const app = (getApps().find(a => a.name === '[DEFAULT]') ?? initializeApp(firebaseConfig)) /* the DEFAULT app, by name: emailTriggers creates a named one, and getApp() throws when only named apps exist */;
     dbInstance = initializeFirestore(app, {
       experimentalForceLongPolling: true
     }, firebaseConfig.firestoreDatabaseId || "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");

@@ -119,7 +119,7 @@ async function startServer() {
         feedXml = cachedServerFeed.xml;
         feedStats = { ...cachedServerFeed.stats, cached: true, cacheAgeSeconds: Math.round((now - cachedServerFeed.timestamp) / 1000) };
       } else {
-        const appInstance = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+        const appInstance = (getApps().find(a => a.name === '[DEFAULT]') ?? initializeApp(firebaseConfig)) /* the DEFAULT app, by name: emailTriggers creates a named one, and getApp() throws when only named apps exist */;
         const db = getFirestore(appInstance, firebaseConfig.firestoreDatabaseId || "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
 
         const [productsSnapshot, categoriesConfigSnap] = await Promise.all([
@@ -610,7 +610,7 @@ Format your output exactly as a JSON object with these keys:
   // itself -- see catalogueMirror.ts.
   registerCatalogueMirror(app);
 
-  // The same route the deployed function serves (api/orders/[action].ts), so a
+  // The same route the deployed function serves (api/orders.ts), so a
   // checkout run locally exercises the real path instead of posting into Vite's
   // SPA middleware and reading the page's HTML back as a success.
   registerOrderMirror(app);

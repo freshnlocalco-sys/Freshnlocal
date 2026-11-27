@@ -2,8 +2,8 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, updateDoc, getDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import nodemailer from 'nodemailer';
-import firebaseConfig from './firebase-applet-config.json';
-import { mirrorOrderToSupabase, supabaseConfigured } from './erpMirror';
+import firebaseConfig from './firebaseServerConfig.js';
+import { mirrorOrderToSupabase, supabaseConfigured } from './erpMirror.js';
 
 // Initialize secondary Firebase Web client inside the server process
 // This is 100% robust and doesn't require complex service accounts or private keys

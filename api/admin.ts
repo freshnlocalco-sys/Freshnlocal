@@ -1,17 +1,17 @@
 /**
- * POST /api/orders/<action> -- one Vercel function for every orders route.
+ * POST /api/admin/<action> -- one Vercel function for every admin route.
  *
  * WHY ONE FILE: Vercel's Hobby plan refuses a deployment with more than 12
  * serverless functions ("No more than 12 Serverless Functions can be added to
  * a Deployment on the Hobby plan"), and every file under api/ is one function.
  * dev reached 13 on 27 Nov 2026. A dynamic segment keeps every public URL
- * exactly as it was -- /api/orders/<action> still resolves here -- so the
- * browser code did not change.
+ * exactly as it was, so the browser code did not change.
  *
- * server.ts is the local development server and is NOT deployed: on Vercel
- * this project is a static SPA plus the functions in api/. A route that is
- * only registered in server.ts does not exist in production and answers with
- * index.html instead. That is why every server route needs a file in here.
+ * HOW A REQUEST GETS HERE: vercel.json rewrites /api/admin/<action> to
+ * /api/admin?action=<action>, ahead of its catch-all rules. A dynamic-segment
+ * file (api/admin/[action].ts) was tried first and Vercel never routed to it in
+ * production (27 Nov 2026: 405s, checkout down), so this deliberately uses a
+ * plain file name and an explicit rewrite instead.
  *
  * Each action is a thin wrapper over a transport-free handler, the same one
  * server.ts registers for local development, so the two cannot drift.
@@ -21,20 +21,20 @@
  * SUPABASE_SERVICE_ROLE_KEY.
  */
 
-import { handleOrderAdminSyncRequest } from '../../orderAdminSync';
-import { handleOrderCreateRequest } from '../../orderCreate';
-import { handleOrderHistoryRequest } from '../../orderHistory';
-import { handleOrderMirrorRequest } from '../../orderMirror';
+import { handleAwardPoints } from '../adminPoints.js';
+import { handleMirrorRequest } from '../catalogueMirror.js';
 
 type Reply = { status: number; body: unknown };
 const ACTIONS: Record<string, (body: unknown) => Promise<Reply>> = {
-  'admin-sync': (b) => handleOrderAdminSyncRequest(b),
-  create: (b) => handleOrderCreateRequest(b),
-  mine: (b) => handleOrderHistoryRequest(b),
-  mirror: (b) => handleOrderMirrorRequest(b),
+  'award-points': (b) => handleAwardPoints(b),
+  // This handler expects an object; a string arrives when the content type is
+  // missing, so it is parsed here, exactly as api/admin/mirror-catalogue.ts did.
+  'mirror-catalogue': (b) => handleMirrorRequest(
+    typeof b === 'string' ? (() => { try { return JSON.parse(b); } catch { return {}; } })() : b
+  ),
 };
 
-/** The action from Vercel's dynamic segment, or the URL's last part as a fallback. */
+/** The action from the rewrite's ?action=, or the URL's last part as a fallback. */
 function actionOf(req: any): string {
   const q = req.query?.action;
   if (typeof q === 'string' && q) return q;
