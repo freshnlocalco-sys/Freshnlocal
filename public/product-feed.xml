@@ -452,7 +452,7 @@
     <item>
       <g:id>1xCFSy4CutpOFu7IY7dA</g:id>
       <g:title>Fresh N Local Marigold Flower Orange 100 G</g:title>
-      <g:description>Marigold Flower Orange </g:description>
+      <g:description>Marigold Flower Orange</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>15.00 INR</g:price>
@@ -706,7 +706,7 @@
       <g:id>4Ib8sjjwT1EVptOYM9Zh</g:id>
       <g:title>Fresh N Local Fresh Blackberry 1pack (125g)</g:title>
       <g:description>Indulge in our plump, deep purple Fresh Blackberries, a premium exotic treat handpicked for Surat&apos;s fruit lovers. Per 100g, these juicy berries offer approx. 5g of dietary fiber, 1.4g of protein, and essential vitamins C and K to support daily vitality. Locally, Gujarati homes love tossing them into refreshing summer salads, blending them into luscious fusion shrikhand, or muddled in festive mocktails. To preserve their delicate, glossy texture, store them unwashed in a paper-lined container inside your refrigerator, washing only right before eating.</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>825.00 INR</g:price>
       <g:sale_price>800.00 INR</g:sale_price>
@@ -960,7 +960,7 @@
     <item>
       <g:id>78bAlUKCvuiQqfchXFTb</g:id>
       <g:title>Fresh N Local Banana Leaf With Stem 1 Pc</g:title>
-      <g:description>Banana Leaf With Stem </g:description>
+      <g:description>Banana Leaf With Stem</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>30.00 INR</g:price>
@@ -1047,19 +1047,6 @@
       <g:price>40.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/8xFlPOiBunod5R342usS</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783161411956_1000191932.jpg?alt=media&amp;token=5faa2fa5-7c2f-4506-be7b-d8898b19ce44</g:image_link>
-      <g:brand>Fresh N Local</g:brand>
-      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
-      <g:identifier_exists>no</g:identifier_exists>
-    </item>
-    <item>
-      <g:id>96lLj0C55nplVAsLwclm</g:id>
-      <g:title>Fresh N Local Cucumber Pickle 1 Can</g:title>
-      <g:description>Cucumber pickle </g:description>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>200.00 INR</g:price>
-      <g:link>https://www.freshnlocal.co/product/96lLj0C55nplVAsLwclm</g:link>
-      <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1793208914076_139595.jpg?alt=media&amp;token=0382df92-9376-407f-b01e-62bc55649dc5</g:image_link>
       <g:brand>Fresh N Local</g:brand>
       <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items</g:google_product_category>
       <g:identifier_exists>no</g:identifier_exists>
@@ -1174,7 +1161,7 @@
     <item>
       <g:id>ACt86uXI7L6aXlzgTrYZ</g:id>
       <g:title>Fresh N Local Fresh Hand Peeled Green Peas 1 Kg</g:title>
-      <g:description>Fresh hand peeled green peas </g:description>
+      <g:description>Fresh hand peeled green peas</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>620.00 INR</g:price>
@@ -1322,7 +1309,7 @@
     <item>
       <g:id>DSTiWOfyr93GO6W7mKzV</g:id>
       <g:title>Fresh N Local Cut Fansi 500 G</g:title>
-      <g:description>Cut fansi </g:description>
+      <g:description>Cut fansi</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>200.00 INR</g:price>
@@ -1733,7 +1720,7 @@
       <g:description>Bite into the exceptionally crisp, sweet, and water-rich world of the Korean Pear, an exotic jewel now delivered fresh to Surat. Offering approx. 1.6g of dietary fiber and approx. 4.5mg of Vitamin C per 100g, this refreshing fruit supports overall vitality. Gujarati homes love using its crunchy texture in festive fruit chaats or as a juicy, cooling palate cleanser alongside a traditional Gujarati thali. To preserve their signature crispness, store this pear wrapped in paper in your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>600.00 INR</g:price>
+      <g:price>500.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/I6AypTIPKFXtwIUEnoOP</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1792588895820_Corean%20pear.jfif?alt=media&amp;token=4e25ea2f-b167-4e9d-9ca2-890bdbab97d6</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -2565,7 +2552,7 @@
       <g:id>WzwvV13d0KZl81KNa37o</g:id>
       <g:title>Fresh N Local Thai Pineapple 1 Kg</g:title>
       <g:description>Thai Pineapple</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>800.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/WzwvV13d0KZl81KNa37o</g:link>
@@ -3007,7 +2994,7 @@
       <g:id>e1UfCbv9syHZrvE62YUU</g:id>
       <g:title>Fresh N Local Fresh Mulberry 1pack (100g)</g:title>
       <g:description>Sourced from local orchards, our dark Fresh Mulberries bring a burst of nostalgic sweetness. Each 100g serving of these delicate berries offers approx. 1.4g of protein, 1.7g of dietary fiber, alongside Vitamin C and iron for general wellness. In Gujarati homes, these juicy gems are perfect for direct snacking, blending into refreshing coolers, or simmering into sweet chutneys. To maintain their plumpness, store them unwashed in a dry container inside your refrigerator.</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>80.00 INR</g:price>
       <g:sale_price>60.00 INR</g:sale_price>
@@ -3060,7 +3047,7 @@
     <item>
       <g:id>fKeTzFjUzvNiOSVdoE6K</g:id>
       <g:title>Fresh N Local Fresh Hand Peeled Tuver Dana 500 G</g:title>
-      <g:description>Fresh Hand Peeled Tuver Dana </g:description>
+      <g:description>Fresh Hand Peeled Tuver Dana</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>400.00 INR</g:price>
@@ -3290,7 +3277,7 @@
       <g:description>Experience the bursting sweetness of our handpicked Juicy Red Cherries, sourced from the finest orchards to bring global quality straight to Surat. Delivering approx. 1.1g of protein, 2.1g of dietary fiber, alongside essential Vitamin C and potassium per 100g, they offer natural vitality. Perfect as a vibrant garnish for festive Gujarati Shrikhand, folded into creamy kheer, or tossed in seasonal fruit chaats. To maintain their plump texture and glossy sheen, store them unwashed in a breathable container inside your refrigerator&apos;s crisper drawer.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>625.00 INR</g:price>
+      <g:price>750.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/jREbVFxMhUWdhEshzvEz</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1783233178474_1000205079.jpg?alt=media&amp;token=da4895cb-c5fe-4c28-882f-d7a0c286e34d</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -3409,7 +3396,7 @@
     </item>
     <item>
       <g:id>lENgraQDLEQnuUbCFiPN</g:id>
-      <g:title>Fresh N Local Potato 500 G</g:title>
+      <g:title>Fresh N Local Potato Badshah 500 G</g:title>
       <g:description>Introducing a guilt-free twist to your daily meals, our premium Potato Carisma is a unique low-glycemic variety perfect for health-conscious households in Surat. Per 100g, it offers approx. 1.6g of protein, 1.8g of dietary fiber, along with essential Vitamin C and potassium to support overall vitality. This versatile spud blends beautifully into traditional Gujarati Batata Nu Shaak, comforting dry subzis, or festive Undhiyu. Keep these potatoes exceptionally fresh by storing them in a cool, dark, well-ventilated basket away from moisture.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
@@ -3626,7 +3613,7 @@
     <item>
       <g:id>nnTxszy4k1vroWp8XvwL</g:id>
       <g:title>Fresh N Local Tulsi Garland 1 Ft</g:title>
-      <g:description>Tulsi Garland </g:description>
+      <g:description>Tulsi Garland</g:description>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>50.00 INR</g:price>
@@ -3678,7 +3665,7 @@
     </item>
     <item>
       <g:id>oXnk7b4azkAc2ie1dmcV</g:id>
-      <g:title>Fresh N Local Tomato 500 G</g:title>
+      <g:title>Fresh N Local Hybrid Tomato 500 G</g:title>
       <g:description>Bring a burst of juicy brightness to your kitchen with our plump, farm-fresh Hybrid Tomatoes. Perfectly firm and mildly sweet, every 100g serving offers approx. 0.9g of protein, 1.2g of fiber, alongside essential Vitamin C and potassium to support daily vitality. They form the luscious base for Gujarati sev tameta nu shaak, aromatic dals, and fresh kachumber salads. To maintain their rich flavor, store these tomatoes stem-side down at room temperature, away from direct sunlight.</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
@@ -3815,7 +3802,7 @@
     <item>
       <g:id>r5KrtDK1mXLVRTDEqFZb</g:id>
       <g:title>Fresh N Local Fine Chop Green Garlic 500 G</g:title>
-      <g:description>Fine chop green garlic </g:description>
+      <g:description>Fine chop green garlic</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>700.00 INR</g:price>
@@ -3884,9 +3871,10 @@
       <g:id>sHytGF7CyF4D2ijBsPVh</g:id>
       <g:title>Fresh N Local Black Grapes 250 G</g:title>
       <g:description>Indulge in the deep, luscious sweetness of our premium Black Grapes, handpicked for their firm texture and vibrant flavor. These juicy gems offer a wholesome snack, providing approx. 0.7g protein and 0.9g fiber per 100g, alongside essential vitamins and minerals for daily vitality. In Gujarati kitchens, their unique tartness elevates fruit salads, refreshing kachumber, or even sweet garnishes for traditional dals. To maintain peak freshness, store these grapes unwashed in the refrigerator’s crisper drawer to keep them crisp and naturally flavorful until you are ready.</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>125.00 INR</g:price>
+      <g:price>100.00 INR</g:price>
+      <g:sale_price>90.00 INR</g:sale_price>
       <g:link>https://www.freshnlocal.co/product/sHytGF7CyF4D2ijBsPVh</g:link>
       <g:image_link>https://firebasestorage.googleapis.com/v0/b/freshnlocal-4a420.firebasestorage.app/o/products%2F1786003854096_1000217412.jpg?alt=media&amp;token=b8b72613-82c3-4884-bb8b-a1243eb7279b</g:image_link>
       <g:brand>Fresh N Local</g:brand>
@@ -4020,7 +4008,7 @@
       <g:id>uEJdfovHpPpOmsfbnint</g:id>
       <g:title>Fresh N Local Yellow Pitaya 1 Pc</g:title>
       <g:description>Yellow Pitaya</g:description>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>600.00 INR</g:price>
       <g:link>https://www.freshnlocal.co/product/uEJdfovHpPpOmsfbnint</g:link>
@@ -4418,7 +4406,7 @@
     <item>
       <g:id>zxTbS4yc0SWsFXDmAE77</g:id>
       <g:title>Fresh N Local Darbha Grass 1 Bunch</g:title>
-      <g:description>Darbha Grass </g:description>
+      <g:description>Darbha Grass</g:description>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>20.00 INR</g:price>

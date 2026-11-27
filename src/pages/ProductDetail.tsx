@@ -11,7 +11,9 @@ import { useSettings } from '../store/useSettings';
 import { useProducts } from '../store/useProducts';
 import { useWishlist } from '../store/useWishlist';
 import { useRecentlyViewed } from '../store/useRecentlyViewed';
-import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
+import { cacheManager, trackFirestoreRead, trackSupabaseRead } from '../lib/cacheManager';
+import { usingSupabaseCatalogue } from '../lib/supabase';
+import { fetchProductById } from '../lib/catalogue';
 import { ProductCard } from '../components/ProductCard';
 import { ProductReviews } from '../components/ProductReviews';
 import { calculateHorecaPrice, getBaseUnit, parseUnitScale, calculateBaseUnitPrice, getUnitQuantityConfig, safeAddQuantity, safeSubtractQuantity, formatDisplayUnit, resolveHorecaSubunitPrice } from '../lib/horecaUtils';
@@ -138,24 +140,35 @@ export function ProductDetail() {
           return;
         }
 
-        // 4. Fetch from Firestore if not found anywhere else
+        // 4. Fetch from the catalogue backend if not found anywhere else
         await cacheManager.fetchDeduplicated(`product_detail_fetch_${id}`, async () => {
-          const docRef = doc(db, 'products', id);
-          const docSnap = await getDoc(docRef);
-          
-          trackFirestoreRead('products', 1);
+          let fetchedProduct: Product | null = null;
 
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const pPrice = Number(data.price) || 0;
-            const pMrp = Number(data.originalPrice) || Number(data.mrp) || Number(data.MRP) || 0;
-            const fetchedProduct = { 
-              id: docSnap.id, 
-              ...data, 
-              price: pPrice,
-              originalPrice: pMrp > pPrice ? pMrp : undefined 
-            } as Product;
+          if (usingSupabaseCatalogue()) {
+            // Same columns and same mapper as the list, so a product looks
+            // identical whether it is reached by link or by browsing.
+            fetchedProduct = await fetchProductById(id);
+            trackSupabaseRead('web_products', fetchedProduct ? 1 : 0);
+          } else {
+            const docRef = doc(db, 'products', id);
+            const docSnap = await getDoc(docRef);
 
+            trackFirestoreRead('products', 1);
+
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              const pPrice = Number(data.price) || 0;
+              const pMrp = Number(data.originalPrice) || Number(data.mrp) || Number(data.MRP) || 0;
+              fetchedProduct = {
+                id: docSnap.id,
+                ...data,
+                price: pPrice,
+                originalPrice: pMrp > pPrice ? pMrp : undefined
+              } as Product;
+            }
+          }
+
+          if (fetchedProduct) {
             // Cache single product details
             cacheManager.set(`product_detail_${id}`, fetchedProduct);
             setProduct(fetchedProduct);

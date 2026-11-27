@@ -2,8 +2,10 @@ import { create } from 'zustand';
 import { isQuotaError, handleFirestoreError, OperationType, db, auth } from '../lib/firebase';
 import { Product } from './useCart';
 import { collection, getDocs, query, orderBy, limit, startAfter } from 'firebase/firestore';
-import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
+import { cacheManager, trackFirestoreRead, trackSupabaseRead } from '../lib/cacheManager';
 import { idb } from '../lib/indexedDB';
+import { usingSupabaseCatalogue } from '../lib/supabase';
+import { fetchCatalogue } from '../lib/catalogue';
 
 interface ProductsState {
   products: Product[];
@@ -101,6 +103,41 @@ export const useProducts = create<ProductsState>((set, get) => ({
     }
 
     try {
+      if (usingSupabaseCatalogue()) {
+        // fetchCatalogue applies the same juice de-duplication and orderIndex
+        // sort as the Firestore branch below, and reads in the same id order, so
+        // both paths arrive at the same list. It throws rather than returning []
+        // on failure, which is what lets the catch below fall back to cache.
+        const uniqueList = await fetchCatalogue();
+        trackSupabaseRead('web_products', uniqueList.length);
+
+        // The whole catalogue arrives in one request, so there is no next page.
+        lastVisibleDoc = null;
+
+        try {
+          cacheManager.set('products_v6', uniqueList);
+          cacheManager.set('products_last_fetched_v4', Date.now());
+          await idb.set('products_v6', uniqueList, 24 * 60 * 60 * 1000);
+          await idb.set('products_last_fetched_v4', Date.now(), 24 * 60 * 60 * 1000);
+        } catch (cacheErr) {
+          console.warn("Cache set failed safely:", cacheErr);
+        }
+
+        set({
+          products: uniqueList,
+          lastFetched: Date.now(),
+          loading: false,
+          hasMore: false,
+          error: null
+        });
+        return;
+      }
+
+      // Returning early above, rather than wrapping the block below in an else,
+      // is deliberate: the Firestore path is the rollback path for this stage
+      // and is left byte-for-byte as it was. The duplicated cache-and-set tail
+      // folds back together when Firestore comes out in a later stage.
+
       // Query all products without limits or ordering requirements to avoid missing any newly added items
       const q = query(
         collection(db, 'products')
@@ -176,7 +213,11 @@ export const useProducts = create<ProductsState>((set, get) => ({
       });
 
     } catch (error: any) {
-      console.warn("Firestore loading error, attempting to fallback to local/IndexedDB cached products:", error);
+      console.warn(
+        `Catalogue loading error from ${usingSupabaseCatalogue() ? 'Supabase' : 'Firestore'}, ` +
+        `attempting to fallback to local/IndexedDB cached products:`,
+        error
+      );
       
       // Load offline fallback products
       const offline = loadLocalStorageProducts();

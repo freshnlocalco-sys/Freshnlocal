@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { fetchMyOrders } from '../lib/orderHistory';
+import { READ_ORDERS_FROM_SUPABASE } from '../lib/orderSource';
 import { useAuth, db, handleFirestoreError, OperationType, signOut, isQuotaError, deleteUserAddress, setDefaultUserAddress, deleteUserLegacyAddress, updateUserDisplayName, sendPasswordReset } from '../lib/firebase';
 import { notifySignOutSuccess, notifyPasswordResetSuccess, getHumanAuthErrorMessage } from '../lib/authNotifications';
+import { currentOwner } from '../lib/authSession';
+import { listSavedRecipes, deleteSavedRecipe } from '../lib/recipeStore';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { Package, ShieldAlert, Award, ChevronRight, ShoppingBag, Calendar, Activity, Key, LogOut, Heart, Trash2, ChefHat, Building2, RotateCcw, Pencil, Check, X, User, Lock, Mail, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
@@ -159,17 +163,25 @@ export function Profile() {
     async function fetchData() {
       if (!user) return;
       try {
-        const qOrders = query(collection(db, 'orders'), where('userId', '==', user.uid));
-        const snapOrders = await getDocs(qOrders);
-        trackFirestoreRead('orders', snapOrders.size);
-        const orderList = snapOrders.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        orderList.sort((a: any, b: any) => b.createdAt - a.createdAt);
-        setOrders(orderList);
+        if (READ_ORDERS_FROM_SUPABASE) {
+          // Orders live in Supabase now; the server hands them back in the old
+          // shape, newest first. A failure here must not take the rest of the
+          // profile down with it -- saved recipes and addresses still load.
+          const mine = await fetchMyOrders();
+          if (mine.ok) setOrders(mine.orders ?? []);
+          else console.error('[ORDERS] could not load this customer\'s orders:', mine.reason);
+        } else {
+          const qOrders = query(collection(db, 'orders'), where('userId', '==', user.uid));
+          const snapOrders = await getDocs(qOrders);
+          trackFirestoreRead('orders', snapOrders.size);
+          const orderList = snapOrders.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          orderList.sort((a: any, b: any) => b.createdAt - a.createdAt);
+          setOrders(orderList);
+        }
 
-        const qRecipes = query(collection(db, 'users', user.uid, 'savedRecipes'), orderBy('createdAt', 'desc'));
-        const snapRecipes = await getDocs(qRecipes);
-        trackFirestoreRead('savedRecipes', snapRecipes.size);
-        setSavedRecipes(snapRecipes.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        // Supabase for customers, Firestore for staff -- recipeStore decides,
+        // and hands back the same shape either way.
+        setSavedRecipes(await listSavedRecipes(user.uid));
       } catch (error: any) {
         if (isQuotaError(error)) {
           toast.error("Database limit reached. History unavailable.");
@@ -190,11 +202,11 @@ export function Profile() {
   const handleDeleteRecipe = async (recipeId: string) => {
     if (!user) return;
     try {
-      await deleteDoc(doc(db, 'users', user.uid, 'savedRecipes', recipeId));
+      await deleteSavedRecipe(user.uid, recipeId);
       setSavedRecipes(prev => prev.filter(r => r.id !== recipeId));
       toast.success('Recipe removed from favorites');
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `users/${user.uid}/savedRecipes/${recipeId}`);
+      console.error('Failed to remove recipe:', error);
       toast.error('Failed to remove recipe');
     }
   };
@@ -560,11 +572,36 @@ export function Profile() {
               </div>
             ) : null}
             
-            {/* Password & Security Section */}
+            {/* Sign-in & Security.
+                Two different accounts can be looking at this card. A customer
+                who signed in with a WhatsApp code has no password to reset and,
+                more often than not, no email either -- this block used to offer
+                them a reset link and render the sentence as "...reset link to ."
+                with an empty bold tag where the address should be, behind a
+                button that was permanently disabled. */}
+            {currentOwner() === 'supabase' ? (
             <div className="bg-background p-3.5 rounded-xl border border-border space-y-2 text-left">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2 font-bold text-xs uppercase text-foreground">
-                  <Lock className="w-4 h-4 text-primary" /> Password & Security
+                  <ShieldCheck className="w-4 h-4 text-primary" /> Sign-in &amp; Security
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground leading-relaxed normal-case">
+                You sign in with a one-time code on WhatsApp, so there is no
+                password to remember, change or have stolen. Codes go to{' '}
+                <b className="text-foreground">
+                  {user?.phone
+                    ? `+91 ${String(user.phone).slice(0, 5)} ${String(user.phone).slice(5)}`
+                    : 'your WhatsApp number'}
+                </b>
+                {' '}and expire after 10 minutes.
+              </p>
+            </div>
+            ) : (
+            <div className="bg-background p-3.5 rounded-xl border border-border space-y-2 text-left">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 font-bold text-xs uppercase text-foreground">
+                  <Lock className="w-4 h-4 text-primary" /> Password &amp; Security
                 </span>
               </div>
               <p className="text-[10px] text-muted-foreground leading-relaxed normal-case">
@@ -589,6 +626,7 @@ export function Profile() {
                 )}
               </button>
             </div>
+            )}
 
             <button 
               onClick={async () => {

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { fetchMyOrders } from '../lib/orderHistory';
+import { READ_ORDERS_FROM_SUPABASE } from '../lib/orderSource';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -6,7 +8,9 @@ import { ArrowRight, Leaf, Truck, ShieldCheck, Sparkles, TrendingUp, Zap, HelpCi
 import { db, isQuotaError, useAuth } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useSettings } from '../store/useSettings';
-import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
+import { cacheManager, trackFirestoreRead, trackSupabaseRead } from '../lib/cacheManager';
+import { usingSupabaseCatalogue } from '../lib/supabase';
+import { fetchWebSetting } from '../lib/webSettings';
 import { getCategoryImage } from '../lib/constants';
 import { useProducts } from '../store/useProducts';
 import { useCart, Product } from '../store/useCart';
@@ -485,22 +489,36 @@ export function Home() {
       }
 
       try {
-        const q = query(
-          collection(db, 'orders'),
-          where('userId', '==', user.uid)
-        );
-        const querySnap = await getDocs(q);
-        trackFirestoreRead('orders', querySnap.docs.length || 1);
+        // Orders live in Supabase now. Either source yields the same shape --
+        // plain order objects with `items` and `createdAt` in milliseconds --
+        // so the reorder logic below is untouched.
+        let orderDocs: any[];
+        if (READ_ORDERS_FROM_SUPABASE) {
+          const mine = await fetchMyOrders();
+          if (!mine.ok) {
+            console.error('[REORDER] could not load past orders:', mine.reason);
+            setReorderProducts([]);
+            return;
+          }
+          orderDocs = mine.orders ?? [];
+        } else {
+          const q = query(
+            collection(db, 'orders'),
+            where('userId', '==', user.uid)
+          );
+          const querySnap = await getDocs(q);
+          trackFirestoreRead('orders', querySnap.docs.length || 1);
+          orderDocs = querySnap.docs.map(d => d.data());
+        }
 
-        if (querySnap.empty) {
+        if (orderDocs.length === 0) {
           setReorderProducts([]);
           return;
         }
 
         const orderedProductTimestamps = new Map<string, number>();
 
-        querySnap.docs.forEach((d) => {
-          const data = d.data();
+        orderDocs.forEach((data) => {
           const itemsArr = data.items || [];
           const timestamp = data.createdAt || 0;
 
@@ -554,11 +572,20 @@ export function Home() {
 
       await cacheManager.fetchDeduplicated('hero_banners_fetch', async () => {
         try {
-          const docRef = doc(db, 'settings', 'heroBanners');
-          const docSnap = await getDoc(docRef);
-          trackFirestoreRead('settings', 1);
-          if (docSnap.exists() && docSnap.data().banners) {
-            const banners = docSnap.data().banners;
+          let data: Record<string, any> | null;
+
+          if (usingSupabaseCatalogue()) {
+            data = await fetchWebSetting('heroBanners');
+            trackSupabaseRead('web_settings', data ? 1 : 0);
+          } else {
+            const docRef = doc(db, 'settings', 'heroBanners');
+            const docSnap = await getDoc(docRef);
+            trackFirestoreRead('settings', 1);
+            data = docSnap.exists() ? docSnap.data() : null;
+          }
+
+          if (data && data.banners) {
+            const banners = data.banners;
             cacheManager.set('heroBanners', banners);
             setHeroBanners(banners);
             // Preload images in background
@@ -636,11 +663,20 @@ export function Home() {
 
       await cacheManager.fetchDeduplicated('spotlights_fetch', async () => {
         try {
-          const docRef = doc(db, 'settings', 'spotlights');
-          const docSnap = await getDoc(docRef);
-          trackFirestoreRead('settings', 1);
-          if (docSnap.exists()) {
-            const overrides = docSnap.data();
+          let overridesData: Record<string, any> | null;
+
+          if (usingSupabaseCatalogue()) {
+            overridesData = await fetchWebSetting('spotlights');
+            trackSupabaseRead('web_settings', overridesData ? 1 : 0);
+          } else {
+            const docRef = doc(db, 'settings', 'spotlights');
+            const docSnap = await getDoc(docRef);
+            trackFirestoreRead('settings', 1);
+            overridesData = docSnap.exists() ? docSnap.data() : null;
+          }
+
+          if (overridesData) {
+            const overrides = overridesData;
             cacheManager.set('spotlights', overrides);
             setSpotlightsConfig(overrides);
           }

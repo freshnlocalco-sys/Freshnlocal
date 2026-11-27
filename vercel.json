@@ -383,6 +383,18 @@
       "destination": "/api/meta/catalog-feed"
     },
     {
+      "source": "/api/orders/:action",
+      "destination": "/api/orders?action=:action"
+    },
+    {
+      "source": "/api/admin/:action",
+      "destination": "/api/admin?action=:action"
+    },
+    {
+      "source": "/api/reviews/:action",
+      "destination": "/api/reviews?action=:action"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

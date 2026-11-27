@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { initializeFirestore, collection, getDocs } from 'firebase/firestore';
+import { readProducts } from './lib/catalogueSource.mjs';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,18 +14,19 @@ async function generateMeta() {
     const configPath = path.join(__dirname, '../firebase-applet-config.json');
     const config = JSON.parse(await readFile(configPath, 'utf8'));
     
-    const app = initializeApp(config);
-    const db = initializeFirestore(app, {
-      experimentalForceLongPolling: true
-    }, "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
-    
-    const productsRef = collection(db, 'products');
-    const snapshot = await getDocs(productsRef);
-    
-    const products = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    // Firestore or Supabase, decided by VITE_CATALOGUE_SOURCE in .env -- the
+    // same variable the browser bundle reads, so the site and its build
+    // artefacts can never disagree about where the catalogue came from.
+    const { source, products } = await readProducts(async () => {
+      const app = initializeApp(config);
+      const db = initializeFirestore(app, {
+        experimentalForceLongPolling: true
+      }, config.firestoreDatabaseId || "ai-studio-6ec7829e-2bd5-4dd4-9c99-1e64c572ed67");
+
+      const snapshot = await getDocs(collection(db, 'products'));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    });
+    console.log(`  ${products.length} products from ${source}`);
     
     const distDir = path.join(__dirname, '../dist');
     const indexPath = path.join(distDir, 'index.html');
