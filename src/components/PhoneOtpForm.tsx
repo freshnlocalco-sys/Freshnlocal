@@ -18,10 +18,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageCircle, Loader2, ArrowLeft, AlertCircle, Phone, Clock, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
-import {
-  requestOtp, verifyOtp, formatIndianMobile, toE164, OtpError, NoAccountError,
-  registerCustomer, registrationPending, RegistrationError, signOutOtp,
-} from '../lib/otpAuth';
+import { requestOtp, verifyOtp, formatIndianMobile, toE164, OtpError, NoAccountError } from '../lib/otpAuth';
 import { notifySignInSuccess } from '../lib/authNotifications';
 import {
   canSend, recordSend, recordFailedAttempt, attemptsLeft, codeExpiresAt,
@@ -34,12 +31,7 @@ interface Props {
 }
 
 export function PhoneOtpForm({ onSuccess, onStaffMode }: Props) {
-  const [step, setStep] = useState<'phone' | 'code' | 'register'>('phone');
-  // Compulsory registration: full name and email, after the code, before an
-  // account exists. The address is still taken at checkout.
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regErrors, setRegErrors] = useState<{ name?: string; email?: string }>({});
+  const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -122,56 +114,6 @@ export function PhoneOtpForm({ onSuccess, onStaffMode }: Props) {
    * because the auto-submit below fires from the keystroke that completes the
    * sixth digit -- before React has re-rendered with it.
    */
-/** Switch to the registration step, pre-filled from any existing account. */
-  const openRegistration = useCallback(async () => {
-    const pending = await registrationPending();
-    if (!pending) return false;
-    setRegName(pending.name);
-    setRegEmail(pending.email);
-    if (!phone) setPhone(String(pending.phone).replace(/\D/g, '').slice(-10));
-    setRegErrors({});
-    setError(null);
-    setNotice(null);
-    setStep('register');
-    return true;
-  }, [phone]);
-
-  // Someone who entered their code but left before registering: the form
-  // reopens straight at registration.
-  useEffect(() => {
-    void openRegistration();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const submitRegistration = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loading) return;
-    const errs: { name?: string; email?: string } = {};
-    if (regName.trim().length < 2) errs.name = 'Please enter your full name.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(regEmail.trim())) errs.email = 'Please enter a valid email address.';
-    setRegErrors(errs);
-    setError(null);
-    if (errs.name || errs.email) return;
-
-    setLoading(true);
-    try {
-      await registerCustomer(regName.trim(), regEmail.trim());
-      notifySignInSuccess(regName.trim().split(' ')[0] || 'there', '');
-      onSuccess();
-    } catch (err) {
-      setLoading(false);
-      if (err instanceof NoAccountError) {
-        setStep('phone');
-        setError(err.message);
-      } else if (err instanceof RegistrationError) {
-        if (err.fields.name || err.fields.email) setRegErrors(err.fields);
-        else setError(err.message);
-      } else {
-        setError('Could not save your details. Please try again.');
-      }
-    }
-  };
-
   const verifyCode = async (value: string) => {
     if (verifying.current) return;
     setError(null);
@@ -185,14 +127,8 @@ export function PhoneOtpForm({ onSuccess, onStaffMode }: Props) {
     verifying.current = true;
     setLoading(true);
     try {
-      const result = await verifyOtp(phone, value);
+      await verifyOtp(phone, value);
       clearOtpState(phone);          // a clean slate for the next sign-in
-      if (result === 'register') {
-        await openRegistration();
-        setLoading(false);
-        verifying.current = false;
-        return;
-      }
       notifySignInSuccess('there', '');
       onSuccess();
       // No setLoading(false): the modal closes, and clearing it first makes the
@@ -252,88 +188,6 @@ export function PhoneOtpForm({ onSuccess, onStaffMode }: Props) {
 
   const errorBox = error && banner('error', <AlertCircle className="w-4 h-4 text-red-600" />, error);
   const noticeBox = !error && notice && banner('info', <Clock className="w-4 h-4 text-amber-600" />, notice);
-
-  // ---- registration: compulsory name + email --------------------------------
-  if (step === 'register') {
-    return (
-      <>
-        <div className="mb-5 pr-6">
-          <h2 className="text-2xl font-bold text-foreground tracking-tight">Complete your registration</h2>
-          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            One last step for{' '}
-            <b className="font-semibold text-foreground/80">{formatIndianMobile(phone)}</b>. We use your
-            name on orders and send order updates to your email. You'll add a delivery address at checkout.
-          </p>
-        </div>
-
-        {errorBox}
-
-        <form onSubmit={submitRegistration} className="space-y-3.5" noValidate>
-          <div>
-            <label className="block text-xs font-semibold text-foreground/85 mb-1.5" htmlFor="reg-name">
-              Full name <span className="text-red-600" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="reg-name"
-              required
-              autoFocus
-              type="text"
-              autoComplete="name"
-              maxLength={80}
-              value={regName}
-              onChange={e => { setRegName(e.target.value); if (regErrors.name) setRegErrors({ ...regErrors, name: undefined }); }}
-              aria-invalid={!!regErrors.name}
-              aria-describedby={regErrors.name ? 'reg-name-err' : undefined}
-              placeholder="Your full name"
-              className="w-full h-11 px-3.5 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
-            />
-            {regErrors.name && <p id="reg-name-err" role="alert" className="text-[11px] text-red-600 mt-1 ml-0.5">{regErrors.name}</p>}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-foreground/85 mb-1.5" htmlFor="reg-email">
-              Email address <span className="text-red-600" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="reg-email"
-              required
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              maxLength={254}
-              value={regEmail}
-              onChange={e => { setRegEmail(e.target.value); if (regErrors.email) setRegErrors({ ...regErrors, email: undefined }); }}
-              aria-invalid={!!regErrors.email}
-              aria-describedby={regErrors.email ? 'reg-email-err' : undefined}
-              placeholder="you@example.com"
-              className="w-full h-11 px-3.5 bg-secondary/40 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary focus:bg-white transition-colors"
-            />
-            {regErrors.email && <p id="reg-email-err" role="alert" className="text-[11px] text-red-600 mt-1 ml-0.5">{regErrors.email}</p>}
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-11 mt-1 bg-primary hover:bg-[#009e45] active:scale-[0.99] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (<><Loader2 className="w-4 h-4 animate-spin" /><span>Saving...</span></>) : (<span>Create my account</span>)}
-          </button>
-        </form>
-
-        <div className="text-center text-xs text-muted-foreground mt-4.5">
-          Not your number?
-          <button
-            type="button"
-            disabled={loading}
-            onClick={async () => { await signOutOtp(); setStep('phone'); setCode(''); setRegErrors({}); setError(null); }}
-            className="text-primary font-bold hover:underline cursor-pointer ml-1.5 disabled:opacity-50"
-          >
-            Use a different number
-          </button>
-        </div>
-      </>
-    );
-  }
 
   // ---- step 1: the number ---------------------------------------------------
   if (step === 'phone') {

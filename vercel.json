@@ -395,10 +395,6 @@
       "destination": "/api/reviews?action=:action"
     },
     {
-      "source": "/api/account/:action",
-      "destination": "/api/account?action=:action"
-    },
-    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

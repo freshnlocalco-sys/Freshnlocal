@@ -16,8 +16,6 @@ import { registerOtpHook } from './whatsappOtp';
 import { registerReviews } from './reviews';
 import { registerAdminPoints } from './adminPoints';
 import { registerOrderAdminSync } from './orderAdminSync';
-import { handleStaffToken } from './staffPhoneAuth';
-import { handleRegister } from './customerRegistration';
 import { generateMetaFeedXml } from './src/lib/metaFeedGenerator';
 
 dotenv.config();
@@ -629,16 +627,6 @@ Format your output exactly as a JSON object with these keys:
   // An admin's order edit, copied from Firestore to the row the customer's
   // order page reads. See orderAdminSync.ts.
   registerOrderAdminSync(app);
-
-  // Phone sign-in steps. Same handlers api/account.ts serves on Vercel.
-  app.post('/api/account/staff-token', async (req, res) => {
-    const { status, body } = await handleStaffToken(req.body);
-    res.status(status).json(body);
-  });
-  app.post('/api/account/register', async (req, res) => {
-    const { status, body } = await handleRegister(req.body);
-    res.status(status).json(body);
-  });
 
   // Posting and removing product reviews. Reading them does not come through
   // here -- web_reviews is publicly readable, so the browser fetches reviews

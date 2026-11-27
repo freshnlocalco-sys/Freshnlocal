@@ -35,8 +35,7 @@
  */
 
 import { supabase } from './supabase';
-import { auth, useAuth, type AppUser, type Address } from './firebase';
-import { signInWithCustomToken } from 'firebase/auth';
+import { useAuth, type AppUser, type Address } from './firebase';
 import { claimAuth, releaseAuth, ownedByOther } from './authSession';
 
 /**
@@ -114,7 +113,7 @@ export async function requestOtp(phone: string): Promise<void> {
  * store is populated the same way whether a session was just created or
  * restored from a previous visit.
  */
-export async function verifyOtp(phone: string, code: string): Promise<'signed-in' | 'register'> {
+export async function verifyOtp(phone: string, code: string): Promise<void> {
   const e164 = toE164(phone);
   if (!e164) throw new OtpError('Enter a 10-digit Indian mobile number.');
 
@@ -129,152 +128,25 @@ export async function verifyOtp(phone: string, code: string): Promise<'signed-in
 
   if (error) throw new OtpError(humanise(error.message, error.status));
 
-  // Staff first. A staff member signs in by phone into their OWN account --
-  // the Firebase one the Admin Portal needs -- not into a customer account,
-  // even if a stray customer row shares the number.
-  const staff = await tryStaffSignIn();
-  if (staff === 'signed-in') return 'signed-in';
-  if (staff === 'staff-unavailable') {
-    await client().auth.signOut().catch(() => {});
-    throw new NoAccountError(
-      "Phone sign-in for staff isn't switched on yet. Please sign in with your email below."
-    );
-  }
-  if (staff === 'shared') {
-    await client().auth.signOut().catch(() => {});
-    throw new NoAccountError(
-      'This number is on more than one staff account. Please sign in with your email below.'
-    );
-  }
-
   // A valid code proves the phone, not that a shop account sits behind it.
   // Check BEFORE the caller shows "signed in": without this the form
   // congratulated the customer, closed, and left them signed out, because the
   // session had no customer row to load.
   const appUser = await loadAppUser();
   if (!appUser) {
-    // Registration is compulsory: no account yet, or one with no name or
-    // email. KEEP the session -- it is what proves the phone when the form is
-    // submitted -- and let the form collect the details.
-    return 'register';
+    // End the half-made session, so nothing is left holding a token that
+    // RLS shows nothing to.
+    await client().auth.signOut().catch(() => {});
+    throw new NoAccountError(
+      "This number isn't linked to a customer account. " +
+      'If you are staff, sign in with your email below.'
+    );
   }
 
   // Populate the store now, rather than racing onAuthStateChange: the form
   // closes the moment this resolves, and the header should already say who is
   // signed in when it does. The listener will set the same user again, which
   // is harmless.
-  claimAuth('supabase');
-  useAuth.getState().setUser(appUser);
-  return 'signed-in';
-}
-
-/**
- * If this phone belongs to exactly ONE staff account, swap the fresh Supabase
- * session for that account's Firebase session. The server decides, from the
- * database, and only for a code entered in the last few minutes (see
- * staffPhoneAuth.ts). Nothing here trusts the browser about who is staff.
- *
- * Returns 'not-staff' for everyone else -- including when the server is not
- * set up or cannot be reached -- so a customer's sign-in never depends on it.
- */
-async function tryStaffSignIn(): Promise<'signed-in' | 'shared' | 'staff-unavailable' | 'not-staff'> {
-  const { data } = await client().auth.getSession();
-  const accessToken = data.session?.access_token;
-  if (!accessToken) return 'not-staff';
-
-  let res: Response;
-  try {
-    res = await fetch('/api/account/staff-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accessToken }),
-    });
-  } catch {
-    return 'not-staff';
-  }
-  if (res.status === 409) return 'shared';
-  if (res.status === 503) {
-    const b = (await res.json().catch(() => ({}))) as { error?: string };
-    if (b.error === 'staff-unavailable') return 'staff-unavailable';
-  }
-  if (!res.ok) return 'not-staff';
-
-  const { customToken } = (await res.json().catch(() => ({}))) as { customToken?: string };
-  if (!customToken) return 'not-staff';
-
-  try {
-    await signInWithCustomToken(auth, customToken);
-  } catch (err) {
-    console.warn('[OTP] staff Firebase sign-in failed:', err instanceof Error ? err.message : String(err));
-    await client().auth.signOut().catch(() => {});
-    // NoAccountError, not OtpError: the code WAS right, so this must not be
-    // counted against the customer's attempts.
-    throw new NoAccountError('Could not sign you in as staff just now. Please sign in with your email below.');
-  }
-  // Firebase owns this browser now. Claim it BEFORE ending the phone session,
-  // or the Supabase sign-out would clear the staff member just signed in.
-  claimAuth('firebase');
-  await client().auth.signOut().catch(() => {});
-  return 'signed-in';
-}
-
-export class RegistrationError extends OtpError {
-  constructor(message: string, public fields: { name?: string; email?: string } = {}) { super(message); }
-}
-
-/**
- * Is this browser holding a verified phone with no completed account? That is
- * a customer who entered their code but has not registered yet -- the form
- * reopens for them rather than letting them use the site half signed in.
- */
-export async function registrationPending(): Promise<{ name: string; email: string; phone: string } | null> {
-  const sb = supabase;
-  if (!sb) return null;
-  const { data } = await sb.auth.getSession();
-  const session = data.session;
-  if (!session?.user?.phone) return null;
-  if (await loadAppUser()) return null;
-  // Pre-fill whatever the linked account already has (older accounts often
-  // have an email but no name).
-  const { data: rows } = await sb
-    .from('web_users')
-    .select('display_name, email')
-    .eq('auth_user_id', session.user.id)
-    .eq('is_deleted', false)
-    .eq('role', 'customer')
-    .limit(1);
-  const row = rows?.[0];
-  return { name: row?.display_name ?? '', email: row?.email ?? '', phone: session.user.phone };
-}
-
-/** Submit the compulsory registration, then sign the customer in. */
-export async function registerCustomer(name: string, email: string): Promise<void> {
-  const { data } = await client().auth.getSession();
-  const accessToken = data.session?.access_token;
-  if (!accessToken) throw new RegistrationError('Your sign-in has expired. Please request a new code.');
-
-  let res: Response;
-  try {
-    res = await fetch('/api/account/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accessToken, name, email }),
-    });
-  } catch {
-    throw new RegistrationError('Could not reach us just now. Please try again.');
-  }
-  const body = (await res.json().catch(() => ({}))) as { error?: string; message?: string; fields?: { name?: string; email?: string } };
-  if (!res.ok) {
-    if (body.fields) throw new RegistrationError(body.fields.email || body.fields.name || 'Please check your details.', body.fields);
-    if (body.error === 'staff') {
-      await client().auth.signOut().catch(() => {});
-      throw new NoAccountError(body.message || 'This number belongs to a staff account. Please sign in with your email below.');
-    }
-    throw new RegistrationError(body.message || 'Could not save your details. Please try again.');
-  }
-
-  const appUser = await loadAppUser();
-  if (!appUser) throw new RegistrationError('Your details were saved, but signing in failed. Please refresh the page.');
   claimAuth('supabase');
   useAuth.getState().setUser(appUser);
 }
@@ -393,9 +265,6 @@ async function loadAppUser(): Promise<AppUser | null> {
   }
   const row = rows?.[0];
   if (!row) return null;
-  // Registration is compulsory: an account without a name or an email is not
-  // finished, and is treated as not signed in until the form is completed.
-  if (!String(row.display_name ?? '').trim() || !String(row.email ?? '').trim()) return null;
 
   let addresses: Address[] = [];
   const { data: addrRows, error: addrErr } = await sb
@@ -451,13 +320,6 @@ if (supabase) {
         // this browser (a staff member who also has a phone session lying
         // around).
         if (!ownedByOther('supabase')) useAuth.getState().setUser(null);
-        // A verified phone that never finished registering (page closed, or
-        // reloaded, mid-form). Registration is compulsory, so reopen the form
-        // once on page load; PhoneOtpForm sees registrationPending() and goes
-        // straight to it.
-        if (event === 'INITIAL_SESSION' && session.user.phone && !ownedByOther('supabase')) {
-          window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode: 'login' } }));
-        }
       }
       useAuth.getState().setLoading(false);
       return;
