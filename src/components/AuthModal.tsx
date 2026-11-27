@@ -3,6 +3,7 @@ import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '../lib/fire
 import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, ArrowLeft, Key } from 'lucide-react';
 import { getHumanAuthErrorMessage, notifySignInSuccess, notifySignUpSuccess, notifyAuthError, notifyPasswordResetSuccess } from '../lib/authNotifications';
 import { motion, AnimatePresence } from 'motion/react';
+import { PhoneOtpForm } from './PhoneOtpForm';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -21,6 +22,10 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState(false);
+  // Customers sign in by phone + WhatsApp OTP; the email/password form below is
+  // now only for the 3 admin and 1 horeca accounts, none of which has a phone
+  // number on file. Default false, so a customer never sees a password field.
+  const [staffMode, setStaffMode] = useState(false);
 
   // Sync mode if defaultMode changes
   React.useEffect(() => {
@@ -172,6 +177,19 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
           )}
         </AnimatePresence>
 
+        {!staffMode ? (
+          <PhoneOtpForm
+            onSuccess={() => {
+              setIsSuccess(true);
+              setTimeout(() => onClose(), 800);
+            }}
+            onStaffMode={() => {
+              setStaffMode(true);
+              setError(null);
+            }}
+          />
+        ) : (
+        <>
         {/* Modal Header */}
         <div className="mb-5 pr-6">
           {isForgotMode ? (
@@ -443,6 +461,26 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
               </>
             )}
           </>
+        )}
+
+        {/* Back out of the staff form. A customer who lands here by accident
+            should not have to close the modal to get their phone field back. */}
+        <div className="text-center text-xs text-muted-foreground mt-4.5 pt-3.5 border-t border-border/60">
+          Not a staff member?
+          <button
+            type="button"
+            onClick={() => {
+              setStaffMode(false);
+              setIsForgotMode(false);
+              setIsLogin(true);
+              setError(null);
+            }}
+            className="text-primary font-bold hover:underline cursor-pointer ml-1.5"
+          >
+            Sign in with your mobile
+          </button>
+        </div>
+        </>
         )}
       </motion.div>
     </div>

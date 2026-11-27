@@ -16,7 +16,7 @@
  * One order, one key, in both places.
  */
 
-import { auth } from './firebase';
+import { getCallerToken } from './callerToken';
 import { readApiJson } from './apiJson';
 
 export interface CreatedOrder {
@@ -35,15 +35,11 @@ export interface CreatedOrder {
  * customer their order was placed when nothing recorded it.
  */
 export async function createOrder(order: Record<string, any>): Promise<CreatedOrder> {
-  const user = auth.currentUser;
-  if (!user) return { ok: false, reason: 'not signed in' };
-
-  let idToken: string;
-  try {
-    idToken = await user.getIdToken();
-  } catch (err) {
-    return { ok: false, reason: `could not get a sign-in token: ${err instanceof Error ? err.message : String(err)}` };
-  }
+  // Not auth.currentUser. A customer signed in by WhatsApp OTP has no Firebase
+  // user, and this is checkout: reading it directly would mean every OTP
+  // customer is told they are not signed in at the moment they try to pay.
+  const { token: idToken, reason } = await getCallerToken();
+  if (!idToken) return { ok: false, reason: reason ?? 'not signed in' };
 
   try {
     const res = await fetch('/api/orders/create', {

@@ -24,16 +24,28 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
  * never appear here; it lives in .env without a VITE_ prefix so Vite cannot
  * expose it to a browser bundle even by accident.
  *
- * Sessions are deliberately off. Stage 1 reads public data anonymously and has
- * no business writing to storage or racing Firebase's own auth state. Stage 2
- * turns persistSession and autoRefreshToken back on when sign-in moves over.
+ * Sessions are ON as of Stage 2 (customer phone + WhatsApp OTP login). Stage 1
+ * had all three off, because reading a public catalogue anonymously has no
+ * business writing to storage or racing Firebase's auth state. Now that a
+ * customer's session lives here, it has to survive a refresh and refresh its
+ * own access token, so the first two are back on.
+ *
+ * detectSessionInUrl stays OFF. It exists for OAuth and magic-link redirects
+ * that come back with tokens in the URL fragment, and phone OTP has no redirect
+ * at all -- the code is typed into the page that asked for it. Leaving it on
+ * would mean the client scans every URL the storefront is ever loaded with,
+ * which is a parser we do not need pointed at our query strings.
+ *
+ * Staff still sign in through Firebase, so two auth systems are live at once.
+ * src/lib/authSession.ts arbitrates which one owns the current session; without
+ * it, whichever listener fired last would win and sign the other out.
  */
 export const supabase: SupabaseClient | null =
   url && anonKey
     ? createClient(url, anonKey, {
         auth: {
-          persistSession: false,
-          autoRefreshToken: false,
+          persistSession: true,
+          autoRefreshToken: true,
           detectSessionInUrl: false,
         },
       })

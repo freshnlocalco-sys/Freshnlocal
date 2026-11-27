@@ -7,7 +7,7 @@
  * on the server rather than here.
  */
 
-import { auth } from './firebase';
+import { getCallerToken } from './callerToken';
 import { readApiJson } from './apiJson';
 
 export interface FetchedOrders {
@@ -17,15 +17,11 @@ export interface FetchedOrders {
 }
 
 export async function fetchMyOrders(): Promise<FetchedOrders> {
-  const user = auth.currentUser;
-  if (!user) return { ok: false, reason: 'not signed in' };
-
-  let idToken: string;
-  try {
-    idToken = await user.getIdToken();
-  } catch (err) {
-    return { ok: false, reason: `could not get a sign-in token: ${err instanceof Error ? err.message : String(err)}` };
-  }
+  // Not auth.currentUser: a customer signed in by WhatsApp OTP has no Firebase
+  // user at all, and reading it directly would report them as signed out while
+  // they are looking at their own order history.
+  const { token: idToken, reason } = await getCallerToken();
+  if (!idToken) return { ok: false, reason: reason ?? 'not signed in' };
 
   try {
     const res = await fetch('/api/orders/mine', {
