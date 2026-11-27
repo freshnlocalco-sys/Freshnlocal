@@ -830,7 +830,7 @@ export function generateLabelStyles(orientation: LabelOrientation = 'portrait'):
       border-bottom: 1.5px solid #000000;
       padding-bottom: 0.4mm;
       margin-bottom: 0.4mm;
-      padding-right: 2mm;
+      padding-right: 10mm;
     }
     .label-brand {
       font-size: 8pt;
@@ -859,10 +859,10 @@ export function generateLabelStyles(orientation: LabelOrientation = 'portrait'):
       font-weight: 700;
       color: #111111;
       gap: 1mm;
-      padding-right: 2mm;
+      padding-right: 10mm;
     }
     .label-customer-name {
-      max-width: 42mm;
+      max-width: 36mm;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -941,7 +941,7 @@ export function generateLabelStyles(orientation: LabelOrientation = 'portrait'):
       justify-content: center;
       flex-shrink: 0;
       padding: 0.2mm 1.5mm;
-      margin-right: 3.5mm;
+      margin-right: 4mm;
       background: #ffffff;
       border-left: 1px dotted #888888;
     }
@@ -1009,7 +1009,7 @@ export function generateSingleItemLabelHtml(
 
   // Generate QR code encoding both Item Code and Order ID (plus product name)
   const qrText = `Order: ${orderNum}\nItem Code: ${itemCode || 'N/A'}\nItem: ${itemName}`;
-  const qrSvg = generateQrCodeSvg(qrText, 46);
+  const qrSvg = generateQrCodeSvg(qrText, 60);
 
   return `
     <div class="label-sticker-page">
@@ -1032,6 +1032,7 @@ export function generateSingleItemLabelHtml(
           <div class="label-item-name">${itemName}</div>
           <div class="label-item-meta">
             ${unit ? `<span>Pack: <b>${unit}</b></span>` : ''}
+            ${price ? `<span>Rate: <b>${price}</b></span>` : ''}
             <span>Order Qty: <b>${labelData.orderQty || 1}</b></span>
           </div>
         </div>

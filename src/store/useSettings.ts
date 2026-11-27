@@ -7,6 +7,7 @@ import { usingSupabaseCatalogue } from '../lib/supabase';
 import { fetchWebSetting, fetchWebSettings } from '../lib/webSettings';
 import { updateFaviconInDOM } from '../lib/utils';
 import toast from 'react-hot-toast';
+import { DEFAULT_META_CATEGORY_MAPPINGS } from '../lib/metaFeedGenerator';
 
 export interface CategoryImageMapping {
   [category: string]: string;
@@ -47,6 +48,9 @@ interface SettingsState {
   reorderProductCategories: (newOrder: string[]) => Promise<void>;
   reorderHorecaCategories: (newOrder: string[]) => Promise<void>;
   reorderJuiceCategories: (newOrder: JuiceCategory[]) => Promise<void>;
+  metaCategoryMapping: Record<string, string>;
+  updateMetaCategoryMapping: (category: string, metaCategory: string) => Promise<void>;
+  saveAllMetaCategoryMappings: (mappings: Record<string, string>) => Promise<void>;
   faviconUrl: string | null;
   fetchFavicon: () => Promise<void>;
   updateFavicon: (url: string | null) => Promise<void>;
@@ -96,6 +100,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   productCategories: DEFAULT_PRODUCT_CATEGORIES,
   horecaCategoryOrder: [],
   juiceCategories: DEFAULT_JUICE_SECTIONS,
+  metaCategoryMapping: DEFAULT_META_CATEGORY_MAPPINGS,
   faviconUrl: getInitialFaviconUrl(),
   lastFetched: 0,
   loading: false,
@@ -114,6 +119,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
     const cachedHorecaOrder = cacheManager.get<string[]>('horecaCategoryOrder', true);
     const cachedJuiceCats = cacheManager.get<JuiceCategory[]>('juiceCategories', true);
     const cachedVisibility = cacheManager.get<CategoryVisibility>('categoryVisibility', true);
+    const cachedMetaMappings = cacheManager.get<Record<string, string>>('metaCategoryMapping', true);
 
     if (cachedImages) {
       set({ categoryImages: cachedImages });
@@ -129,6 +135,9 @@ export const useSettings = create<SettingsState>((set, get) => ({
     }
     if (cachedVisibility) {
       set({ categoryVisibility: cachedVisibility });
+    }
+    if (cachedMetaMappings) {
+      set({ metaCategoryMapping: cachedMetaMappings });
     }
 
     // 3. See if the cache is unexpired (< 24 hours) and we aren't forcing
@@ -174,6 +183,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         let horecaOrder: string[] = [];
         let juiceCats = DEFAULT_JUICE_SECTIONS;
         let catVisibility: CategoryVisibility = {};
+        let metaCatMapping: Record<string, string> = DEFAULT_META_CATEGORY_MAPPINGS;
 
         if (catData) {
           if (catData.productCategories) {
@@ -190,6 +200,9 @@ export const useSettings = create<SettingsState>((set, get) => ({
           if (catData.categoryVisibility) {
             catVisibility = catData.categoryVisibility;
           }
+          if (catData.metaCategoryMapping) {
+            metaCatMapping = { ...DEFAULT_META_CATEGORY_MAPPINGS, ...catData.metaCategoryMapping };
+          }
         }
 
         // Save back to cache
@@ -198,6 +211,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         cacheManager.set('horecaCategoryOrder', horecaOrder);
         cacheManager.set('juiceCategories', juiceCats);
         cacheManager.set('categoryVisibility', catVisibility);
+        cacheManager.set('metaCategoryMapping', metaCatMapping);
 
         set({ 
           categoryImages: imagesData, 
@@ -205,6 +219,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
           horecaCategoryOrder: horecaOrder,
           juiceCategories: juiceCats,
           categoryVisibility: catVisibility,
+          metaCategoryMapping: metaCatMapping,
           lastFetched: Date.now(), 
           loading: false 
         });
@@ -268,6 +283,36 @@ export const useSettings = create<SettingsState>((set, get) => ({
       cacheManager.set('categoryVisibility', updatedVisibility);
       set({ categoryVisibility: updatedVisibility });
       toast.success(`Category "${normKey}" ${visible ? 'enabled' : 'hidden'} for ${target.toUpperCase()}`);
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
+      throw error;
+    }
+  },
+  updateMetaCategoryMapping: async (category: string, metaCategory: string) => {
+    try {
+      const current = get().metaCategoryMapping || {};
+      const normKey = category.trim();
+      const updated = {
+        ...current,
+        [normKey]: metaCategory.trim()
+      };
+      const docRef = doc(db, 'settings', 'categoriesConfig');
+      await setDocMirrored(docRef, { metaCategoryMapping: updated }, { merge: true });
+      cacheManager.set('metaCategoryMapping', updated);
+      set({ metaCategoryMapping: updated });
+      toast.success(`Meta category for "${normKey}" updated`);
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
+      throw error;
+    }
+  },
+  saveAllMetaCategoryMappings: async (mappings: Record<string, string>) => {
+    try {
+      const docRef = doc(db, 'settings', 'categoriesConfig');
+      await setDocMirrored(docRef, { metaCategoryMapping: mappings }, { merge: true });
+      cacheManager.set('metaCategoryMapping', mappings);
+      set({ metaCategoryMapping: mappings });
+      toast.success('Meta catalog categories updated successfully');
     } catch (error: any) {
       handleFirestoreError(error, OperationType.WRITE, 'settings/categoriesConfig');
       throw error;
