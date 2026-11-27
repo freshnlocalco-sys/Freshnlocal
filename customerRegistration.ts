@@ -21,7 +21,7 @@
  *   (the database enforces this too: uq_web_users_email_live).
  */
 
-import { STAFF_ROLES, normalisePhone } from './staffPhoneAuth.js';
+import { STAFF_ROLES, normalisePhone } from './phoneRules.js';
 
 const SB_URL = () => (process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SB_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY || '';

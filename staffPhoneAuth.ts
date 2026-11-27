@@ -31,8 +31,22 @@
  * it the endpoint answers 503 and the sign-in form falls back to "use email".
  */
 
-import { initializeApp, cert, getApps, type App } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+import type { App } from 'firebase-admin/app';
+import { STAFF_ROLES, normalisePhone } from './phoneRules.js';
+export { STAFF_ROLES, normalisePhone };
+
+// firebase-admin is loaded only when a staff exchange actually happens, and a
+// failure to load it is answered as "staff sign-in unavailable" instead of
+// crashing the function. Nothing else in api/account.ts may depend on it.
+async function firebaseAdmin() {
+  try {
+    const [app, auth] = await Promise.all([import('firebase-admin/app'), import('firebase-admin/auth')]);
+    return { ...app, getAuth: auth.getAuth };
+  } catch (err) {
+    console.error('[STAFF-PHONE] firebase-admin could not be loaded:', err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
 
 const SB_URL = () => (process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SB_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -40,18 +54,9 @@ const PROJECT_ID = 'freshnlocal-4a420';
 const FRESH_SECONDS = 10 * 60;
 const ADMIN_APP_NAME = 'staff-phone-signin';
 
-/** Roles that sign in through Firebase rather than as a phone customer. */
-export const STAFF_ROLES = ['admin', 'horeca_admin', 'horeca'] as const;
 
 type Reply = { status: number; body: unknown };
 
-/** The bare 10-digit Indian mobile, or null. Same rule as toE164() elsewhere. */
-export function normalisePhone(raw: unknown): string | null {
-  let d = String(raw ?? '').replace(/\D/g, '');
-  if (d.length === 12 && d.startsWith('91')) d = d.slice(2);
-  if (d.length === 11 && d.startsWith('0')) d = d.slice(1);
-  return /^[6-9]\d{9}$/.test(d) ? d : null;
-}
 
 export interface StaffRow {
   id: string;
@@ -96,9 +101,12 @@ export function otpAgeSeconds(accessToken: string, nowSeconds = Date.now() / 100
 const mask = (p: string | null | undefined) => (p ? `...${String(p).slice(-4)}` : '(none)');
 
 let warnedConfig = false;
-function adminApp(): App | null {
+async function adminApp(): Promise<{ app: App; getAuth: (a: App) => any } | null> {
+  const fa = await firebaseAdmin();
+  if (!fa) return null;
+  const { initializeApp, cert, getApps, getAuth } = fa;
   const existing = getApps().find(a => a.name === ADMIN_APP_NAME);
-  if (existing) return existing;
+  if (existing) return { app: existing, getAuth };
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) return null;
   let sa: any;
@@ -114,7 +122,7 @@ function adminApp(): App | null {
     warnedConfig = true;
     return null;
   }
-  return initializeApp({ credential: cert(sa) }, ADMIN_APP_NAME);
+  return { app: initializeApp({ credential: cert(sa) }, ADMIN_APP_NAME), getAuth };
 }
 
 export const staffPhoneConfigured = (): boolean =>
@@ -175,11 +183,14 @@ export async function handleStaffToken(rawBody: unknown): Promise<Reply> {
   }
 
   // 4. Mint the Firebase session for that one account.
-  const app = adminApp();
+  // Not configured (no key) or firebase-admin unavailable: answered the same,
+  // and only for a number that IS staff, so customers are never affected.
+  const admin = process.env.FIREBASE_SERVICE_ACCOUNT ? await adminApp() : null;
+  const app = admin?.app ?? null;
   // 'staff-unavailable' tells the website this IS a staff number, so it shows
   // "use email" rather than offering a customer registration.
   if (!app) return { status: 503, body: { error: 'staff-unavailable' } };
-  const fbAuth = getAuth(app);
+  const fbAuth = admin!.getAuth(app);
   try {
     const fbUser = await fbAuth.getUser(pick.row.id);
     if (fbUser.disabled) {
