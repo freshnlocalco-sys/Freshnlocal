@@ -51,6 +51,70 @@ function newOrderNumber(): string {
   return `FNL-${Math.floor(100000 + Math.random() * 900000)}`;
 }
 
+// Read lazily, per the convention server.ts imposes: dotenv.config() runs after
+// the imports evaluate.
+const SUPABASE_URL = () => (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+const SERVICE_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+/**
+ * Subtract the points this order redeemed, atomically, server-side.
+ *
+ * This used to happen in the browser: Cart.tsx computed a new balance and wrote
+ * it to Firestore. A customer signed in by WhatsApp OTP has no Firebase user,
+ * so that write failed silently while the UI had already shown the deduction --
+ * the order completed with its discount and the points were back on reload, so
+ * the same 100 points could be redeemed on every order.
+ *
+ * Called AFTER the order is safely in web_orders, and deliberately not allowed
+ * to fail the request. The customer has paid and the order exists; refusing it
+ * now because a balance update failed would be the worse outcome by far. A
+ * failure here is loud in the log and leaves points unspent, which is a
+ * discrepancy someone can fix, not a lost order.
+ *
+ * The AMOUNT still comes from the browser -- see the header of this file. This
+ * makes the deduction real and atomic; it does not make the figure trustworthy.
+ */
+async function redeemPoints(uid: string, amount: number, orderNumber: string): Promise<void> {
+  if (!Number.isFinite(amount) || amount <= 0) return;
+  if (!SUPABASE_URL() || !SERVICE_KEY()) {
+    console.error(`[POINTS] ${orderNumber}: Supabase not configured; ${amount} point(s) NOT deducted from ${uid}`);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${SUPABASE_URL()}/rest/v1/rpc/web_redeem_points`, {
+      method: 'POST',
+      headers: {
+        apikey: SERVICE_KEY(),
+        Authorization: `Bearer ${SERVICE_KEY()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_user_id: uid, p_amount: amount }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error(
+        `[POINTS] ${orderNumber}: could not deduct ${amount} from ${uid}: ` +
+          `${res.status} ${body.slice(0, 200)}`
+      );
+      return;
+    }
+
+    const balance = await res.json().catch(() => null);
+    if (balance === null) {
+      console.error(`[POINTS] ${orderNumber}: no live web_users row for ${uid}; ${amount} point(s) not deducted`);
+      return;
+    }
+    console.log(`[POINTS] ${orderNumber}: ${amount} redeemed by ${uid}, balance now ${balance}`);
+  } catch (err) {
+    console.error(
+      `[POINTS] ${orderNumber}: deduction of ${amount} for ${uid} threw: ` +
+        (err instanceof Error ? err.message : String(err))
+    );
+  }
+}
+
 /** Postgres says 23505 and PostgREST says 409; either means the number is taken. */
 const isDuplicateNumber = (err: unknown): boolean => {
   const m = err instanceof Error ? err.message : String(err);
@@ -118,6 +182,12 @@ export async function handleOrderCreateRequest(rawBody: unknown): Promise<OrderC
     try {
       const { lines } = await mirrorOrderToSupabase(orderId, { ...toWrite, orderNumber }, null);
       console.log(`[ORDER CREATE] ${orderNumber} (${orderId}) -> web_orders, ${lines} line(s), uid ${caller.uid}`);
+
+      // Only once the order exists. Awaited so the reply carries a balance the
+      // browser can trust, and so a failure is logged against this order rather
+      // than surfacing minutes later with no context.
+      await redeemPoints(caller.uid, Number(order.pointsRedeemed ?? 0), orderNumber);
+
       return { status: 200, body: { ok: true, id: orderId, orderNumber, lines } };
     } catch (err) {
       lastErr = err;

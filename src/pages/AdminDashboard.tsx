@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { setDocMirrored, updateDocMirrored, deleteDocMirrored, mirrorProductIds } from '../lib/mirrorToSupabase';
+import { fetchAllReviews, awardPoints } from '../lib/reviews';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Package, Users, ShoppingBag, Plus, Minus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff, CheckCircle2, AlertCircle, Eye, Tag } from 'lucide-react';
 import { Product } from '../store/useCart';
@@ -1429,8 +1430,10 @@ export function AdminDashboard() {
         } else if (activeTab === 'categories') {
           await fetchCategoryImages(true);
         } else if (activeTab === 'reviews') {
-          const reviewsSnap = await getDocs(query(collection(db, 'reviews'), orderBy('createdAt', 'desc')));
-          setReviews(reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          // Reviews live in Supabase now. Reading them from Firestore here
+          // would show an empty moderation list while customers post reviews
+          // the shop never sees.
+          setReviews(await fetchAllReviews());
         } else if (activeTab === 'hero') {
           const docSnap = await getDoc(doc(db, 'settings', 'heroBanners'));
           if (docSnap.exists() && docSnap.data().banners) {
@@ -2546,16 +2549,31 @@ export function AdminDashboard() {
 
         if (pointsToGive > 0 && order.userId) {
           try {
-            const customerUserRef = doc(db, 'users', order.userId);
-            await setDoc(customerUserRef, {
-              points: increment(pointsToGive)
-            }, { merge: true });
+            // Through the server, not Firestore. The customer's balance lives
+            // in web_users now, and an admin's Firebase token cannot write it
+            // directly: RLS would match no row and the credit would vanish
+            // without an error. See adminPoints.ts.
+            const credited = await awardPoints(order.userId, pointsToGive);
+            if (!credited.ok) {
+              throw new Error(credited.reason || 'the server refused the credit');
+            }
             pointsAwardedNow = true;
             pointsGivenCount = pointsToGive;
             orderUpdates.pointsAwarded = true;
             orderUpdates.pointsAwardedAt = Date.now();
           } catch (ptsErr) {
-            console.error("Failed to credit points to customer user document:", ptsErr);
+            // Deliberately NOT marking the order as awarded: leaving the flag
+            // off means the next attempt retries the credit, where setting it
+            // would quietly cost the customer their points for good.
+            console.error("Failed to credit points to the customer:", ptsErr);
+            // And say so. The order still completes its status change with a
+            // success toast, so without this the operator has no way to know
+            // the customer was not credited -- they find out when the customer
+            // asks where their points went.
+            toast.error(
+              `Order updated, but ${pointsToGive} points were NOT credited. Mark it delivered again to retry.`,
+              { duration: 8000 }
+            );
           }
         } else {
           // If pointsToGive is 0 or guest order without userId, mark awarded so it does not re-run

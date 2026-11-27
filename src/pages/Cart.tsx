@@ -3,6 +3,7 @@ import { useCart, Product } from '../store/useCart';
 import { useAuth } from '../lib/firebase';
 import { signIn, db, handleFirestoreError, OperationType, deleteUserAddress } from '../lib/firebase';
 import { createOrder } from '../lib/createOrder';
+import { saveProfileFields, saveAddresses } from '../lib/customerProfile';
 import { WRITE_ORDER_SHADOW_TO_FIRESTORE } from '../lib/orderSource';
 import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Truck, Wallet, ShieldCheck, Info, Building2, ChevronRight, Loader2, Gift, Sparkles, Check } from 'lucide-react';
 import { addDoc, collection, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -676,27 +677,77 @@ export function Cart() {
         }
       }
 
-      // Save address and deduct redeemed discount points immediately from user profile
+      // Save the address and phone this order was placed with.
+      //
+      // Points are NOT written here any more. The browser used to compute a new
+      // balance and write it to Firestore; for a customer signed in by WhatsApp
+      // OTP there is no Firebase user, so that write failed silently while the
+      // UI had already shown the deduction -- the order went through with its
+      // discount and the points were back on reload, so the same 100 points
+      // could be redeemed on every order. orderCreate.ts now deducts them
+      // server-side and atomically, through web_redeem_points().
+      //
+      // The same expression as the order payload above, including the isHoreca
+      // case: a horeca order records pointsRedeemed 0, so deducting 100 from
+      // the local balance would disagree with both the order and the server.
+      const pointsDeducted = isHoreca ? 0 : (discount > 0 ? 100 : 0);
+      const newPoints = Math.max(0, userPoints - pointsDeducted);
+
+      // NOT `phone: orderPhone`.
+      //
+      // orderPhone is `selectedObj.phone || phone` -- the contact number on the
+      // delivery address, which is routinely somebody else's: an office, a
+      // relative, the person receiving a gift. Firestore treated web_users.phone
+      // as a cosmetic profile field so overwriting it was harmless. It is now
+      // the login identity that web_link_auth_user() matches on, and writing a
+      // delivery number over it would point the account at a number the
+      // customer does not control -- and, if a second customer really owns that
+      // number, make it match two live rows, so the trigger refuses to link
+      // either of them. The delivery contact belongs on the address row, which
+      // saveAddresses writes.
+      let profileSaved = false;
       try {
-        const userRef = doc(db, 'users', user.uid);
-        const pointsDeducted = discount > 0 ? 100 : 0;
-        const newPoints = Math.max(0, userPoints - pointsDeducted);
-        await updateDoc(userRef, { 
-          address: formattedAddress, 
-          phone: orderPhone, 
-          addresses: finalAddresses,
-          points: newPoints
+        // Customers are on Supabase; staff on Firebase fall through to the
+        // Firestore write that has always been here.
+        const handled = await saveProfileFields(user.uid, {
+          legacy_address: formattedAddress,
         });
-        setUser({ 
-          ...user, 
-          address: formattedAddress, 
-          phone: orderPhone, 
-          addresses: finalAddresses,
-          points: newPoints
-        });
+
+        if (!handled) {
+          const userRef = doc(db, 'users', user.uid);
+          await updateDoc(userRef, {
+            address: formattedAddress,
+            phone: orderPhone,
+            addresses: finalAddresses,
+            points: newPoints,
+          });
+        }
+        profileSaved = true;
       } catch (err) {
-        console.error("Failed to save user address profile details", err);
+        console.error("Failed to save user profile details", err);
       }
+
+      // Its own try, so a failed profile write does not take the address book
+      // with it. These were one updateDoc under Firestore and could not come
+      // apart; as two calls they can, and the address the customer just typed
+      // at checkout is the more important of the two to keep.
+      let addressesSaved = false;
+      try {
+        if (await saveAddresses(user.uid, finalAddresses)) addressesSaved = true;
+      } catch (err) {
+        console.error("Failed to save the address book", err);
+      }
+
+      // Points always: the server has already deducted them, so the local
+      // balance is right whatever happened above. Address and phone only if
+      // they were actually stored -- claiming otherwise would show the customer
+      // a saved address that silently reverts on their next visit.
+      setUser({
+        ...user,
+        ...(profileSaved ? { address: formattedAddress } : {}),
+        ...(addressesSaved || profileSaved ? { addresses: finalAddresses } : {}),
+        points: newPoints,
+      });
 
       clearCart();
       toast.success(`Order Placed successfully! Order ID: ${orderNumber}`);

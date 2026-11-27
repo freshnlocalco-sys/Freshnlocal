@@ -12,6 +12,9 @@ import { registerCatalogueMirror, mirrorConfigured } from './catalogueMirror';
 import { registerOrderMirror, orderMirrorConfigured } from './orderMirror';
 import { registerOrderCreate } from './orderCreate';
 import { registerOrderHistory } from './orderHistory';
+import { registerOtpHook } from './whatsappOtp';
+import { registerReviews } from './reviews';
+import { registerAdminPoints } from './adminPoints';
 import { registerOrderAdminSync } from './orderAdminSync';
 
 dotenv.config();
@@ -84,6 +87,12 @@ async function startServer() {
 
   // Add trust proxy so req.ip works correctly behind Vercel/Nginx
   app.set('trust proxy', 1);
+
+  // BEFORE express.json(): the Supabase SMS hook signs the raw request body,
+  // and a parsed-then-restringified body does not reproduce it byte for byte.
+  // This route mounts its own express.raw(), so it has to claim the stream
+  // first.
+  registerOtpHook(app);
 
   app.use(express.json({ limit: '5mb' }));
 
@@ -532,6 +541,18 @@ Format your output exactly as a JSON object with these keys:
   // An admin's order edit, copied from Firestore to the row the customer's
   // order page reads. See orderAdminSync.ts.
   registerOrderAdminSync(app);
+
+  // Posting and removing product reviews. Reading them does not come through
+  // here -- web_reviews is publicly readable, so the browser fetches reviews
+  // straight from Supabase. Writes need the server because staff hold a
+  // Firebase token that Supabase does not accept. See reviews.ts.
+  registerReviews(app);
+
+  // Crediting loyalty points when an admin marks an order delivered. Needs the
+  // server because an admin's Firebase token means web_firebase_uid() is NULL,
+  // so a direct client write would match no row and change nothing. See
+  // adminPoints.ts.
+  registerAdminPoints(app);
   if (!orderMirrorConfigured()) {
     console.warn(
       "[ORDER MIRROR] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set; " +
