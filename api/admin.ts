@@ -21,12 +21,13 @@
  * SUPABASE_SERVICE_ROLE_KEY.
  */
 
-import { handleAwardPoints } from '../adminPoints.js';
+import { handleAwardPoints, handleAwardOrderPoints } from '../adminPoints.js';
 import { handleMirrorRequest } from '../catalogueMirror.js';
 
 type Reply = { status: number; body: unknown };
 const ACTIONS: Record<string, (body: unknown) => Promise<Reply>> = {
   'award-points': (b) => handleAwardPoints(b),
+  'award-order-points': (b) => handleAwardOrderPoints(b),
   // This handler expects an object; a string arrives when the content type is
   // missing, so it is parsed here, exactly as api/admin/mirror-catalogue.ts did.
   'mirror-catalogue': (b) => handleMirrorRequest(

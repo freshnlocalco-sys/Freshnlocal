@@ -100,9 +100,74 @@ export async function handleAwardPoints(rawBody: unknown): Promise<Reply> {
   }
 }
 
+/** Admin or HoReCa admin, read from the database. Null when the caller is not. */
+async function staffCaller(idToken: string): Promise<string | null> {
+  const caller = await lookupCaller(idToken);
+  if (!caller.uid) return null;
+  const r = await fetch(
+    `${SUPABASE_URL()}/rest/v1/web_users?select=role,is_deleted&id=eq.${encodeURIComponent(caller.uid)}&limit=1`,
+    { headers: H() }
+  );
+  if (!r.ok) return null;
+  const who = (await r.json())?.[0];
+  return who && !who.is_deleted && (who.role === 'admin' || who.role === 'horeca_admin') ? caller.uid : null;
+}
+
+/**
+ * POST /api/admin/award-order-points  { idToken, orderId }
+ *
+ * Credit ONE order's points, at most once, through web_award_order_points()
+ * (supabase_web_points_on_completion.sql), which claims the order's
+ * points_awarded flag and credits the customer in a single statement.
+ *
+ * The Admin Portal used to call award-points with a user and an amount, having
+ * checked only its own Firestore copy of the order. Once the ERP can complete
+ * an order and credit it too, that copy can be stale -- and the customer would
+ * be paid twice. Crediting by order, against the Supabase flag, closes that.
+ *
+ * Answers { reason: 'not-ready' } while the SQL has not been run, so the
+ * Portal can fall back to its previous behaviour during the rollout.
+ */
+export async function handleAwardOrderPoints(rawBody: unknown): Promise<Reply> {
+  if (!adminPointsConfigured()) {
+    return { status: 503, body: { error: 'Supabase is not configured on this server.' } };
+  }
+  const body = typeof rawBody === 'string'
+    ? (() => { try { return JSON.parse(rawBody); } catch { return {}; } })()
+    : ((rawBody ?? {}) as Record<string, any>);
+
+  const uid = await staffCaller(String(body.idToken ?? ''));
+  if (!uid) return { status: 401, body: { error: 'Not signed in.' } };
+
+  const orderId = String(body.orderId ?? '').trim();
+  if (!orderId) return { status: 400, body: { error: 'orderId is required' } };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL()}/rest/v1/rpc/web_award_order_points`, {
+      method: 'POST', headers: H(), body: JSON.stringify({ p_order_id: orderId }),
+    });
+    const text = await res.text().catch(() => '');
+    if (!res.ok) {
+      if (text.includes('PGRST202')) return { status: 200, body: { ok: true, reason: 'not-ready', credited: 0 } };
+      console.error(`[POINTS] order ${orderId} credit failed: ${res.status} ${text.slice(0, 200)}`);
+      return { status: 500, body: { error: 'Could not award points.' } };
+    }
+    const result = JSON.parse(text) as { credited?: number; reason?: string };
+    console.log(`[POINTS] order ${orderId}: ${result.reason} (${result.credited ?? 0}) by ${uid}`);
+    return { status: 200, body: { ok: true, credited: Number(result.credited) || 0, reason: result.reason } };
+  } catch (err) {
+    console.error('[POINTS] order credit threw:', err instanceof Error ? err.message : String(err));
+    return { status: 500, body: { error: 'Could not award points.' } };
+  }
+}
+
 export function registerAdminPoints(app: Express): void {
   app.post('/api/admin/award-points', async (req, res) => {
     const { status, body } = await handleAwardPoints(req.body);
+    res.status(status).json(body);
+  });
+  app.post('/api/admin/award-order-points', async (req, res) => {
+    const { status, body } = await handleAwardOrderPoints(req.body);
     res.status(status).json(body);
   });
 }

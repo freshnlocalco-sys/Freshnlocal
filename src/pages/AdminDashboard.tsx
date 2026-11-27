@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
 import { setDocMirrored, updateDocMirrored, deleteDocMirrored, mirrorProductIds } from '../lib/mirrorToSupabase';
-import { fetchAllReviews, awardPoints } from '../lib/reviews';
+import { fetchAllReviews, awardOrderPoints } from '../lib/reviews';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Package, Users, ShoppingBag, Plus, Minus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff, CheckCircle2, AlertCircle, Eye, Tag } from 'lucide-react';
 import { Product } from '../store/useCart';
@@ -2513,12 +2513,15 @@ export function AdminDashboard() {
             // in web_users now, and an admin's Firebase token cannot write it
             // directly: RLS would match no row and the credit would vanish
             // without an error. See adminPoints.ts.
-            const credited = await awardPoints(order.userId, pointsToGive);
+            // By ORDER, against Supabase's own flag: if the ERP already
+            // completed (and so credited) this order, this credits 0 rather
+            // than paying the customer twice. See adminPoints.ts.
+            const credited = await awardOrderPoints(orderId, order.userId, pointsToGive);
             if (!credited.ok) {
               throw new Error(credited.reason || 'the server refused the credit');
             }
-            pointsAwardedNow = true;
-            pointsGivenCount = pointsToGive;
+            pointsAwardedNow = (credited.credited ?? 0) > 0;
+            pointsGivenCount = credited.credited ?? 0;
             orderUpdates.pointsAwarded = true;
             orderUpdates.pointsAwardedAt = Date.now();
           } catch (ptsErr) {

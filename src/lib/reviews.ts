@@ -141,6 +141,34 @@ export async function deleteReview(reviewId: string): Promise<WriteResult> {
  * for the same reason: an admin's Firebase token makes `web_firebase_uid()`
  * NULL, so RLS matches no row and the write silently does nothing.
  */
+/**
+ * Credit one ORDER's points, at most once, against the order's own flag in
+ * Supabase. Falls back to the plain user credit only while the database
+ * function is not installed yet ('not-ready'). Returns how many were credited:
+ * 0 means already credited (for example by the ERP completing the order).
+ */
+export async function awardOrderPoints(orderId: string, userId: string, amount: number): Promise<WriteResult & { credited?: number }> {
+  const { token, reason } = await getCallerToken();
+  if (!token) return { ok: false, reason: reason ?? 'not signed in' };
+  try {
+    const res = await fetch('/api/admin/award-order-points', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: token, orderId }),
+    });
+    const result = await readApiJson<{ ok?: boolean; error?: string; credited?: number; reason?: string }>(res);
+    if (!result.ok) return { ok: false, reason: result.reason };
+    if (result.data?.error) return { ok: false, reason: result.data.error };
+    if (result.data?.reason === 'not-ready' || result.data?.reason === 'no-order') {
+      const legacy = await awardPoints(userId, amount);
+      return legacy.ok ? { ok: true, credited: amount } : legacy;
+    }
+    return { ok: true, credited: Number(result.data?.credited) || 0 };
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 export async function awardPoints(userId: string, amount: number): Promise<WriteResult> {
   const { token, reason } = await getCallerToken();
   if (!token) return { ok: false, reason: reason ?? 'not signed in' };
