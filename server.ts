@@ -8,14 +8,6 @@ import { setupOrderEmailTriggers, sendCancellationEmailDirect, sendStatusUpdateE
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json';
-import { registerCatalogueMirror, mirrorConfigured } from './catalogueMirror';
-import { registerOrderMirror, orderMirrorConfigured } from './orderMirror';
-import { registerOrderCreate } from './orderCreate';
-import { registerOrderHistory } from './orderHistory';
-import { registerOtpHook } from './whatsappOtp';
-import { registerReviews } from './reviews';
-import { registerAdminPoints } from './adminPoints';
-import { registerOrderAdminSync } from './orderAdminSync';
 import { generateMetaFeedXml } from './src/lib/metaFeedGenerator';
 
 dotenv.config();
@@ -88,12 +80,6 @@ async function startServer() {
 
   // Add trust proxy so req.ip works correctly behind Vercel/Nginx
   app.set('trust proxy', 1);
-
-  // BEFORE express.json(): the Supabase SMS hook signs the raw request body,
-  // and a parsed-then-restringified body does not reproduce it byte for byte.
-  // This route mounts its own express.raw(), so it has to claim the stream
-  // first.
-  registerOtpHook(app);
 
   app.use(express.json({ limit: '5mb' }));
 
@@ -603,54 +589,6 @@ Format your output exactly as a JSON object with these keys:
       res.status(500).json({ error: error?.message || "Failed to send status update email" });
     }
   });
-
-  // Copies an admin's product and settings edits from Firestore into Supabase
-  // as they happen, so the catalogue the storefront reads cannot go stale while
-  // writes still land in Firestore. Takes ids only and re-reads Firestore
-  // itself -- see catalogueMirror.ts.
-  registerCatalogueMirror(app);
-
-  // The same route the deployed function serves (api/orders/[action].ts), so a
-  // checkout run locally exercises the real path instead of posting into Vite's
-  // SPA middleware and reading the page's HTML back as a success.
-  registerOrderMirror(app);
-
-  // Creating an order IN Supabase, rather than copying one Firestore already
-  // owns. See orderCreate.ts -- this is the route that ends the two-copies
-  // arrangement, and it shares the mirror's Supabase configuration check.
-  registerOrderCreate(app);
-
-  // The customer's own order history, read from Supabase and translated back
-  // into the shape the pages already render. See orderHistory.ts.
-  registerOrderHistory(app);
-
-  // An admin's order edit, copied from Firestore to the row the customer's
-  // order page reads. See orderAdminSync.ts.
-  registerOrderAdminSync(app);
-
-  // Posting and removing product reviews. Reading them does not come through
-  // here -- web_reviews is publicly readable, so the browser fetches reviews
-  // straight from Supabase. Writes need the server because staff hold a
-  // Firebase token that Supabase does not accept. See reviews.ts.
-  registerReviews(app);
-
-  // Crediting loyalty points when an admin marks an order delivered. Needs the
-  // server because an admin's Firebase token means web_firebase_uid() is NULL,
-  // so a direct client write would match no row and change nothing. See
-  // adminPoints.ts.
-  registerAdminPoints(app);
-  if (!orderMirrorConfigured()) {
-    console.warn(
-      "[ORDER MIRROR] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set; " +
-      "orders placed here will NOT reach the ERP from checkout."
-    );
-  }
-  if (!mirrorConfigured()) {
-    console.warn(
-      "[CATALOGUE MIRROR] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set; " +
-      "admin edits will NOT reach Supabase. Harmless while VITE_CATALOGUE_SOURCE=firestore."
-    );
-  }
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

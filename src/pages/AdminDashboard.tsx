@@ -2,13 +2,10 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, auth, db, handleFirestoreError, OperationType, isQuotaError, storage, fallbackStorage, AppUser } from '../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch, setDoc, getDoc, limit, orderBy, increment } from 'firebase/firestore';
-import { setDocMirrored, updateDocMirrored, deleteDocMirrored, mirrorProductIds } from '../lib/mirrorToSupabase';
-import { fetchAllReviews, awardPoints } from '../lib/reviews';
 import { ref, uploadString, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Package, Users, ShoppingBag, Plus, Minus, Trash2, Upload, Download, FileSpreadsheet, Sparkles, Sliders, Check, FileText, Edit2, ChevronDown, ChevronUp, Filter, Calendar, TrendingUp, X, Star, Globe, GripVertical, Search, Calculator, Mail, Gift, Printer, Hash, PowerOff, RotateCcw, Ban, EyeOff, CheckCircle2, AlertCircle, Eye, Tag } from 'lucide-react';
 import { Product } from '../store/useCart';
 import { saveCustomerHorecaPrice } from '../lib/horecaPrices';
-import { syncOrderChange } from '../lib/syncOrderChange';
 import { parseUnitScale, getBaseUnit } from '../lib/horecaUtils';
 import { useSettings } from '../store/useSettings';
 import { BrandingSettings } from '../components/BrandingSettings';
@@ -678,7 +675,7 @@ export function AdminDashboard() {
 
         if (newCat && p.category !== newCat) {
           try {
-            await updateDocMirrored(doc(db, 'products', p.id), { category: newCat });
+            await updateDoc(doc(db, 'products', p.id), { category: newCat });
             count++;
           } catch (e) {}
         }
@@ -865,7 +862,7 @@ export function AdminDashboard() {
             }
 
             // Update in Firestore!
-            await updateDocMirrored(doc(db, 'products', docSnap.id), {
+            await updateDoc(doc(db, 'products', docSnap.id), {
               description: result.description,
               metaDescription: result.metaDescription,
               updatedAt: Date.now()
@@ -1033,7 +1030,7 @@ export function AdminDashboard() {
               mainUrl = await getDownloadURL(storageRef);
             }
 
-            await updateDocMirrored(doc(db, 'products', productId), {
+            await updateDoc(doc(db, 'products', productId), {
               imageUrl: mainUrl,
               updatedAt: Date.now()
             });
@@ -1433,10 +1430,8 @@ export function AdminDashboard() {
         } else if (activeTab === 'categories') {
           await fetchCategoryImages(true);
         } else if (activeTab === 'reviews') {
-          // Reviews live in Supabase now. Reading them from Firestore here
-          // would show an empty moderation list while customers post reviews
-          // the shop never sees.
-          setReviews(await fetchAllReviews());
+          const reviewsSnap = await getDocs(query(collection(db, 'reviews'), orderBy('createdAt', 'desc')));
+          setReviews(reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         } else if (activeTab === 'hero') {
           const docSnap = await getDoc(doc(db, 'settings', 'heroBanners'));
           if (docSnap.exists() && docSnap.data().banners) {
@@ -1998,8 +1993,6 @@ export function AdminDashboard() {
         });
         await batch.commit();
       }
-
-      mirrorProductIds(seededProducts.map(p => p.id));
       setProducts(prev => [...seededProducts, ...prev]);
       toast.success(`Successfully imported ${toSeed.length} signature FNL juices!`);
     } catch (err: any) {
@@ -2132,7 +2125,7 @@ export function AdminDashboard() {
       // Save directly to Firestore for auto-save
       const optimizedItem = { ...updatedItem };
 
-      await setDocMirrored(doc(db, 'settings', 'spotlights'), {
+      await setDoc(doc(db, 'settings', 'spotlights'), {
         [key]: optimizedItem
       }, { merge: true });
 
@@ -2167,7 +2160,7 @@ export function AdminDashboard() {
       const newBanner = { id: Date.now().toString(), imageUrl: url, link: '' };
       const newBanners = [...heroBanners, newBanner];
       
-      await setDocMirrored(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
+      await setDoc(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
       setHeroBanners(newBanners);
       
       toast.success('Banner uploaded!', { id: toastId });
@@ -2183,7 +2176,7 @@ export function AdminDashboard() {
   const deleteHeroBanner = async (bannerId: string) => {
     try {
       const newBanners = heroBanners.filter(b => b.id !== bannerId);
-      await setDocMirrored(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
+      await setDoc(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
       setHeroBanners(newBanners);
       toast.success('Banner deleted');
     } catch (error) {
@@ -2194,7 +2187,7 @@ export function AdminDashboard() {
   const updateHeroBannerLink = async (bannerId: string, link: string) => {
     try {
       const newBanners = heroBanners.map(b => b.id === bannerId ? { ...b, link } : b);
-      await setDocMirrored(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
+      await setDoc(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
       setHeroBanners(newBanners);
       toast.success('Banner link updated');
     } catch (error) {
@@ -2223,7 +2216,7 @@ export function AdminDashboard() {
     setDraggedBannerIndex(null);
 
     try {
-      await setDocMirrored(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
+      await setDoc(doc(db, 'settings', 'heroBanners'), { banners: newBanners }, { merge: true });
       toast.success('Banners rearranged');
     } catch (error) {
       toast.error('Failed to rearrange banners');
@@ -2281,7 +2274,6 @@ export function AdminDashboard() {
         totalAmount: newTotal,
         updatedAt: Date.now() 
       });
-      syncOrderChange(orderId, 'lines');
       
       const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
       setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
@@ -2316,7 +2308,6 @@ export function AdminDashboard() {
         totalAmount: newTotal,
         updatedAt: Date.now() 
       });
-      syncOrderChange(orderId, 'lines');
       
       const updatedOrder = { ...order, items: newItems, totalAmount: newTotal };
       setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
@@ -2369,7 +2360,6 @@ export function AdminDashboard() {
         shippingEmailStatus: null,
         updatedAt: Date.now() 
       });
-      syncOrderChange(orderId, 'lines');
 
       // Save remembered price for HoReCa customer
       const customerUserId = order.userId || '';
@@ -2441,7 +2431,6 @@ export function AdminDashboard() {
         shippingEmailStatus: null,
         updatedAt: Date.now() 
       });
-      syncOrderChange(orderId, 'lines');
 
       // Save remembered price if added
       const customerUserIdAdd = order.userId || '';
@@ -2509,31 +2498,16 @@ export function AdminDashboard() {
 
         if (pointsToGive > 0 && order.userId) {
           try {
-            // Through the server, not Firestore. The customer's balance lives
-            // in web_users now, and an admin's Firebase token cannot write it
-            // directly: RLS would match no row and the credit would vanish
-            // without an error. See adminPoints.ts.
-            const credited = await awardPoints(order.userId, pointsToGive);
-            if (!credited.ok) {
-              throw new Error(credited.reason || 'the server refused the credit');
-            }
+            const customerUserRef = doc(db, 'users', order.userId);
+            await setDoc(customerUserRef, {
+              points: increment(pointsToGive)
+            }, { merge: true });
             pointsAwardedNow = true;
             pointsGivenCount = pointsToGive;
             orderUpdates.pointsAwarded = true;
             orderUpdates.pointsAwardedAt = Date.now();
           } catch (ptsErr) {
-            // Deliberately NOT marking the order as awarded: leaving the flag
-            // off means the next attempt retries the credit, where setting it
-            // would quietly cost the customer their points for good.
-            console.error("Failed to credit points to the customer:", ptsErr);
-            // And say so. The order still completes its status change with a
-            // success toast, so without this the operator has no way to know
-            // the customer was not credited -- they find out when the customer
-            // asks where their points went.
-            toast.error(
-              `Order updated, but ${pointsToGive} points were NOT credited. Mark it delivered again to retry.`,
-              { duration: 8000 }
-            );
+            console.error("Failed to credit points to customer user document:", ptsErr);
           }
         } else {
           // If pointsToGive is 0 or guest order without userId, mark awarded so it does not re-run
@@ -2543,7 +2517,6 @@ export function AdminDashboard() {
       }
 
       await updateDoc(doc(db, 'orders', orderId), orderUpdates);
-      syncOrderChange(orderId, 'status');
 
       if (status === 'confirmed' && order) {
         const customerUserId = order.userId || '';
@@ -2614,7 +2587,6 @@ export function AdminDashboard() {
       }
 
       await deleteDoc(doc(db, 'orders', orderId));
-      syncOrderChange(orderId, 'deleted');
       setOrders(orders.filter(o => o.id !== orderId));
       setOrderToDelete(null);
       toast.success('Order deleted and cancellation email sent successfully.');
@@ -2680,7 +2652,7 @@ export function AdminDashboard() {
       const finalIsDeactivated = !!newProduct.isDeactivated;
 
       if (editingProductId) {
-        await updateDocMirrored(doc(db, 'products', editingProductId), {
+        await updateDoc(doc(db, 'products', editingProductId), {
           itemCode: newProduct.itemCode ? newProduct.itemCode.trim() : '',
           name: newProduct.name,
           price: Number(newProduct.price),
@@ -2706,7 +2678,7 @@ export function AdminDashboard() {
           updatedAt: Date.now()
         });
       } else {
-        await setDocMirrored(doc(db, 'products', productId), {
+        await setDoc(doc(db, 'products', productId), {
           itemCode: newProduct.itemCode ? newProduct.itemCode.trim() : '',
           name: newProduct.name,
           price: Number(newProduct.price),
@@ -3506,7 +3478,7 @@ export function AdminDashboard() {
   const handleConfirmDeleteProduct = async () => {
     if (!productToDelete) return;
     try {
-      await deleteDocMirrored(doc(db, 'products', productToDelete));
+      await deleteDoc(doc(db, 'products', productToDelete));
       setProducts(products.filter(p => p.id !== productToDelete));
       toast.success('Product catalog item cleared.');
     } catch (error) {
@@ -3619,7 +3591,7 @@ export function AdminDashboard() {
         let updatedCount = 0;
         for (const p of productsToUpdate) {
            try {
-             await updateDocMirrored(doc(db, 'products', p.id), { 
+             await updateDoc(doc(db, 'products', p.id), { 
                category: newCat,
                updatedAt: Date.now()
              });
@@ -3716,8 +3688,6 @@ export function AdminDashboard() {
         await batch.commit();
       }
 
-      mirrorProductIds(updates.map(u => u.id));
-
       const updatedProducts = products.map(p => {
         const match = newOrder.find(no => no.id === p.id);
         if (match) {
@@ -3766,7 +3736,7 @@ export function AdminDashboard() {
   const handleToggleStock = async (product: Product) => {
     try {
       const newStockStatus = !(product.inStock ?? true);
-      await updateDocMirrored(doc(db, 'products', product.id), { inStock: newStockStatus, updatedAt: Date.now() });
+      await updateDoc(doc(db, 'products', product.id), { inStock: newStockStatus, updatedAt: Date.now() });
       setProducts(products.map(p => p.id === product.id ? { ...p, inStock: newStockStatus } : p));
       toast.success(`${product.name} marked as ${newStockStatus ? 'In Stock' : 'Out of Stock'}`);
     } catch (error) {
@@ -3840,11 +3810,11 @@ export function AdminDashboard() {
         if (updatedProduct.originalPrice) updateData.originalPrice = updatedProduct.originalPrice;
         if (updatedProduct.horecaPrice) updateData.horecaPrice = updatedProduct.horecaPrice;
 
-        await updateDocMirrored(doc(db, 'products', product.id), updateData);
+        await updateDoc(doc(db, 'products', product.id), updateData);
         setProducts(products.map(p => p.id === product.id ? updatedProduct : p));
         toast.success(`Base price updated to ₹${parsedPrice}/${product.baseUnit || 'Kg'}. Recalculated main price to ₹${updatedProduct.price}`);
       } else {
-        await updateDocMirrored(doc(db, 'products', product.id), { price: parsedPrice, updatedAt: Date.now() });
+        await updateDoc(doc(db, 'products', product.id), { price: parsedPrice, updatedAt: Date.now() });
         setProducts(products.map(p => p.id === product.id ? { ...p, price: parsedPrice } : p));
         toast.success(`Price updated to ₹${parsedPrice}`);
       }
@@ -4051,10 +4021,6 @@ export function AdminDashboard() {
         });
         await batch.commit();
       }
-
-      // writeBatch has no per-document hook, so the touched ids go over
-      // explicitly. The helper coalesces them into one request.
-      mirrorProductIds(bulkChangedProducts.map(item => item.id));
 
       const m = await import('../store/useProducts');
       await m.useProducts.getState().fetchProducts(true);
@@ -7124,7 +7090,6 @@ export function AdminDashboard() {
                         shippingEmailStatus: null,
                         updatedAt: Date.now()
                       });
-                      syncOrderChange(selectedOrder.id, 'emailFlags');
                       toast.success('Updated rates email queued for customer!');
                     } catch (e: any) {
                       toast.error('Failed to queue rate email');

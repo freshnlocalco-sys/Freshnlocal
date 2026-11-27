@@ -5,7 +5,6 @@ import { useCart, Product } from '../store/useCart';
 import Markdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
-import { listChats, saveChat, deleteChat, saveRecipe, deleteSavedRecipe } from '../lib/recipeStore';
 import { useAuth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, deleteDoc, doc, getDoc, setDoc, query, orderBy, getDocs } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
@@ -61,15 +60,20 @@ export function RecipeAI() {
       setLoadingHistory(true);
       const loadFromFirestore = async () => {
         try {
-          // Supabase for customers, Firestore for staff; recipeStore returns the
-          // same shape either way, newest first.
-          const sessionsList: RecipeChatSession[] = (await listChats(user.uid)).map(c => ({
-            id: c.id,
-            title: c.title || 'New Chef Chat',
-            messages: (c.messages || []) as ChatMessage[],
-            updatedAt: c.updatedAt || Date.now(),
-          }));
-
+          const q = query(collection(db, 'users', user.uid, 'recipeChat'), orderBy('updatedAt', 'desc'));
+          const snap = await getDocs(q);
+          const sessionsList: RecipeChatSession[] = [];
+          
+          snap.forEach(doc => {
+            const data = doc.data();
+            sessionsList.push({
+              id: doc.id,
+              title: data.title || 'New Chef Chat',
+              messages: data.messages || [],
+              updatedAt: data.updatedAt || Date.now()
+            });
+          });
+          
           if (sessionsList.length > 0) {
             // Find if there is an empty session (one with no user messages)
             const emptySession = sessionsList.find(s => !s.messages.some(m => m.sender === 'user'));
@@ -101,7 +105,7 @@ export function RecipeAI() {
               localStorage.setItem('fnl_recipe_active_session_id', newId);
               
               // Save to firestore
-              await saveChat(user.uid, newId, {
+              await setDoc(doc(db, 'users', user.uid, 'recipeChat', newId), {
                 messages: newSession.messages,
                 title: newSession.title,
                 updatedAt: newSession.updatedAt
@@ -128,7 +132,7 @@ export function RecipeAI() {
             localStorage.setItem('fnl_recipe_active_session_id', defaultId);
             
             // Save to firestore
-            await saveChat(user.uid, defaultId, {
+            await setDoc(doc(db, 'users', user.uid, 'recipeChat', defaultId), {
               messages: defaultSession.messages,
               title: defaultSession.title,
               updatedAt: defaultSession.updatedAt
@@ -234,7 +238,7 @@ export function RecipeAI() {
             return m;
           });
 
-          await saveChat(user.uid, activeSessionId, {
+          await setDoc(doc(db, 'users', user.uid, 'recipeChat', activeSessionId), {
             messages: cleanMessages,
             title: activeSession.title,
             updatedAt: Date.now()
@@ -309,7 +313,7 @@ export function RecipeAI() {
     
     if (user) {
       try {
-        await saveChat(user.uid, newId, {
+        await setDoc(doc(db, 'users', user.uid, 'recipeChat', newId), {
           messages: newSession.messages,
           title: newSession.title,
           updatedAt: newSession.updatedAt
@@ -354,7 +358,7 @@ export function RecipeAI() {
         
         if (user) {
           try {
-            await saveChat(user.uid, defaultId, {
+            await setDoc(doc(db, 'users', user.uid, 'recipeChat', defaultId), {
               messages: defaultSession.messages,
               title: defaultSession.title,
               updatedAt: defaultSession.updatedAt
@@ -371,7 +375,7 @@ export function RecipeAI() {
     
     if (user) {
       try {
-        await deleteChat(user.uid, sessionId);
+        await deleteDoc(doc(db, 'users', user.uid, 'recipeChat', sessionId));
       } catch (err) {
         console.warn('Failed to delete session from Firestore', err);
       }
@@ -880,7 +884,7 @@ export function RecipeAI() {
     try {
       const existingDocId = savedRecipeIds[msgId];
       if (existingDocId) {
-        await deleteSavedRecipe(user.uid, existingDocId);
+        await deleteDoc(doc(db, 'users', user.uid, 'savedRecipes', existingDocId));
         setSavedRecipeIds(prev => {
           const updated = { ...prev };
           delete updated[msgId];
@@ -888,10 +892,13 @@ export function RecipeAI() {
         });
         toast.success('Recipe removed from favorites');
       } else {
-        const newRecipeId = await saveRecipe(user.uid, recipeText);
+        const docRef = await addDoc(collection(db, 'users', user.uid, 'savedRecipes'), {
+          recipeMarkdown: recipeText,
+          createdAt: Date.now()
+        });
         setSavedRecipeIds(prev => ({
           ...prev,
-          [msgId]: newRecipeId
+          [msgId]: docRef.id
         }));
         toast.success('Recipe saved to favorites!');
       }

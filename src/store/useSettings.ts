@@ -1,10 +1,7 @@
 import { create } from 'zustand';
-import { doc, getDoc } from 'firebase/firestore';
-import { setDocMirrored } from '../lib/mirrorToSupabase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, isQuotaError, handleFirestoreError, OperationType } from '../lib/firebase';
-import { cacheManager, trackFirestoreRead, trackSupabaseRead } from '../lib/cacheManager';
-import { usingSupabaseCatalogue } from '../lib/supabase';
-import { fetchWebSetting, fetchWebSettings } from '../lib/webSettings';
+import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import { updateFaviconInDOM } from '../lib/utils';
 import toast from 'react-hot-toast';
 import { DEFAULT_META_CATEGORY_MAPPINGS } from '../lib/metaFeedGenerator';
@@ -155,37 +152,24 @@ export const useSettings = create<SettingsState>((set, get) => ({
 
     await cacheManager.fetchDeduplicated('category_images_config_fetch', async () => {
       try {
-        let imagesData: CategoryImageMapping;
-        let catData: Record<string, any> | null;
+        // Fetch 1: Category Images
+        const docRef = doc(db, 'settings', 'categoryImages');
+        const docSnap = await getDoc(docRef);
+        trackFirestoreRead('settings', 1);
+        const imagesData = docSnap.exists() ? (docSnap.data() as CategoryImageMapping) : {};
 
-        if (usingSupabaseCatalogue()) {
-          // Both rows in one request. The UI treats this as a single load, and
-          // two round trips for it show up as a flicker.
-          const rows = await fetchWebSettings(['categoryImages', 'categoriesConfig']);
-          trackSupabaseRead('web_settings', Object.keys(rows).length);
-          imagesData = (rows.categoryImages ?? {}) as CategoryImageMapping;
-          catData = (rows.categoriesConfig ?? null) as Record<string, any> | null;
-        } else {
-          // Fetch 1: Category Images
-          const docRef = doc(db, 'settings', 'categoryImages');
-          const docSnap = await getDoc(docRef);
-          trackFirestoreRead('settings', 1);
-          imagesData = docSnap.exists() ? (docSnap.data() as CategoryImageMapping) : {};
-
-          // Fetch 2: Categories configuration
-          const catRef = doc(db, 'settings', 'categoriesConfig');
-          const catSnap = await getDoc(catRef);
-          trackFirestoreRead('settings', 1);
-          catData = catSnap.exists() ? catSnap.data() : null;
-        }
-
+        // Fetch 2: Categories configuration
+        const catRef = doc(db, 'settings', 'categoriesConfig');
+        const catSnap = await getDoc(catRef);
+        trackFirestoreRead('settings', 1);
         let prodCats = DEFAULT_PRODUCT_CATEGORIES;
         let horecaOrder: string[] = [];
         let juiceCats = DEFAULT_JUICE_SECTIONS;
         let catVisibility: CategoryVisibility = {};
         let metaCatMapping: Record<string, string> = DEFAULT_META_CATEGORY_MAPPINGS;
 
-        if (catData) {
+        if (catSnap.exists()) {
+          const catData = catSnap.data();
           if (catData.productCategories) {
             prodCats = catData.productCategories;
           }
@@ -255,7 +239,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       newImages[pluralKey] = finalUrl;
       
       const docRef = doc(db, 'settings', 'categoryImages');
-      await setDocMirrored(docRef, newImages, { merge: true });
+      await setDoc(docRef, newImages, { merge: true });
       
       cacheManager.set('categoryImages', newImages);
       set({ categoryImages: newImages });
@@ -278,7 +262,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       };
       
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { categoryVisibility: updatedVisibility }, { merge: true });
+      await setDoc(docRef, { categoryVisibility: updatedVisibility }, { merge: true });
       
       cacheManager.set('categoryVisibility', updatedVisibility);
       set({ categoryVisibility: updatedVisibility });
@@ -297,7 +281,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         [normKey]: metaCategory.trim()
       };
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { metaCategoryMapping: updated }, { merge: true });
+      await setDoc(docRef, { metaCategoryMapping: updated }, { merge: true });
       cacheManager.set('metaCategoryMapping', updated);
       set({ metaCategoryMapping: updated });
       toast.success(`Meta category for "${normKey}" updated`);
@@ -309,7 +293,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   saveAllMetaCategoryMappings: async (mappings: Record<string, string>) => {
     try {
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { metaCategoryMapping: mappings }, { merge: true });
+      await setDoc(docRef, { metaCategoryMapping: mappings }, { merge: true });
       cacheManager.set('metaCategoryMapping', mappings);
       set({ metaCategoryMapping: mappings });
       toast.success('Meta catalog categories updated successfully');
@@ -333,7 +317,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       
       const updated = [...current, normalizedNew];
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { productCategories: updated }, { merge: true });
+      await setDoc(docRef, { productCategories: updated }, { merge: true });
       
       cacheManager.set('productCategories', updated);
       
@@ -349,7 +333,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         imgUpdate[singularKey] = finalUrl;
         imgUpdate[pluralKey] = finalUrl;
 
-        await setDocMirrored(imgRef, imgUpdate, { merge: true });
+        await setDoc(imgRef, imgUpdate, { merge: true });
         
         const newImages = { ...get().categoryImages, ...imgUpdate };
         cacheManager.set('categoryImages', newImages);
@@ -391,7 +375,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       ).filter((c, idx, arr) => c && arr.indexOf(c) === idx);
       
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { 
+      await setDoc(docRef, { 
         productCategories: updated,
         horecaCategoryOrder: updatedHoreca
       }, { merge: true });
@@ -422,7 +406,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         newImages[newPlural] = oldImg;
         
         const imgRef = doc(db, 'settings', 'categoryImages');
-        await setDocMirrored(imgRef, newImages);
+        await setDoc(imgRef, newImages);
         cacheManager.set('categoryImages', newImages);
         set({ categoryImages: newImages });
       }
@@ -462,7 +446,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
 
       const updated = [...current, newCat];
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { juiceData: updated }, { merge: true });
+      await setDoc(docRef, { juiceData: updated }, { merge: true });
 
       cacheManager.set('juiceCategories', updated);
 
@@ -478,7 +462,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
         imgUpdate[singularKey] = finalUrl;
         imgUpdate[pluralKey] = finalUrl;
 
-        await setDocMirrored(imgRef, imgUpdate, { merge: true });
+        await setDoc(imgRef, imgUpdate, { merge: true });
         
         const newImages = { ...get().categoryImages, ...imgUpdate };
         cacheManager.set('categoryImages', newImages);
@@ -510,7 +494,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       delete updatedVisibility[normalizedName.toLowerCase()];
 
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { 
+      await setDoc(docRef, { 
         productCategories: updated,
         horecaCategoryOrder: updatedHoreca,
         categoryVisibility: updatedVisibility
@@ -528,7 +512,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       delete newImages[pluralKey];
 
       const imgRef = doc(db, 'settings', 'categoryImages');
-      await setDocMirrored(imgRef, newImages);
+      await setDoc(imgRef, newImages);
 
       cacheManager.set('productCategories', updated);
       cacheManager.set('horecaCategoryOrder', updatedHoreca);
@@ -553,7 +537,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       const updated = current.filter(c => c.id !== id);
       
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { juiceData: updated }, { merge: true });
+      await setDoc(docRef, { juiceData: updated }, { merge: true });
       
       // Clean up image associations if any
       const normalizedImgKey = name.toLowerCase().replace(/ font-bold/gi, '').trim();
@@ -567,7 +551,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       delete newImages[pluralKey];
 
       const imgRef = doc(db, 'settings', 'categoryImages');
-      await setDocMirrored(imgRef, newImages);
+      await setDoc(imgRef, newImages);
 
       cacheManager.set('juiceCategories', updated);
       cacheManager.set('categoryImages', newImages);
@@ -585,7 +569,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   reorderProductCategories: async (newOrder: string[]) => {
     try {
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { productCategories: newOrder }, { merge: true });
+      await setDoc(docRef, { productCategories: newOrder }, { merge: true });
       cacheManager.set('productCategories', newOrder);
       set({ productCategories: newOrder });
     } catch (error: any) {
@@ -596,7 +580,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   reorderHorecaCategories: async (newOrder: string[]) => {
     try {
       const docRef = doc(db, 'settings', 'categoriesConfig');
-      await setDocMirrored(docRef, { horecaCategoryOrder: newOrder }, { merge: true });
+      await setDoc(docRef, { horecaCategoryOrder: newOrder }, { merge: true });
       cacheManager.set('horecaCategoryOrder', newOrder);
       set({ horecaCategoryOrder: newOrder });
       toast.success('HoReCa category order updated');
@@ -608,7 +592,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   reorderJuiceCategories: async (newOrder: JuiceCategory[]) => {
     try {
       const docRef = doc(db, 'settings', 'juiceCategories');
-      await setDocMirrored(docRef, { categories: newOrder }, { merge: true });
+      await setDoc(docRef, { categories: newOrder }, { merge: true });
       cacheManager.set('juiceCategories', newOrder);
       set({ juiceCategories: newOrder });
     } catch (error: any) {
@@ -618,19 +602,11 @@ export const useSettings = create<SettingsState>((set, get) => ({
   },
   fetchFavicon: async () => {
     try {
-      let data: Record<string, any> | null;
-
-      if (usingSupabaseCatalogue()) {
-        data = await fetchWebSetting('branding');
-        trackSupabaseRead('web_settings', data ? 1 : 0);
-      } else {
-        const docRef = doc(db, 'settings', 'branding');
-        const docSnap = await getDoc(docRef);
-        trackFirestoreRead('settings', 1);
-        data = docSnap.exists() ? docSnap.data() : null;
-      }
-
-      if (data) {
+      const docRef = doc(db, 'settings', 'branding');
+      const docSnap = await getDoc(docRef);
+      trackFirestoreRead('settings', 1);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
         const faviconUrl = data.faviconUrl || null;
         if (faviconUrl) {
           try { localStorage.setItem('fnl_favicon_url', faviconUrl); } catch(e) {}
@@ -654,7 +630,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   updateFavicon: async (url: string | null) => {
     try {
       const docRef = doc(db, 'settings', 'branding');
-      await setDocMirrored(docRef, { faviconUrl: url }, { merge: true });
+      await setDoc(docRef, { faviconUrl: url }, { merge: true });
       if (url) {
         try { localStorage.setItem('fnl_favicon_url', url); } catch(e) {}
       } else {

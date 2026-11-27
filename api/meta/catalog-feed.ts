@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { initializeFirestore, collection, getDocs, doc, getDoc, getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { generateMetaFeedXml, type ProductFeedInput } from '../../src/lib/metaFeedGenerator';
+import { generateMetaFeedXml } from '../../src/lib/metaFeedGenerator';
 
 let dbInstance: any = null;
 
@@ -44,14 +44,10 @@ export default async function handler(req: any, res: any) {
         getDoc(doc(db, 'settings', 'categoriesConfig')).catch(() => null)
       ]);
 
-      // Firestore hands back untyped documents. Product docs do carry name and
-      // price, so this asserts the shape the generator needs rather than
-      // checking it -- the same trust server.ts places in this data. Surfaced
-      // when api/ joined the typecheck (tsconfig include) on dev.
       const products = productsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })) as ProductFeedInput[];
+      }));
 
       const catData = categoriesConfigSnap && categoriesConfigSnap.exists() ? categoriesConfigSnap.data() : {};
       const customMappings = catData.metaCategoryMapping || {};

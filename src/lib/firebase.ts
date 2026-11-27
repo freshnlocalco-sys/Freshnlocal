@@ -4,14 +4,6 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp, getDocFromServer, o
 import { getStorage } from 'firebase/storage';
 import { create } from 'zustand';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { claimAuth, releaseAuth, ownedByOther } from './authSession';
-// Imported directly rather than through otpAuth.ts, which imports this file:
-// going the other way would be a cycle. signOut() needs it to end a customer's
-// Supabase session as well as a staff Firebase one.
-import { supabase } from './supabase';
-// customerProfile.ts imports only a TYPE back from this file, which TypeScript
-// erases, so this is not a runtime cycle.
-import { saveProfileFields, saveAddresses } from './customerProfile';
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
@@ -174,9 +166,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
   }
 
   if (firebaseUser) {
-    // Staff are the only people who should still arrive here. Claim the session
-    // so the Supabase listener does not clear it out from under us.
-    claimAuth('firebase');
     const userEmail = firebaseUser.email?.toLowerCase().trim() || '';
     const isAdmin = userEmail === 'freshnlocalco@gmail.com' || userEmail === 'mohitswami855@gmail.com' || userEmail === 'freshnlocal2@gmail.com' || userEmail.startsWith('admin@');
     const isHorecaAdmin = userEmail === 'horeca@gmail.com' || userEmail === 'horecaadmin@gmail.com' || userEmail.startsWith('horecaadmin@');
@@ -241,15 +230,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       useAuth.getState().setUser({ uid: firebaseUser.uid, ...fallbackUser } as AppUser);
     }
   } else {
-    // No Firebase user. That is the NORMAL state for a signed-in customer, who
-    // holds a Supabase session instead -- so this branch must not assume
-    // "nobody is signed in" and clear the store. Without this check the two
-    // listeners race on every page load and the customer is signed out a beat
-    // after signing in, intermittently. See authSession.ts.
-    releaseAuth('firebase');
-    if (!ownedByOther('firebase')) {
-      useAuth.getState().setUser(null);
-    }
+    useAuth.getState().setUser(null);
   }
   useAuth.getState().setLoading(false);
 });
@@ -304,26 +285,12 @@ export const signUpWithEmail = async (email: string, pass: string, name: string)
   return res;
 };
 
-/**
- * Sign out of everything.
- *
- * Both are ended regardless of which one is live, because "Sign out" has to
- * mean it. Signing out of only the owning provider would leave a stale session
- * in the other one, and the next page load would silently restore it -- the
- * worst possible answer on a shared or family device, which is exactly the
- * situation the shared-phone merge showed us is real here.
- */
 export const signOut = async () => {
-  const results = await Promise.allSettled([
-    firebaseSignOut(auth),
-    supabase ? supabase.auth.signOut() : Promise.resolve(),
-  ]);
-  for (const r of results) {
-    if (r.status === 'rejected') console.error('Sign-out error', r.reason);
+  try {
+    await firebaseSignOut(auth);
+  } catch (error) {
+    console.error('Sign-out error', error);
   }
-  releaseAuth('firebase');
-  releaseAuth('supabase');
-  useAuth.getState().setUser(null);
 };
 
 export const sendPasswordReset = async (email: string) => {
@@ -356,14 +323,10 @@ export const deleteUserAddress = async (addressId: string) => {
   useAuth.getState().setUser(updatedUser);
 
   try {
-    // Customers are on Supabase. Staff fall through to Firestore, which is
-    // where their profile still lives.
-    if (!(await saveAddresses(currentUser.uid, updatedAddresses))) {
-      const userRef = doc(db, 'users', currentUser.uid);
-      await setDoc(userRef, { addresses: updatedAddresses }, { merge: true });
-    }
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, { addresses: updatedAddresses }, { merge: true });
   } catch (err) {
-    console.warn("Could not delete address:", err);
+    console.warn("Could not delete address from Firestore:", err);
   }
 };
 
@@ -384,12 +347,10 @@ export const setDefaultUserAddress = async (addressId: string) => {
   useAuth.getState().setUser(updatedUser);
 
   try {
-    if (!(await saveAddresses(currentUser.uid, updatedAddresses))) {
-      const userRef = doc(db, 'users', currentUser.uid);
-      await setDoc(userRef, { addresses: updatedAddresses }, { merge: true });
-    }
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, { addresses: updatedAddresses }, { merge: true });
   } catch (err) {
-    console.warn("Could not set default address:", err);
+    console.warn("Could not set default address in Firestore:", err);
   }
 };
 
@@ -406,12 +367,10 @@ export const deleteUserLegacyAddress = async () => {
   useAuth.getState().setUser(updatedUser);
 
   try {
-    if (!(await saveProfileFields(currentUser.uid, { legacy_address: '' }))) {
-      const userRef = doc(db, 'users', currentUser.uid);
-      await setDoc(userRef, { address: '' }, { merge: true });
-    }
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, { address: '' }, { merge: true });
   } catch (err) {
-    console.warn("Could not delete legacy address:", err);
+    console.warn("Could not delete legacy address from Firestore:", err);
   }
 };
 
@@ -438,14 +397,12 @@ export const updateUserDisplayName = async (newName: string): Promise<AppUser> =
   };
   useAuth.getState().setUser(updatedUser);
 
-  // 3. Persist. Supabase for customers, Firestore for staff.
+  // 3. Persist to Firestore
   try {
-    if (!(await saveProfileFields(currentUser.uid, { display_name: trimmed }))) {
-      const userRef = doc(db, 'users', currentUser.uid);
-      await setDoc(userRef, { displayName: trimmed }, { merge: true });
-    }
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, { displayName: trimmed }, { merge: true });
   } catch (err) {
-    console.warn("Could not save updated displayName:", err);
+    console.warn("Could not save updated displayName to Firestore:", err);
   }
 
   return updatedUser;

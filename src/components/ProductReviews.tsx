@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../lib/firebase';
-import { fetchReviews as loadReviews, submitReview, deleteReview, type Review } from '../lib/reviews';
+import { collection, query, where, getDocs, addDoc, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { db, useAuth } from '../lib/firebase';
 import { Star, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export type { Review };
+export interface Review {
+  id?: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  createdAt: number;
+}
 
 export function ProductReviews({ productId }: { productId: string }) {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -22,10 +30,20 @@ export function ProductReviews({ productId }: { productId: string }) {
 
   const fetchReviews = async () => {
     try {
-      // Already newest-first from Postgres. The old Firestore version sorted in
-      // memory because a compound query would have needed an index nobody had
-      // created; that is no longer a constraint.
-      setReviews(await loadReviews(productId));
+      const q = query(
+        collection(db, 'reviews'), 
+        where('productId', '==', productId)
+      );
+      const snapshot = await getDocs(q);
+      const fetchedReviews = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Review[];
+      
+      // Sort in memory since we might lack index for compound query
+      fetchedReviews.sort((a, b) => b.createdAt - a.createdAt);
+      
+      setReviews(fetchedReviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
     } finally {
@@ -46,20 +64,18 @@ export function ProductReviews({ productId }: { productId: string }) {
 
     setSubmitting(true);
     try {
-      // The server fills in the author and the timestamp. Sending them from
-      // here would be inviting a browser to claim authorship of someone else's
-      // review, and the old Firestore rule only caught that because it compared
-      // the payload against request.auth.uid.
-      const result = await submitReview(productId, rating, comment.trim());
-      if (!result.ok) {
-        console.error("Error submitting review:", result.reason);
-        toast.error(result.reason === 'not signed in'
-          ? "Please login to submit a review"
-          : "Failed to submit review");
-        return;
-      }
+      const newReview: Review = {
+        productId,
+        userId: user.uid,
+        userName: user.displayName || 'Anonymous',
+        rating,
+        comment: comment.trim(),
+        createdAt: Date.now()
+      };
+      
+      await addDoc(collection(db, 'reviews'), newReview);
       toast.success("Review submitted successfully");
-
+      
       setRating(5);
       setComment('');
       fetchReviews();
@@ -74,12 +90,7 @@ export function ProductReviews({ productId }: { productId: string }) {
   const handleDelete = async (reviewId: string) => {
     if (!confirm('Are you sure you want to delete this review?')) return;
     try {
-      const result = await deleteReview(reviewId);
-      if (!result.ok) {
-        console.error('Failed to delete review:', result.reason);
-        toast.error('Failed to delete review');
-        return;
-      }
+      await deleteDoc(doc(db, 'reviews', reviewId));
       toast.success('Review deleted');
       fetchReviews();
     } catch (err) {

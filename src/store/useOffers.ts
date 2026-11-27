@@ -1,10 +1,7 @@
 import { create } from 'zustand';
-import { doc, getDoc } from 'firebase/firestore';
-import { setDocMirrored } from '../lib/mirrorToSupabase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, isQuotaError, handleFirestoreError, OperationType } from '../lib/firebase';
-import { cacheManager, trackFirestoreRead, trackSupabaseRead } from '../lib/cacheManager';
-import { usingSupabaseCatalogue } from '../lib/supabase';
-import { fetchWebSetting } from '../lib/webSettings';
+import { cacheManager, trackFirestoreRead } from '../lib/cacheManager';
 import toast from 'react-hot-toast';
 
 export interface GiftItem {
@@ -302,20 +299,13 @@ export const useOffers = create<OffersState>((set, get) => ({
 
     await cacheManager.fetchDeduplicated('free_gift_offer_fetch', async () => {
       try {
-        let data: Record<string, any> | null;
-
-        if (usingSupabaseCatalogue()) {
-          data = await fetchWebSetting('promotions');
-          trackSupabaseRead('web_settings', data ? 1 : 0);
-        } else {
-          const docRef = doc(db, 'settings', 'promotions');
-          const docSnap = await getDoc(docRef);
-          trackFirestoreRead('settings', 1);
-          data = docSnap.exists() ? docSnap.data() : null;
-        }
+        const docRef = doc(db, 'settings', 'promotions');
+        const docSnap = await getDoc(docRef);
+        trackFirestoreRead('settings', 1);
 
         let finalOffer = DEFAULT_FREE_GIFT_OFFER;
-        if (data) {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
           finalOffer = {
             ...DEFAULT_FREE_GIFT_OFFER,
             ...data,
@@ -378,7 +368,7 @@ export const useOffers = create<OffersState>((set, get) => ({
       };
 
       const docRef = doc(db, 'settings', 'promotions');
-      await setDocMirrored(docRef, nextOffer, { merge: true });
+      await setDoc(docRef, nextOffer, { merge: true });
 
       cacheManager.set('freeGiftOffer', nextOffer);
       set({ offer: nextOffer });
