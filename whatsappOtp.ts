@@ -569,7 +569,7 @@ export async function handleSmsHook(
 /**
  * POST /api/auth/sms-hook -- the LOCAL DEVELOPMENT transport.
  *
- * server.ts is not deployed (see api/orders/mirror.ts, which says so). The
+ * server.ts is not deployed (see api/orders/[action].ts, which says so). The
  * production transport is api/auth/sms-hook.ts, and both are thin wrappers
  * over handleSmsHook above. If you add behaviour, add it there or only half
  * your customers get it.

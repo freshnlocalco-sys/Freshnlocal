@@ -610,7 +610,7 @@ Format your output exactly as a JSON object with these keys:
   // itself -- see catalogueMirror.ts.
   registerCatalogueMirror(app);
 
-  // The same route the deployed function serves (api/orders/mirror.ts), so a
+  // The same route the deployed function serves (api/orders/[action].ts), so a
   // checkout run locally exercises the real path instead of posting into Vite's
   // SPA middleware and reading the page's HTML back as a success.
   registerOrderMirror(app);

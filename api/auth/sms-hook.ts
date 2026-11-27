@@ -5,7 +5,7 @@
  * On Vercel this project is a static SPA plus serverless functions in api/;
  * server.ts is the local development server and is NOT deployed. Without this
  * file the hook URL answers with index.html in production and every customer
- * login fails -- which is exactly the gap api/orders/mirror.ts documents, in
+ * login fails -- which is exactly the gap api/orders/[action].ts documents, in
  * the opposite direction.
  *
  * WHY bodyParser IS OFF

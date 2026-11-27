@@ -214,7 +214,7 @@ async function mirrorSettings(keys: string[]) {
 // ---------------------------------------------------------------------------
 //
 // Two transports reach this: server.ts's Express route in local development,
-// and api/admin/mirror-catalogue.ts as a Vercel function in production. They
+// and api/admin/[action].ts as a Vercel function in production. They
 // share this function for the same reason the bulk sync and the mirror share
 // catalogueTransform.mjs -- if the two disagreed about who counts as an admin,
 // the answer would depend on which environment the request landed in.
